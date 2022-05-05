@@ -1,0 +1,27 @@
+{
+  "name": "elm-land",
+  "version": "0.1.0",
+  "description": "Reliable web apps for everyone",
+  "main": "index.js",
+  "bin": {
+    "elm-land": "index.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/elm-land/cli.git"
+  },
+  "keywords": [
+    "elm",
+    "elm-land",
+    "cli"
+  ],
+  "author": "Ryan Haskell-Glatz",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/elm-land/cli/issues"
+  },
+  "homepage": "https://github.com/elm-land/cli#readme"
+}
