@@ -25,8 +25,15 @@ describe('/guide', () => {
         let commandFromTheGuide = await files.initInputSnippet()
 
         let expectedFiles = [
-          { kind: 'file', name: 'elm-land-twitter/elm.json', content: await files.initOutputElmJson() },
-          { kind: 'folder', name: 'elm-land-twitter/src' }
+          {
+            kind: 'file',
+            name: 'elm-land-twitter/elm.json',
+            content: await files.initOutputElmJson()
+          },
+          {
+            kind: 'folder',
+            name: 'elm-land-twitter/src'
+          }
         ]
 
         let actual = await Cli.run(commandFromTheGuide)

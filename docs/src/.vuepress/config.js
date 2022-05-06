@@ -57,7 +57,6 @@ module.exports = {
           collapsable: false,
           children: [
             '',
-            'app/'
           ]
         }
       ],
