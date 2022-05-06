@@ -14,10 +14,10 @@ describe('/guide', () => {
     test('prints expected message',
       async () => {
         let commandFromTheGuide = await files.initInputSnippet()
-        let expectedOutput = await files.initOutputSnippet()
+        let expectedMessage = await files.initOutputSnippet()
         let actual = await Cli.run(commandFromTheGuide)
 
-        expect(actual.message).toEqual(expectedOutput)
+        expect(actual.message).toEqual(expectedMessage)
       })
 
     test('creates expected files',

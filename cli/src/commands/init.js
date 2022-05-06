@@ -10,7 +10,7 @@ let run = async (options = {}) => {
       '',
       '📄  elm.json',
       '📂  src/'
-    ].join('\r\n')
+    ].join('\n')
 
     return {
       message,

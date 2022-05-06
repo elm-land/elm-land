@@ -36,7 +36,8 @@ module.exports = {
   themeConfig: {
     logo: '/images/logo.png',
     repo: 'https://github.com/elm-land/elm-land',
-    docsDir: 'docs',
+    docsDir: 'docs/src',
+    docsBranch: 'main',
     editLinks: true,
     editLinkText: 'Help us improve this page!',
     lastUpdated: false,
