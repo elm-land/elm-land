@@ -28,26 +28,27 @@ Let's use the `elm-land init` command to create a new `elm-land-twitter` project
 </code-group>
 
 
-### Adding our pages
+### Adding new pages <Badge type="warning" text="wip" vertical="middle" />
 
-With the `elm-land page init` command, we can also create our 4 new pages without leaving the terminal. Each command will take the URL path you want as its argument.
+With the `elm-land page` command, we can also create our 4 new pages without leaving the terminal. Each command will take the URL path you want as its argument.
 
 ```sh
-npx elm-land page init /home
+npx elm-land page /home
 ```
 ```sh
-npx elm-land page init /notifications
+npx elm-land page /notifications
 ```
 ```sh
-npx elm-land page init /settings
+npx elm-land page /settings
 ```
 ```sh
-npx elm-land page init /profile/:id
+npx elm-land page /profile/:id
 ```
 
 For that last page, we use `/profile/:id` rather than `/profile/id` to indicate that profile will take a dynamic `id` URL parameter. This `:` prefix might already be familar to you if you've worked with dynamic routing in libraries like [ExpressJS](https://expressjs.com/en/guide/routing.html), [NextJS](https://nextjs.org/docs/routing/dynamic-routes), [NuxtJS](https://nuxtjs.org/examples/routing/dynamic-pages/), or [Gridsome](https://gridsome.org/docs/dynamic-routing/).
 
-### Running the app
+### Running the app <Badge type="warning" text="wip" vertical="middle" />
+
 
 Just like Elm's CLI, Elm Land comes along with it's own dev server. That means we can run our new Elm Land app in the browser with the `server` command:
 
