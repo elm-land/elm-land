@@ -67,7 +67,6 @@ body, .navbar, .navbar .links.links, .sidebar, .theme-container
   margin-left: 0.125em;
 
 .theme-default-content blockquote
-    
     color: #243;
     border-left: 0.2rem solid #bee;
     padding: 1rem;
@@ -126,7 +125,10 @@ body, .navbar, .navbar .links.links, .sidebar, .theme-container
     margin-top: 0
   
   // Hide line numbers for bash, sh, and unspecified blocks
-  .language-bash.line-numbers-mode, .language-sh.line-numbers-mode, .language-.line-numbers-mode
+  .language-bash.line-numbers-mode, 
+  .language-sh.line-numbers-mode, 
+  .language-txt.line-numbers-mode, 
+  .language-.line-numbers-mode
     pre
       padding-left: 1.5rem
     &::after

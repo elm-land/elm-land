@@ -11,3 +11,11 @@ $ npx elm-land
 ```
 
 Pretty exciting stuff, right?
+
+# Guide Driven Design
+
+> philozsilo: "gdd guide driven design"
+
+All of our tests are intended to make sure what users read in the docs are accurate!
+
+I did my best and you like it.
