@@ -1,13 +1,14 @@
 #! /usr/bin/env node
 const { Cli } = require('./cli')
+const { Effects } = require('./effects')
 const { Files } = require('./files')
 
 let main = async () => {
   try {
-    let command = ['npx elm-land', ...process.argv.slice(2)].join(' ')
-    let output = await Cli.run(command)
+    let output = await Cli.run(process.argv)
 
     await Files.create(output.files)
+    await Effects.run(output.effects)
 
     console.log(output.message)
 

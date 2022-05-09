@@ -15,7 +15,7 @@ describe('/guide', () => {
       async () => {
         let commandFromTheGuide = await files.initInputSnippet()
         let expectedMessage = await files.initOutputSnippet()
-        let actual = await Cli.run(commandFromTheGuide)
+        let actual = await Cli.run(commandFromTheGuide.split(' '))
 
         expect(actual.message).toEqual(expectedMessage)
       })
@@ -36,7 +36,7 @@ describe('/guide', () => {
           }
         ]
 
-        let actual = await Cli.run(commandFromTheGuide)
+        let actual = await Cli.run(commandFromTheGuide.split(' '))
 
         expect(actual.files).toEqual(expectedFiles)
       })

@@ -4,7 +4,6 @@ let run = async (options = {}) => {
   let { name } = options
 
   if (name) {
-
     let message = [
       `🌈 New project created in "./${name}"`,
       '',
@@ -21,12 +20,22 @@ let run = async (options = {}) => {
           content: await Docs.read('examples/02-elm-land-app/elm.json')
         },
         { kind: 'folder', name: `${name}/src` },
+      ],
+      effects: [
+        { kind: 'changeFolder', folder: name }
       ]
     }
   } else {
     return {
-      message: '⚰️ TODO',
-      files: []
+      message: [
+        `🌈 Please provide a folder name for your new project.`,
+        '',
+        `💁 Here\'s an example:`,
+        '',
+        'npx elm-land init my-project'
+      ].join('\n'),
+      files: [],
+      effects: []
     }
   }
 }

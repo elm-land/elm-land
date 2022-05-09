@@ -2,7 +2,7 @@
 
 ## Introduction
 
-The goal of _Elm Land_ is to solve common problems folks run into when creating web apps. Traditionally, frontend web development comes with an overwhelming amount of decisions to make. Getting set up with the right tooling and project configuration can be intimidating, and the internet has strong opinions about which tool is best for the job. By providing guides and conventions, we can get frontend devs up-and-running with confidence.
+The goal of _Elm Land_ is to solve common problems folks run into when creating web apps. Traditionally, frontend web development comes with an overwhelming amount of decision making. By providing clear guides and conventions, we can get frontend devs up-and-running in Elm with confidence.
 
 In order to create real-world applications, there are a few things that should be easy:
 
@@ -13,9 +13,9 @@ In order to create real-world applications, there are a few things that should b
 
 ## Your first app
 
-_Elm Land_ comes with a CLI tool that we can get via [NPM](https://npmjs.org/elm-land).
+If you already have [NodeJS](https://nodejs.org) installed, you can get started with _Elm Land_ using the official CLI tool available on [NPM](https://npmjs.org/elm-land).
 
-Let's use the `elm-land init` command to create a new `elm-land-twitter` project:
+Let's start by using the `elm-land init` command to create a new `elm-land-twitter` project:
 
 <<< @/snippets/init-input.sh
 
@@ -29,6 +29,8 @@ Let's use the `elm-land init` command to create a new `elm-land-twitter` project
 
 
 ### Adding new pages <Badge type="warning" text="wip" vertical="middle" />
+
+Now that our project is created in the `elm-land-twitter` folder, we can begin to add pages.
 
 With the `elm-land page` command, we can also create our 4 new pages without leaving the terminal. Each command will take the URL path you want as its argument.
 
