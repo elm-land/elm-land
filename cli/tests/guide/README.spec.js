@@ -47,7 +47,7 @@ describe('/guide', () => {
           {
             kind: 'file',
             name: `hello-world/.elm-land/src/Main.elm`,
-            content: await Docs.read('../cli/src/commands/.elm-land/src/Main.elm')
+            content: await Docs.read('../cli/src/templates/.elm-land/src/Main.elm')
           }
         ]
 

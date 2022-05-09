@@ -12,7 +12,7 @@ let runServer = async (options) => {
     // If not, create a new one with the initial files
     if (hasElmLandFolderAlready === false) {
       await Files.copyPaste({
-        source: path.join(__dirname, 'commands', '.elm-land', 'server'),
+        source: path.join(__dirname, 'templates', '_elm-land', 'server'),
         destination: path.join(process.cwd(), '.elm-land'),
       })
     }
