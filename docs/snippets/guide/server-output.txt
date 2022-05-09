@@ -1,0 +1,1 @@
+🌈 Server ready at http://localhost:1234
