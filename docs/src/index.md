@@ -1,8 +1,9 @@
 ---
 home: true
 heroImage: /images/logo.png
-tagline: Reliable web apps for everyone
-actionText: Learn more
+heroText: Reliable web apps for everyone
+tagline: A production-ready framework for building Elm applications. Build your next app with confidence, step by step.
+actionText: Get started
 actionLink: /guide/
 features:
 - title: 🌳 elm-land/app
