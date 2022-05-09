@@ -5,7 +5,9 @@ const { Docs } = require('../../src/docs.js')
 let files = {
   initInputSnippet: async () => Docs.read('snippets/guide/init-input.sh'),
   initOutputSnippet: async () => Docs.read('snippets/guide/init-output.txt'),
-  initOutputElmJson: async () => Docs.read('examples/02-elm-land-app/elm.json'),
+  initOutputElmJson: async () => Docs.read('examples/01-hello-world/elm.json'),
+  initOutputGitignore: async () => Docs.read('examples/01-hello-world/.gitignore'),
+  initOutputHomepage: async () => Docs.read('examples/01-hello-world/src/Pages/Home_.elm'),
   serverInputSnippet: async () => Docs.read('snippets/guide/server-input.sh'),
   serverOutputSnippet: async () => Docs.read('snippets/guide/server-output.txt'),
 }
@@ -29,16 +31,27 @@ describe('/guide', () => {
         let expectedFiles = [
           {
             kind: 'file',
-            name: 'hello-world/elm.json',
+            name: `hello-world/elm.json`,
             content: await files.initOutputElmJson()
           },
           {
-            kind: 'folder',
-            name: 'hello-world/src'
+            kind: 'file',
+            name: `hello-world/.gitignore`,
+            content: await files.initOutputGitignore()
+          },
+          {
+            kind: 'file',
+            name: `hello-world/src/Pages/Home_.elm`,
+            content: await files.initOutputHomepage()
+          },
+          {
+            kind: 'file',
+            name: `hello-world/.elm-land/src/Main.elm`,
+            content: await Docs.read('../cli/src/commands/.elm-land/src/Main.elm')
           }
         ]
 
-        let actual = await Cli.run(commandFromTheGuide.split(' '))
+        let actual = await Cli.run(commandFromTheGuide)
 
         expect(actual.files).toEqual(expectedFiles)
       })

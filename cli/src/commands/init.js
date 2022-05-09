@@ -18,9 +18,23 @@ let run = async (options = {}) => {
         {
           kind: 'file',
           name: `${name}/elm.json`,
-          content: await Docs.read('examples/02-elm-land-app/elm.json')
+          content: await Docs.read('examples/01-hello-world/elm.json')
         },
-        { kind: 'folder', name: `${name}/src` },
+        {
+          kind: 'file',
+          name: `${name}/.gitignore`,
+          content: await Docs.read('examples/01-hello-world/.gitignore')
+        },
+        {
+          kind: 'file',
+          name: `${name}/src/Pages/Home_.elm`,
+          content: await Docs.read('examples/01-hello-world/src/Pages/Home_.elm')
+        },
+        {
+          kind: 'file',
+          name: `${name}/.elm-land/src/Main.elm`,
+          content: await Docs.read('../cli/src/commands/.elm-land/src/Main.elm')
+        }
       ],
       effects: []
     }
