@@ -27,7 +27,7 @@ Let's start by using the `elm-land init` command to create a new `hello-world` p
 
 
 
-### Running the app <Badge type="warning" text="wip" vertical="middle" />
+### Running the app
 
 The _Elm Land_ CLI tool comes with a dev server built-in, so you can run your new project using this command:
 
