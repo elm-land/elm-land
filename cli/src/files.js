@@ -88,6 +88,15 @@ let createFolder = async ({ name }) => {
   )
 }
 
+let read = async (filepath) => {
+  let pieces = filepath.split('/')
+  let content = await fs.readFile(
+    path.join(__dirname, '..', ...pieces),
+    { encoding: 'utf-8' }
+  )
+  return content.split('\r').join('')
+}
+
 module.exports = {
-  Files: { create, exists, copyPaste }
+  Files: { read, create, exists, copyPaste }
 }

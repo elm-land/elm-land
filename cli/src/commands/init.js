@@ -1,4 +1,4 @@
-const { Docs } = require("../docs")
+const { Files } = require("../files")
 
 let run = async (options = {}) => {
   let { name } = options
@@ -18,22 +18,22 @@ let run = async (options = {}) => {
         {
           kind: 'file',
           name: `${name}/elm.json`,
-          content: await Docs.read('../cli/src/templates/elm.json')
+          content: await Files.read('src/templates/elm.json')
         },
         {
           kind: 'file',
           name: `${name}/.gitignore`,
-          content: await Docs.read('../cli/src/templates/_gitignore')
+          content: await Files.read('src/templates/_gitignore')
         },
         {
           kind: 'file',
           name: `${name}/src/Pages/Home_.elm`,
-          content: await Docs.read('../cli/src/templates/src/Pages/Home_.elm')
+          content: await Files.read('src/templates/src/Pages/Home_.elm')
         },
         {
           kind: 'file',
           name: `${name}/.elm-land/src/Main.elm`,
-          content: await Docs.read('../cli/src/templates/_elm-land/src/Main.elm')
+          content: await Files.read('src/templates/_elm-land/src/Main.elm')
         }
       ],
       effects: []
