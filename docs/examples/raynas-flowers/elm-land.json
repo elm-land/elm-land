@@ -1,0 +1,10 @@
+{
+  "app": {
+    "env": [ "FLOWER_COLOR" ],
+    "html": {
+      "attributes": {},
+      "link": [],
+      "meta": []
+    }
+  }
+}

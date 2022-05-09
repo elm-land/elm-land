@@ -17,13 +17,20 @@ let runServer = async (options) => {
       })
     }
 
+    // Expose ENV variables to Vite explicitly allowed by the user
+    attemptToLoadEnvVariablesFromUserConfig()
+
     // Run the vite server on options.port 
     const server = await Vite.createServer({
       configFile: false,
       root: path.join(process.cwd(), '.elm-land', 'server'),
-      // publicDir: path.join(process.cwd(), 'static'),
+      publicDir: path.join(process.cwd(), 'static'),
       server: {
-        port: options.port
+        port: options.port,
+        watch: {
+          disableGlobbing: false,
+          include: `${path.join(process.cwd(), 'static')}/**`,
+        }
       },
       plugins: [
         ElmVitePlugin.plugin({
@@ -34,7 +41,12 @@ let runServer = async (options) => {
       logLevel: 'silent'
     })
 
+    // Add static folder to watch list
+    addStaticFolderToWatcher(server)
+
     await server.listen()
+
+
     return { problem: null }
 
   } catch (e) {
@@ -43,6 +55,27 @@ let runServer = async (options) => {
     return { problem: `❗️ Had trouble starting the server...` }
   }
 
+}
+
+let attemptToLoadEnvVariablesFromUserConfig = () => {
+  try {
+    let config = require(path.join(process.cwd(), 'elm-land.json'))
+    if (config) {
+      if (config.app && config.app.env && Array.isArray(config.app.env)) {
+        for (var key of config.app.env) {
+          if (typeof key === 'string') {
+            process.env[`VITE_${key}`] = process.env[key]
+          }
+        }
+      }
+    }
+  } catch (_) { }
+}
+
+let addStaticFolderToWatcher = ({ watcher }) => {
+  watcher.on('all', (event, path) => {
+    console.log('hey!', { event, path })
+  })
 }
 
 let run = async (effects) => {
