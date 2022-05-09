@@ -3,19 +3,20 @@ const { Docs } = require('../../src/docs.js')
 
 
 let files = {
-  initInputSnippet: async () => await Docs.read('snippets/init-input.sh'),
-  initOutputSnippet: async () => await Docs.read('snippets/init-output.txt'),
-  initOutputElmJson: async () => await Docs.read('examples/02-elm-land-app/elm.json')
+  initInputSnippet: async () => Docs.read('snippets/guide/init-input.sh'),
+  initOutputSnippet: async () => Docs.read('snippets/guide/init-output.txt'),
+  initOutputElmJson: async () => Docs.read('examples/02-elm-land-app/elm.json'),
+  serverInputSnippet: async () => Docs.read('snippets/guide/server-input.sh')
 }
 
 describe('/guide', () => {
-  describe('elm-land init intro', () => {
+  describe('elm-land init', () => {
 
     test('prints expected message',
       async () => {
         let commandFromTheGuide = await files.initInputSnippet()
         let expectedMessage = await files.initOutputSnippet()
-        let actual = await Cli.run(commandFromTheGuide.split(' '))
+        let actual = await Cli.run(commandFromTheGuide)
 
         expect(actual.message).toEqual(expectedMessage)
       })
@@ -27,12 +28,12 @@ describe('/guide', () => {
         let expectedFiles = [
           {
             kind: 'file',
-            name: 'elm-land-twitter/elm.json',
+            name: 'hello-world/elm.json',
             content: await files.initOutputElmJson()
           },
           {
             kind: 'folder',
-            name: 'elm-land-twitter/src'
+            name: 'hello-world/src'
           }
         ]
 
@@ -40,5 +41,16 @@ describe('/guide', () => {
 
         expect(actual.files).toEqual(expectedFiles)
       })
+  })
+  describe('elm-land server', () => {
+    test('starts a server on port 1234', async () => {
+
+      let commandFromTheGuide = await files.serverInputSnippet()
+      let expectedPort = 1234
+      let actual = await Cli.run(commandFromTheGuide)
+
+      expect(actual.effects).toHaveLength(1)
+      expect(actual.effects[0].options.port).toEqual(expectedPort)
+    })
   })
 })

@@ -1,8 +1,8 @@
-module Main exposing (main)
+module Pages.Home_ exposing (page)
 
 import Html exposing (Html)
 
 
-main : Html msg
-main =
+page : Html msg
+page =
     Html.text "Hello, world!"

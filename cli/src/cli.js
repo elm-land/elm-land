@@ -1,4 +1,5 @@
 const { Init } = require('./commands/init')
+const { Server } = require('./commands/server')
 
 let { version } = require('../package.json')
 let intro = `🌈 Welcome to Elm Land! (v${version})`
@@ -8,10 +9,20 @@ let subcommandList = [
   '✨ elm-spa init <folder-name> ...... create a new project'
 ]
 
-let run = ([_npx, _elmLand, subCommand, ...args]) => {
+let run = (commandFromCli) => {
+  // ( This function accepts a string or string[] )
+  let command = typeof commandFromCli === 'string'
+    ? commandFromCli.split(' ')
+    : commandFromCli
+
+  let [_npx, _elmLand, subCommand, ...args] = command
+
   let subcommandHandlers = {
     'init': (args) => {
       return Init.run({ name: args[0] })
+    },
+    'server': (args) => {
+      return Server.run({})
     }
   }
 

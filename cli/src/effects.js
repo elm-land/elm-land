@@ -1,31 +1,14 @@
-const path = require('path')
-const child = require('child_process')
-
-let changeFolder = ({ name }) => {
-  try {
-    let command = `cd ${path.join(process.cwd(), ...name.split('/'))}`
-    console.log({ command })
-    child.execSync(command)
-    return {
-      problem: null
-    }
-  } catch (e) {
-    return {
-      problem: [
-        `❗️ Elm Land wasn't able to automatically enter the ${name} folder`,
-        '',
-        `  Please run "cd ${name}" before running more elm-land commands`
-      ].join('\n')
-    }
-  }
+let runServer = (options) => {
+  console.log(options)
+  return { problem: `❗️ TODO: Implement server` }
 }
 
 let run = (effects) => {
   // 1. Perform all effects, one at a time
   let results = effects.map(effect => {
     switch (effect.kind) {
-      case 'changeFolder':
-        return changeFolder({ name: effect.folder })
+      case 'runServer':
+        return runServer(effect.options)
       default:
         return { problem: `❗️ Unrecognized effect: ${effect.kind}` }
     }

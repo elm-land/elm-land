@@ -1,0 +1,1 @@
+npx elm-land init hello-world

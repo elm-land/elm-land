@@ -5,10 +5,11 @@ let run = async (options = {}) => {
 
   if (name) {
     let message = [
-      `🌈 New project created in "./${name}"`,
+      `🌈 New project created in ./${name}`,
       '',
-      '📄  elm.json',
-      '📂  src/'
+      'Here are some next steps:',
+      `📂 cd ${name}`,
+      '🚀 npx elm-land server'
     ].join('\n')
 
     return {
@@ -21,9 +22,7 @@ let run = async (options = {}) => {
         },
         { kind: 'folder', name: `${name}/src` },
       ],
-      effects: [
-        { kind: 'changeFolder', folder: name }
-      ]
+      effects: []
     }
   } else {
     return {

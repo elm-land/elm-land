@@ -1,4 +1,0 @@
-🌈 New project created in "./elm-land-twitter"
-
-📄  elm.json
-📂  src/

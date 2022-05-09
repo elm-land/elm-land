@@ -1,0 +1,5 @@
+🌈 New project created in ./hello-world
+
+Here are some next steps:
+📂 cd hello-world
+🚀 npx elm-land server
