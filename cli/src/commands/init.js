@@ -18,22 +18,22 @@ let run = async (options = {}) => {
         {
           kind: 'file',
           name: `${name}/elm.json`,
-          content: await Files.read('src/templates/elm.json')
+          content: await Files.readFromCliFolder('src/templates/elm.json')
         },
         {
           kind: 'file',
           name: `${name}/.gitignore`,
-          content: await Files.read('src/templates/_gitignore')
+          content: await Files.readFromCliFolder('src/templates/_gitignore')
         },
         {
           kind: 'file',
           name: `${name}/src/Pages/Home_.elm`,
-          content: await Files.read('src/templates/src/Pages/Home_.elm')
+          content: await Files.readFromCliFolder('src/templates/src/Pages/Home_.elm')
         },
         {
           kind: 'file',
           name: `${name}/.elm-land/src/Main.elm`,
-          content: await Files.read('src/templates/_elm-land/src/Main.elm')
+          content: await Files.readFromCliFolder('src/templates/_elm-land/src/Main.elm')
         }
       ],
       effects: []

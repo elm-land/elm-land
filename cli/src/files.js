@@ -88,7 +88,7 @@ let createFolder = async ({ name }) => {
   )
 }
 
-let read = async (filepath) => {
+let readFromCliFolder = async (filepath) => {
   let pieces = filepath.split('/')
   let content = await fs.readFile(
     path.join(__dirname, '..', ...pieces),
@@ -97,6 +97,21 @@ let read = async (filepath) => {
   return content.split('\r').join('')
 }
 
+let readFromUserFolder = async (filepath) => {
+  let pieces = filepath.split('/')
+  let content = await fs.readFile(
+    path.join(process.cwd(), ...pieces),
+    { encoding: 'utf-8' }
+  )
+  return content.split('\r').join('')
+}
+
+// Pokes a file to trigger any related file-watchers
+let touch = (filepath) => {
+  let now = Date.now()
+  fsOld.utimesSync(filepath, now, now)
+}
+
 module.exports = {
-  Files: { read, create, exists, copyPaste }
+  Files: { readFromCliFolder, readFromUserFolder, create, exists, copyPaste, touch }
 }
