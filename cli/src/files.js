@@ -1,5 +1,4 @@
-const fs = require('fs/promises')
-const fsOld = require('fs')
+const fs = require('fs')
 const path = require('path')
 
 let create = async (filesAndFolders) => {
@@ -18,7 +17,13 @@ let create = async (filesAndFolders) => {
 // Determines if a file or folder exists
 let exists = async (filepath) => {
   try {
-    await fs.access(filepath)
+    await new Promise((resolve, reject) => {
+      fs.access(filepath, (err) => {
+        if (err) {
+          reject(err)
+        } else { resolve(true) }
+      })
+    })
     return true
   } catch (e) {
     return false
@@ -28,7 +33,15 @@ let exists = async (filepath) => {
 // Copy the contents of one folder into another
 let copyPaste = async ({ source, destination }) => {
   // Make sure destination folder exists first!
-  await fs.mkdir(destination, { recursive: true })
+  await new Promise((resolve, reject) => {
+    fs.mkdir(destination, { recursive: true }, (err, path) => {
+      if (err) {
+        reject(err)
+      } else {
+        resolve(path)
+      }
+    })
+  })
   copyFolderRecursiveSync(source, destination)
 }
 
@@ -37,13 +50,13 @@ function copyFileSync(source, target) {
   var targetFile = target;
 
   // If target is a directory, a new file with the same name will be created
-  if (fsOld.existsSync(target)) {
-    if (fsOld.lstatSync(target).isDirectory()) {
+  if (fs.existsSync(target)) {
+    if (fs.lstatSync(target).isDirectory()) {
       targetFile = path.join(target, path.basename(source));
     }
   }
 
-  fsOld.writeFileSync(targetFile, fsOld.readFileSync(source));
+  fs.writeFileSync(targetFile, fs.readFileSync(source));
 }
 
 function copyFolderRecursiveSync(source, target) {
@@ -51,16 +64,16 @@ function copyFolderRecursiveSync(source, target) {
 
   // Check if folder needs to be created or integrated
   var targetFolder = path.join(target, path.basename(source));
-  if (!fsOld.existsSync(targetFolder)) {
-    fsOld.mkdirSync(targetFolder);
+  if (!fs.existsSync(targetFolder)) {
+    fs.mkdirSync(targetFolder);
   }
 
   // Copy
-  if (fsOld.lstatSync(source).isDirectory()) {
-    files = fsOld.readdirSync(source);
+  if (fs.lstatSync(source).isDirectory()) {
+    files = fs.readdirSync(source);
     files.forEach(function (file) {
       var curSource = path.join(source, file);
-      if (fsOld.lstatSync(curSource).isDirectory()) {
+      if (fs.lstatSync(curSource).isDirectory()) {
         copyFolderRecursiveSync(curSource, targetFolder);
       } else {
         copyFileSync(curSource, targetFolder);
@@ -75,22 +88,39 @@ let createFile = async ({ name, content }) => {
   let containingFolder = folderPieces.join('/')
 
   await createFolder({ name: containingFolder })
-  await fs.writeFile(
-    path.join(process.cwd(), ...pieces),
-    content, { encoding: 'utf-8' }
-  )
+  await new Promise((resolve, reject) => {
+    fs.writeFile(
+      path.join(process.cwd(), ...pieces),
+      content, { encoding: 'utf-8' },
+      (err) => {
+        if (err) {
+          reject(err)
+        } else {
+          resolve(true)
+        }
+      }
+    )
+  })
 }
 
 let createFolder = async ({ name }) => {
-  await fs.mkdir(
-    path.join(process.cwd(), ...name.split('/')),
-    { recursive: true }
-  )
+  return new Promise((resolve, reject) => {
+    fs.mkdir(
+      path.join(process.cwd(), ...name.split('/')),
+      { recursive: true },
+      (err, path) => {
+        if (err) {
+          reject(err)
+        } else {
+          resolve(path)
+        }
+      })
+  })
 }
 
 let readFromCliFolder = async (filepath) => {
   let pieces = filepath.split('/')
-  let content = await fs.readFile(
+  let content = fs.readFileSync(
     path.join(__dirname, '..', ...pieces),
     { encoding: 'utf-8' }
   )
@@ -99,7 +129,7 @@ let readFromCliFolder = async (filepath) => {
 
 let readFromUserFolder = async (filepath) => {
   let pieces = filepath.split('/')
-  let content = await fs.readFile(
+  let content = fs.readFileSync(
     path.join(process.cwd(), ...pieces),
     { encoding: 'utf-8' }
   )
@@ -109,7 +139,7 @@ let readFromUserFolder = async (filepath) => {
 // Pokes a file to trigger any related file-watchers
 let touch = (filepath) => {
   let now = Date.now()
-  fsOld.utimesSync(filepath, now, now)
+  fs.utimesSync(filepath, now, now)
 }
 
 module.exports = {
