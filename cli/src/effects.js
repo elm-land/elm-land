@@ -97,6 +97,14 @@ let attemptToLoadEnvVariablesFromUserConfig = () => {
   } catch (_) { }
 }
 
+const attempt = (fn) => {
+  try {
+    return fn()
+  } catch (_) {
+    return undefined
+  }
+}
+
 
 // Generating index.html from elm-land.json file
 const generateHtml = async (config) => {
@@ -130,9 +138,9 @@ const generateHtml = async (config) => {
     return ' ' + attributes.join(' ')
   }
 
-  let htmlAttributes = toAttributeString(config?.app?.html?.attributes?.html)
-  let headAttributes = toAttributeString(config?.app?.html?.attributes?.head)
-  let bodyAttributes = toAttributeString(config?.app?.html?.attributes?.body)
+  let htmlAttributes = toAttributeString(attempt(() => config.app.html.attributes.html))
+  let headAttributes = toAttributeString(attempt(() => config.app.html.attributes.head))
+  let bodyAttributes = toAttributeString(attempt(() => config.app.html.attributes.body))
 
 
   let toHtmlTag = (tagName, attrs, child) => {
@@ -147,11 +155,11 @@ const generateHtml = async (config) => {
     )
   }
 
-  let titleTags = config?.app?.html?.title
+  let titleTags = attempt(_ => config.app.html.title)
     ? [toHtmlTag('title', {}, config.app.html.title)]
     : []
-  let metaTags = toSelfClosingHtmlTags('meta', config?.app?.html?.meta)
-  let linkTags = toSelfClosingHtmlTags('link', config?.app?.html?.link)
+  let metaTags = toSelfClosingHtmlTags('meta', attempt(_ => config.app.html.meta))
+  let linkTags = toSelfClosingHtmlTags('link', attempt(_ => config.app.html.link))
 
   let combinedTags = [...titleTags, ...metaTags, ...linkTags]
   let headTags = combinedTags.length > 0
