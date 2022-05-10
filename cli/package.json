@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "chokidar": "3.5.3",
+    "elm": "0.19.1-5",
     "vite": "2.9.8",
     "vite-plugin-elm": "2.6.1"
   }
