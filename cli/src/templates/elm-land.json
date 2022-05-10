@@ -1,13 +1,13 @@
 {
   "app": {
-    "env": ["NODE_ENV"],
+    "env": [],
     "html": {
       "attributes": {
         "html": { "lang": "en" },
         "head": {},
         "body": {}
       },
-      "title": "Elm Land",
+      "title": "My Elm Land App",
       "meta": [
         { "charset": "UTF-8" },
         { "http-equiv": "X-UA-Compatible", "content": "IE=edge" },

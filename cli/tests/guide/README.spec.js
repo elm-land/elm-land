@@ -6,6 +6,7 @@ let files = {
   initInputSnippet: async () => Docs.read('snippets/guide/init-input.sh'),
   initOutputSnippet: async () => Docs.read('snippets/guide/init-output.txt'),
   initOutputElmJson: async () => Docs.read('examples/01-hello-world/elm.json'),
+  initOutputElmLandJson: async () => Docs.read('examples/01-hello-world/elm-land.json'),
   initOutputGitignore: async () => Docs.read('examples/01-hello-world/.gitignore'),
   initOutputHomepage: async () => Docs.read('examples/01-hello-world/src/Pages/Home_.elm'),
   serverInputSnippet: async () => Docs.read('snippets/guide/server-input.sh'),
@@ -33,6 +34,11 @@ describe('/guide', () => {
             kind: 'file',
             name: `hello-world/elm.json`,
             content: await files.initOutputElmJson()
+          },
+          {
+            kind: 'file',
+            name: `hello-world/elm-land.json`,
+            content: await files.initOutputElmLandJson()
           },
           {
             kind: 'file',

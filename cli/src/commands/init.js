@@ -22,6 +22,11 @@ let run = async (options = {}) => {
         },
         {
           kind: 'file',
+          name: `${name}/elm-land.json`,
+          content: await Files.readFromCliFolder('src/templates/elm-land.json')
+        },
+        {
+          kind: 'file',
           name: `${name}/.gitignore`,
           content: await Files.readFromCliFolder('src/templates/_gitignore')
         },

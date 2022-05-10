@@ -7,11 +7,11 @@ const { Files } = require('./files')
 let runServer = async (options) => {
   try {
     // Check if `.elm-land` folder exists
-    let hasElmLandFolderAlready =
-      await Files.exists(path.join(process.cwd(), '.elm-land', 'server'))
+    let hasElmLandJsAlready =
+      await Files.exists(path.join(process.cwd(), '.elm-land', 'server', 'main.js'))
 
     // If not, create a new one with the initial files
-    if (hasElmLandFolderAlready === false) {
+    if (!hasElmLandJsAlready) {
       await Files.copyPaste({
         source: path.join(__dirname, 'templates', '_elm-land', 'server'),
         destination: path.join(process.cwd(), '.elm-land'),
