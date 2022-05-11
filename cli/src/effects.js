@@ -111,11 +111,11 @@ const generateHtml = async (config) => {
 
   const escapeHtml = (unsafe) => {
     return unsafe
-      .replaceAll('&', '&amp;')
-      .replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;')
-      .replaceAll('"', '&quot;')
-      .replaceAll("'", '&#039;')
+      .split('&',).join( '&amp')
+      .split('<',).join( '&lt')
+      .split('>',).join( '&gt')
+      .split('"',).join( '&quot')
+      .split("'",).join( '&#039')
   }
 
   let toAttributeString = (object) => {
