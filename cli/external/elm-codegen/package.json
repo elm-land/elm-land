@@ -1,0 +1,52 @@
+{
+  "name": "elm-codegen",
+  "version": "0.1.0",
+  "description": "Codegen for Elm",
+  "main": "./dist/index.js",
+  "bin": {
+    "elm-codegen": "./bin/elm-codegen"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc && npm run pkg:build",
+    "watch": "tsc --watch",
+    "codegen": "npm run build; node dist/index.js",
+    "build:docs": "elm make --docs=docs.json",
+    "pkg:build": "cd cli/gen-package; elm make src/Generate.elm --optimize --output=../../dist/gen-package.js",
+    "pkg:build-debug": "cd cli/gen-package; elm make src/Generate.elm --output=../../dist/gen-package.js",
+    "pkg:generate-codegen-bindings": "npm run build ; npm run build:docs ; cd cli/gen-package ; ../../bin/elm-codegen install",
+    "pkg:test-install": "node dist/index.js src/Generate.elm --output engine --cwd cli/gen-package --debug --flags-from playground/docs/gql-docs.json",
+    "pkg:install-elm-json": "(npm run build; node dist/index.js install elm/json)",
+    "pkg:install-elm-core": "(npm run build; node dist/index.js install elm/core)",
+    "pkg:install-local-file": "(npm run build; cd cli/gen-package ; ../../bin/elm-codegen install test-package-from-file/Test.elm)",
+    "playground": "(npm run build; cd playground; node ../dist/index.js run src/Gen.elm --debug)",
+    "playground-watch": "(npm run build; cd playground; node ../dist/index.js run src/Gen.elm --debug --watch)"
+  },
+  "files": [
+    "dist",
+    "bin"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mdgriffith/elm-codegen.git"
+  },
+  "author": "Matthew Griffith",
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/mdgriffith/elm-codegen/issues"
+  },
+  "homepage": "https://github.com/mdgriffith/elm-codegen#readme",
+  "devDependencies": {
+    "@types/node-fetch": "^2.5.10",
+    "typescript": "^4.2.4"
+  },
+  "dependencies": {
+    "@types/node": "^15.0.3",
+    "chalk": "^4.1.1",
+    "chokidar": "^3.5.1",
+    "commander": "^8.3.0",
+    "elm-optimize-level-2": "^0.1.5",
+    "node-elm-compiler": "^5.0.6",
+    "node-fetch": "^2.6.1"
+  }
+}
