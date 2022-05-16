@@ -53,7 +53,7 @@ describe('/guide', () => {
           {
             kind: 'file',
             name: `hello-world/.elm-land/src/Main.elm`,
-            content: await Docs.read('../cli/src/templates/.elm-land/src/Main.elm')
+            content: await Docs.read('../cli/src/templates/_elm-land/src/Main.elm')
           }
         ]
 
@@ -62,25 +62,34 @@ describe('/guide', () => {
         expect(actual.files).toEqual(expectedFiles)
       })
   })
+
   describe('elm-land server', () => {
 
-    test('prints expected message',
-      async () => {
-        let commandFromTheGuide = await files.serverInputSnippet()
-        let expectedMessage = await files.serverOutputSnippet()
-        let actual = await Cli.run(commandFromTheGuide)
-
-        expect(actual.message).toEqual(expectedMessage)
-      })
-
-    test('starts a server on port 1234', async () => {
-
+    test('warns user if not in elm-land project folder', async () => {
       let commandFromTheGuide = await files.serverInputSnippet()
-      let expectedPort = 1234
-      let actual = await Cli.run(commandFromTheGuide)
+      let expectedMessage = `🌈  Elm Land couldn't find a "elm-land.json" file in the current folder...`
 
-      expect(actual.effects).toHaveLength(1)
-      expect(actual.effects[0].options.port).toEqual(expectedPort)
+      let actual = await Cli.run(commandFromTheGuide)
+      expect(actual.message).toContain(expectedMessage)
     })
+
+    // test('prints expected message',
+    //   async () => {
+    //     let commandFromTheGuide = await files.serverInputSnippet()
+    //     let expectedMessage = await files.serverOutputSnippet()
+    //     let actual = await Cli.run(commandFromTheGuide)
+
+    //     expect(actual.message).toEqual(expectedMessage)
+    //   })
+
+    // test('starts a server on port 1234', async () => {
+
+    //   let commandFromTheGuide = await files.serverInputSnippet()
+    //   let expectedPort = 1234
+    //   let actual = await Cli.run(commandFromTheGuide)
+
+    //   expect(actual.effects).toHaveLength(1)
+    //   expect(actual.effects[0].options.port).toEqual(expectedPort)
+    // })
   })
 })

@@ -58,6 +58,7 @@ module.exports = {
           collapsable: false,
           children: [
             '',
+            'pages'
           ]
         }
       ],
