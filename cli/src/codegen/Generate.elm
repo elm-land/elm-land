@@ -7,6 +7,8 @@ import Elm.Annotation
 import Elm.Case
 import Elm.Gen
 import Gen.Basics
+import Gen.Maybe
+import Gen.Url.Parser
 
 
 main : Program {} () ()
@@ -20,7 +22,135 @@ main =
 
 files : List Elm.File
 files =
-    [ mainElm ]
+    [ mainElm, routeElm ]
+
+
+
+-- Pages in user folder (TODO: get these from filesystem)
+
+
+type alias RoutePath =
+    List String
+
+
+routePaths : List RoutePath
+routePaths =
+    [ [ "Home_" ]
+    , [ "SignIn" ]
+    , [ "Settings" ]
+    , [ "People", "Username_" ]
+    ]
+
+
+
+-- ROUTE.ELM
+
+
+routeElm : Elm.File
+routeElm =
+    Elm.file [ "Route" ]
+        [ routeType routePaths
+            |> Elm.exposeWith
+                { exposeConstructor = True
+                , group = Nothing
+                }
+        , fromUrlFn
+            |> Elm.expose
+        , routeParserFn routePaths
+        ]
+
+
+routeType : List RoutePath -> Elm.Declaration
+routeType paths =
+    let
+        toRouteVariant : RoutePath -> Elm.Variant
+        toRouteVariant routePath =
+            if isLastPieceDynamic routePath then
+                Elm.variantWith (String.join "__" routePath)
+                    [ Elm.Annotation.record [ ( "username", Elm.Annotation.string ) ]
+                    ]
+
+            else
+                Elm.variant (String.join "__" routePath)
+    in
+    Elm.customType "Route"
+        (List.map toRouteVariant paths ++ [ toRouteVariant [ "NotFound_" ] ])
+
+
+{-|
+
+    Url.Parser.parse routeParser url
+        |> Maybe.withDefault NotFound_
+
+-}
+fromUrlFn : Elm.Declaration
+fromUrlFn =
+    Elm.declaration "fromUrl"
+        (Elm.fn "url"
+            (\url ->
+                Gen.Maybe.withDefault
+                    (Elm.value
+                        { importFrom = []
+                        , name = "NotFound_"
+                        , annotation = Nothing
+                        }
+                    )
+                    (Gen.Url.Parser.parse
+                        (Elm.value { importFrom = [], name = "routeParser", annotation = Nothing })
+                        url
+                        |> Elm.withType
+                            (Elm.Annotation.maybe
+                                (Elm.Annotation.named [] "Route")
+                            )
+                    )
+            )
+        )
+
+
+routeParserFn : List RoutePath -> Elm.Declaration
+routeParserFn paths =
+    let
+        toUrlParser : RoutePath -> Elm.Expression
+        toUrlParser routePath =
+            if routePath == [ "Home_" ] then
+                Gen.Url.Parser.map
+                    (Elm.value
+                        { importFrom = []
+                        , name = String.join "__" routePath
+                        , annotation = Nothing
+                        }
+                    )
+                    Gen.Url.Parser.top
+
+            else
+                Gen.Url.Parser.map
+                    (toRouteConstructor routePath)
+                    (Elm.value
+                        { importFrom = [ "Url", "Parser" ]
+                        , name = "s"
+                        , annotation = Nothing
+                        }
+                    )
+
+        toRouteConstructor : RoutePath -> Elm.Expression
+        toRouteConstructor routePath =
+            Elm.value
+                { importFrom = []
+                , name = String.join "__" routePath
+                , annotation = Nothing
+                }
+    in
+    Elm.declaration "routeParser"
+        (Gen.Url.Parser.oneOf
+            (List.map
+                toUrlParser
+                paths
+            )
+        )
+
+
+
+-- MAIN.ELM
 
 
 mainElm : Elm.File
@@ -37,12 +167,7 @@ mainElm =
         , subscriptionsFn
         , Elm.comment "VIEW"
         , viewFn
-        , viewPageFn
-            [ [ "Home_" ]
-            , [ "SignIn" ]
-            , [ "Settings" ]
-            , [ "People", "Username_" ]
-            ]
+        , viewPageFn routePaths
         ]
 
 
