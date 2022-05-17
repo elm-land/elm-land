@@ -37,7 +37,12 @@ mainElm =
         , subscriptionsFn
         , Elm.comment "VIEW"
         , viewFn
-        , viewPageFn [ "Home_", "SignIn", "Settings" ]
+        , viewPageFn
+            [ [ "Home_" ]
+            , [ "SignIn" ]
+            , [ "Settings" ]
+            , [ "People", "Username_" ]
+            ]
         ]
 
 
@@ -210,23 +215,75 @@ viewFn =
         )
 
 
-viewPageFn : List String -> Elm.Declaration
+viewPageFn : List (List String) -> Elm.Declaration
 viewPageFn routes =
+    let
+        branches : List Elm.Case.Branch
+        branches =
+            List.map toBranch routes ++ [ toBranch [ "NotFound_" ] ]
+
+        {-
+           Route.Home_ ->
+               Pages.Home_.page
+        -}
+        toBranch : List String -> Elm.Case.Branch
+        toBranch routePath =
+            if isLastPieceDynamic routePath then
+                Elm.Case.branch1 [ "Route" ]
+                    (String.join "__" routePath)
+                    (\params ->
+                        Elm.apply
+                            (Elm.value
+                                { importFrom = "Pages" :: routePath
+                                , name = "page"
+                                , annotation = Nothing
+                                }
+                            )
+                            [ params ]
+                    )
+
+            else
+                Elm.Case.branch0 [ "Route" ]
+                    (String.join "__" routePath)
+                    (Elm.value
+                        { importFrom = "Pages" :: routePath
+                        , name = "page"
+                        , annotation = Just annotations.htmlMsg
+                        }
+                    )
+
+        routeFromUrl : Elm.Expression -> Elm.Expression
+        routeFromUrl model =
+            Elm.apply
+                (Elm.value
+                    { importFrom = [ "Route" ]
+                    , name = "fromUrl"
+                    , annotation = Just annotations.route
+                    }
+                )
+                [ model |> Elm.get "url" ]
+    in
     Elm.declaration "viewPage"
         (Elm.fn "model"
             (\model ->
-                Elm.apply
-                    (Elm.value
-                        { importFrom = [ "Html" ]
-                        , name = "text"
-                        , annotation = Nothing
-                        }
-                    )
-                    [ Elm.string "Hello"
-                    ]
+                Elm.Case.custom (routeFromUrl model) branches
                     |> Elm.withType annotations.htmlMsg
             )
         )
+
+
+isLastPieceDynamic : List String -> Bool
+isLastPieceDynamic pieces =
+    case List.drop (List.length pieces - 1) pieces of
+        [] ->
+            False
+
+        item :: _ ->
+            if List.member item [ "Home_", "NotFound_" ] then
+                False
+
+            else
+                String.endsWith "_" item
 
 
 
@@ -252,6 +309,8 @@ annotations =
             "Cmd"
             [ Elm.Annotation.named [] "Msg"
             ]
+    , route =
+        Elm.Annotation.named [ "Route" ] "Route"
     }
 
 

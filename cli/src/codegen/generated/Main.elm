@@ -9,6 +9,12 @@ import Browser
 import Browser.Navigation
 import Html
 import Json.Decode
+import Pages.Home_
+import Pages.NotFound_
+import Pages.People.Username_
+import Pages.Settings
+import Pages.SignIn
+import Route
 import Url
 
 
@@ -85,6 +91,20 @@ view model =
 
 viewPage : model -> Html.Html Msg
 viewPage model =
-    Html.text "Hello"
+    case Route.fromUrl model.url of
+        Route.Home_ ->
+            Pages.Home_.page
+
+        Route.SignIn ->
+            Pages.SignIn.page
+
+        Route.Settings ->
+            Pages.Settings.page
+
+        Route.People__Username_ one_4_0_0 ->
+            Pages.People.Username_.page one_4_0_0
+
+        Route.NotFound_ ->
+            Pages.NotFound_.page
 
 
