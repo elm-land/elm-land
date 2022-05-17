@@ -7,6 +7,13 @@
     "elm-land": "src/index.js"
   },
   "scripts": {
+    "start": "npm install && npm run setup && npm run dev",
+    "setup": "npm run setup:elm-codegen",
+    "setup:elm-codegen": "(cd external/elm-codegen && npm i && npm run build && npm link)",
+    "build": "npm run build:elm-codegen",
+    "build:elm-codegen": "(cd src && elm-codegen run)",
+    "dev": "npm run dev:elm-codegen",
+    "dev:elm-codegen": "chokidar src/codegen/Generate.elm -c \"npm run build:elm-codegen\"",
     "test": "jest",
     "test:watch": "jest --watch"
   },

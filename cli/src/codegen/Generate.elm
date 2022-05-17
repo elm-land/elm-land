@@ -6,6 +6,7 @@ import Elm
 import Elm.Annotation
 import Elm.Case
 import Elm.Gen
+import Gen.Basics
 
 
 main : Program {} () ()
@@ -35,7 +36,8 @@ mainElm =
         , updateFn
         , subscriptionsFn
         , Elm.comment "VIEW"
-        , viewFn [ "Home_", "SignIn", "Settings" ]
+        , viewFn
+        , viewPageFn [ "Home_", "SignIn", "Settings" ]
         ]
 
 
@@ -91,31 +93,16 @@ modelTypeAlias =
 
 initFn : Elm.Declaration
 initFn =
-    Elm.declaration "init"
-        (Elm.fn3
-            "flags"
-            "url"
-            "key"
-            (\flags url key ->
-                Elm.tuple
-                    (Elm.record
-                        [ Elm.field "flags" flags
-                        , Elm.field "url" url
-                        , Elm.field "key" key
-                        ]
-                        |> Elm.withType annotations.model
-                    )
-                    values.cmdNone
-            )
-            |> Elm.withType
-                (Elm.Annotation.function
-                    [ annotations.flags
-                    , annotations.url
-                    , annotations.browserKey
-                    ]
-                    (Elm.Annotation.tuple annotations.model annotations.cmdMsg)
-                )
-        )
+    Elm.unsafe """
+init : Flags -> Url.Url -> Browser.Navigation.Key -> (Model, Cmd Msg)
+init flags url key =
+    ( { flags = flags
+      , url = url
+      , key = key
+      }
+    , Cmd.none
+    )
+"""
 
 
 msgType : Elm.Declaration
@@ -198,7 +185,8 @@ subscriptionsFn =
         )
 
 
-viewFn routes =
+viewFn : Elm.Declaration
+viewFn =
     Elm.declaration "view"
         (Elm.fn "model"
             (\model ->
@@ -208,23 +196,36 @@ viewFn routes =
                         (Elm.list
                             [ Elm.apply
                                 (Elm.value
-                                    { importFrom = [ "Html" ]
-                                    , name = "text"
-                                    , annotation = Just (Elm.Annotation.function [ Elm.Annotation.string ] annotations.htmlMsg)
+                                    { importFrom = []
+                                    , name = "viewPage"
+                                    , annotation = Nothing
                                     }
                                 )
-                                [ Elm.string "Hey"
+                                [ model
                                 ]
                             ]
                         )
                     ]
-             -- |> Elm.withType annotations.documentMsg
             )
-         -- |> Elm.withType
-         --     (Elm.Annotation.function
-         --         [ annotations.model ]
-         --         annotations.documentMsg
-         --     )
+        )
+
+
+viewPageFn : List String -> Elm.Declaration
+viewPageFn routes =
+    Elm.declaration "viewPage"
+        (Elm.fn "model"
+            (\model ->
+                Elm.apply
+                    (Elm.value
+                        { importFrom = [ "Html" ]
+                        , name = "text"
+                        , annotation = Nothing
+                        }
+                    )
+                    [ Elm.string "Hello"
+                    ]
+                    |> Elm.withType annotations.htmlMsg
+            )
         )
 
 

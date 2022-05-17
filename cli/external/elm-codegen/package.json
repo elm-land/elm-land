@@ -12,7 +12,7 @@
     "watch": "tsc --watch",
     "codegen": "npm run build; node dist/index.js",
     "build:docs": "elm make --docs=docs.json",
-    "pkg:build": "cd cli/gen-package; elm make src/Generate.elm --optimize --output=../../dist/gen-package.js",
+    "pkg:build": "(cd cli/gen-package && elm make src/Generate.elm --optimize --output=../../dist/gen-package.js)",
     "pkg:build-debug": "cd cli/gen-package; elm make src/Generate.elm --output=../../dist/gen-package.js",
     "pkg:generate-codegen-bindings": "npm run build ; npm run build:docs ; cd cli/gen-package ; ../../bin/elm-codegen install",
     "pkg:test-install": "node dist/index.js src/Generate.elm --output engine --cwd cli/gen-package --debug --flags-from playground/docs/gql-docs.json",

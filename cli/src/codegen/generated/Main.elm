@@ -35,20 +35,14 @@ type alias Model =
     { flags : Flags, key : Browser.Navigation.Key, url : Url.Url }
 
 
-{-| -- ELM-CODEGEN ERROR --
-
-I found
-
-    Model
-
-But I was expecting:
-
-    {flags : flags, url : url, key : key}
-
-
--}
+init : Flags -> Url.Url -> Browser.Navigation.Key -> (Model, Cmd Msg)
 init flags url key =
-    ( { flags = flags, url = url, key = key }, Cmd.none )
+    ( { flags = flags
+      , url = url
+      , key = key
+      }
+    , Cmd.none
+    )
 
 
 {- UPDATE -}
@@ -84,8 +78,13 @@ subscriptions model =
 {- VIEW -}
 
 
-view : model -> { title : String, body : List (Html.Html Msg) }
+view : model -> { title : String, body : List viewPage_1_0_0_1_1_0_0_result }
 view model =
-    { title = "App", body = [ Html.text "Hey" ] }
+    { title = "App", body = [ viewPage model ] }
+
+
+viewPage : model -> Html.Html Msg
+viewPage model =
+    Html.text "Hello"
 
 
