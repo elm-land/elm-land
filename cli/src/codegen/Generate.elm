@@ -116,7 +116,7 @@ routeParserFn paths =
                 Gen.Url.Parser.map
                     (Elm.value
                         { importFrom = []
-                        , name = String.join "__" routePath
+                        , name = "Home_"
                         , annotation = Nothing
                         }
                     )
@@ -125,13 +125,45 @@ routeParserFn paths =
             else
                 Gen.Url.Parser.map
                     (toRouteConstructor routePath)
-                    (Elm.value
-                        { importFrom = [ "Url", "Parser" ]
-                        , name = "s"
-                        , annotation = Nothing
-                        }
+                    (routePath
+                        |> List.map toRouteSegmentParser
+                        |> List.foldl joinWithUrlSlash Nothing
+                        |> Maybe.withDefault Gen.Url.Parser.top
                     )
 
+        toRouteSegmentParser : String -> Elm.Expression
+        toRouteSegmentParser pathSegment =
+            if String.endsWith "_" pathSegment then
+                Gen.Url.Parser.string
+
+            else
+                Gen.Url.Parser.s (fromPascalCaseToKebabCase pathSegment)
+
+        fromPascalCaseToKebabCase : String -> String
+        fromPascalCaseToKebabCase str =
+            str
+                |> String.toList
+                |> List.concatMap
+                    (\char ->
+                        if Char.isUpper char then
+                            [ '-', Char.toLower char ]
+
+                        else
+                            [ char ]
+                    )
+                |> String.fromList
+                |> String.dropLeft 1
+
+        joinWithUrlSlash : Elm.Expression -> Maybe Elm.Expression -> Maybe Elm.Expression
+        joinWithUrlSlash expr1 maybeExpr =
+            case maybeExpr of
+                Nothing ->
+                    Just expr1
+
+                Just expr2 ->
+                    Just (Elm.slash expr2 expr1)
+
+        -- TODO
         toRouteConstructor : RoutePath -> Elm.Expression
         toRouteConstructor routePath =
             Elm.value
@@ -141,11 +173,29 @@ routeParserFn paths =
                 }
     in
     Elm.declaration "routeParser"
-        (Gen.Url.Parser.oneOf
-            (List.map
-                toUrlParser
-                paths
+        (Elm.apply
+            (Elm.value
+                { importFrom = [ "Url", "Parser" ]
+                , name = "oneOf"
+                , annotation =
+                    Nothing
+                }
             )
+            [ Elm.list
+                (List.map
+                    toUrlParser
+                    paths
+                )
+            ]
+            |> Elm.withType
+                (Gen.Url.Parser.annotation_.parser
+                    (Elm.Annotation.function
+                        [ Elm.Annotation.named [] "Route"
+                        ]
+                        (Elm.Annotation.var "x")
+                    )
+                    (Elm.Annotation.var "x")
+                )
         )
 
 

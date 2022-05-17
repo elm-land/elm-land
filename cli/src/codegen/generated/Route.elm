@@ -22,24 +22,15 @@ fromUrl url =
     Maybe.withDefault NotFound_ (Url.Parser.parse routeParser url)
 
 
-{-| -- ELM-CODEGEN ERROR --
-
-I found
-
-    Url.Parser.Parser a_2_2 b_2_2
-
-But I was expecting:
-
-    ()
-
-
--}
+routeParser : Url.Parser.Parser (Route -> x) x
 routeParser =
     Url.Parser.oneOf
         [ Url.Parser.map Home_ Url.Parser.top
-        , Url.Parser.map SignIn ()
-        , Url.Parser.map Settings ()
-        , Url.Parser.map People__Username_ ()
+        , Url.Parser.map SignIn (Url.Parser.s "sign-in")
+        , Url.Parser.map Settings (Url.Parser.s "settings")
+        , Url.Parser.map
+            People__Username_
+            (Url.Parser.s "people" </> Url.Parser.string)
         ]
 
 
