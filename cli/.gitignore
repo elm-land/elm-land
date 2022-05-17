@@ -2,3 +2,4 @@ node_modules
 elm-stuff
 dist
 elm-land*.tgz
+src/codegen/generated
