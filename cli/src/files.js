@@ -142,6 +142,39 @@ let touch = (filepath) => {
   fs.utimesSync(filepath, now, now)
 }
 
+// Read all the files in the current folder, recursively
+let listElmFilepathsInFolder = (filepath) => {
+  let fullFilepaths = walk(filepath)
+  let relativeFilepaths = fullFilepaths.map(str => str.slice(filepath.length + 1, -'.elm'.length))
+
+  return relativeFilepaths
+}
+
+var walk = function(dir) {
+  var results = [];
+  var list = fs.readdirSync(dir);
+  list.forEach(function(file) {
+      file = dir + '/' + file;
+      var stat = fs.statSync(file);
+      if (stat && stat.isDirectory()) { 
+          /* Recurse into a subdirectory */
+          results = results.concat(walk(file));
+      } else { 
+          /* Is a file */
+          results.push(file);
+      }
+  });
+  return results;
+}
+
 module.exports = {
-  Files: { readFromCliFolder, readFromUserFolder, create, exists, copyPaste, touch }
+  Files: {
+    readFromCliFolder, 
+    readFromUserFolder,
+    create,
+    exists,
+    copyPaste,
+    touch,
+    listElmFilepathsInFolder
+  }
 }

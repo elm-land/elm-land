@@ -1,5 +1,7 @@
 const { Init } = require('./commands/init')
+const { Add } = require('./commands/add')
 const { Server } = require('./commands/server')
+const { Utils } = require('./commands/_utils')
 
 let { version } = require('../package.json')
 let intro = `🌈 Welcome to Elm Land! (v${version})`
@@ -24,6 +26,12 @@ let run = (commandFromCli) => {
     },
     'server': (args) => {
       return Server.run({})
+    },
+    'add': (args) => {
+      return Add.run({ arguments: args })
+    },
+    'generate': (args) => {
+      return Add.testElmCodegen()
     }
   }
 
@@ -45,13 +53,10 @@ let run = (commandFromCli) => {
     return handler(args)
   } else {
     return {
-      message: [
-        intro,
-        '',
-        `❗️ We didn't recognize the "${subCommand}" command`,
-        '',
-        ...subcommandList,
-      ].join('\n'),
+      message: Utils.didNotRecognizeCommand({
+        subCommand,
+        subcommandList
+      }),
       files: [],
       effects: []
     }
