@@ -1,4 +1,4 @@
-module Generate exposing (main)
+module Generate exposing (RoutePath, main, run)
 
 {-| -}
 
@@ -14,42 +14,70 @@ import Gen.Url.Parser
 main : Program {} () ()
 main =
     Platform.worker
-        { init = \json -> ( (), Elm.Gen.files files )
+        { init =
+            \json ->
+                ( ()
+                , Elm.Gen.files
+                    (files
+                        [ [ "Home_" ]
+                        , [ "SignIn" ]
+                        , [ "Settings" ]
+                        , [ "People", "Username_" ]
+                        ]
+                    )
+                )
         , update = \msg model -> ( model, Cmd.none )
         , subscriptions = \_ -> Sub.none
         }
 
 
-files : List Elm.File
-files =
-    [ mainElm, routeElm ]
+run : List RoutePath -> Cmd msg
+run routePaths =
+    Elm.Gen.files (files routePaths)
+
+
+files : List RoutePath -> List Elm.File
+files routePaths =
+    [ mainElm routePaths
+    , routeElm routePaths
+    , notFoundElm
+    ]
 
 
 
--- Pages in user folder (TODO: get these from filesystem)
+-- src/Pages/NotFound_.elm
+
+
+notFoundElm : Elm.File
+notFoundElm =
+    Elm.file [ "Pages", "NotFound_" ]
+        [ Elm.declaration "page"
+            (Elm.apply
+                (Elm.value
+                    { importFrom = [ "Html" ]
+                    , name = "text"
+                    , annotation = Just annotations.htmlMsgGeneric
+                    }
+                )
+                [ Elm.string "Page not found..."
+                ]
+            )
+        ]
 
 
 type alias RoutePath =
     List String
 
 
-routePaths : List RoutePath
-routePaths =
-    [ [ "Home_" ]
-    , [ "SignIn" ]
-    , [ "Settings" ]
-    , [ "People", "Username_" ]
-    ]
-
-
 
 -- ROUTE.ELM
 
 
-routeElm : Elm.File
-routeElm =
+routeElm : List RoutePath -> Elm.File
+routeElm routePaths =
     Elm.file [ "Route" ]
-        [ routeType routePaths
+        [ Elm.unsafe "import Url.Parser exposing ((</>))"
+        , routeType routePaths
             |> Elm.exposeWith
                 { exposeConstructor = True
                 , group = Nothing
@@ -163,14 +191,58 @@ routeParserFn paths =
                 Just expr2 ->
                     Just (Elm.slash expr2 expr1)
 
-        -- TODO
+        fromPascalCaseToCamelCase : String -> String
+        fromPascalCaseToCamelCase str =
+            String.toLower (String.left 1 str) ++ String.dropLeft 1 str
+
         toRouteConstructor : RoutePath -> Elm.Expression
         toRouteConstructor routePath =
-            Elm.value
-                { importFrom = []
-                , name = String.join "__" routePath
-                , annotation = Nothing
-                }
+            let
+                dynamicValues : List String
+                dynamicValues =
+                    routePath
+                        |> List.filter (String.endsWith "_")
+
+                numberOfDynamicValues : Int
+                numberOfDynamicValues =
+                    List.length dynamicValues
+            in
+            if numberOfDynamicValues > 0 then
+                Elm.function
+                    (( "param", Nothing )
+                        |> List.repeat numberOfDynamicValues
+                        |> List.indexedMap
+                            (\i ( str, maybe ) ->
+                                ( str ++ String.fromInt (i + 1), maybe )
+                            )
+                    )
+                    (\exprs ->
+                        Elm.apply
+                            (Elm.value
+                                { importFrom = []
+                                , name = String.join "__" routePath
+                                , annotation = Nothing
+                                }
+                            )
+                            [ Elm.record
+                                (List.map2
+                                    (\nameWithUnderscore expr ->
+                                        Elm.field
+                                            (fromPascalCaseToCamelCase (String.dropRight 1 nameWithUnderscore))
+                                            expr
+                                    )
+                                    dynamicValues
+                                    exprs
+                                )
+                            ]
+                    )
+
+            else
+                Elm.value
+                    { importFrom = []
+                    , name = String.join "__" routePath
+                    , annotation = Nothing
+                    }
     in
     Elm.declaration "routeParser"
         (Elm.apply
@@ -203,8 +275,8 @@ routeParserFn paths =
 -- MAIN.ELM
 
 
-mainElm : Elm.File
-mainElm =
+mainElm : List RoutePath -> Elm.File
+mainElm routePaths =
     Elm.file [ "Main" ]
         [ flagsAlias
         , Elm.expose mainFn
@@ -387,6 +459,7 @@ viewFn =
                         )
                     ]
             )
+            |> Elm.withType (Elm.Annotation.function [ annotations.model ] annotations.documentMsg)
         )
 
 
@@ -444,6 +517,7 @@ viewPageFn routes =
                 Elm.Case.custom (routeFromUrl model) branches
                     |> Elm.withType annotations.htmlMsg
             )
+            |> Elm.withType (Elm.Annotation.function [ annotations.model ] annotations.htmlMsg)
         )
 
 
@@ -473,6 +547,7 @@ annotations =
     , urlRequest = Elm.Annotation.named [ "Browser" ] "UrlRequest"
     , documentMsg = Elm.Annotation.namedWith [ "Browser" ] "Document" [ Elm.Annotation.named [] "Msg" ]
     , htmlMsg = Elm.Annotation.namedWith [ "Html" ] "Html" [ Elm.Annotation.named [] "Msg" ]
+    , htmlMsgGeneric = Elm.Annotation.namedWith [ "Html" ] "Html" [ Elm.Annotation.var "msg" ]
     , url = Elm.Annotation.named [ "Url" ] "Url"
     , subMsg =
         Elm.Annotation.namedWith []

@@ -1,0 +1,5 @@
+external/
+src/codegen
+elm-stuff
+*.tgz
+tests

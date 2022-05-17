@@ -1,6 +1,6 @@
 {
   "name": "elm-land",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "Reliable web apps for everyone",
   "main": "index.js",
   "bin": {
@@ -8,8 +8,9 @@
   },
   "scripts": {
     "start": "npm install && npm run setup && npm run dev",
-    "setup": "npm run setup:elm-codegen",
+    "setup": "npm run setup:elm-codegen && npm run setup:elm-worker",
     "setup:elm-codegen": "(cd external/elm-codegen && npm i && npm run build && npm link)",
+    "setup:elm-worker": "(cd src/codegen && elm make Worker.elm --output=../../dist/worker.js --optimize)",
     "build": "npm run build:elm-codegen",
     "build:elm-codegen": "(cd src && elm-codegen run)",
     "dev": "npm run dev:elm-codegen",

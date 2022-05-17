@@ -4,7 +4,9 @@ let intro = `🌈 Welcome to Elm Land! (v${version})`
 let didNotRecognizeCommand = ({subCommand, subcommandList}) => [
   intro,
   '',
-  `❗️ We didn't recognize the "${subCommand}" command`,
+  subCommand === undefined
+    ? '❗️ Missing a required argument'
+    : `❗️ We didn't recognize the "${subCommand}" command`,
   '',
   ...subcommandList,
 ].join('\n')

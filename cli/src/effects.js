@@ -54,6 +54,40 @@ let runServer = async (options) => {
       }
     })
 
+    // Listen for changes to the src/Pages folder
+    let srcPagesFolderFilepath = path.join(process.cwd(), 'src', 'Pages')
+    let srcPagesFolderFileWatcher = chokidar.watch(srcPagesFolderFilepath, {
+      ignorePermissionErrors: true,
+      ignoreInitial: true
+    })
+
+    let onPageFileChanged = async () => {
+      try {
+        let pageRoutePaths = await Files.listElmFilepathsInFolder(srcPagesFolderFilepath).map(filepath => filepath.split('/'))
+        let { Elm } = require('../dist/worker.js')
+
+        let newFiles = await new Promise((resolve, reject) => {
+          let app = Elm.Worker.init({
+            flags: { pageRoutePaths }
+          })
+          app.ports.onSuccessSend.subscribe(resolve)
+        })
+
+        await Files.create(
+          newFiles.map(generatedFile => ({
+            kind: 'file',
+            name: `.elm-land/src/${generatedFile.path}`,
+            content: generatedFile.contents
+          }))
+        )
+
+      } catch (err) {
+        console.error(err)
+      }
+    }
+    srcPagesFolderFileWatcher.on('all', onPageFileChanged)
+    await onPageFileChanged()
+
     // Run the vite server on options.port 
     const server = await Vite.createServer({
       configFile: false,
@@ -111,11 +145,11 @@ const generateHtml = async (config) => {
 
   const escapeHtml = (unsafe) => {
     return unsafe
-      .split('&',).join( '&amp')
-      .split('<',).join( '&lt')
-      .split('>',).join( '&gt')
-      .split('"',).join( '&quot')
-      .split("'",).join( '&#039')
+      .split('&',).join('&amp')
+      .split('<',).join('&lt')
+      .split('>',).join('&gt')
+      .split('"',).join('&quot')
+      .split("'",).join('&#039')
   }
 
   let toAttributeString = (object) => {

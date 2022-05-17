@@ -9,7 +9,9 @@ let intro = `🌈 Welcome to Elm Land! (v${version})`
 let subcommandList = [
   'Here are the commands:',
   '✨ elm-spa init <folder-name> ...... create a new project',
-  '🚀 elm-spa server ................ run a local dev server'
+  '🚀 elm-spa server ................ run a local dev server',
+  '📄 elm-spa add page <url> ................ add a new page',
+  ''
 ]
 
 let run = (commandFromCli) => {
