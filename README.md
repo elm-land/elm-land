@@ -1,7 +1,7 @@
-[![Elm Land: reliable web apps for everyone.](./banner.jpg)](https://elm.land)
-
 # Elm Land
 [![Node.js CI](https://github.com/elm-land/elm-land/actions/workflows/node.js.yml/badge.svg)](https://github.com/elm-land/elm-land/actions/workflows/node.js.yml)
+
+[![Elm Land: reliable web apps for everyone.](./elm-land-banner.png)](https://elm.land)
 
 This GitHub repo is made up of two projects:
 
