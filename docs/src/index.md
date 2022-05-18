@@ -1,6 +1,6 @@
 ---
 home: true
-heroImage: /images/logo.png
+heroImage: /images/logo-256.png
 heroText: Reliable web apps for everyone
 tagline: A production-ready framework for building Elm applications. Build your next app with confidence, step by step.
 actionText: Get started
