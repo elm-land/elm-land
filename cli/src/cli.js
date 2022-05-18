@@ -14,7 +14,7 @@ let subcommandList = [
   ''
 ]
 
-let run = (commandFromCli) => {
+let run = async (commandFromCli) => {
   // ( This function accepts a string or string[] )
   let command = typeof commandFromCli === 'string'
     ? commandFromCli.split(' ')
@@ -23,8 +23,8 @@ let run = (commandFromCli) => {
   let [_npx, _elmLand, subCommand, ...args] = command
 
   let subcommandHandlers = {
-    'init': (args) => {
-      return Init.run({ name: args[0] })
+    'init': ([folderName] = []) => {
+      return Init.run({ name: folderName })
     },
     'server': (args) => {
       return Server.run({})
@@ -54,14 +54,12 @@ let run = (commandFromCli) => {
   if (handler) {
     return handler(args)
   } else {
-    return {
-      message: Utils.didNotRecognizeCommand({
+    return Promise.reject(
+      Utils.didNotRecognizeCommand({
         subCommand,
         subcommandList
-      }),
-      files: [],
-      effects: []
-    }
+      })
+    )
   }
 }
 

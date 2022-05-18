@@ -1,9 +1,22 @@
+const path = require('path')
 const { Files } = require("../files")
 
 let run = async (options = {}) => {
   let { name } = options
 
   if (name) {
+
+    let isNonEmptyFolder = await Files.isNonEmptyFolder(path.join(process.cwd(), name))
+
+    if (isNonEmptyFolder) {
+      return Promise.reject([
+        `🌈 It looks like ./${name} is a non-empty folder`,
+        '',
+        'I don\'t want to delete anything important, so',
+        'please run this command when that folder is empty.',
+      ].join('\n'))
+    }
+
     let message = [
       `🌈 New project created in ./${name}`,
       '',
@@ -44,17 +57,13 @@ let run = async (options = {}) => {
       effects: []
     }
   } else {
-    return {
-      message: [
-        `🌈 Please provide a folder name for your new project.`,
-        '',
-        `💁 Here\'s an example:`,
-        '',
-        'npx elm-land init my-project'
-      ].join('\n'),
-      files: [],
-      effects: []
-    }
+    return Promise.reject([
+      `🌈 Please provide a folder name for your new project.`,
+      '',
+      `💁 Here\'s an example:`,
+      '',
+      'npx elm-land init my-project'
+    ].join('\n'))
   }
 }
 

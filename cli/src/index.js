@@ -11,7 +11,6 @@ let main = async () => {
     await Effects.run(output.effects)
 
     console.log(output.message)
-
   } catch (err) {
     console.error(err)
     process.exit(1)

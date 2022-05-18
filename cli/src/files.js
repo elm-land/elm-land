@@ -150,26 +150,37 @@ let listElmFilepathsInFolder = (filepath) => {
   return relativeFilepaths
 }
 
-var walk = function(dir) {
+var walk = function (dir) {
   var results = [];
   var list = fs.readdirSync(dir);
-  list.forEach(function(file) {
-      file = dir + '/' + file;
-      var stat = fs.statSync(file);
-      if (stat && stat.isDirectory()) { 
-          /* Recurse into a subdirectory */
-          results = results.concat(walk(file));
-      } else { 
-          /* Is a file */
-          results.push(file);
-      }
+  list.forEach(function (file) {
+    file = dir + '/' + file;
+    var stat = fs.statSync(file);
+    if (stat && stat.isDirectory()) {
+      /* Recurse into a subdirectory */
+      results = results.concat(walk(file));
+    } else {
+      /* Is a file */
+      results.push(file);
+    }
   });
   return results;
 }
 
+let isNonEmptyFolder = async (filepath) => {
+  try {
+    return fs.readdirSync(filepath).length > 0
+  } catch (_) {
+    // Crashes if folder does not exist, in which
+    // case it is NOT an non-empty folder
+    return false
+  }
+}
+
 module.exports = {
   Files: {
-    readFromCliFolder, 
+    isNonEmptyFolder,
+    readFromCliFolder,
     readFromUserFolder,
     create,
     exists,
