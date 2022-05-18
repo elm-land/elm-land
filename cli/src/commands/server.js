@@ -1,22 +1,13 @@
 const { Files } = require("../files")
+const { Utils } = require("./_utils")
 
 let run = async () => {
 
   let rawTextConfig = undefined
-  let elmLandJsonMissing = {
-    message: [
-      `🌈  Elm Land couldn't find a "elm-land.json" file in the current folder...`,
-      '',
-      `If you'd like to create a new project, use this command:`,
-      `✨ npx elm-spa init`,
-    ].join('\n'),
-    files: [],
-    effects: []
-  }
   try {
     rawTextConfig = await Files.readFromUserFolder('elm-land.json')
   } catch (_) {
-    return elmLandJsonMissing
+    return Promise.reject(Utils.notInElmLandProject)
   }
 
   let config = {}

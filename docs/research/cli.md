@@ -86,4 +86,4 @@ npx nuxi init [folder-name]
         - "I need to create an elm.json file, but I see there's already one in this folder. May I overwrite it? [y/N]"
 - Tell the user the next commands to run:
   - `cd new-folder-name`
-  - `npx elm-spa server`
+  - `npx elm-land server`
