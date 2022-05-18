@@ -8,13 +8,13 @@ let intro = `🌈 Welcome to Elm Land! (v${version})`
 
 let subcommandList = [
   'Here are the commands:',
-  '✨ elm-spa init <folder-name> ...... create a new project',
-  '🚀 elm-spa server ................ run a local dev server',
-  '📄 elm-spa add page <url> ................ add a new page',
+  '✨ elm-land init <folder-name> ...... create a new project',
+  '🚀 elm-land server ................ run a local dev server',
+  '📄 elm-land add page <url> ................ add a new page',
   ''
 ]
 
-let run = (commandFromCli) => {
+let run = async (commandFromCli) => {
   // ( This function accepts a string or string[] )
   let command = typeof commandFromCli === 'string'
     ? commandFromCli.split(' ')
@@ -23,8 +23,8 @@ let run = (commandFromCli) => {
   let [_npx, _elmLand, subCommand, ...args] = command
 
   let subcommandHandlers = {
-    'init': (args) => {
-      return Init.run({ name: args[0] })
+    'init': ([folderName] = []) => {
+      return Init.run({ name: folderName })
     },
     'server': (args) => {
       return Server.run({})
@@ -54,14 +54,12 @@ let run = (commandFromCli) => {
   if (handler) {
     return handler(args)
   } else {
-    return {
-      message: Utils.didNotRecognizeCommand({
+    return Promise.reject(
+      Utils.didNotRecognizeCommand({
         subCommand,
         subcommandList
-      }),
-      files: [],
-      effects: []
-    }
+      })
+    )
   }
 }
 

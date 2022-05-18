@@ -15,8 +15,7 @@
     "build:elm-codegen": "(cd src && elm-codegen run)",
     "dev": "npm run dev:elm-codegen",
     "dev:elm-codegen": "chokidar src/codegen/Generate.elm -c \"npm run build:elm-codegen\"",
-    "test": "jest",
-    "test:watch": "jest --watch"
+    "test": "bats tests/suite.bats"
   },
   "repository": {
     "type": "git",
@@ -34,7 +33,7 @@
   },
   "homepage": "https://elm.land",
   "devDependencies": {
-    "jest": "^28.0.3"
+    "bats": "1.7.0"
   },
   "dependencies": {
     "chokidar": "3.5.3",

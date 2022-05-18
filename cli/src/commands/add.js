@@ -2,19 +2,21 @@ const { Files } = require("../files")
 const { Utils } = require("./_utils")
 const path = require('path')
 
-let addNewPage = async ([ url ]) => {
+let addNewPage = async ([url]) => {
   if (!url) {
-    return {
-      message: [
-        `🌈 This command is missing a URL...`,
-        '',
-        'Here are some examples:',
-        '1️⃣  elm-land add page /sign-in',
-        '2️⃣  elm-land add page /users/:id'
-      ].join('\n'),
-      files: [],
-      effects: []
-    }
+    return Promise.reject([
+      `🌈 This command is missing a URL...`,
+      '',
+      'Here are some examples:',
+      '1️⃣  elm-land add page /sign-in',
+      '2️⃣  elm-land add page /users/:id'
+    ].join('\n'))
+  }
+
+  let inFolderWithElmLandJson = await Files.exists(path.join(process.cwd(), 'elm-land.json'))
+
+  if (!inFolderWithElmLandJson) {
+    return Promise.reject(Utils.notInElmLandProject)
   }
 
   let relativeFilepath = `src/Pages/${toNewPageFilename({ url })}`
@@ -27,8 +29,8 @@ let addNewPage = async ([ url ]) => {
       `👉 ./${relativeFilepath}`
     ].join('\n'),
     files: [
-      { 
-        kind: 'file', 
+      {
+        kind: 'file',
         name: relativeFilepath,
         content: toNewPageContentString({ url })
       }
@@ -73,7 +75,7 @@ page =
 `.trimStart()
 
 let run = async ({ arguments }) => {
-  let [ subCommand, ...otherArgs ] = arguments
+  let [subCommand, ...otherArgs] = arguments
   let subCommandHandlers = {
     'page': addNewPage
   }
@@ -83,16 +85,12 @@ let run = async ({ arguments }) => {
   if (handler) {
     return handler(otherArgs)
   } else {
-    return {
-      message: Utils.didNotRecognizeCommand({
-        subCommand,
-        subcommandList: [
-          '📄 elm-land add page <url> ...... create a new page'
-        ]
-      }),
-      files: [],
-      effects: []
-    }
+    return Promise.reject(Utils.didNotRecognizeCommand({
+      subCommand,
+      subcommandList: [
+        '📄 elm-land add page <url> ...... create a new page'
+      ]
+    }))
   }
 }
 
@@ -102,10 +100,10 @@ let testElmCodegen = async () => {
   try {
     // Import worker, silence Elm warning while testing
     let originalWarnFn = console.warn
-    console.warn = () => {}
+    console.warn = () => { }
     worker = require('../../dist/elm/add-page-worker')
     console.warn = originalWarnFn
-  } catch (_) {}
+  } catch (_) { }
 
   if (!worker) {
     return {
