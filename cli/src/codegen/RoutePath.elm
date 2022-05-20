@@ -3,6 +3,7 @@ module RoutePath exposing
     , home, notFound
     , hasDynamicParameters, toDynamicParameterRecord
     , toRouteVariantName, toUrlParser
+    , toInitialHtmlMessage
     , toList
     )
 
@@ -13,6 +14,7 @@ module RoutePath exposing
 
 @docs hasDynamicParameters, toDynamicParameterRecord
 @docs toRouteVariantName, toUrlParser
+@docs toInitialHtmlMessage
 @docs toList
 
 -}
@@ -63,6 +65,31 @@ toRouteVariantName (RoutePath list) =
     String.join "__" list
 
 
+toInitialHtmlMessage : String -> RoutePath -> Elm.Expression
+toInitialHtmlMessage url routePath =
+    let
+        toStringExpression : String -> Elm.Expression
+        toStringExpression str =
+            if String.endsWith "_" str then
+                Elm.value { importFrom = [], name = "params", annotation = Nothing }
+                    |> Elm.get (toDynamicParameterName str)
+
+            else
+                str
+                    |> fromPascalCaseToKebabCase
+                    |> surroundWith "/"
+                    |> Elm.string
+    in
+    if hasDynamicParameters routePath then
+        toList routePath
+            |> List.map toStringExpression
+            |> joinTogetherWith Elm.append
+            |> Maybe.withDefault (Elm.string url)
+
+    else
+        Elm.string url
+
+
 toUrlParser : RoutePath -> Elm.Expression
 toUrlParser routePath =
     let
@@ -73,30 +100,6 @@ toUrlParser routePath =
 
             else
                 Gen.Url.Parser.s (fromPascalCaseToKebabCase pathSegment)
-
-        fromPascalCaseToKebabCase : String -> String
-        fromPascalCaseToKebabCase str =
-            str
-                |> String.toList
-                |> List.concatMap
-                    (\char ->
-                        if Char.isUpper char then
-                            [ '-', Char.toLower char ]
-
-                        else
-                            [ char ]
-                    )
-                |> String.fromList
-                |> String.dropLeft 1
-
-        joinWithUrlSlash : Elm.Expression -> Maybe Elm.Expression -> Maybe Elm.Expression
-        joinWithUrlSlash expr1 maybeExpr =
-            case maybeExpr of
-                Nothing ->
-                    Just expr1
-
-                Just expr2 ->
-                    Just (Elm.slash expr2 expr1)
 
         toRouteConstructor : Elm.Expression
         toRouteConstructor =
@@ -164,9 +167,31 @@ toUrlParser routePath =
             (routePath
                 |> toList
                 |> List.map toRouteSegmentParser
-                |> List.foldl joinWithUrlSlash Nothing
+                |> joinTogetherWith Elm.slash
                 |> Maybe.withDefault Gen.Url.Parser.top
             )
+
+
+joinTogetherWith :
+    (Elm.Expression -> Elm.Expression -> Elm.Expression)
+    -> List Elm.Expression
+    -> Maybe Elm.Expression
+joinTogetherWith operator expressions =
+    let
+        loop :
+            Elm.Expression
+            -> Maybe Elm.Expression
+            -> Maybe Elm.Expression
+        loop expr1 maybeExpr =
+            case maybeExpr of
+                Nothing ->
+                    Just expr1
+
+                Just expr2 ->
+                    Just (operator expr2 expr1)
+    in
+    expressions
+        |> List.foldl loop Nothing
 
 
 toDynamicParameterRecord : RoutePath -> Elm.Annotation.Annotation
@@ -188,6 +213,27 @@ fromPascalCaseToCamelCase str =
 
         first :: rest ->
             String.fromList (Char.toLower first :: rest)
+
+
+fromPascalCaseToKebabCase : String -> String
+fromPascalCaseToKebabCase str =
+    str
+        |> String.toList
+        |> List.concatMap
+            (\char ->
+                if Char.isUpper char then
+                    [ '-', Char.toLower char ]
+
+                else
+                    [ char ]
+            )
+        |> String.fromList
+        |> String.dropLeft 1
+
+
+surroundWith : String -> String -> String
+surroundWith ends root =
+    ends ++ root ++ ends
 
 
 {-|
@@ -213,5 +259,11 @@ toDynamicParameterNames (RoutePath list) =
         _ ->
             list
                 |> List.filter (String.endsWith "_")
-                |> List.map (String.dropRight 1)
-                |> List.map fromPascalCaseToCamelCase
+                |> List.map toDynamicParameterName
+
+
+toDynamicParameterName : String -> String
+toDynamicParameterName str =
+    str
+        |> String.dropRight 1
+        |> fromPascalCaseToCamelCase

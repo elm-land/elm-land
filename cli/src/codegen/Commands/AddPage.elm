@@ -41,7 +41,7 @@ pageFn { url, routePath } =
                         , annotation = Nothing
                         }
                     )
-                    [ Elm.string url ]
+                    [ RoutePath.toInitialHtmlMessage url routePath ]
                     |> Elm.withType
                         (Elm.Annotation.namedWith [ "Html" ]
                             "Html"
@@ -58,7 +58,7 @@ pageFn { url, routePath } =
                 , annotation = Nothing
                 }
             )
-            [ Elm.string url ]
+            [ RoutePath.toInitialHtmlMessage url routePath ]
             |> Elm.withType
                 (Elm.Annotation.namedWith [ "Html" ]
                     "Html"
