@@ -1,6 +1,7 @@
 const { Files } = require("../files")
 const { Utils } = require("./_utils")
 const path = require('path')
+const { Codegen } = require("../codegen")
 
 let addNewPage = async ([url]) => {
   if (!url) {
@@ -19,7 +20,21 @@ let addNewPage = async ([url]) => {
     return Promise.reject(Utils.notInElmLandProject)
   }
 
-  let relativeFilepath = `src/Pages/${toNewPageFilename({ url })}`
+  let routePath = toNewPageModuleNamePieces({ url })
+
+
+  let [generatedFile] = await Codegen.addNewPage({
+    url,
+    routePath
+  })
+
+  let relativeFilepath = `src/${generatedFile.path}`
+
+  let newFile = {
+    kind: 'file',
+    name: relativeFilepath,
+    content: generatedFile.contents
+  }
 
   return {
     message: [
@@ -28,13 +43,7 @@ let addNewPage = async ([url]) => {
       'You can edit your new page here:',
       `👉 ./${relativeFilepath}`
     ].join('\n'),
-    files: [
-      {
-        kind: 'file',
-        name: relativeFilepath,
-        content: toNewPageContentString({ url })
-      }
-    ],
+    files: [newFile],
     effects: []
   }
 }
@@ -60,19 +69,6 @@ let toNewPageModuleNamePieces = ({ url }) => {
     .map(toNewPageModuleNamePiece)
 }
 
-let toNewPageFilename = ({ url }) =>
-  `${toNewPageModuleNamePieces({ url }).join('/')}.elm`
-
-let toNewPageContentString = ({ url }) => `
-module Pages.${toNewPageModuleNamePieces({ url }).join('.')} exposing (page)
-
-import Html exposing (Html)
-
-
-page : Html msg
-page =
-    Html.text "${url}"
-`.trimStart()
 
 let run = async ({ arguments }) => {
   let [subCommand, ...otherArgs] = arguments

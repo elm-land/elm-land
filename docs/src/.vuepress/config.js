@@ -51,17 +51,15 @@ module.exports = {
         link: 'https://twitter.com/elmland_'
       }
     ],
-    sidebar: {
-      '/guide/': [
-        {
-          title: 'Guide',
-          collapsable: false,
-          children: [
-            '',
-            'pages'
-          ]
-        }
-      ],
-    }
+    sidebar: [
+      {
+        title: 'Guide',
+        collapsable: false,
+        children: [
+          '/guide/',
+          '/guide/pages',
+        ]
+      }
+    ]
   }
 }

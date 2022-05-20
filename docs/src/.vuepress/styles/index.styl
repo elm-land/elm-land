@@ -90,7 +90,11 @@ body, .navbar, .navbar .links.links, .sidebar, .theme-container
     > h6:first-child
       padding-top: 6rem
 
+
+
 .theme-default-content
+  tr
+    background: white
   li
     margin-bottom: 0.75rem
   strong
@@ -101,12 +105,15 @@ body, .navbar, .navbar .links.links, .sidebar, .theme-container
     padding-right: 10px
 
   .theme-code-group__nav-tab.theme-code-group__nav-tab
-    font-family: 'Fira Code'
+    font-family: 'Fira Code', monospace
     padding:  0.25em 0.75em
     white-space: nowrap;
     color: #fffa;
     border-bottom: 1px solid #42b98300;
     transition: color 200ms ease-in-out, border-color 200ms ease-in-out;
+
+  code[class*="language-"], pre[class*="language-"]
+    font-family: 'Fira Code', monospace
 
   .theme-code-group__nav-tab.theme-code-group__nav-tab-active
     border-color: #42b983;
@@ -134,6 +141,7 @@ body, .navbar, .navbar .links.links, .sidebar, .theme-container
   .language-bash.line-numbers-mode, 
   .language-sh.line-numbers-mode, 
   .language-txt.line-numbers-mode, 
+  .language-hs.line-numbers-mode, 
   .language-.line-numbers-mode
     pre
       padding-left: 1.5rem
