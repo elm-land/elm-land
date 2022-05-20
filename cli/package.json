@@ -1,6 +1,6 @@
 {
   "name": "elm-land",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "Reliable web apps for everyone",
   "main": "index.js",
   "bin": {
@@ -10,12 +10,13 @@
     "start": "npm install && npm run setup && npm run dev",
     "setup": "npm run setup:elm-codegen && npm run setup:elm-worker",
     "setup:elm-codegen": "(cd external/elm-codegen && npm i && npm run build && npm link)",
-    "setup:elm-worker": "(cd src/codegen && elm make Worker.elm --output=../../dist/worker.js --optimize)",
+    "setup:elm-worker": "npm run build:elm-worker",
     "build": "npm run build:elm-codegen",
     "build:elm-codegen": "(cd src && elm-codegen run)",
-    "dev": "npm run dev:elm-codegen",
-    "dev:elm-codegen": "chokidar src/codegen/Generate.elm -c \"npm run build:elm-codegen\"",
-    "test": "bats tests/suite.bats"
+    "build:elm-worker": "(cd src/codegen && elm make Worker.elm --output=../../dist/worker.js --optimize)",
+    "dev": "npm run dev:elm-worker",
+    "dev:elm-worker": "chokidar src/codegen/**.elm src/codegen/**/*.elm -c \"npm run build:elm-worker\"",
+    "test": "bats tests/*.bats"
   },
   "repository": {
     "type": "git",

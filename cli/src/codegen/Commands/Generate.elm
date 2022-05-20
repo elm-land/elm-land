@@ -1,4 +1,4 @@
-module Generate exposing (RoutePath, main, run)
+module Commands.Generate exposing (Options, main, run)
 
 {-| -}
 
@@ -6,9 +6,9 @@ import Elm
 import Elm.Annotation
 import Elm.Case
 import Elm.Gen
-import Gen.Basics
 import Gen.Maybe
 import Gen.Url.Parser
+import RoutePath exposing (RoutePath)
 
 
 main : Program {} () ()
@@ -19,10 +19,10 @@ main =
                 ( ()
                 , Elm.Gen.files
                     (files
-                        [ [ "Home_" ]
-                        , [ "SignIn" ]
-                        , [ "Settings" ]
-                        , [ "People", "Username_" ]
+                        [ RoutePath.fromList [ "Home_" ]
+                        , RoutePath.fromList [ "SignIn" ]
+                        , RoutePath.fromList [ "Settings" ]
+                        , RoutePath.fromList [ "People", "Username_" ]
                         ]
                     )
                 )
@@ -31,9 +31,14 @@ main =
         }
 
 
-run : List RoutePath -> Cmd msg
-run routePaths =
-    Elm.Gen.files (files routePaths)
+type alias Options =
+    { pageRoutePaths : List RoutePath
+    }
+
+
+run : Options -> Cmd msg
+run { pageRoutePaths } =
+    Elm.Gen.files (files pageRoutePaths)
 
 
 files : List RoutePath -> List Elm.File
@@ -65,10 +70,6 @@ notFoundElm =
         ]
 
 
-type alias RoutePath =
-    List String
-
-
 
 -- ROUTE.ELM
 
@@ -93,16 +94,16 @@ routeType paths =
     let
         toRouteVariant : RoutePath -> Elm.Variant
         toRouteVariant routePath =
-            if isLastPieceDynamic routePath then
-                Elm.variantWith (String.join "__" routePath)
-                    [ Elm.Annotation.record [ ( "username", Elm.Annotation.string ) ]
+            if RoutePath.hasDynamicParameters routePath then
+                Elm.variantWith (RoutePath.toRouteVariantName routePath)
+                    [ RoutePath.toDynamicParameterRecord routePath
                     ]
 
             else
-                Elm.variant (String.join "__" routePath)
+                Elm.variant (RoutePath.toRouteVariantName routePath)
     in
     Elm.customType "Route"
-        (List.map toRouteVariant paths ++ [ toRouteVariant [ "NotFound_" ] ])
+        (List.map toRouteVariant paths ++ [ toRouteVariant RoutePath.notFound ])
 
 
 {-|
@@ -137,113 +138,6 @@ fromUrlFn =
 
 routeParserFn : List RoutePath -> Elm.Declaration
 routeParserFn paths =
-    let
-        toUrlParser : RoutePath -> Elm.Expression
-        toUrlParser routePath =
-            if routePath == [ "Home_" ] then
-                Gen.Url.Parser.map
-                    (Elm.value
-                        { importFrom = []
-                        , name = "Home_"
-                        , annotation = Nothing
-                        }
-                    )
-                    Gen.Url.Parser.top
-
-            else
-                Gen.Url.Parser.map
-                    (toRouteConstructor routePath)
-                    (routePath
-                        |> List.map toRouteSegmentParser
-                        |> List.foldl joinWithUrlSlash Nothing
-                        |> Maybe.withDefault Gen.Url.Parser.top
-                    )
-
-        toRouteSegmentParser : String -> Elm.Expression
-        toRouteSegmentParser pathSegment =
-            if String.endsWith "_" pathSegment then
-                Gen.Url.Parser.string
-
-            else
-                Gen.Url.Parser.s (fromPascalCaseToKebabCase pathSegment)
-
-        fromPascalCaseToKebabCase : String -> String
-        fromPascalCaseToKebabCase str =
-            str
-                |> String.toList
-                |> List.concatMap
-                    (\char ->
-                        if Char.isUpper char then
-                            [ '-', Char.toLower char ]
-
-                        else
-                            [ char ]
-                    )
-                |> String.fromList
-                |> String.dropLeft 1
-
-        joinWithUrlSlash : Elm.Expression -> Maybe Elm.Expression -> Maybe Elm.Expression
-        joinWithUrlSlash expr1 maybeExpr =
-            case maybeExpr of
-                Nothing ->
-                    Just expr1
-
-                Just expr2 ->
-                    Just (Elm.slash expr2 expr1)
-
-        fromPascalCaseToCamelCase : String -> String
-        fromPascalCaseToCamelCase str =
-            String.toLower (String.left 1 str) ++ String.dropLeft 1 str
-
-        toRouteConstructor : RoutePath -> Elm.Expression
-        toRouteConstructor routePath =
-            let
-                dynamicValues : List String
-                dynamicValues =
-                    routePath
-                        |> List.filter (String.endsWith "_")
-
-                numberOfDynamicValues : Int
-                numberOfDynamicValues =
-                    List.length dynamicValues
-            in
-            if numberOfDynamicValues > 0 then
-                Elm.function
-                    (( "param", Nothing )
-                        |> List.repeat numberOfDynamicValues
-                        |> List.indexedMap
-                            (\i ( str, maybe ) ->
-                                ( str ++ String.fromInt (i + 1), maybe )
-                            )
-                    )
-                    (\exprs ->
-                        Elm.apply
-                            (Elm.value
-                                { importFrom = []
-                                , name = String.join "__" routePath
-                                , annotation = Nothing
-                                }
-                            )
-                            [ Elm.record
-                                (List.map2
-                                    (\nameWithUnderscore expr ->
-                                        Elm.field
-                                            (fromPascalCaseToCamelCase (String.dropRight 1 nameWithUnderscore))
-                                            expr
-                                    )
-                                    dynamicValues
-                                    exprs
-                                )
-                            ]
-                    )
-
-            else
-                Elm.value
-                    { importFrom = []
-                    , name = String.join "__" routePath
-                    , annotation = Nothing
-                    }
-    in
     Elm.declaration "routeParser"
         (Elm.apply
             (Elm.value
@@ -255,7 +149,7 @@ routeParserFn paths =
             )
             [ Elm.list
                 (List.map
-                    toUrlParser
+                    RoutePath.toUrlParser
                     paths
                 )
             ]
@@ -463,26 +357,26 @@ viewFn =
         )
 
 
-viewPageFn : List (List String) -> Elm.Declaration
-viewPageFn routes =
+viewPageFn : List RoutePath -> Elm.Declaration
+viewPageFn routePaths =
     let
         branches : List Elm.Case.Branch
         branches =
-            List.map toBranch routes ++ [ toBranch [ "NotFound_" ] ]
+            List.map toBranch routePaths ++ [ toBranch RoutePath.notFound ]
 
         {-
            Route.Home_ ->
                Pages.Home_.page
         -}
-        toBranch : List String -> Elm.Case.Branch
+        toBranch : RoutePath -> Elm.Case.Branch
         toBranch routePath =
-            if isLastPieceDynamic routePath then
+            if RoutePath.hasDynamicParameters routePath then
                 Elm.Case.branch1 [ "Route" ]
-                    (String.join "__" routePath)
+                    (RoutePath.toRouteVariantName routePath)
                     (\params ->
                         Elm.apply
                             (Elm.value
-                                { importFrom = "Pages" :: routePath
+                                { importFrom = "Pages" :: RoutePath.toList routePath
                                 , name = "page"
                                 , annotation = Nothing
                                 }
@@ -492,9 +386,9 @@ viewPageFn routes =
 
             else
                 Elm.Case.branch0 [ "Route" ]
-                    (String.join "__" routePath)
+                    (RoutePath.toRouteVariantName routePath)
                     (Elm.value
-                        { importFrom = "Pages" :: routePath
+                        { importFrom = "Pages" :: RoutePath.toList routePath
                         , name = "page"
                         , annotation = Just annotations.htmlMsg
                         }

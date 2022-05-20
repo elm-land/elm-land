@@ -2,6 +2,7 @@ const chokidar = require('chokidar')
 const path = require('path')
 const Vite = require('vite')
 const ElmVitePlugin = require('vite-plugin-elm')
+const { Codegen } = require('./codegen')
 const { Files } = require('./files')
 
 let runServer = async (options) => {
@@ -64,14 +65,8 @@ let runServer = async (options) => {
     let onPageFileChanged = async () => {
       try {
         let pageRoutePaths = await Files.listElmFilepathsInFolder(srcPagesFolderFilepath).map(filepath => filepath.split('/'))
-        let { Elm } = require('../dist/worker.js')
 
-        let newFiles = await new Promise((resolve, reject) => {
-          let app = Elm.Worker.init({
-            flags: { pageRoutePaths }
-          })
-          app.ports.onSuccessSend.subscribe(resolve)
-        })
+        let newFiles = await Codegen.generateElmLandFiles({ pageRoutePaths })
 
         await Files.create(
           newFiles.map(generatedFile => ({
