@@ -20,6 +20,7 @@ type Argument
 
 {-| Create a simple argument that is just the name of a value
 
+    -- params
     CodeGen.Argument.new "params"
 
 -}

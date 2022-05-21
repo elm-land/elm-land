@@ -1,11 +1,13 @@
 module CodeGen.Declaration exposing
-    ( Declaration, function
+    ( Declaration
+    , function, customType
     , toString
     )
 
 {-|
 
-@docs Declaration, function
+@docs Declaration
+@docs function, customType
 
 @docs toString
 
@@ -25,6 +27,10 @@ type Declaration
         , annotation : CodeGen.Annotation.Annotation
         , arguments : List CodeGen.Argument.Argument
         , expression : CodeGen.Expression.Expression
+        }
+    | CustomTypeDeclaration
+        { name : String
+        , variants : List ( String, List CodeGen.Annotation.Annotation )
         }
 
 
@@ -62,6 +68,39 @@ function options =
     FunctionDeclaration options
 
 
+{-| Create a custom type in your Elm module
+
+    {-
+
+        type Color
+            = Red
+            | Green
+            | Blue
+            | CustomHexValue String
+
+    -}
+    CodeGen.Declaration.customType
+        { name = "Color"
+        , variants =
+            [ ( "Red", [] )
+            , ( "Green", [] )
+            , ( "Blue", [] )
+            , ( "CustomHexValue"
+              , [ CodeGen.Annotation.string ]
+              )
+            ]
+        }
+
+-}
+customType :
+    { name : String
+    , variants : List ( String, List CodeGen.Annotation.Annotation )
+    }
+    -> Declaration
+customType options =
+    CustomTypeDeclaration options
+
+
 {-| Render a `Declaration` value as a `String`.
 
 ( This is used internally by `CodeGen.Module.toString` )
@@ -72,6 +111,9 @@ toString declaration =
     case declaration of
         FunctionDeclaration options ->
             fromFunctionDeclarationToString options
+
+        CustomTypeDeclaration options ->
+            fromCustomTypeDeclarationToString options
 
 
 
@@ -86,11 +128,12 @@ fromFunctionDeclarationToString :
     }
     -> String
 fromFunctionDeclarationToString options =
-    Util.String.dedent
-        """
-    {{name}} : {{annotation}}
-    {{name}}{{arguments}} =
-    {{expression}}
+    Util.String.dedent """
+
+        {{name}} : {{annotation}}
+        {{name}}{{arguments}} =
+        {{expression}}
+
     """
         |> String.replace "{{name}}" options.name
         |> String.replace "{{annotation}}" (CodeGen.Annotation.toString options.annotation)
@@ -106,3 +149,24 @@ fromFunctionDeclarationToString options =
             (CodeGen.Expression.toString options.expression
                 |> Util.String.indent 4
             )
+
+
+fromCustomTypeDeclarationToString :
+    { name : String
+    , variants : List ( String, List CodeGen.Annotation.Annotation )
+    }
+    -> String
+fromCustomTypeDeclarationToString options =
+    "type {{name}}\n    = {{variants}}"
+        |> String.replace "{{name}}" options.name
+        |> String.replace "{{variants}}"
+            (options.variants
+                |> List.map fromCustomTypeVariantToString
+                |> String.join "\n    | "
+            )
+
+
+fromCustomTypeVariantToString : ( String, List CodeGen.Annotation.Annotation ) -> String
+fromCustomTypeVariantToString ( variantName, args ) =
+    (variantName :: List.map CodeGen.Annotation.toString args)
+        |> String.join " "

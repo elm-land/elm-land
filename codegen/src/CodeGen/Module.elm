@@ -82,14 +82,14 @@ Renders the following:
 toString : Module -> String
 toString (Module options) =
     Util.String.dedent """
-    module {{name}} exposing ({{exposing}})
+        module {{name}} exposing ({{exposing}})
 
-    {{imports}}
+        {{imports}}
 
 
-    {{declarations}}
+        {{declarations}}
     """
         |> String.replace "{{name}}" (String.join "." options.name)
         |> String.replace "{{exposing}}" (String.join ", " options.exposing_)
         |> String.replace "{{imports}}" (String.join "\n" (List.map CodeGen.Import.toString options.imports))
-        |> String.replace "{{declarations}}" (String.join "\n\n" (List.map CodeGen.Declaration.toString options.declarations))
+        |> String.replace "{{declarations}}" (String.join "\n\n\n" (List.map CodeGen.Declaration.toString options.declarations))

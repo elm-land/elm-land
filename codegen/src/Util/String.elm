@@ -1,69 +1,4 @@
-module Util.String exposing (dedent, indent, quote, toRecord)
-
-{-| Removes excess spaces from the string provided
-
-    """
-            query {
-              me
-            }
-    """
-
-    -- becomes
-    """
-    query {
-      me
-    }
-    """
-
--}
-
-
-dedent : String -> String
-dedent indentedString =
-    let
-        lines : List String
-        lines =
-            String.lines indentedString
-
-        nonBlankLines : List String
-        nonBlankLines =
-            List.filter isNonBlank lines
-
-        isNonBlank : String -> Bool
-        isNonBlank =
-            not << String.isEmpty << String.trimLeft
-
-        countInitialSpacesFor : String -> Int
-        countInitialSpacesFor str =
-            String.length str - String.length (String.trimLeft str)
-
-        numberOfSpacesToRemove : Int
-        numberOfSpacesToRemove =
-            List.foldl
-                (\line maybeMin ->
-                    let
-                        count =
-                            countInitialSpacesFor line
-                    in
-                    case maybeMin of
-                        Nothing ->
-                            Just count
-
-                        Just min ->
-                            if min < count then
-                                Just min
-
-                            else
-                                Just count
-                )
-                Nothing
-                nonBlankLines
-                |> Maybe.withDefault 0
-    in
-    nonBlankLines
-        |> List.map (String.dropLeft numberOfSpacesToRemove)
-        |> String.join "\n"
-
+module Util.String exposing (indent, quote, toMultilineList, toRecord, wrapInParentheses, dedent)
 
 {-| Indent each line of the given string by a number of spaces.
 
@@ -74,6 +9,8 @@ dedent indentedString =
     indent 4 "hello\nworld" == "    hello\n    world"
 
 -}
+
+
 indent : Int -> String -> String
 indent numberOfSpaces str =
     let
@@ -106,6 +43,11 @@ quote str =
         ++ "\""
 
 
+wrapInParentheses : String -> String
+wrapInParentheses str =
+    "(" ++ str ++ ")"
+
+
 {-| Helper function for making a record, either for a type annotation or a value
 -}
 toRecord :
@@ -134,3 +76,67 @@ toRecord options =
                 |> List.map fromItemToString
                 |> String.join ", "
                 |> (\str -> "{ " ++ str ++ " }")
+
+
+toMultilineList : { toString : item -> String, items : List item } -> String
+toMultilineList options =
+    case options.items of
+        [] ->
+            "[]"
+
+        items ->
+            "[ "
+                ++ (items
+                        |> List.map options.toString
+                        |> String.join "\n, "
+                   )
+                ++ "\n]"
+
+
+
+dedent : String -> String
+dedent string =
+  let
+      trimmedLines : List String
+      trimmedLines =
+          string
+            |> String.trim
+            |> String.lines
+            
+      toIndentation : String -> Int
+      toIndentation line =
+        String.length line - String.length (String.trimLeft line)
+            
+      keepSmallestPositiveInt : Int -> Maybe Int -> Maybe Int
+      keepSmallestPositiveInt indentation smallestSoFar =
+                  case smallestSoFar of
+                    Just smallest ->
+                        if indentation > 0 && smallest > indentation then
+                          Just indentation
+                        else
+                          smallestSoFar
+                    Nothing ->
+                        if indentation > 0 then
+                          Just indentation
+                        else
+                          smallestSoFar
+                
+            
+      smallestIndent : Int
+      smallestIndent =
+          trimmedLines
+            |> List.map toIndentation
+            |> List.foldl keepSmallestPositiveInt Nothing
+            |> Maybe.withDefault 0
+            
+            
+      trimIfIndented : String -> String
+      trimIfIndented str =
+          if String.left smallestIndent str == String.fromList (List.repeat smallestIndent ' ') then
+            String.dropLeft smallestIndent str
+          else
+            str
+  in
+  trimmedLines
+      |> List.map trimIfIndented
+      |> String.join "\n"
