@@ -1,5 +1,5 @@
-# @elm-land/codegen
-> An Elm package for generating Elm code
+# __@elm-land__/codegen
+> Generate Elm code with Elm code
 
 ## __Installation__
 

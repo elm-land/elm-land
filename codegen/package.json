@@ -1,7 +1,7 @@
 {
   "name": "@elm-land/codegen",
   "version": "1.0.0",
-  "description": "Generate Elm code from Elm code",
+  "description": "Generate Elm code with Elm code",
   "main": "src/Codegen.elm",
   "scripts": {
     "start": "npm install && npm run docs",
