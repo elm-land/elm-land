@@ -4,6 +4,8 @@
   "description": "Generate Elm code from Elm code",
   "main": "src/Codegen.elm",
   "scripts": {
+    "start": "npm install && npm run docs",
+    "docs": "elm-doc-preview",
     "test": "elm-test",
     "test:watch": "elm-test --watch"
   },
