@@ -39,7 +39,7 @@ load helpers
 
   expectFileExists "src/Pages/SignIn.elm"
   expectFileContains "src/Pages/SignIn.elm" "module Pages.SignIn exposing (page)"
-  expectFileContains "src/Pages/SignIn.elm" "page : Html.Html msg"
+  expectFileContains "src/Pages/SignIn.elm" "page : Html msg"
 
   cd ../..
   rm -r tmp
@@ -61,13 +61,13 @@ load helpers
 
   expectFileExists "src/Pages/Profile/Username_.elm"
   expectFileContains "src/Pages/Profile/Username_.elm" "module Pages.Profile.Username_ exposing (page)"
-  expectFileContains "src/Pages/Profile/Username_.elm" "page : { username : String } -> Html.Html msg"
+  expectFileContains "src/Pages/Profile/Username_.elm" "page : { username : String } -> Html msg"
 
-  cd ../..
-  rm -r tmp
+  # cd ../..
+  # rm -r tmp
 }
 
 
-@test "cleanup" {
-  cleanupTmpFolder
-}
+# @test "cleanup" {
+#   cleanupTmpFolder
+# }

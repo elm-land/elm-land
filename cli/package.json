@@ -8,14 +8,12 @@
   },
   "scripts": {
     "start": "npm install && npm run setup && npm run dev",
-    "setup": "npm run setup:elm-codegen && npm run setup:elm-worker",
-    "setup:elm-codegen": "(cd external/elm-codegen && npm i && npm run build && npm link)",
+    "setup": "npm run setup:elm-worker",
     "setup:elm-worker": "npm run build:elm-worker",
-    "build": "npm run build:elm-codegen",
-    "build:elm-codegen": "(cd src && elm-codegen run)",
-    "build:elm-worker": "(cd src/codegen && elm make Worker.elm --output=../../dist/worker.js --optimize)",
+    "build": "npm run build:elm-worker",
+    "build:elm-worker": "(cd src/codegen && elm make src/Worker.elm --output=../../dist/worker.js)",
     "dev": "npm run dev:elm-worker",
-    "dev:elm-worker": "chokidar src/codegen/**.elm src/codegen/**/*.elm -c \"npm run build:elm-worker\"",
+    "dev:elm-worker": "chokidar src/codegen/src -c \"npm run build:elm-worker\"",
     "test": "bats tests/*.bats"
   },
   "repository": {

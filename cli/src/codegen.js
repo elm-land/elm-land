@@ -1,34 +1,30 @@
-let generateElmLandFiles = async ({ pageRoutePaths }) => {
+let generateElmLandFiles = async ({ filepaths }) => {
   let { Elm } = require('../dist/worker.js')
 
   let newFiles = await new Promise((resolve, reject) => {
     let app = Elm.Worker.init({
       flags: {
-        tag: 'generate-elm-land-files',
-        data: {
-          pageRoutePaths
-        }
+        tag: 'generate',
+        data: { filepaths }
       }
     })
-    app.ports.onSuccessSend.subscribe(resolve)
-    app.ports.onFailureSend.subscribe(reject)
+    app.ports.onComplete.subscribe(resolve)
   })
 
   return newFiles
 }
 
-let addNewPage = async ({ url, routePath }) => {
+let addNewPage = async ({ url, filepath }) => {
   let { Elm } = require('../dist/worker.js')
 
   let newFiles = await new Promise((resolve, reject) => {
     let app = Elm.Worker.init({
       flags: {
         tag: 'add-page',
-        data: { routePath, url }
+        data: { filepath, url }
       }
     })
-    app.ports.onSuccessSend.subscribe(resolve)
-    app.ports.onFailureSend.subscribe(reject)
+    app.ports.onComplete.subscribe(resolve)
   })
 
   return newFiles

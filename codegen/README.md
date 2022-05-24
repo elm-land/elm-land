@@ -34,8 +34,9 @@ main =
     CodeGen.program
         { onComplete = onComplete
         , modules =
-            [ mainElmModule
-            ]
+            \flags ->
+                [ mainElmModule
+                ]
         }
 
 
