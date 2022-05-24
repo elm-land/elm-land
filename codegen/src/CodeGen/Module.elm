@@ -13,7 +13,6 @@ module CodeGen.Module exposing
 
 import CodeGen.Declaration
 import CodeGen.Import
-import Util.String
 
 
 {-| Represents an Elm module, which has a one-to-one mapping with a file in your project.
