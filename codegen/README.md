@@ -91,7 +91,7 @@ app.ports.onSuccess(files => {
 1. __Compile__ the Elm worker to JavaScript
 
     ```txt
-    $ elm make src/Worker --output=dist/elm-worker.js
+    $ elm make src/Worker.elm --output=dist/elm-worker.js
     ```
 
 2. __Run__ your Node.js program
@@ -117,19 +117,19 @@ main =
 ## __Notable alternatives__
 
 This package was designed for use in [Elm Land](https://elm.land). Our use case prioritized:
-- _Ease-of-use_ over _type-safety_
-- _Fine-grained control_ over _concise code_
+- Fine-grained control on how the code is generated
+- Easy-to-scan function names with record arguments
 
 However, you might prefer one of these more powerful solutions for use in your next codegen project:
 
 1. [the-sett/elm-syntax-dsl](https://package.elm-lang.org/packages/the-sett/elm-syntax-dsl/latest) 
     - __Benefits:__
-      - More type-safe than this package
+      - More type-safe, less strings
       - Aims to be compatable with elm-format
 2. [mdgriffith/elm-codegen](https://github.com/mdgriffith/elm-codegen)
     - __Benefits:__
       - Automatic imports
       - Inferred type annotations
       - Built-in CLI tool for getting started
-      - More type-safe than this package
+      - More type-safe, less strings
       - Aims to be compatable with elm-format
