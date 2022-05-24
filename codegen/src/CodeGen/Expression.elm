@@ -2,8 +2,12 @@ module CodeGen.Expression exposing
     ( Expression
     , function, multilineFunction
     , value
-    , record, lambda
-    , multilineList
+    , record, multilineRecord
+    , recordUpdate
+    , lambda
+    , caseExpression
+    , list, multilineList
+    , multilineTuple
     , string
     , operator
     , parens, pipeline
@@ -15,8 +19,12 @@ module CodeGen.Expression exposing
 @docs Expression
 @docs function, multilineFunction
 @docs value
-@docs record, lambda
-@docs multilineList
+@docs record, multilineRecord
+@docs recordUpdate
+@docs lambda
+@docs caseExpression
+@docs list, multilineList
+@docs multilineTuple
 @docs string
 @docs operator
 @docs parens, pipeline
@@ -41,11 +49,27 @@ type Expression
         , arguments : List Expression
         }
     | RecordExpression (List ( String, Expression ))
+    | MultilineRecordExpression (List ( String, Expression ))
+    | RecordUpdateExpression
+        { value : String
+        , fields : List ( String, Expression )
+        }
+    | ListExpression (List Expression)
     | MultiLineListExpression (List Expression)
+    | MultiLineTupleExpression (List Expression)
     | StringExpression String
     | OperatorExpression String
     | WrappedInParens (List Expression)
     | Pipeline (List Expression)
+    | CaseExpression
+        { value : CodeGen.Argument.Argument
+        , branches :
+            List
+                { name : String
+                , arguments : List CodeGen.Argument.Argument
+                , expression : Expression
+                }
+        }
     | LambdaExpression
         { arguments : List CodeGen.Argument.Argument
         , expression : Expression
@@ -134,6 +158,85 @@ record fields =
     RecordExpression fields
 
 
+{-| Create a record value with a list of fields
+
+    -- {}
+    CodeGen.Expression.multilineRecord []
+
+    {-
+
+       { username = "ryan"
+       }
+
+    -}
+    CodeGen.Expression.multilineRecord
+        [ ( "username", CodeGen.Expression.string "ryan" )
+        ]
+
+    {-
+
+       { username = "ryan"
+       , email = "ryan@elm.land"
+       }
+
+    -}
+    CodeGen.Expression.multilineRecord
+        [ ( "username", CodeGen.Expression.string "ryan" )
+        , ( "email", CodeGen.Expression.string "ryan@elm.land" )
+        ]
+
+-}
+multilineRecord : List ( String, Expression ) -> Expression
+multilineRecord fields =
+    MultilineRecordExpression fields
+
+
+{-| Represent a record getting updated
+
+    -- model
+    CodeGen.Expression.recordUpdate
+        { value = "model"
+        , fields = []
+        }
+
+    -- { model | url = url }
+    CodeGen.Expression.recordUpdate
+        { value = "model"
+        , fields =
+            [ ( "url", CodeGen.Expression.value "url" )
+            ]
+        }
+
+    -- { model | url = url, key = key }
+    CodeGen.Expression.recordUpdate
+        { value = "model"
+        , fields =
+            [ ( "url", CodeGen.Expression.value "url" )
+            , ( "key", CodeGen.Expression.value "key" )
+            ]
+        }
+
+-}
+recordUpdate : { value : String, fields : List ( String, Expression ) } -> Expression
+recordUpdate options =
+    RecordUpdateExpression options
+
+
+{-| Create a list, where each item is on a new line
+
+    -- [ "Hello", "darkness", "my old friend" ]
+    Elm.CodeGen.Expression.list
+        [ Elm.CodeGen.Expression "Hello"
+        , Elm.CodeGen.Expression "darkness"
+        , Elm.CodeGen.Expression "my old friend"
+        ]
+
+-}
+list : List Expression -> Expression
+list expressions =
+    ListExpression expressions
+
+
 {-| Create a list, where each item is on a new line
 
     {-
@@ -154,6 +257,28 @@ record fields =
 multilineList : List Expression -> Expression
 multilineList expressions =
     MultiLineListExpression expressions
+
+
+{-| Create a tuple, where each item is on a new line
+
+    {-
+
+        ( "Hello"
+        , "darkness"
+        , "my old friend"
+        )
+
+    -}
+    Elm.CodeGen.Expression.multilineTuple
+        ( Elm.CodeGen.Expression "Hello"
+        , Elm.CodeGen.Expression "darkness"
+        , Elm.CodeGen.Expression "my old friend"
+        )
+
+-}
+multilineTuple : List Expression -> Expression
+multilineTuple expressions =
+    MultiLineTupleExpression expressions
 
 
 {-| Create an inline lambda function, always wrapped in parens.
@@ -181,6 +306,54 @@ lambda :
     -> Expression
 lambda options =
     LambdaExpression options
+
+
+{-|
+
+    {-
+
+        case color of
+            Red ->
+                "red"
+
+            Blue ->
+                "blue"
+
+            Custom hex ->
+                hex
+
+    -}
+    CodeGen.Expression.caseExpression
+        { value = CodeGen.Argument.new "color"
+        , branches =
+            [ { name = "Red"
+              , arguments = []
+              , expression = CodeGen.Expression.string "red"
+              }
+            , { name = "Blue"
+              , arguments = []
+              , expression = CodeGen.Expression.string "blue"
+              }
+            , { name = "Custom"
+              , arguments = [ CodeGen.Argument.new "hex" ]
+              , expression = CodeGen.Expression.value "hex"
+              }
+            ]
+        }
+
+-}
+caseExpression :
+    { value : CodeGen.Argument.Argument
+    , branches :
+        List
+            { name : String
+            , arguments : List CodeGen.Argument.Argument
+            , expression : Expression
+            }
+    }
+    -> Expression
+caseExpression options =
+    CaseExpression options
 
 
 {-| Create a `String` value
@@ -286,8 +459,36 @@ toString expression =
                 , items = fields
                 }
 
+        MultilineRecordExpression fields ->
+            Util.String.toMultilineRecord
+                { joinWith = "="
+                , toKey = Tuple.first
+                , toValue = \( _, expr ) -> toString expr
+                , items = fields
+                }
+
+        RecordUpdateExpression options ->
+            Util.String.toRecordUpdate
+                { value = options.value
+                , toKey = Tuple.first
+                , toValue = \( _, expr ) -> toString expr
+                , fields = options.fields
+                }
+
+        ListExpression expressions ->
+            Util.String.toSinglelineList
+                { toString = toString
+                , items = expressions
+                }
+
         MultiLineListExpression expressions ->
             Util.String.toMultilineList
+                { toString = toString
+                , items = expressions
+                }
+
+        MultiLineTupleExpression expressions ->
+            Util.String.toMultilineTuple
                 { toString = toString
                 , items = expressions
                 }
@@ -313,6 +514,33 @@ toString expression =
             "(\\{{args}} -> {{expression}})"
                 |> String.replace "{{args}}" (String.join " " (List.map CodeGen.Argument.toString options.arguments))
                 |> String.replace "{{expression}}" (toString options.expression)
+
+        CaseExpression options ->
+            "case {{value}} of\n{{branches}}"
+                |> String.replace "{{value}}" (CodeGen.Argument.toString options.value)
+                |> String.replace "{{branches}}"
+                    (options.branches
+                        |> List.map (fromBranchToString >> Util.String.indent 4)
+                        |> String.join "\n\n"
+                    )
+
+
+fromBranchToString : { name : String, arguments : List CodeGen.Argument.Argument, expression : Expression } -> String
+fromBranchToString branch =
+    "{{name}}{{args}} ->\n{{expression}}"
+        |> String.replace "{{name}}" branch.name
+        |> String.replace "{{args}}"
+            (if List.isEmpty branch.arguments then
+                ""
+
+             else
+                " " ++ (branch.arguments |> List.map CodeGen.Argument.toString |> String.join " ")
+            )
+        |> String.replace "{{expression}}"
+            (branch.expression
+                |> toString
+                |> Util.String.indent 4
+            )
 
 
 fromFunctionExpressionToString :

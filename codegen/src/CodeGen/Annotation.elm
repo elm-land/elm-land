@@ -1,6 +1,7 @@
 module CodeGen.Annotation exposing
     ( Annotation
-    , string, record
+    , string
+    , record, multilineRecord
     , function, type_
     , toString
     )
@@ -8,7 +9,8 @@ module CodeGen.Annotation exposing
 {-|
 
 @docs Annotation
-@docs string, record
+@docs string
+@docs record, multilineRecord
 @docs function, type_
 
 @docs toString
@@ -24,6 +26,7 @@ type Annotation
     = TypeAnnotation String
     | FunctionAnnotation (List Annotation)
     | RecordAnnotation (List ( String, Annotation ))
+    | MultilineRecordAnnotation (List ( String, Annotation ))
 
 
 {-| A type alias, custom type, or a type from another module.
@@ -79,6 +82,39 @@ record options =
     RecordAnnotation options
 
 
+{-| A record annotation in your Elm code
+
+    -- {}
+    CodeGen.Annotation.multilineRecord []
+
+    {-
+
+       { username : String
+       }
+
+    -}
+    CodeGen.Annotation.multilineRecord
+        [ ( "username", CodeGen.Annotation.string )
+        ]
+
+    {-
+
+       { id : String
+       , view : Html msg
+       }
+
+    -}
+    CodeGen.Annotation.multilineRecord
+        [ ( "id", CodeGen.Annotation.string )
+        , ( "view", CodeGen.Annotation.type_ "Html msg" )
+        ]
+
+-}
+multilineRecord : List ( String, Annotation ) -> Annotation
+multilineRecord options =
+    MultilineRecordAnnotation options
+
+
 {-| The type annotation for Elm's `String` type
 
     -- String
@@ -106,6 +142,14 @@ toString annotation =
 
         RecordAnnotation items ->
             Util.String.toRecord
+                { joinWith = ":"
+                , toKey = \( key, _ ) -> key
+                , toValue = \( _, annotation_ ) -> toString annotation_
+                , items = items
+                }
+
+        MultilineRecordAnnotation items ->
+            Util.String.toMultilineRecord
                 { joinWith = ":"
                 , toKey = \( key, _ ) -> key
                 , toValue = \( _, annotation_ ) -> toString annotation_

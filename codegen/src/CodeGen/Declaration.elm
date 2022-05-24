@@ -1,13 +1,15 @@
 module CodeGen.Declaration exposing
     ( Declaration
-    , function, customType
+    , function, customType, typeAlias
+    , comment
     , toString
     )
 
 {-|
 
 @docs Declaration
-@docs function, customType
+@docs function, customType, typeAlias
+@docs comment
 
 @docs toString
 
@@ -32,6 +34,11 @@ type Declaration
         { name : String
         , variants : List ( String, List CodeGen.Annotation.Annotation )
         }
+    | TypeAliasDeclaration
+        { name : String
+        , annotation : CodeGen.Annotation.Annotation
+        }
+    | CommentDeclaration (List String)
 
 
 {-| Define a new function in your Elm module.
@@ -101,6 +108,55 @@ customType options =
     CustomTypeDeclaration options
 
 
+{-| Create a type alias in your Elm module
+
+    {-
+
+        type alias Email =
+            String
+
+    -}
+    CodeGen.Declaration.typeAlias
+        { name = "Email"
+        , annotation = CodeGen.Annotation.string
+        }
+
+-}
+typeAlias :
+    { name : String
+    , annotation : CodeGen.Annotation.Annotation
+    }
+    -> Declaration
+typeAlias options =
+    TypeAliasDeclaration options
+
+
+{-| Add a comment to the file, using the `--` notation
+
+    {-
+
+        -- INIT
+
+    -}
+    CodeGen.Declaration.comment [ "INIT" ]
+
+    {-
+
+        -- These can be
+        -- multiple lines!
+
+    -}
+    CodeGen.Declaration.comment
+        [ "These can be"
+        , "multiple lines!"
+        ]
+
+-}
+comment : List String -> Declaration
+comment options =
+    CommentDeclaration options
+
+
 {-| Render a `Declaration` value as a `String`.
 
 ( This is used internally by `CodeGen.Module.toString` )
@@ -114,6 +170,12 @@ toString declaration =
 
         CustomTypeDeclaration options ->
             fromCustomTypeDeclarationToString options
+
+        TypeAliasDeclaration options ->
+            fromTypeAliasDeclarationToString options
+
+        CommentDeclaration lines ->
+            "\n" ++ (lines |> List.map (\line -> "-- " ++ line) |> String.join "\n")
 
 
 
@@ -149,6 +211,7 @@ fromFunctionDeclarationToString options =
             (CodeGen.Expression.toString options.expression
                 |> Util.String.indent 4
             )
+        |> Util.String.removeTrailingWhitespaceFromEmptyLines
 
 
 fromCustomTypeDeclarationToString :
@@ -163,6 +226,21 @@ fromCustomTypeDeclarationToString options =
             (options.variants
                 |> List.map fromCustomTypeVariantToString
                 |> String.join "\n    | "
+            )
+
+
+fromTypeAliasDeclarationToString :
+    { name : String
+    , annotation : CodeGen.Annotation.Annotation
+    }
+    -> String
+fromTypeAliasDeclarationToString options =
+    "type alias {{name}} =\n{{annotation}}"
+        |> String.replace "{{name}}" options.name
+        |> String.replace "{{annotation}}"
+            (options.annotation
+                |> CodeGen.Annotation.toString
+                |> Util.String.indent 4
             )
 
 

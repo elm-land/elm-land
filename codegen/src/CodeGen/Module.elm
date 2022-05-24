@@ -81,15 +81,20 @@ Renders the following:
 -}
 toString : Module -> String
 toString (Module options) =
-    Util.String.dedent """
-        module {{name}} exposing ({{exposing}})
-
-        {{imports}}
-
-
-        {{declarations}}
-    """
+    "module {{name}} exposing ({{exposing}}){{imports}}{{declarations}}"
         |> String.replace "{{name}}" (String.join "." options.name)
         |> String.replace "{{exposing}}" (String.join ", " options.exposing_)
-        |> String.replace "{{imports}}" (String.join "\n" (List.map CodeGen.Import.toString options.imports))
-        |> String.replace "{{declarations}}" (String.join "\n\n\n" (List.map CodeGen.Declaration.toString options.declarations))
+        |> String.replace "{{imports}}"
+            (if List.isEmpty options.imports then
+                ""
+
+             else
+                "\n\n" ++ String.join "\n" (List.map CodeGen.Import.toString options.imports)
+            )
+        |> String.replace "{{declarations}}"
+            (if List.isEmpty options.declarations then
+                ""
+
+             else
+                "\n\n\n" ++ String.join "\n\n\n" (List.map CodeGen.Declaration.toString options.declarations)
+            )
