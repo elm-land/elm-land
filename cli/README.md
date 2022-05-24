@@ -19,3 +19,13 @@ Pretty exciting stuff, right?
 All of our tests are intended to make sure what users read in the docs are accurate!
 
 I did my best and you like it.
+
+## Running the tests
+
+```bash
+# Make sure you are in the `cli` folder!
+npm install
+npm link
+npm run setup
+npm run test
+```
