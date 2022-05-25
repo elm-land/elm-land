@@ -64,14 +64,14 @@ let runServer = async (options) => {
 
     let onPageFileChanged = async () => {
       try {
-        let pageRoutePaths = await Files.listElmFilepathsInFolder(srcPagesFolderFilepath).map(filepath => filepath.split('/'))
+        let filepaths = await Files.listElmFilepathsInFolder(srcPagesFolderFilepath).map(filepath => filepath.split('/'))
 
-        let newFiles = await Codegen.generateElmLandFiles({ pageRoutePaths })
+        let newFiles = await Codegen.generateElmLandFiles({ filepaths })
 
         await Files.create(
           newFiles.map(generatedFile => ({
             kind: 'file',
-            name: `.elm-land/src/${generatedFile.path}`,
+            name: `.elm-land/src/${generatedFile.filepath}`,
             content: generatedFile.contents
           }))
         )

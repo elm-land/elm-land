@@ -1,0 +1,31 @@
+{
+  "name": "@elm-land/codegen",
+  "version": "1.0.0",
+  "description": "Generate Elm code with Elm code",
+  "main": "src/Codegen.elm",
+  "scripts": {
+    "start": "npm install && npm run docs",
+    "docs": "elm-doc-preview",
+    "test": "elm-test",
+    "test:watch": "elm-test --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/elm-land/elm-land.git"
+  },
+  "keywords": [
+    "elm",
+    "codegen"
+  ],
+  "author": "Ryan Haskell-Glatz",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/elm-land/elm-land/issues"
+  },
+  "homepage": "https://github.com/elm-land/elm-land#readme",
+  "devDependencies": {
+    "elm": "^0.19.1-5",
+    "elm-doc-preview": "5.0.5",
+    "elm-test": "^0.19.1-revision7"
+  }
+}

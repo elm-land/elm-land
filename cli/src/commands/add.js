@@ -20,15 +20,15 @@ let addNewPage = async ([url]) => {
     return Promise.reject(Utils.notInElmLandProject)
   }
 
-  let routePath = toNewPageModuleNamePieces({ url })
+  let filepath = toNewPageModuleNamePieces({ url })
 
 
   let [generatedFile] = await Codegen.addNewPage({
     url,
-    routePath
+    filepath
   })
 
-  let relativeFilepath = `src/${generatedFile.path}`
+  let relativeFilepath = `src/${generatedFile.filepath}`
 
   let newFile = {
     kind: 'file',
