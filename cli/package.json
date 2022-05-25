@@ -11,7 +11,7 @@
     "setup": "npm run setup:elm-worker",
     "setup:elm-worker": "npm run build:elm-worker",
     "build": "npm run build:elm-worker",
-    "build:elm-worker": "(cd src/codegen && elm make src/Worker.elm --output=../../dist/worker.js)",
+    "build:elm-worker": "(cd src/codegen && elm make src/Worker.elm --output=../../dist/worker.js --optimize)",
     "dev": "npm run dev:elm-worker",
     "dev:elm-worker": "chokidar src/codegen/src -c \"npm run build:elm-worker\"",
     "test": "bats tests/*.bats"

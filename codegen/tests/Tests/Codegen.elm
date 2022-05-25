@@ -468,27 +468,6 @@ suite =
                                               )
                                             ]
                                     }
-
-                                {-
-
-                                   viewPage : Model -> Html Msg
-                                   viewPage model =
-                                       case Route.fromUrl model.url of
-                                           Route.Home_ ->
-                                               Pages.Home_.page
-
-                                           Route.SignIn ->
-                                               Pages.SignIn.page
-
-                                           Route.Settings__Account ->
-                                               Pages.Settings.Account.page
-
-                                           Route.Profile__Username_ params ->
-                                               Pages.Profile.Username_.page params
-
-                                           Route.NotFound_ ->
-                                               Pages.NotFound_.page
-                                -}
                                 , CodeGen.Declaration.function
                                     { name = "viewPage"
                                     , annotation =

@@ -71,7 +71,7 @@ let runServer = async (options) => {
         await Files.create(
           newFiles.map(generatedFile => ({
             kind: 'file',
-            name: `.elm-land/src/${generatedFile.path}`,
+            name: `.elm-land/src/${generatedFile.filepath}`,
             content: generatedFile.contents
           }))
         )

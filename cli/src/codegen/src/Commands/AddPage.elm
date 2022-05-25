@@ -28,13 +28,16 @@ type alias Data =
     }
 
 
-{-| module Pages.SignIn exposing (page)
+{-| 
 
-import Html exposing (Html)
+    module Pages.SignIn exposing (page)
 
-page : Html msg
-page =
-Html.text "/sign-in"
+    import Html exposing (Html)
+
+
+    page : Html msg
+    page =
+        Html.text "/sign-in"
 
 -}
 newPageModule : Data -> CodeGen.Module
@@ -47,7 +50,7 @@ newPageModule { url, filepath } =
                     { name = "page"
                     , annotation =
                         CodeGen.Annotation.function
-                            [ Filepath.toParamsRecord filepath
+                            [ Filepath.toParamsRecordAnnotation filepath
                             , CodeGen.Annotation.type_ "Html msg"
                             ]
                     , arguments = [ CodeGen.Argument.new "params" ]
