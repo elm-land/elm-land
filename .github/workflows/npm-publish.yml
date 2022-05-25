@@ -20,6 +20,7 @@ jobs:
           node-version: 16
       - run: npm install
       - run: npm run setup
+      - run: npm link
       - run: npm test
 
   publish-npm:
