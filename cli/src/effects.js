@@ -1,7 +1,7 @@
 const chokidar = require('chokidar')
 const path = require('path')
 const Vite = require('vite')
-const ElmVitePlugin = require('vite-plugin-elm')
+const ElmVitePlugin = require('./vite-plugin/index.js')
 const { Codegen } = require('./codegen')
 const { Files } = require('./files')
 
@@ -92,10 +92,18 @@ let runServer = async (options) => {
         port: options.port
       },
       plugins: [
+        // {
+        //   enforce: 'pre',
+        //   configureServer(server) {
+        //     setInterval(() => {
+        //       server.ws.send('my:greetings', { msg: 'hello' })
+        //     }, 1000)
+        //   }
+        // },
         ElmVitePlugin.plugin({
           debug: false,
           optimize: false
-        })
+        }),
       ],
       logLevel: 'silent'
     })

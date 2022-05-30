@@ -10,7 +10,6 @@ let toRawJsonString = async (path : string) : Promise<string> => {
     .catch((err : { message: string }) => err.message.slice('Compilation failed\n'.length))
 }
 
-
 export type ElmError
   = CompilerReportError
   | ReportError
@@ -92,6 +91,57 @@ const parse = (rawErrorString: string): ElmError | undefined => {
   } catch (e) {
     console.error(`Failed to decode an Elm error`, rawErrorString)
     return undefined
+  }
+}
+
+
+const toColoredHtmlOutput = (elmError: ElmError, colorMap?: Record<ElmErrorColor, string>): string => {
+  const gap = `<br/>`
+
+  // These can be passed in
+  const colors: Record<ElmErrorColor, string> = {
+    RED: 'red',
+    MAGENTA: 'magenta',
+    YELLOW: 'yellow',
+    GREEN: 'green',
+    CYAN: 'cyan',
+    BLUE: 'blue',
+    BLACK: 'black',
+    WHITE: 'white',
+    ...colorMap
+  }
+
+  const render = (message: ElmErrorMessage[]): string => {
+    const messages = normalizeErrorMessages(message)
+    return messages.map(msg => {
+      const text = msg.string.split('\n')
+      const lines: string[] = text.map(str => {
+        let style: Record<string, string> = {}
+        if (msg.bold) { style['font-weight'] = 'bold' }
+        if (msg.underline) { style['text-decoration'] = 'underline' }
+        if (msg.color) { style['color'] = colors[msg.color.toUpperCase() as ElmErrorColor] }
+        const styleValue = Object.keys(style).map(k => `${k}: ${style[k]}`).join('; ')
+        return `<span style="${styleValue}">${escapeHtml(str)}</span>`
+      })
+      return lines.join(gap)
+    }).join('')
+  }
+
+  let attrs = `style="white-space: pre;"`
+
+  switch (elmError.type) {
+    case 'compile-errors':
+      const lines = elmError.errors.map(error => {
+        return error.problems.map(problem => {
+          return [
+            `<span style="color:cyan">${escapeHtml(header(error, problem))}</span>`,
+            render(problem.message)
+          ].join(gap.repeat(2))
+        }).join(gap.repeat(2))
+      })
+      return `<div ${attrs}>${lines.join(gap.repeat(3))}</div>`
+    case 'error':
+      return `<div ${attrs}>${render(elmError.message)}</div>`
   }
 }
 
@@ -182,6 +232,8 @@ export const toColoredTerminalOutput = (elmError: ElmError): string => {
 
 export default {
   compile,
+  parse,
   toRawJsonString,
-  toColoredTerminalOutput
+  toColoredTerminalOutput,
+  toColoredHtmlOutput
 }
