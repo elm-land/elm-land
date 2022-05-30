@@ -4,14 +4,8 @@ import { Elm } from '../src/Main.elm'
 if (import.meta.hot) {
   class ElmErrorOverlay extends HTMLElement {
     constructor() {
-      super();
-      this.attachShadow({ mode: 'open' });
-    }
-
-    attributeChangedCallback(attrName, oldValue, newValue) {
-      if (oldValue !== newValue) {
-        this[attrName] = this.hasAttribute(attrName);
-      }
+      super()
+      this.attachShadow({ mode: 'open' })
     }
 
     onContentChanged(html) {
@@ -53,10 +47,9 @@ if (import.meta.hot) {
   }
 
   import.meta.hot.on('elm:error', (data) => {
-    import.meta.hot.send('elm:error-confirmation', {})
 
     if (!customElements.get('elm-error-overlay')) {
-      customElements.define('elm-error-overlay', ElmErrorOverlay);
+      customElements.define('elm-error-overlay', ElmErrorOverlay)
     }
 
     let existingOverlay = document.querySelector('elm-error-overlay')

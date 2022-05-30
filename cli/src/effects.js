@@ -95,7 +95,7 @@ let runServer = async (options) => {
         ElmVitePlugin.plugin({
           debug: false,
           optimize: false
-        }),
+        })
       ],
       logLevel: 'silent'
     })
