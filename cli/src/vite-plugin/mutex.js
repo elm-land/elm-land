@@ -20,7 +20,8 @@ const acquireLock = async () => {
   locked = true
 
   return () => {
-    queue.shift()?.()
+    let shifted = queue.shift()
+    if (shifted) { shifted() }
     if (queue.length === 0) {
       locked = false
     }

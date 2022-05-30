@@ -23,8 +23,8 @@ const parseImportId = (id) => {
 
 const plugin = (opts) => {
   const compilableFiles = new Map()
-  const debug = opts?.debug
-  const optimize = opts?.optimize
+  const debug = opts ? opts.debug : undefined
+  const optimize = opts ? opts.optimize : undefined
 
   let lastErrorSent = undefined
   let server = undefined
@@ -77,7 +77,10 @@ const plugin = (opts) => {
             if (moduleId === id) break
             importer = moduleId
           }
-          const resolveAcoompany = async (accompany) => (await this.resolve(accompany, importer))?.id ?? ''
+          const resolveAcoompany = async (accompany) => {
+            let thing = await this.resolve(accompany, importer)
+            return thing && thing.id ? thing.id : ''
+          }
           return Promise.all(withParams.map(resolveAcoompany))
         } else {
           return Promise.resolve([])
