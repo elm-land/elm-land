@@ -102,7 +102,7 @@ const plugin = (opts) => {
           output: '.js',
           optimize: typeof optimize === 'boolean' ? optimize : !debug && isBuild,
           verbose: isBuild,
-          debug: debug ?? !isBuild,
+          debug: typeof debug === 'boolean' ? debug : !isBuild,
           report: 'json'
         })
 
