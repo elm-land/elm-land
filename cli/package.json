@@ -1,6 +1,6 @@
 {
   "name": "elm-land",
-  "version": "0.11.2",
+  "version": "0.12.0",
   "description": "Reliable web apps for everyone",
   "main": "index.js",
   "bin": {
@@ -37,7 +37,8 @@
   "dependencies": {
     "chokidar": "3.5.3",
     "elm": "0.19.1-5",
-    "vite": "2.9.8",
-    "vite-plugin-elm": "2.6.1"
+    "elm-esm": "1.1.4",
+    "node-elm-compiler": "5.0.6",
+    "vite": "2.9.8"
   }
 }
