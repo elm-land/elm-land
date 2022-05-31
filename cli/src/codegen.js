@@ -1,11 +1,11 @@
-let generateElmLandFiles = async ({ filepaths }) => {
+let generateElmLandFiles = async ({ pages, layouts }) => {
   let { Elm } = require('../dist/worker.js')
 
   let newFiles = await new Promise((resolve, reject) => {
     let app = Elm.Worker.init({
       flags: {
         tag: 'generate',
-        data: { filepaths }
+        data: { pages, layouts }
       }
     })
     app.ports.onComplete.subscribe(resolve)

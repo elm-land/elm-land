@@ -9,16 +9,24 @@ import CodeGen.Import
 import CodeGen.Module
 import Filepath exposing (Filepath)
 import Json.Decode
+import PageFile exposing (PageFile)
 
 
 run : Json.Decode.Value -> List CodeGen.Module
 run json =
     case Json.Decode.decodeValue decoder json of
         Ok data ->
-            [ mainElmModule data
-            , routeElmModule data
-            , notFoundModule
-            ]
+            List.concat
+                [ [ mainElmModule data
+                  , routeElmModule data
+                  , notFoundModule
+                  ]
+                , if List.isEmpty data.layouts then
+                    []
+
+                  else
+                    [ elmLandLayoutsElmModule data ]
+                ]
 
         Err _ ->
             []
@@ -37,7 +45,12 @@ mainElmModule data =
                         |> CodeGen.Import.withExposing [ "Html" ]
                   , CodeGen.Import.new [ "Json", "Decode" ]
                   ]
-                , data.filepaths
+                , data.layouts
+                    |> List.map Filepath.toList
+                    |> List.map (\pieces -> "Layouts" :: pieces)
+                    |> List.map CodeGen.Import.new
+                , data.pages
+                    |> List.map PageFile.toFilepath
                     |> List.map Filepath.toList
                     |> List.map (\pieces -> "Pages" :: pieces)
                     |> List.map CodeGen.Import.new
@@ -208,29 +221,54 @@ mainElmModule data =
                 }
             , let
                 toViewBranch :
-                    Filepath
+                    PageFile
                     ->
                         { name : String
                         , arguments : List CodeGen.Argument.Argument
                         , expression : CodeGen.Expression.Expression
                         }
-                toViewBranch filepath =
+                toViewBranch pageFile =
+                    let
+                        filepath : Filepath
+                        filepath =
+                            PageFile.toFilepath pageFile
+
+                        conditionallyWrapInLayout : CodeGen.Expression -> CodeGen.Expression
+                        conditionallyWrapInLayout pageExpression =
+                            case PageFile.toLayoutName pageFile of
+                                Just layoutName ->
+                                    CodeGen.Expression.multilineFunction
+                                        { name = "Layouts." ++ layoutName ++ ".layout"
+                                        , arguments =
+                                            [ CodeGen.Expression.multilineRecord
+                                                [ ( "page", pageExpression )
+                                                ]
+                                            ]
+                                        }
+
+                                Nothing ->
+                                    pageExpression
+                    in
                     if Filepath.hasDynamicParameters filepath then
                         { name = "Route." ++ Filepath.toRouteVariantName filepath
                         , arguments = [ CodeGen.Argument.new "params" ]
                         , expression =
-                            CodeGen.Expression.function
-                                { name = Filepath.toPageModuleName filepath ++ ".page"
-                                , arguments =
-                                    [ CodeGen.Expression.value "params"
-                                    ]
-                                }
+                            conditionallyWrapInLayout
+                                (CodeGen.Expression.function
+                                    { name = Filepath.toPageModuleName filepath ++ ".page"
+                                    , arguments =
+                                        [ CodeGen.Expression.value "params"
+                                        ]
+                                    }
+                                )
                         }
 
                     else
                         { name = "Route." ++ Filepath.toRouteVariantName filepath
                         , arguments = []
-                        , expression = CodeGen.Expression.value (Filepath.toPageModuleName filepath ++ ".page")
+                        , expression =
+                            conditionallyWrapInLayout
+                                (CodeGen.Expression.value (Filepath.toPageModuleName filepath ++ ".page"))
                         }
               in
               CodeGen.Declaration.function
@@ -246,7 +284,7 @@ mainElmModule data =
                         { value = CodeGen.Argument.new "Route.fromUrl model.url"
                         , branches =
                             List.concat
-                                [ data.filepaths
+                                [ data.pages
                                     |> List.map toViewBranch
                                 , [ { name = "Route.NotFound_"
                                     , arguments = []
@@ -276,7 +314,8 @@ routeElmModule data =
                 { name = "Route"
                 , variants =
                     List.concat
-                        [ data.filepaths
+                        [ data.pages
+                            |> List.map PageFile.toFilepath
                             |> List.map Filepath.toRouteVariant
                         , [ ( "NotFound_", [] ) ]
                         ]
@@ -314,11 +353,38 @@ routeElmModule data =
                     CodeGen.Expression.multilineFunction
                         { name = "Url.Parser.oneOf"
                         , arguments =
-                            [ data.filepaths
+                            [ data.pages
+                                |> List.map PageFile.toFilepath
                                 |> List.map Filepath.toUrlParser
                                 |> CodeGen.Expression.multilineList
                             ]
                         }
+                }
+            ]
+        }
+
+
+{-|
+
+    module ElmLand.Layout exposing (Layout(..))
+
+    type Layout
+        = Default
+        | Sidebar
+
+-}
+elmLandLayoutsElmModule : Data -> CodeGen.Module
+elmLandLayoutsElmModule data =
+    CodeGen.Module.new
+        { name = [ "ElmLand", "Layout" ]
+        , exposing_ = [ "Layout(..)" ]
+        , imports = []
+        , declarations =
+            [ CodeGen.Declaration.customType
+                { name = "Layout"
+                , variants =
+                    data.layouts
+                        |> List.map Filepath.toRouteVariant
                 }
             ]
         }
@@ -349,11 +415,13 @@ notFoundModule =
 
 
 type alias Data =
-    { filepaths : List Filepath
+    { pages : List PageFile
+    , layouts : List Filepath
     }
 
 
 decoder : Json.Decode.Decoder Data
 decoder =
-    Json.Decode.map Data
-        (Json.Decode.field "filepaths" (Json.Decode.list Filepath.decoder))
+    Json.Decode.map2 Data
+        (Json.Decode.field "pages" (Json.Decode.list PageFile.decoder))
+        (Json.Decode.field "layouts" (Json.Decode.list Filepath.decoder))
