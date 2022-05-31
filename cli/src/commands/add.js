@@ -3,6 +3,48 @@ const { Utils } = require("./_utils")
 const path = require('path')
 const { Codegen } = require("../codegen")
 
+let addNewLayout = async ([name]) => {
+  if (!name) {
+    return Promise.reject([
+      `🌈 This layout is missing a name...`,
+      '',
+      'Here are some examples:',
+      '1️⃣  elm-land add layout Default',
+      '2️⃣  elm-land add layout Sidebar',
+    ].join('\n'))
+  }
+
+  let inFolderWithElmLandJson =
+    await Files.exists(path.join(process.cwd(), 'elm-land.json'))
+
+  if (!inFolderWithElmLandJson) {
+    return Promise.reject(Utils.notInElmLandProject)
+  }
+
+  let [generatedFile] = await Codegen.addNewLayout({
+    name
+  })
+
+  let relativeFilepath = `src/${generatedFile.filepath}`
+
+  return {
+    message: [
+      `🌈 New layout added!`,
+      '',
+      'You can edit your layout here:',
+      `👉 ./${relativeFilepath}`
+    ].join('\n'),
+    files: [
+      {
+        kind: 'file',
+        name: relativeFilepath,
+        content: generatedFile.contents
+      }
+    ],
+    effects: []
+  }
+}
+
 let addNewPage = async ([url]) => {
   if (!url) {
     return Promise.reject([
@@ -73,7 +115,8 @@ let toNewPageModuleNamePieces = ({ url }) => {
 let run = async ({ arguments }) => {
   let [subCommand, ...otherArgs] = arguments
   let subCommandHandlers = {
-    'page': addNewPage
+    'page': addNewPage,
+    'layout': addNewLayout
   }
 
   let handler = subCommandHandlers[subCommand]
@@ -84,7 +127,8 @@ let run = async ({ arguments }) => {
     return Promise.reject(Utils.didNotRecognizeCommand({
       subCommand,
       subcommandList: [
-        '📄 elm-land add page <url> ...... create a new page'
+        '📄 elm-land add page <url> ...... create a new page',
+        '🪆  elm-land add layout <name> ........... add a new layout'
       ]
     }))
   }

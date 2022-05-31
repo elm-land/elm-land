@@ -11,6 +11,7 @@ let subcommandList = [
   '✨ elm-land init <folder-name> ...... create a new project',
   '🚀 elm-land server ................ run a local dev server',
   '📄 elm-land add page <url> ................ add a new page',
+  '🪆  elm-land add layout <name> ........... add a new layout',
   ''
 ]
 

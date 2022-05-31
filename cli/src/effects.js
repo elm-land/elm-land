@@ -55,18 +55,30 @@ let runServer = async (options) => {
       }
     })
 
-    // Listen for changes to the src/Pages folder
+    // Listen for changes to src/Pages and src/Layouts folders
     let srcPagesFolderFilepath = path.join(process.cwd(), 'src', 'Pages')
-    let srcPagesFolderFileWatcher = chokidar.watch(srcPagesFolderFilepath, {
+    let srcLayoutsFolderFilepath = path.join(process.cwd(), 'src', 'Layouts')
+    let srcPagesAndLayoutsFolderWatcher = chokidar.watch([srcPagesFolderFilepath, srcLayoutsFolderFilepath], {
       ignorePermissionErrors: true,
       ignoreInitial: true
     })
 
     let onPageFileChanged = async () => {
       try {
-        let filepaths = await Files.listElmFilepathsInFolder(srcPagesFolderFilepath).map(filepath => filepath.split('/'))
+        let pageFilepaths = Files.listElmFilepathsInFolder(srcPagesFolderFilepath)
+        let layouts = Files.listElmFilepathsInFolder(srcLayoutsFolderFilepath).map(filepath => filepath.split('/'))
 
-        let newFiles = await Codegen.generateElmLandFiles({ filepaths })
+        let pages =
+          await Promise.all(pageFilepaths.map(async filepath => {
+            let contents = await Files.readFromUserFolder(`src/Pages/${filepath}.elm`)
+
+            return {
+              filepath: filepath.split('/'),
+              contents
+            }
+          }))
+
+        let newFiles = await Codegen.generateElmLandFiles({ pages, layouts })
 
         await Files.create(
           newFiles.map(generatedFile => ({
@@ -80,7 +92,7 @@ let runServer = async (options) => {
         console.error(err)
       }
     }
-    srcPagesFolderFileWatcher.on('all', onPageFileChanged)
+    srcPagesAndLayoutsFolderWatcher.on('all', onPageFileChanged)
     await onPageFileChanged()
 
     // Run the vite server on options.port 

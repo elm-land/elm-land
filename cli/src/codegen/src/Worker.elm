@@ -2,6 +2,7 @@ port module Worker exposing (main)
 
 import CodeGen
 import Commands.AddPage
+import Commands.AddLayout
 import Commands.Generate
 import Json.Decode
 
@@ -27,6 +28,9 @@ main =
 
                     "add-page" ->
                         Commands.AddPage.run flags.data
+
+                    "add-layout" ->
+                        Commands.AddLayout.run flags.data
 
                     _ ->
                         []
