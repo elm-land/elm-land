@@ -45,9 +45,9 @@ new name =
         |> CodeGen.Import.withAlias "Attr"
 
 -}
-withAlias : List String -> Import -> Import
-withAlias exposing_ (Import options) =
-    Import { options | exposing_ = exposing_ }
+withAlias : String -> Import -> Import
+withAlias alias_ (Import options) =
+    Import { options | alias = Just alias_ }
 
 
 {-| Add a list of values or types you'd like this module to expose.
