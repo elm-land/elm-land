@@ -158,6 +158,11 @@ const generateHtml = async (config) => {
       .split('"',).join('&quot')
       .split("'",).join('&#039')
   }
+  
+  const escapeQuotes = (unsafe) => {
+    return unsafe
+      .split('"',).join('\"')
+  }
 
   let toAttributeString = (object) => {
     if (!object || typeof object !== 'object' || Array.isArray(object)) {
@@ -171,9 +176,10 @@ const generateHtml = async (config) => {
     let attributes = []
     for (let key in object) {
       if (typeof object[key] === 'boolean') {
-        attributes.push(escapeHtml(key))
+        attributes.push(
+          (key))
       } else if (typeof object[key] === 'string') {
-        attributes.push(`${escapeHtml(key)}="${escapeHtml(object[key])}"`)
+        attributes.push(`${escapeHtml(key)}="${escapeQuotes(object[key])}"`)
       }
     }
     return ' ' + attributes.join(' ')
