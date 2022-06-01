@@ -144,10 +144,16 @@ let touch = (filepath) => {
 
 // Read all the files in the current folder, recursively
 let listElmFilepathsInFolder = (filepath) => {
-  let fullFilepaths = walk(filepath)
-  let relativeFilepaths = fullFilepaths.map(str => str.slice(filepath.length + 1, -'.elm'.length))
+  let folderExists = fs.existsSync(filepath)
 
-  return relativeFilepaths
+  if (folderExists) {
+    let fullFilepaths = walk(filepath)
+    let relativeFilepaths = fullFilepaths.map(str => str.slice(filepath.length + 1, -'.elm'.length))
+
+    return relativeFilepaths
+  } else {
+    return []
+  }
 }
 
 var walk = function (dir) {

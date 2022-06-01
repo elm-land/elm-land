@@ -63,11 +63,11 @@ load helpers
   expectFileContains "src/Pages/Profile/Username_.elm" "module Pages.Profile.Username_ exposing (page)"
   expectFileContains "src/Pages/Profile/Username_.elm" "page : { username : String } -> Html msg"
 
-  # cd ../..
-  # rm -r tmp
+  cd ../..
+  rm -r tmp
 }
 
 
-# @test "cleanup" {
-#   cleanupTmpFolder
-# }
+@test "cleanup" {
+  cleanupTmpFolder
+}

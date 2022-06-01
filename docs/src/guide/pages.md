@@ -67,9 +67,9 @@ If you have a dev server running (with the `elm-land server` command), you can s
 
 ![Browser window showing the sign in page](./pages/sign-in.png)
 
-## Nested pages
+## Nested routes
 
-For some pages in our app, we might want a URL like `/settings/account` or `/settings/notifications`. In _Elm Land_, we refer to these as __nested pages__. A "nested page" is just a page with more than one slash in the URL:
+For some pages in our app, we might want a URL like `/settings/account` or `/settings/notifications`. In _Elm Land_, we refer to these as __nested routes__. A "nested route" is just a route with more than one slash in the URL:
 
 ```sh
 npx elm-land add page /settings/account
@@ -94,13 +94,13 @@ page =
 
 ![Browser window showing the settings page](./pages/settings.png)
 
-## Dynamic pages
+## Dynamic routes
 
-For pages like our _Profile_ page, we won't know all the usernames up-front. We'll need a way to have a single page that works for _any_ username that might exist.
+For things like our _Profile_ page, we won't know all the usernames up-front. We'll need a way to have a single page that works for _any_ username that might exist.
 
-If we need a page to handle URLs like `/profile/ryan`, `/profile/duncan`, or `/profile/alexa`, we can make a __dynamic page__. 
+If we need a page to handle URLs like `/profile/ryan`, `/profile/duncan`, or `/profile/alexa`, we can make a __dynamic route__. 
 
-A "dynamic page" passes in URL parameters (like username) to your page, so it can handle many different values.
+A "dynamic route" passes in URL parameters (like `username`) to your page, so it can handle many different values.
 
 ```sh
 npx elm-land add page /profile/:username
