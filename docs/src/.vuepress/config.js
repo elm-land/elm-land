@@ -58,6 +58,8 @@ module.exports = {
         children: [
           '/guide/',
           '/guide/pages',
+          '/guide/layouts',
+          '/guide/css',
         ]
       }
     ]
