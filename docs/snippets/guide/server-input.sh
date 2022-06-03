@@ -1,1 +1,0 @@
-npx elm-land server
