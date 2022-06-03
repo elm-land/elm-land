@@ -2,6 +2,7 @@ module CodeGen.Expression exposing
     ( Expression
     , function, multilineFunction
     , value
+    , letIn
     , record, multilineRecord
     , recordUpdate
     , lambda
@@ -19,6 +20,7 @@ module CodeGen.Expression exposing
 @docs Expression
 @docs function, multilineFunction
 @docs value
+@docs letIn
 @docs record, multilineRecord
 @docs recordUpdate
 @docs lambda
@@ -33,6 +35,7 @@ module CodeGen.Expression exposing
 
 -}
 
+import CodeGen.Annotation
 import CodeGen.Argument
 import Util.String
 
@@ -47,6 +50,10 @@ type Expression
     | MultilineFunctionExpression
         { name : String
         , arguments : List Expression
+        }
+    | LetInExpression
+        { let_ : List LetDeclaration
+        , in_ : Expression
         }
     | RecordExpression (List ( String, Expression ))
     | MultilineRecordExpression (List ( String, Expression ))
@@ -140,6 +147,64 @@ multilineFunction options =
 value : String -> Expression
 value name =
     FunctionExpression { name = name, arguments = [] }
+
+
+type alias LetDeclaration =
+    { argument : CodeGen.Argument.Argument
+    , annotation : Maybe CodeGen.Annotation.Annotation
+    , expression : Expression
+    }
+
+
+{-| Create a let-in expression to allow locally scoped values
+
+    {-
+        "Hello!"
+    -}
+    CodeGen.Expression.letIn
+        { let_ = []
+        , in = CodeGen.Expression.string "Hello!"
+        }
+
+    {-
+        let
+            name : String
+            name =
+                "Steve"
+
+        in
+        ("Hello, " ++ name ++ "!")
+    -}
+    CodeGen.Expression.letIn
+        { let_ = [
+            { argument = CodeGen.Argument.new "name"
+            , annotation = CodeGen.Annotation.string
+            , expression =
+                CodeGen.Expression.string "Steve"
+            }
+        ]
+        , in = CodeGen.Expression.parens
+            [ CodeGen.Expression.string "Hello, "
+            , CodeGen.Expreession.operator "++"
+            , CodeGen.Expression.value "name"
+            , CodeGen.Expreession.operator "++"
+            , CodeGen.Expression.string "!"
+            ]
+        }
+
+-}
+letIn :
+    { let_ :
+        List
+            { argument : CodeGen.Argument.Argument
+            , annotation : Maybe CodeGen.Annotation.Annotation
+            , expression : Expression
+            }
+    , in_ : Expression
+    }
+    -> Expression
+letIn options =
+    LetInExpression options
 
 
 {-| Create a record value with a list of fields
@@ -451,6 +516,21 @@ toString expression =
         StringExpression str ->
             Util.String.quote str
 
+        LetInExpression options ->
+            case options.let_ of
+                [] ->
+                    toString options.in_
+
+                _ ->
+                    "let\n{{letExpressions}}\nin\n{{finalExpression}}"
+                        |> String.replace "{{letExpressions}}"
+                            (options.let_
+                                |> List.map fromLetDeclarationToString
+                                |> String.join "\n\n"
+                                |> Util.String.indent 4
+                            )
+                        |> String.replace "{{finalExpression}}" (toString options.in_)
+
         RecordExpression fields ->
             Util.String.toRecord
                 { joinWith = "="
@@ -578,3 +658,26 @@ fromMultilineFunctionExpressionToString options =
                     "\n"
                         ++ (List.map toString args |> String.join "\n" |> Util.String.indent 4)
             )
+
+
+fromLetDeclarationToString : LetDeclaration -> String
+fromLetDeclarationToString declaration =
+    case declaration.annotation of
+        Nothing ->
+            "{{argument}} =\n{{expression}}"
+                |> String.replace "{{argument}}" (CodeGen.Argument.toString declaration.argument)
+                |> String.replace "{{expression}}"
+                    (declaration.expression
+                        |> toString
+                        |> Util.String.indent 4
+                    )
+
+        Just annotation ->
+            "{{argument}} : {{annotation}}\n{{argument}} =\n{{expression}}"
+                |> String.replace "{{argument}}" (CodeGen.Argument.toString declaration.argument)
+                |> String.replace "{{annotation}}" (CodeGen.Annotation.toString annotation)
+                |> String.replace "{{expression}}"
+                    (declaration.expression
+                        |> toString
+                        |> Util.String.indent 4
+                    )
