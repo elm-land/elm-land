@@ -6,7 +6,7 @@ module CodeGen.Expression exposing
     , record, multilineRecord
     , recordUpdate
     , lambda
-    , caseExpression
+    , Branch, caseExpression
     , list, multilineList
     , multilineTuple
     , string
@@ -24,7 +24,7 @@ module CodeGen.Expression exposing
 @docs record, multilineRecord
 @docs recordUpdate
 @docs lambda
-@docs caseExpression
+@docs Branch, caseExpression
 @docs list, multilineList
 @docs multilineTuple
 @docs string
@@ -371,6 +371,37 @@ lambda :
     -> Expression
 lambda options =
     LambdaExpression options
+
+
+{-| Used by `CodeGen.Expression.caseExpression`, helpful for type annotations
+
+    expression : CodeGen.Expression
+    expression =
+        CodeGen.Expression.caseExpression
+            { value = CodeGen.Argument.new "maybeUsername"
+            , branches = branches
+            }
+
+    branches : List CodeGen.Expression.Branch
+    branches =
+        [ { name = "Nothing"
+          , arguments = []
+          , expression = CodeGen.Expression.string "Missing!"
+          }
+        , { name = "Just"
+          , arguments =
+                [ CodeGen.Argument.new "username"
+                ]
+          , expression = CodeGen.Expression.value "username"
+          }
+        ]
+
+-}
+type alias Branch =
+    { name : String
+    , arguments : List CodeGen.Argument.Argument
+    , expression : Expression
+    }
 
 
 {-|

@@ -1,6 +1,7 @@
 module PageFile exposing
     ( PageFile
     , decoder
+    , isElmLandPage
     , toFilepath
     , toLayoutName
     )
@@ -94,3 +95,59 @@ toLayoutName (PageFile { contents }) =
         |> Result.map (Elm.Processing.process Elm.Processing.init)
         |> Result.toMaybe
         |> Maybe.andThen toLayoutNameFromFile
+
+
+isElmLandPage : PageFile -> Bool
+isElmLandPage (PageFile { contents }) =
+    let
+        isElmLandPageFromFile : Elm.Syntax.File.File -> Bool
+        isElmLandPageFromFile file =
+            file.declarations
+                |> List.map Elm.Syntax.Node.value
+                |> List.any isElmLandPageFromDeclaration
+
+        isElmLandPageFromDeclaration : Elm.Syntax.Declaration.Declaration -> Bool
+        isElmLandPageFromDeclaration decl =
+            case decl of
+                Elm.Syntax.Declaration.FunctionDeclaration func ->
+                    isElmLandPageFromFunction func
+
+                _ ->
+                    False
+
+        isElmLandPageFromFunction : Elm.Syntax.Expression.Function -> Bool
+        isElmLandPageFromFunction func =
+            let
+                functionName : String
+                functionName =
+                    func.declaration
+                        |> Elm.Syntax.Node.value
+                        |> .name
+                        |> Elm.Syntax.Node.value
+
+                expression : Elm.Syntax.Expression.Expression
+                expression =
+                    Elm.Syntax.Node.value (Elm.Syntax.Node.value func.declaration).expression
+            in
+            if functionName == "page" then
+                case expression of
+                    Elm.Syntax.Expression.Application (node :: _) ->
+                        case Elm.Syntax.Node.value node of
+                            Elm.Syntax.Expression.FunctionOrValue [ "ElmLand", "Page" ] _ ->
+                                True
+
+                            _ ->
+                                False
+
+                    _ ->
+                        False
+
+            else
+                False
+    in
+    contents
+        |> Elm.Parser.parse
+        |> Result.map (Elm.Processing.process Elm.Processing.init)
+        |> Result.toMaybe
+        |> Maybe.map isElmLandPageFromFile
+        |> Maybe.withDefault False
