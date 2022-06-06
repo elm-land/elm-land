@@ -434,14 +434,16 @@ toViewPageCaseExpression pages =
             { name = "PageModel" ++ Filepath.toRouteVariantName filepath
             , arguments = toPageModelArgs page filepath
             , expression =
-                if Filepath.hasDynamicParameters filepath then
-                    CodeGen.Expression.function
-                        { name = Filepath.toPageModuleName filepath ++ ".page"
-                        , arguments = [ CodeGen.Expression.value "params" ]
-                        }
+                conditionallyWrapInLayout page
+                    (if Filepath.hasDynamicParameters filepath then
+                        CodeGen.Expression.function
+                            { name = Filepath.toPageModuleName filepath ++ ".page"
+                            , arguments = [ CodeGen.Expression.value "params" ]
+                            }
 
-                else
-                    CodeGen.Expression.value (Filepath.toPageModuleName filepath ++ ".page")
+                     else
+                        CodeGen.Expression.value (Filepath.toPageModuleName filepath ++ ".page")
+                    )
             }
     in
     CodeGen.Expression.caseExpression
