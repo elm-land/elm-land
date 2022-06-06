@@ -38,6 +38,10 @@ if (import.meta.hot) {
             border-radius: 0.25rem;
             box-shadow: 0 1rem 1rem rgba(0, 0, 0, 0.125);
             border-top: solid 0.5rem indianred;
+            max-height: calc(100vh - 8rem);
+            overflow: auto;
+            max-width: 100vw;
+            box-sizing: border-box;
           }
         </style>
         <div class="elm-error__background"></div>
