@@ -421,8 +421,7 @@ toViewPageCaseExpression pages =
             , expression =
                 conditionallyWrapInLayout page
                     (toPageModelMapper
-                        { pageModule = Filepath.toPageModuleName filepath
-                        , routeVariant = Filepath.toRouteVariantName filepath
+                        { filepath = filepath
                         , function = "view"
                         , mapper = "Html.map"
                         }
@@ -435,15 +434,7 @@ toViewPageCaseExpression pages =
             , arguments = toPageModelArgs page filepath
             , expression =
                 conditionallyWrapInLayout page
-                    (if Filepath.hasDynamicParameters filepath then
-                        CodeGen.Expression.function
-                            { name = Filepath.toPageModuleName filepath ++ ".page"
-                            , arguments = [ CodeGen.Expression.value "params" ]
-                            }
-
-                     else
-                        CodeGen.Expression.value (Filepath.toPageModuleName filepath ++ ".page")
-                    )
+                    (callPageFunction filepath)
             }
     in
     CodeGen.Expression.caseExpression
@@ -523,7 +514,7 @@ toUpdatePageCaseExpression pages =
                 CodeGen.Expression.multilineFunction
                     { name = "Tuple.mapBoth"
                     , arguments =
-                        [ CodeGen.Expression.value ("PageModel" ++ Filepath.toRouteVariantName filepath)
+                        [ pageModelConstructor filepath
                         , CodeGen.Expression.parens
                             [ CodeGen.Expression.function
                                 { name = "Cmd.map"
@@ -536,7 +527,7 @@ toUpdatePageCaseExpression pages =
                             [ CodeGen.Expression.function
                                 { name = "ElmLand.Page.update"
                                 , arguments =
-                                    [ CodeGen.Expression.value (Filepath.toPageModuleName filepath ++ ".page")
+                                    [ callPageFunction filepath
                                     , CodeGen.Expression.value "pageMsg"
                                     , CodeGen.Expression.value "pageModel"
                                     ]
@@ -594,8 +585,7 @@ toSubscriptionPageCaseExpression pages =
             , arguments = toPageModelArgs page filepath
             , expression =
                 toPageModelMapper
-                    { pageModule = Filepath.toPageModuleName filepath
-                    , routeVariant = Filepath.toRouteVariantName filepath
+                    { filepath = filepath
                     , function = "subscriptions"
                     , mapper = "Sub.map"
                     }
@@ -638,23 +628,12 @@ toInitPageCaseExpression pages =
                 , CodeGen.Expression.value "Cmd.none"
                 ]
 
-        pageModelConstructor : Filepath -> CodeGen.Expression
-        pageModelConstructor filepath =
-            if Filepath.hasDynamicParameters filepath then
-                CodeGen.Expression.function
-                    { name = "PageModel" ++ Filepath.toRouteVariantName filepath
-                    , arguments = [ CodeGen.Expression.value "params" ]
-                    }
-
-            else
-                CodeGen.Expression.value ("PageModel" ++ Filepath.toRouteVariantName filepath)
-
         toBranchExpressionForElmLandPage : Filepath -> CodeGen.Expression
         toBranchExpressionForElmLandPage filepath =
             CodeGen.Expression.multilineFunction
                 { name = "Tuple.mapBoth"
                 , arguments =
-                    [ CodeGen.Expression.parens [ pageModelConstructor filepath ]
+                    [ pageModelConstructor filepath
                     , CodeGen.Expression.parens
                         [ CodeGen.Expression.function
                             { name = "Cmd.map"
@@ -667,8 +646,7 @@ toInitPageCaseExpression pages =
                         [ CodeGen.Expression.function
                             { name = "ElmLand.Page.init"
                             , arguments =
-                                [ CodeGen.Expression.value
-                                    (Filepath.toPageModuleName filepath ++ ".page")
+                                [ callPageFunction filepath
                                 ]
                             }
                         ]
@@ -719,25 +697,64 @@ toInitPageCaseExpression pages =
         }
 
 
+pageModelConstructor : Filepath -> CodeGen.Expression
+pageModelConstructor filepath =
+    if Filepath.hasDynamicParameters filepath then
+        CodeGen.Expression.parens
+            [ CodeGen.Expression.function
+                { name = "PageModel" ++ Filepath.toRouteVariantName filepath
+                , arguments = [ CodeGen.Expression.value "params" ]
+                }
+            ]
+
+    else
+        CodeGen.Expression.value ("PageModel" ++ Filepath.toRouteVariantName filepath)
+
+
+callPageFunction : Filepath -> CodeGen.Expression
+callPageFunction filepath =
+    if Filepath.hasDynamicParameters filepath then
+        CodeGen.Expression.parens
+            [ CodeGen.Expression.value (Filepath.toPageModuleName filepath ++ ".page")
+            , CodeGen.Expression.value "params"
+            ]
+
+    else
+        CodeGen.Expression.value (Filepath.toPageModuleName filepath ++ ".page")
+
+
 toPageModelMapper :
-    { pageModule : String
-    , routeVariant : String
+    { filepath : Filepath
     , function : String
     , mapper : String
     }
     -> CodeGen.Expression
 toPageModelMapper options =
+    let
+        pageModuleName =
+            Filepath.toPageModuleName options.filepath
+
+        routeVariantName =
+            Filepath.toRouteVariantName options.filepath
+    in
     CodeGen.Expression.pipeline
         [ CodeGen.Expression.function
             { name = "ElmLand.Page." ++ options.function
             , arguments =
-                [ CodeGen.Expression.value (options.pageModule ++ ".page")
+                [ if Filepath.hasDynamicParameters options.filepath then
+                    CodeGen.Expression.parens
+                        [ CodeGen.Expression.value (pageModuleName ++ ".page")
+                        , CodeGen.Expression.value "params"
+                        ]
+
+                  else
+                    CodeGen.Expression.value (pageModuleName ++ ".page")
                 , CodeGen.Expression.value "pageModel"
                 ]
             }
         , CodeGen.Expression.function
             { name = options.mapper
-            , arguments = [ CodeGen.Expression.value ("PageMsg" ++ options.routeVariant) ]
+            , arguments = [ CodeGen.Expression.value ("PageMsg" ++ routeVariantName) ]
             }
         , CodeGen.Expression.function
             { name = options.mapper
