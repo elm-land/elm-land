@@ -29,7 +29,7 @@ if (import.meta.hot) {
             position: fixed;
             top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%);
+            transform: translate(calc(-50% + 0.5px), calc(-50% + 0.5px));
             background: linear-gradient(#333, #303030);
             color: white;
             font-weight: 400;
