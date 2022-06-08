@@ -1,8 +1,11 @@
 module Pages.Home_ exposing (page)
 
-import Html exposing (Html)
+import Html
+import View exposing (View)
 
 
-page : Html msg
+page : View msg
 page =
-    Html.text "Hello, world!"
+    { title = "Homepage"
+    , body = [ Html.text "Hello, world!" ]
+    }
