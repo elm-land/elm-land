@@ -75,7 +75,7 @@ If you have a dev server running (with the `elm-land server` command), you can s
 For some pages in our app, we might want a URL like `/settings/account` or `/settings/notifications`. In _Elm Land_, we refer to these as __nested routes__. A "nested route" is just a route with more than one slash in the URL:
 
 ```sh
-npx elm-land add page /settings/account
+npx elm-land add page:static /settings/account
 ```
 
 <code-group>
@@ -109,7 +109,7 @@ If we need a page to handle URLs like `/profile/ryan`, `/profile/duncan`, or `/p
 A "dynamic route" passes in URL parameters (like `username`) to your page, so it can handle many different values.
 
 ```sh
-npx elm-land add page /profile/:username
+npx elm-land add page:static /profile/:username
 ```
 
 ![Browser window showing the profile page](./pages/profile-ryan.png)
