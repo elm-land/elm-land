@@ -45,7 +45,7 @@ let addNewLayout = async ([name]) => {
   }
 }
 
-let addNewPage = async ([url]) => {
+let addNewPage = (kind) => async ([url]) => {
   if (!url) {
     return Promise.reject([
       `🌈 This command is missing a URL...`,
@@ -66,6 +66,7 @@ let addNewPage = async ([url]) => {
 
 
   let [generatedFile] = await Codegen.addNewPage({
+    kind,
     url,
     filepath
   })
@@ -115,7 +116,10 @@ let toNewPageModuleNamePieces = ({ url }) => {
 let run = async ({ arguments }) => {
   let [subCommand, ...otherArgs] = arguments
   let subCommandHandlers = {
-    'page': addNewPage,
+    'page': addNewPage('new'),
+    'page:static': addNewPage('static'),
+    'page:sandbox': addNewPage('sandbox'),
+    'page:element': addNewPage('element'),
     'layout': addNewLayout
   }
 

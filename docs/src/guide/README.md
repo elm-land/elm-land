@@ -10,12 +10,20 @@
 
 You can get started with _Elm Land_ using the official CLI tool available on [NPM](https://npmjs.org/elm-land). Let's start by using the `elm-land init` command to create our first project:
 
-<<< @/snippets/guide/init-input.sh
+```sh
+npx elm-land init hello-world
+```
 
 <code-group>
 <code-block title="Terminal output">
 
-<<< @/snippets/guide/init-output.txt
+```txt
+🌈 New project created in ./hello-world
+
+Here are some next steps:
+📂 cd hello-world
+🚀 npx elm-land server
+```
 
 </code-block>
 </code-group>

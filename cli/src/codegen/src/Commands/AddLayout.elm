@@ -45,12 +45,17 @@ decoder =
 
     import Html exposing (Html)
     import Html.Attributes as Attr
+    import View exposing (View)
 
-    layout : { page : Html msg } -> Html msg
+    layout : { page : View msg } -> View msg
     layout { page } =
-        Html.div
-            [ Attr.class "layout" ]
-            [ page ]
+        { title = page.title
+        , body =
+            [ Html.div
+                [ Attr.class "layout" ]
+                page.body
+            ]
+        }
 
 -}
 newLayoutModule : Data -> CodeGen.Module
@@ -63,6 +68,8 @@ newLayoutModule data =
                 |> CodeGen.Import.withExposing [ "Html" ]
             , CodeGen.Import.new [ "Html", "Attributes" ]
                 |> CodeGen.Import.withAlias "Attr"
+            , CodeGen.Import.new [ "View" ]
+                |> CodeGen.Import.withExposing [ "View" ]
             ]
         , declarations =
             [ CodeGen.Declaration.function
@@ -70,26 +77,31 @@ newLayoutModule data =
                 , annotation =
                     CodeGen.Annotation.function
                         [ CodeGen.Annotation.record
-                            [ ( "page", CodeGen.Annotation.type_ "Html msg" )
+                            [ ( "page", CodeGen.Annotation.type_ "View msg" )
                             ]
-                        , CodeGen.Annotation.type_ "Html msg"
+                        , CodeGen.Annotation.type_ "View msg"
                         ]
                 , arguments = [ CodeGen.Argument.new "{ page }" ]
                 , expression =
-                    CodeGen.Expression.multilineFunction
-                        { name = "Html.div"
-                        , arguments =
-                            [ CodeGen.Expression.list
-                                [ CodeGen.Expression.function
-                                    { name = "Attr.class"
-                                    , arguments = [ CodeGen.Expression.string "layout" ]
+                    CodeGen.Expression.multilineRecord
+                        [ ( "title", CodeGen.Expression.value "page.title" )
+                        , ( "body"
+                          , CodeGen.Expression.list
+                                [ CodeGen.Expression.multilineFunction
+                                    { name = "Html.div"
+                                    , arguments =
+                                        [ CodeGen.Expression.list
+                                            [ CodeGen.Expression.function
+                                                { name = "Attr.class"
+                                                , arguments = [ CodeGen.Expression.string "layout" ]
+                                                }
+                                            ]
+                                        , CodeGen.Expression.value "page.body"
+                                        ]
                                     }
                                 ]
-                            , CodeGen.Expression.list
-                                [ CodeGen.Expression.value "page"
-                                ]
-                            ]
-                        }
+                          )
+                        ]
                 }
             ]
         }

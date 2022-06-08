@@ -52,6 +52,16 @@ let run = async (options = {}) => {
           kind: 'file',
           name: `${name}/.elm-land/src/Main.elm`,
           content: await Files.readFromCliFolder('src/templates/_elm-land/src/Main.elm')
+        },
+        {
+          kind: 'file',
+          name: `${name}/.elm-land/src/View.elm`,
+          content: await Files.readFromCliFolder('src/templates/_elm-land/src/View.elm')
+        },
+        {
+          kind: 'file',
+          name: `${name}/.elm-land/src/ElmLand/Page.elm`,
+          content: await Files.readFromCliFolder('src/templates/_elm-land/src/ElmLand/Page.elm')
         }
       ],
       effects: []

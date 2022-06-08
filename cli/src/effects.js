@@ -101,7 +101,8 @@ let runServer = async (options) => {
       root: path.join(process.cwd(), '.elm-land', 'server'),
       publicDir: path.join(process.cwd(), 'static'),
       server: {
-        port: options.port
+        port: options.port,
+        fs: { allow: ['../..'] }
       },
       plugins: [
         ElmVitePlugin.plugin({
@@ -158,7 +159,7 @@ const generateHtml = async (config) => {
       .split('"',).join('&quot')
       .split("'",).join('&#039')
   }
-  
+
   const escapeQuotes = (unsafe) => {
     return unsafe
       .split('"',).join('\"')

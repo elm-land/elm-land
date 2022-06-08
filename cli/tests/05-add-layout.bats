@@ -24,7 +24,7 @@ load helpers
 
   expectFileExists "src/Layouts/Sidebar.elm"
   expectFileContains "src/Layouts/Sidebar.elm" "module Layouts.Sidebar exposing (layout)"
-  expectFileContains "src/Layouts/Sidebar.elm" "layout : { page : Html msg } -> Html msg"
+  expectFileContains "src/Layouts/Sidebar.elm" "layout : { page : View msg } -> View msg"
 
   cd ../..
   rm -r tmp

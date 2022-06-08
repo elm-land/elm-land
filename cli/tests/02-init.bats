@@ -11,7 +11,6 @@ load helpers
 
 @test "'elm-land init' hello-world creates a new hello-world project" {
 
-  # TODO: Move this into setupSuite
   mkdir -p tests/tmp
   cd tests/tmp
 
@@ -26,8 +25,9 @@ load helpers
   expectFileExists "hello-world/.gitignore"
   expectFileExists "hello-world/src/Pages/Home_.elm"
   expectFileExists "hello-world/.elm-land/src/Main.elm"
+  expectFileExists "hello-world/.elm-land/src/View.elm"
+  expectFileExists "hello-world/.elm-land/src/ElmLand/Page.elm"
 
-  # TODO: Move this into teardownSuite
   cd ..
   rm -r tmp
 }
