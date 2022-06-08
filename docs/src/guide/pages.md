@@ -28,7 +28,7 @@ The easiest way to add pages to your application is with the Elm Land CLI!
 Let's start by adding a new "Sign In" page at `/sign-in`:
 
 ```sh
-npx elm-land add page /sign-in
+npx elm-land add page:static /sign-in
 ```
 
 <code-group>
@@ -52,12 +52,15 @@ Each time you run this command, a new file will be created in the `src/Pages` fo
 ```elm
 module Pages.SignIn exposing (page)
 
-import Html exposing (Html)
+import Html
+import View exposing (View)
 
 
-page : Html msg
+page : View msg
 page =
-    Html.text "/sign-in"
+    { title = "Pages.SignIn"
+    , body = [ Html.text "/sign-in" ]
+    }
 ```
 
 </code-block>
@@ -81,12 +84,15 @@ npx elm-land add page /settings/account
 ```elm
 module Pages.Settings.Account exposing (page)
 
-import Html exposing (Html)
+import Html
+import View exposing (View)
 
 
-page : Html msg
+page : View msg
 page =
-    Html.text "/settings/account"
+    { title = "Pages.Settings.Account"
+    , body = [ Html.text "/settings/account" ]
+    }
 ```
 
 </code-block>
@@ -115,12 +121,15 @@ npx elm-land add page /profile/:username
 ```elm
 module Pages.Profile.Username_ exposing (page)
 
-import Html exposing (Html)
+import Html
+import View exposing (View)
 
 
-page : { username : String } -> Html msg
+page : { username : String } ->  View msg
 page params =
-    Html.text ("/profile/" ++ params.username)
+    { title = "Pages.Profile.Username_"
+    , body = [ Html.text ("/profile/" ++ params.username) ]
+    }
 ```
 
 </code-block>

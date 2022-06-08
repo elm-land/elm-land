@@ -14,14 +14,14 @@ let generateElmLandFiles = async ({ pages, layouts }) => {
   return newFiles
 }
 
-let addNewPage = async ({ url, filepath }) => {
+let addNewPage = async ({ kind, url, filepath }) => {
   let { Elm } = require('../dist/worker.js')
 
   let newFiles = await new Promise((resolve, reject) => {
     let app = Elm.Worker.init({
       flags: {
         tag: 'add-page',
-        data: { filepath, url }
+        data: { kind, filepath, url }
       }
     })
     app.ports.onComplete.subscribe(resolve)

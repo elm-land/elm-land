@@ -12,7 +12,7 @@ module ElmLand.Page exposing
 
 -}
 
-import Html exposing (Html)
+import View exposing (View)
 
 
 type Page model msg
@@ -20,14 +20,14 @@ type Page model msg
         { init : ( model, Cmd msg )
         , update : msg -> model -> ( model, Cmd msg )
         , subscriptions : model -> Sub msg
-        , view : model -> Html msg
+        , view : model -> View msg
         }
 
 
 sandbox :
     { init : model
     , update : msg -> model -> model
-    , view : model -> Html msg
+    , view : model -> View msg
     }
     -> Page model msg
 sandbox options =
@@ -43,7 +43,7 @@ element :
     { init : ( model, Cmd msg )
     , update : msg -> model -> ( model, Cmd msg )
     , subscriptions : model -> Sub msg
-    , view : model -> Html msg
+    , view : model -> View msg
     }
     -> Page model msg
 element options =
@@ -65,7 +65,7 @@ update (Internals page) =
     page.update
 
 
-view : Page model msg -> model -> Html msg
+view : Page model msg -> model -> View msg
 view (Internals page) =
     page.view
 

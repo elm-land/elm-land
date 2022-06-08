@@ -60,6 +60,8 @@ module.exports = {
           '/guide/pages',
           '/guide/layouts',
           '/guide/css',
+          '/guide/state-management',
+          '/guide/data-fetching',
         ]
       }
     ]

@@ -59,6 +59,8 @@ mainElmModule data =
                   , CodeGen.Import.new [ "Route" ]
                   , CodeGen.Import.new [ "Url" ]
                         |> CodeGen.Import.withExposing [ "Url" ]
+                  , CodeGen.Import.new [ "View" ]
+                        |> CodeGen.Import.withExposing [ "View" ]
                   ]
                 ]
         , declarations =
@@ -296,30 +298,7 @@ mainElmModule data =
                         , CodeGen.Annotation.type_ "Browser.Document Msg"
                         ]
                 , arguments = [ CodeGen.Argument.new "model" ]
-                , expression =
-                    CodeGen.Expression.multilineRecord
-                        [ ( "title", CodeGen.Expression.string "App" )
-                        , ( "body"
-                          , CodeGen.Expression.list
-                                [ CodeGen.Expression.function
-                                    { name = "viewPage"
-                                    , arguments =
-                                        [ CodeGen.Expression.value "model"
-                                        ]
-                                    }
-                                ]
-                          )
-                        ]
-                }
-            , CodeGen.Declaration.function
-                { name = "viewPage"
-                , annotation =
-                    CodeGen.Annotation.function
-                        [ CodeGen.Annotation.type_ "Model"
-                        , CodeGen.Annotation.type_ "Html Msg"
-                        ]
-                , arguments = [ CodeGen.Argument.new "model" ]
-                , expression = toViewPageCaseExpression data.pages
+                , expression = toViewCaseExpression data.pages
                 }
             ]
         }
@@ -382,8 +361,8 @@ toPageModelCustomType pages =
         ]
 
 
-toViewPageCaseExpression : List PageFile -> CodeGen.Expression
-toViewPageCaseExpression pages =
+toViewCaseExpression : List PageFile -> CodeGen.Expression
+toViewCaseExpression pages =
     let
         conditionallyWrapInLayout : PageFile -> CodeGen.Expression -> CodeGen.Expression
         conditionallyWrapInLayout page pageExpression =
@@ -423,7 +402,7 @@ toViewPageCaseExpression pages =
                     (toPageModelMapper
                         { filepath = filepath
                         , function = "view"
-                        , mapper = "Html.map"
+                        , mapper = "View.map"
                         }
                     )
             }
@@ -863,17 +842,26 @@ notFoundModule =
         , imports =
             [ CodeGen.Import.new [ "Html" ]
                 |> CodeGen.Import.withExposing [ "Html" ]
+            , CodeGen.Import.new [ "View" ]
+                |> CodeGen.Import.withExposing [ "View" ]
             ]
         , declarations =
             [ CodeGen.Declaration.function
                 { name = "page"
                 , arguments = []
-                , annotation = CodeGen.Annotation.type_ "Html msg"
+                , annotation = CodeGen.Annotation.type_ "View msg"
                 , expression =
-                    CodeGen.Expression.function
-                        { name = "Html.text"
-                        , arguments = [ CodeGen.Expression.string "Page not found..." ]
-                        }
+                    CodeGen.Expression.multilineRecord
+                        [ ( "title", CodeGen.Expression.string "404" )
+                        , ( "body"
+                          , CodeGen.Expression.list
+                                [ CodeGen.Expression.function
+                                    { name = "Html.text"
+                                    , arguments = [ CodeGen.Expression.string "Page not found..." ]
+                                    }
+                                ]
+                          )
+                        ]
                 }
             ]
         }

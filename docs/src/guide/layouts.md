@@ -34,13 +34,18 @@ module Layouts.Sidebar exposing (layout)
 
 import Html exposing (Html)
 import Html.Attributes as Attr
+import View exposing (View)
 
 
-layout : { page : Html msg } -> Html msg
+layout : { page : View msg } -> View msg
 layout { page } =
-    Html.div
-        [ Attr.class "layout" ]
-        [ page ]
+    { title = page.title
+    , body = 
+        [ Html.div
+            [ Attr.class "layout" ]
+            page.body
+        ]
+    }
 ```
 
 </code-block>
@@ -55,20 +60,25 @@ Let's add in a bit of HTML to our new layout, so that we render a sidebar next t
 <code-group>
 <code-block title="src/Layouts/Sidebar.elm">
 
-```elm{11,16-22}
+```elm{14,21-27}
 module Layouts.Sidebar exposing (layout)
 
 import Html exposing (Html)
 import Html.Attributes as Attr
+import View exposing (View)
 
 
-layout : { page : Html msg } -> Html msg
+layout : { page : View msg } -> View msg
 layout { page } =
-    Html.div
-        [ Attr.class "layout" ]
-        [ viewSidebar
-        , page
+    { title = page.title
+    , body = 
+        [ Html.div
+            [ Attr.class "layout" ]
+            [ viewSidebar
+            , page
+            ]
         ]
+    }
 
 
 viewSidebar : Html msg
@@ -93,11 +103,12 @@ We tell Elm Land which layout we'd like to use by defining a `layout` function w
 <code-group>
 <code-block title="src/Pages/Home_.elm">
 
-```elm{4,7-9}
+```elm{3,8-10}
 module Pages.Home_ exposing (page)
 
-import Html exposing (Html)
 import ElmLand.Layout exposing (Layout)
+import Html exposing (Html)
+import View exposing (View)
 
 
 layout : Layout
@@ -105,9 +116,11 @@ layout =
     ElmLand.Layout.Sidebar
 
 
-page : Html msg
+page : View msg
 page =
-    Html.text "Hello, world!"
+    { title = "Homepage"
+    , body = [ Html.text "Hello, world!" ]
+    }
 ```
 
 </code-block>
@@ -125,11 +138,12 @@ Let's do the same thing on our `Profile` and `Settings` pages, so that as we use
 <code-group>
 <code-block title="src/Pages/Profile/Username_.elm">
 
-```elm{4,7-9}
+```elm{3,8-10}
 module Pages.Profile.Username_ exposing (page)
 
-import Html exposing (Html)
 import ElmLand.Layout exposing (Layout)
+import Html exposing (Html)
+import View exposing (View)
 
 
 layout : Layout
@@ -137,19 +151,22 @@ layout =
     ElmLand.Layout.Sidebar
 
 
-page : { username : String } -> Html msg
-page params =
-    Html.text ("/profile/" ++ params.username)
+page : View msg
+page =
+    { title = "Page.Profile.Username_"
+    , body = [ Html.text ("/profile/" ++ params.username) ]
+    }
 ```
 
 </code-block>
 <code-block title="src/Pages/Settings/Account.elm">
 
-```elm{4,7-9}
+```elm{3,8-10}
 module Pages.Settings.Account exposing (page)
 
-import Html exposing (Html)
 import ElmLand.Layout exposing (Layout)
+import Html exposing (Html)
+import View exposing (View)
 
 
 layout : Layout
@@ -157,9 +174,11 @@ layout =
     ElmLand.Layout.Sidebar
 
 
-page : Html msg
+page : View msg
 page =
-    Html.text "/settings/account"
+    { title = "Page.Settings.Account"
+    , body = [ Html.text "/settings/account" ]
+    }
 ```
 
 </code-block>
