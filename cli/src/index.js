@@ -8,9 +8,13 @@ let main = async () => {
     let output = await Cli.run(process.argv)
 
     await Files.create(output.files)
-    await Effects.run(output.effects)
+    let data = await Effects.run(output.effects)
 
-    console.log(output.message)
+    if (typeof output.message === 'string') {
+      console.log(output.message)
+    } else {
+      console.log(output.message(data))
+    }
   } catch (err) {
     console.error(err)
     process.exit(1)
