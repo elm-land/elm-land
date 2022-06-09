@@ -60,7 +60,7 @@ Let's add in a bit of HTML to our new layout, so that we render a sidebar next t
 <code-group>
 <code-block title="src/Layouts/Sidebar.elm">
 
-```elm{14,21-27}
+```elm{14-15,21-27}
 module Layouts.Sidebar exposing (layout)
 
 import Html exposing (Html)
@@ -75,7 +75,7 @@ layout { page } =
         [ Html.div
             [ Attr.class "layout" ]
             [ viewSidebar
-            , page
+            , Html.div [ Attr.class "page" ] page.body
             ]
         ]
     }
