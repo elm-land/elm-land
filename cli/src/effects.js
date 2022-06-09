@@ -5,6 +5,10 @@ const ElmVitePlugin = require('./vite-plugin/index.js')
 const { Codegen } = require('./codegen')
 const { Files } = require('./files')
 
+
+let srcPagesFolderFilepath = path.join(process.cwd(), 'src', 'Pages')
+let srcLayoutsFolderFilepath = path.join(process.cwd(), 'src', 'Layouts')
+
 let runServer = async (options) => {
   try {
     // Check if `.elm-land` folder exists
@@ -42,58 +46,26 @@ let runServer = async (options) => {
     })
 
     configFileWatcher.on('change', async () => {
-      let config = {}
 
       try {
         let rawConfig = await Files.readFromUserFolder('elm-land.json')
-        config = JSON.parse(rawConfig)
+        let config = JSON.parse(rawConfig)
+        let result = await generateHtml(config)
+        if (result.problem) {
+          console.info(result.problem)
+        }
       } catch (_) { }
 
-      let result = await generateHtml(config)
-      if (result.problem) {
-        console.info(result.problem)
-      }
     })
 
     // Listen for changes to src/Pages and src/Layouts folders
-    let srcPagesFolderFilepath = path.join(process.cwd(), 'src', 'Pages')
-    let srcLayoutsFolderFilepath = path.join(process.cwd(), 'src', 'Layouts')
     let srcPagesAndLayoutsFolderWatcher = chokidar.watch([srcPagesFolderFilepath, srcLayoutsFolderFilepath], {
       ignorePermissionErrors: true,
       ignoreInitial: true
     })
 
-    let onPageFileChanged = async () => {
-      try {
-        let pageFilepaths = Files.listElmFilepathsInFolder(srcPagesFolderFilepath)
-        let layouts = Files.listElmFilepathsInFolder(srcLayoutsFolderFilepath).map(filepath => filepath.split('/'))
-
-        let pages =
-          await Promise.all(pageFilepaths.map(async filepath => {
-            let contents = await Files.readFromUserFolder(`src/Pages/${filepath}.elm`)
-
-            return {
-              filepath: filepath.split('/'),
-              contents
-            }
-          }))
-
-        let newFiles = await Codegen.generateElmLandFiles({ pages, layouts })
-
-        await Files.create(
-          newFiles.map(generatedFile => ({
-            kind: 'file',
-            name: `.elm-land/src/${generatedFile.filepath}`,
-            content: generatedFile.contents
-          }))
-        )
-
-      } catch (err) {
-        console.error(err)
-      }
-    }
-    srcPagesAndLayoutsFolderWatcher.on('all', onPageFileChanged)
-    await onPageFileChanged()
+    srcPagesAndLayoutsFolderWatcher.on('all', generateElmFiles)
+    await generateElmFiles()
 
     // Run the vite server on options.port 
     const server = await Vite.createServer({
@@ -113,15 +85,47 @@ let runServer = async (options) => {
       logLevel: 'silent'
     })
 
+
+
     await server.listen()
 
-    return { problem: null }
+    return { problem: null, port: server.httpServer.address().port }
   } catch (e) {
     console.error(e)
     console.log('')
     return { problem: `❗️ Had trouble starting the server...` }
   }
 
+}
+
+let generateElmFiles = async () => {
+  try {
+    let pageFilepaths = Files.listElmFilepathsInFolder(srcPagesFolderFilepath)
+    let layouts = Files.listElmFilepathsInFolder(srcLayoutsFolderFilepath).map(filepath => filepath.split('/'))
+
+    let pages =
+      await Promise.all(pageFilepaths.map(async filepath => {
+        let contents = await Files.readFromUserFolder(`src/Pages/${filepath}.elm`)
+
+        return {
+          filepath: filepath.split('/'),
+          contents
+        }
+      }))
+
+    let newFiles = await Codegen.generateElmLandFiles({ pages, layouts })
+
+    await Files.create(
+      newFiles.map(generatedFile => ({
+        kind: 'file',
+        name: `.elm-land/src/${generatedFile.filepath}`,
+        content: generatedFile.contents
+      }))
+    )
+
+  } catch (err) {
+    console.error(err)
+  }
 }
 
 let attemptToLoadEnvVariablesFromUserConfig = () => {
@@ -147,6 +151,42 @@ const attempt = (fn) => {
   }
 }
 
+const build = async (config) => {
+  // Make sure initial files are up-to-date
+  await Files.copyPaste({
+    source: path.join(__dirname, 'templates', '_elm-land', 'server'),
+    destination: path.join(process.cwd(), '.elm-land'),
+  })
+  await Files.copyPaste({
+    source: path.join(__dirname, 'templates', '_elm-land', 'src'),
+    destination: path.join(process.cwd(), '.elm-land'),
+  })
+
+  // Load ENV variables
+  attemptToLoadEnvVariablesFromUserConfig()
+
+  // Generate Elm files
+  await generateElmFiles()
+
+  // Build app in dist folder 
+  await Vite.build({
+    configFile: false,
+    root: path.join(process.cwd(), '.elm-land', 'server'),
+    publicDir: path.join(process.cwd(), 'static'),
+    build: {
+      outDir: '../../dist'
+    },
+    plugins: [
+      ElmVitePlugin.plugin({
+        debug: false,
+        optimize: true
+      })
+    ],
+    logLevel: 'silent'
+  })
+
+  return { problem: null }
+}
 
 // Generating index.html from elm-land.json file
 const generateHtml = async (config) => {
@@ -241,14 +281,20 @@ const generateHtml = async (config) => {
 let run = async (effects) => {
   // 1. Perform all effects, one at a time
   let results = []
+  let port = process.env.PORT || 1234
 
   for (let effect of effects) {
     switch (effect.kind) {
       case 'runServer':
-        results.push(await runServer(effect.options))
+        let result = await runServer(effect.options)
+        port = result.port
+        results.push(result)
         break
       case 'generateHtml':
         results.push(await generateHtml(effect.config))
+        break
+      case 'build':
+        results.push(await build(effect.config))
         break
       default:
         results.push({ problem: `❗️ Unrecognized effect: ${effect.kind}` })
@@ -264,7 +310,7 @@ let run = async (effects) => {
   }
 
   // 3. If there weren't any problems, great!
-  return { problem: null }
+  return { problem: null, port }
 }
 
 module.exports = {

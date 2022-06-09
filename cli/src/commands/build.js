@@ -18,17 +18,17 @@ let run = async () => {
   }
 
   return {
-    message: ({ port }) => `🌈 Server ready at http://localhost:${port}`,
+    message: `🌈 Build was successful!`,
     files: [],
     effects: [
       { kind: 'generateHtml', config },
-      { kind: 'runServer', options: { port: 1234 } }
+      { kind: 'build', config }
     ]
   }
 }
 
 module.exports = {
-  Server: {
+  Build: {
     run
   }
 }

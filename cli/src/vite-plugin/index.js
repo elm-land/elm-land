@@ -4,6 +4,7 @@ const { relative } = require('path')
 const { injectHMR } = require('./hmrInjector')
 const { acquireLock } = require('./mutex')
 const { default: ElmErrorJson } = require('./elm-error-json.js')
+const terser = require('terser')
 
 const trimDebugMessage = (code) => code.replace(/(console\.warn\('Compiled in DEBUG mode)/, '// $1')
 const viteProjectPath = (dependency) => `/${relative(process.cwd(), dependency)}`
@@ -101,7 +102,7 @@ const plugin = (opts) => {
         const compiled = await compiler.compileToString(targets, {
           output: '.js',
           optimize: typeof optimize === 'boolean' ? optimize : !debug && isBuild,
-          verbose: isBuild,
+          verbose: false,
           debug: typeof debug === 'boolean' ? debug : !isBuild,
           report: 'json'
         })
@@ -114,11 +115,29 @@ const plugin = (opts) => {
         }
 
         lastErrorSent = null
-        server.ws.send('elm:success', { msg: 'Success!' })
+        if (server) {
+          server.ws.send('elm:success', { msg: 'Success!' })
+        }
 
-        return {
-          code: isBuild ? esm : trimDebugMessage(injectHMR(esm, dependencies.map(viteProjectPath))),
-          map: null,
+        let minify = async (unminifiedJs) => {
+          // --compress 'pure_funcs="F2,F3,F4,F5,F6,F7,F8,F9,A2,A3,A4,A5,A6,A7,A8,A9",pure_getters,keep_fargs=false,unsafe_comps,unsafe' })
+          const { code: step1 } = await terser.minify(unminifiedJs, { compress: { pure_funcs: 'F2,F3,F4,F5,F6,F7,F8,F9,A2,A3,A4,A5,A6,A7,A8,A9'.split(','), pure_getters: true, keep_fargs: false, unsafe_comps: true, unsafe: true } })
+          // --mangle
+          const { code: step2 } = await terser.minify(step1, { mangle: true })
+          return step2
+        }
+
+        if (isBuild) {
+          let code = await minify(esm)
+          return {
+            code,
+            map: null
+          }
+        } else {
+          return {
+            code: trimDebugMessage(injectHMR(esm, dependencies.map(viteProjectPath))),
+            map: null,
+          }
         }
       } catch (e) {
         if (e instanceof Error && e.message.includes('-- NO MAIN')) {
@@ -128,14 +147,22 @@ const plugin = (opts) => {
           throw message
         } else {
           if (isBuild) {
-            throw e
+            try {
+              let output = ElmErrorJson.parse(e.message)
+              console.error(`❗️ Elm Land build failed:`)
+              console.error('')
+              console.error(ElmErrorJson.toColoredTerminalOutput(output))
+              console.error('')
+              return process.exit(1)
+            } catch (e) {
+              throw e
+            }
           } else {
             let elmError = ElmErrorJson.parse(e.message)
             lastErrorSent = elmError
             server.ws.send('elm:error', {
               error: ElmErrorJson.toColoredHtmlOutput(elmError)
             })
-
 
             return {
               code: `export const Elm = new Proxy({}, () => ({ init: () => {} }))`,
