@@ -98,19 +98,14 @@ const plugin = (opts) => {
 
       const releaseLock = await acquireLock()
       const isBuild = process.env.NODE_ENV === 'production'
-      let log = console.log
       try {
-        if (isBuild) {
-          console.log = () => undefined
-        }
         const compiled = await compiler.compileToString(targets, {
           output: '.js',
           optimize: typeof optimize === 'boolean' ? optimize : !debug && isBuild,
-          verbose: isBuild,
+          verbose: false,
           debug: typeof debug === 'boolean' ? debug : !isBuild,
           report: 'json'
         })
-        console.log = log
 
         const esm = toESModule(compiled)
 
@@ -145,7 +140,6 @@ const plugin = (opts) => {
           }
         }
       } catch (e) {
-        console.log = log
         if (e instanceof Error && e.message.includes('-- NO MAIN')) {
           const message = `${viteProjectPath(
             pathname,
