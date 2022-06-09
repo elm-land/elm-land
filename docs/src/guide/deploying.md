@@ -5,7 +5,7 @@
 When you are ready to publish your Elm Land app, you can use the `elm-land build` command. The build command will handle building, optimizing, and minifying your app for production.
 
 ```sh
-elm-land build
+npx elm-land build
 ```
 
 <code-group>
