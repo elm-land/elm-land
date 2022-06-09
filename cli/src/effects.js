@@ -157,6 +157,10 @@ const build = async (config) => {
     source: path.join(__dirname, 'templates', '_elm-land', 'server'),
     destination: path.join(process.cwd(), '.elm-land'),
   })
+  await Files.copyPaste({
+    source: path.join(__dirname, 'templates', '_elm-land', 'src'),
+    destination: path.join(process.cwd(), '.elm-land'),
+  })
 
   // Load ENV variables
   attemptToLoadEnvVariablesFromUserConfig()
