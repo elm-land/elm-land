@@ -58,9 +58,9 @@ Each time we modify something in `elm-land.json`, the HTML entrypoint of our app
 </code-block>
 </code-group>
 
-If we want to add a new CSS stylesheet, we'll need to update the `app.html.list` property, like we would in HTML.
+If we want to add a new CSS stylesheet, we'll need to update the `app.html.link` property, like we would in HTML.
 
-As soon as we do that, you'll see a new `<link>` tag in the generated HTML file rendered at [http://localhost:1234]()
+As soon as we do that, you'll see a new `<link>` tag in the generated HTML file rendered at [http://localhost:1234](http://localhost:1234)
 
 <code-group>
 <code-block title="elm-land.json">
