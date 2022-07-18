@@ -1,27 +1,39 @@
 module ElmLand.Page exposing
-    ( Page
+    ( Page, new
     , sandbox, element
     , init, update, view, subscriptions
     )
 
 {-|
 
-@docs Page
+@docs Page, new
 @docs sandbox, element
 @docs init, update, view, subscriptions
 
 -}
 
+import Effect exposing (Effect)
 import View exposing (View)
 
 
 type Page model msg
     = Internals
-        { init : ( model, Cmd msg )
-        , update : msg -> model -> ( model, Cmd msg )
+        { init : () -> ( model, Effect msg )
+        , update : msg -> model -> ( model, Effect msg )
         , subscriptions : model -> Sub msg
         , view : model -> View msg
         }
+
+
+new : 
+    { init : () -> ( model, Effect msg )
+    , update : msg -> model -> ( model, Effect msg )
+    , subscriptions : model -> Sub msg
+    , view : model -> View msg
+    }
+    -> Page model msg
+new options =
+    Internals options
 
 
 sandbox :
@@ -32,8 +44,8 @@ sandbox :
     -> Page model msg
 sandbox options =
     Internals
-        { init = ( options.init, Cmd.none )
-        , update = \msg model -> ( options.update msg model, Cmd.none )
+        { init = \_ -> ( options.init, Effect.none )
+        , update = \msg model -> ( options.update msg model, Effect.none )
         , subscriptions = \model -> Sub.none
         , view = options.view
         }
@@ -48,19 +60,25 @@ element :
     -> Page model msg
 element options =
     Internals
-        { init = options.init
-        , update = options.update
+        { init =
+            \_ ->
+                options.init
+                    |> Tuple.mapSecond Effect.fromCmd
+        , update =
+            \msg model ->
+                options.update msg model
+                    |> Tuple.mapSecond Effect.fromCmd
         , subscriptions = options.subscriptions
         , view = options.view
         }
 
 
-init : Page model msg -> ( model, Cmd msg )
+init : Page model msg -> () -> ( model, Effect msg )
 init (Internals page) =
     page.init
 
 
-update : Page model msg -> msg -> model -> ( model, Cmd msg )
+update : Page model msg -> msg -> model -> ( model, Effect msg )
 update (Internals page) =
     page.update
 

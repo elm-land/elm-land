@@ -2,7 +2,7 @@ module CodeGen.Annotation exposing
     ( Annotation
     , string
     , record, multilineRecord
-    , function, type_
+    , function, type_, genericType
     , toString
     )
 
@@ -11,7 +11,7 @@ module CodeGen.Annotation exposing
 @docs Annotation
 @docs string
 @docs record, multilineRecord
-@docs function, type_
+@docs function, type_, genericType
 
 @docs toString
 
@@ -24,6 +24,7 @@ import Util.String
 -}
 type Annotation
     = TypeAnnotation String
+    | GenericTypeAnnotation String (List Annotation)
     | FunctionAnnotation (List Annotation)
     | RecordAnnotation (List ( String, Annotation ))
     | MultilineRecordAnnotation (List ( String, Annotation ))
@@ -44,6 +45,29 @@ type Annotation
 type_ : String -> Annotation
 type_ str =
     TypeAnnotation str
+
+
+{-| A type alias, custom type, or a type from another module.
+
+    -- Person
+    CodeGen.Annotation.genericType "Person" []
+
+    -- Html msg
+    CodeGen.Annotation.genericType "Html"
+        [ CodeGen.Annotation.type_ "msg"
+        ]
+
+    -- Request { username : String }
+    CodeGen.Annotation.genericType "Request"
+        [ CodeGen.Annotation.record
+            [ ( "username", CodeGen.Annotation.string )
+            ]
+        ]
+
+-}
+genericType : String -> List Annotation -> Annotation
+genericType str annotations =
+    GenericTypeAnnotation str annotations
 
 
 {-| A function annotation, where each piece is joined together by the `->` symbol
@@ -136,6 +160,9 @@ toString annotation =
     case annotation of
         TypeAnnotation str ->
             str
+
+        GenericTypeAnnotation str annotations ->
+            str ++ " " ++ String.join " " (List.map toString annotations)
 
         FunctionAnnotation annotations ->
             String.join " -> " (List.map toString annotations)
