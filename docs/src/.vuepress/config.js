@@ -62,6 +62,8 @@ module.exports = {
           '/guide/css',
           '/guide/state-management',
           '/guide/data-fetching',
+          '/guide/shared-state',
+          '/guide/urls-and-requests',
           '/guide/deploying',
         ]
       }
