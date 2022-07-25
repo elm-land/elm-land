@@ -97,6 +97,9 @@ body, .navbar, .navbar .links.links, .sidebar, .theme-container
     background: white
   li
     margin-bottom: 0.75rem
+  ul
+    margin-top: 1rem
+    margin-bottom: 1rem
   strong
     font-weight: 700
 
@@ -118,6 +121,19 @@ body, .navbar, .navbar .links.links, .sidebar, .theme-container
   .theme-code-group__nav-tab.theme-code-group__nav-tab-active
     border-color: #42b983;
     color: #fff;
+
+  .theme-code-group__li:nth-child(1):not(:last-child) .theme-code-group__nav-tab::before
+    content: '1️⃣';
+  .theme-code-group__li:nth-child(2) .theme-code-group__nav-tab::before
+    content: '2️⃣';
+  .theme-code-group__li:nth-child(3) .theme-code-group__nav-tab::before
+    content: '3️⃣';
+  .theme-code-group__li:nth-child(4) .theme-code-group__nav-tab::before
+    content: '4️⃣';
+  .theme-code-group__li:nth-child(5) .theme-code-group__nav-tab::before
+    content: '5️⃣';
+  .theme-code-group__li:nth-child(6) .theme-code-group__nav-tab::before
+    content: '6️⃣';
 
   .theme-code-block pre
     margin-top: 1px
