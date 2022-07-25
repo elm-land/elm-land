@@ -11,7 +11,8 @@ module Shared exposing
 @docs init, update, subscriptions
 
 -}
-import ElmLand.Request exposing (Request)
+
+import Route exposing (Route)
 
 
 
@@ -26,22 +27,20 @@ type alias Model =
     {}
 
 
-init : Flags -> Request () -> ( Model, Cmd Msg )
+init : Flags -> Route () -> ( Model, Cmd Msg )
 init flags req =
-    ( {}
-    , Cmd.none
-    )
+    ( {}, Cmd.none )
 
 
 
 -- UPDATE
 
 
-type Msg 
+type Msg
     = ExampleMsgReplaceMe
 
 
-update : Request () -> Msg -> Model -> ( Model, Cmd Msg )
+update : Route () -> Msg -> Model -> ( Model, Cmd Msg )
 update req msg model =
     case msg of
         ExampleMsgReplaceMe ->
@@ -52,6 +51,6 @@ update req msg model =
 -- SUBSCRIPTIONS
 
 
-subscriptions : Request () -> Model -> Sub Msg
+subscriptions : Route () -> Model -> Sub Msg
 subscriptions req model =
     Sub.none

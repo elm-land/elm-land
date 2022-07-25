@@ -1,22 +1,35 @@
 module Effect exposing
     ( Effect, none, map, batch
-    , fromCmd, fromShared
+    , fromCmd, fromSharedMsg
+    , pushRoute, replaceRoute, loadExternalUrl
     , toCmd
     )
 
 {-|
+
 @docs Effect, none, map, batch
-@docs fromCmd, fromShared
+@docs fromCmd, fromSharedMsg
+@docs pushRoute, replaceRoute, loadExternalUrl
 @docs toCmd
+
 -}
 
+import Browser.Navigation
+import Dict exposing (Dict)
+import Route exposing (Route)
+import Route.Path
+import Route.Query
 import Shared
 import Task
+import Url exposing (Url)
 
 
 type Effect msg
     = None
     | Cmd (Cmd msg)
+    | PushUrl String
+    | ReplaceUrl String
+    | LoadExternalUrl String
     | Shared Shared.Msg
     | Batch (List (Effect msg))
 
@@ -35,6 +48,15 @@ map fn effect =
         Cmd cmd ->
             Cmd (Cmd.map fn cmd)
 
+        PushUrl url ->
+            PushUrl url
+
+        ReplaceUrl url ->
+            ReplaceUrl url
+
+        LoadExternalUrl url ->
+            LoadExternalUrl url
+
         Shared msg ->
             Shared msg
 
@@ -47,9 +69,24 @@ fromCmd =
     Cmd
 
 
-fromShared : Shared.Msg -> Effect msg
-fromShared =
+fromSharedMsg : Shared.Msg -> Effect msg
+fromSharedMsg =
     Shared
+
+
+pushRoute : { path : Route.Path.Path, query : Dict String String, hash : Maybe String } -> Effect msg
+pushRoute route =
+    PushUrl (Route.toString route)
+
+
+replaceRoute : { path : Route.Path.Path, query : Dict String String, hash : Maybe String } -> Effect msg
+replaceRoute route =
+    ReplaceUrl (Route.toString route)
+
+
+loadExternalUrl : String -> Effect msg
+loadExternalUrl =
+    LoadExternalUrl
 
 
 batch : List (Effect msg) -> Effect msg
@@ -61,7 +98,13 @@ batch =
 -- Used by Main.elm
 
 
-toCmd : { fromSharedMsg : Shared.Msg -> mainMsg, fromPageMsg : msg -> mainMsg } -> Effect msg -> Cmd mainMsg
+toCmd :
+    { key : Browser.Navigation.Key
+    , fromSharedMsg : Shared.Msg -> mainMsg
+    , fromPageMsg : msg -> mainMsg
+    }
+    -> Effect msg
+    -> Cmd mainMsg
 toCmd options effect =
     case effect of
         None ->
@@ -69,6 +112,15 @@ toCmd options effect =
 
         Cmd cmd ->
             Cmd.map options.fromPageMsg cmd
+
+        PushUrl url ->
+            Browser.Navigation.pushUrl options.key url
+
+        ReplaceUrl url ->
+            Browser.Navigation.replaceUrl options.key url
+
+        LoadExternalUrl url ->
+            Browser.Navigation.load url
 
         Shared msg ->
             Task.succeed msg

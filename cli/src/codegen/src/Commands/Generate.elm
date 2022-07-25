@@ -7,6 +7,7 @@ import CodeGen.Declaration
 import CodeGen.Expression
 import CodeGen.Import
 import CodeGen.Module
+import Extras.String
 import Filepath exposing (Filepath)
 import Json.Decode
 import PageFile exposing (PageFile)
@@ -18,7 +19,7 @@ run json =
         Ok data ->
             List.concat
                 [ [ mainElmModule data
-                  , routeElmModule data
+                  , routePathElmModule data
                   , notFoundModule
                   ]
                 , if List.isEmpty data.layouts then
@@ -44,7 +45,6 @@ mainElmModule data =
                   , CodeGen.Import.new [ "Effect" ]
                         |> CodeGen.Import.withExposing [ "Effect" ]
                   , CodeGen.Import.new [ "ElmLand", "Page" ]
-                  , CodeGen.Import.new [ "ElmLand", "Request" ]
                   , CodeGen.Import.new [ "Html" ]
                         |> CodeGen.Import.withExposing [ "Html" ]
                   , CodeGen.Import.new [ "Json", "Decode" ]
@@ -60,6 +60,7 @@ mainElmModule data =
                     |> List.map CodeGen.Import.new
                 , [ CodeGen.Import.new [ "Pages", "NotFound_" ]
                   , CodeGen.Import.new [ "Route" ]
+                  , CodeGen.Import.new [ "Route", "Path" ]
                   , CodeGen.Import.new [ "Shared" ]
                   , CodeGen.Import.new [ "Url" ]
                         |> CodeGen.Import.withExposing [ "Url" ]
@@ -135,7 +136,7 @@ mainElmModule data =
                                         { name = "Shared.init"
                                         , arguments =
                                             [ CodeGen.Expression.value "flags"
-                                            , CodeGen.Expression.parens [ CodeGen.Expression.value "ElmLand.Request.new () url" ]
+                                            , CodeGen.Expression.parens [ CodeGen.Expression.value "Route.fromUrl () url" ]
                                             ]
                                         }
                               }
@@ -229,9 +230,9 @@ mainElmModule data =
                               , expression =
                                     CodeGen.Expression.letIn
                                         { let_ =
-                                            [ { argument = CodeGen.Argument.new "sharedModel"
-                                              , annotation = Just (CodeGen.Annotation.type_ "Shared.Model")
-                                              , expression = CodeGen.Expression.value "model.shared"
+                                            [ { argument = CodeGen.Argument.new "( sharedModel, key )"
+                                              , annotation = Nothing
+                                              , expression = CodeGen.Expression.value "( model.shared, model.key )"
                                               }
                                             , { argument = CodeGen.Argument.new "( pageModel, pageCmd )"
                                               , annotation = Nothing
@@ -291,7 +292,7 @@ mainElmModule data =
                                                     CodeGen.Expression.function
                                                         { name = "Shared.update"
                                                         , arguments =
-                                                            [ CodeGen.Expression.parens [ CodeGen.Expression.value "ElmLand.Request.new () model.url" ]
+                                                            [ CodeGen.Expression.parens [ CodeGen.Expression.value "Route.fromUrl () model.url" ]
                                                             , CodeGen.Expression.value "sharedMsg"
                                                             , CodeGen.Expression.value "model.shared"
                                                             ]
@@ -359,16 +360,21 @@ mainElmModule data =
                 { name = "fromEffect"
                 , annotation =
                     CodeGen.Annotation.function
-                        [ CodeGen.Annotation.type_ "Effect PageMsg"
+                        [ CodeGen.Annotation.type_ "Browser.Navigation.Key"
+                        , CodeGen.Annotation.type_ "Effect PageMsg"
                         , CodeGen.Annotation.type_ "Cmd Msg"
                         ]
-                , arguments = [ CodeGen.Argument.new "effect" ]
+                , arguments =
+                    [ CodeGen.Argument.new "key"
+                    , CodeGen.Argument.new "effect"
+                    ]
                 , expression =
                     CodeGen.Expression.multilineFunction
                         { name = "Effect.toCmd"
                         , arguments =
                             [ CodeGen.Expression.multilineRecord
-                                [ ( "fromPageMsg", CodeGen.Expression.value "PageSentMsg" )
+                                [ ( "key", CodeGen.Expression.value "key" )
+                                , ( "fromPageMsg", CodeGen.Expression.value "PageSentMsg" )
                                 , ( "fromSharedMsg", CodeGen.Expression.value "SharedSentMsg" )
                                 ]
                             , CodeGen.Expression.value "effect"
@@ -581,7 +587,7 @@ toUpdatePageCaseExpression pages =
                                     ]
                                 }
                             , CodeGen.Expression.operator ">>"
-                            , CodeGen.Expression.value "fromEffect"
+                            , CodeGen.Expression.value "fromEffect model.key"
                             ]
                         , CodeGen.Expression.parens
                             [ CodeGen.Expression.function
@@ -621,7 +627,7 @@ toUpdatePageCaseExpression pages =
                                     ]
                                 }
                             , CodeGen.Expression.operator ">>"
-                            , CodeGen.Expression.value "fromEffect"
+                            , CodeGen.Expression.value "fromEffect model.key"
                             ]
                         , CodeGen.Expression.parens
                             [ CodeGen.Expression.function
@@ -749,7 +755,7 @@ toInitPageCaseExpression pages =
                                 ]
                             }
                         , CodeGen.Expression.operator ">>"
-                        , CodeGen.Expression.value "fromEffect"
+                        , CodeGen.Expression.value "fromEffect key"
                         ]
                     , CodeGen.Expression.parens
                         [ CodeGen.Expression.function
@@ -777,7 +783,7 @@ toInitPageCaseExpression pages =
                                 ]
                             }
                         , CodeGen.Expression.operator ">>"
-                        , CodeGen.Expression.value "fromEffect"
+                        , CodeGen.Expression.value "fromEffect key"
                         ]
                     , CodeGen.Expression.parens
                         [ CodeGen.Expression.function
@@ -809,23 +815,23 @@ toInitPageCaseExpression pages =
                         toBranchExpressionForStaticPage filepath
             in
             if Filepath.hasDynamicParameters filepath then
-                { name = "Route." ++ Filepath.toRouteVariantName filepath
+                { name = "Route.Path." ++ Filepath.toRouteVariantName filepath
                 , arguments = [ CodeGen.Argument.new "params" ]
                 , expression = branchExpression
                 }
 
             else
-                { name = "Route." ++ Filepath.toRouteVariantName filepath
+                { name = "Route.Path." ++ Filepath.toRouteVariantName filepath
                 , arguments = []
                 , expression = branchExpression
                 }
     in
     CodeGen.Expression.caseExpression
-        { value = CodeGen.Argument.new "Route.fromUrl url"
+        { value = CodeGen.Argument.new "Route.Path.fromUrl url"
         , branches =
             List.concat
                 [ List.map toBranch pages
-                , [ { name = "Route.NotFound_"
+                , [ { name = "Route.Path.NotFound_"
                     , arguments = []
                     , expression =
                         CodeGen.Expression.multilineTuple
@@ -870,7 +876,7 @@ callAdvancedPageFunction sharedVarName urlVarName filepath =
         CodeGen.Expression.parens
             [ CodeGen.Expression.value (Filepath.toPageModuleName filepath ++ ".page")
             , CodeGen.Expression.value sharedVarName
-            , CodeGen.Expression.value ("(ElmLand.Request.new params " ++ urlVarName ++ ")")
+            , CodeGen.Expression.value ("(Route.fromUrl params " ++ urlVarName ++ ")")
             ]
 
     else
@@ -900,7 +906,7 @@ toPageModelMapper options =
                     CodeGen.Expression.parens
                         [ CodeGen.Expression.value (pageModuleName ++ ".page")
                         , CodeGen.Expression.value "model.shared"
-                        , CodeGen.Expression.value "(ElmLand.Request.new params model.url)"
+                        , CodeGen.Expression.value "(Route.fromUrl params model.url)"
                         ]
 
                   else if Filepath.hasDynamicParameters options.filepath then
@@ -925,11 +931,11 @@ toPageModelMapper options =
         ]
 
 
-routeElmModule : Data -> CodeGen.Module
-routeElmModule data =
+routePathElmModule : Data -> CodeGen.Module
+routePathElmModule data =
     CodeGen.Module.new
-        { name = [ "Route" ]
-        , exposing_ = [ "Route(..)", "fromUrl" ]
+        { name = [ "Route", "Path" ]
+        , exposing_ = [ "Path(..)", "fromUrl", "toString" ]
         , imports =
             [ CodeGen.Import.new [ "Url" ]
                 |> CodeGen.Import.withExposing [ "Url" ]
@@ -938,7 +944,7 @@ routeElmModule data =
             ]
         , declarations =
             [ CodeGen.Declaration.customType
-                { name = "Route"
+                { name = "Path"
                 , variants =
                     List.concat
                         [ data.pages
@@ -952,7 +958,7 @@ routeElmModule data =
                 , annotation =
                     CodeGen.Annotation.function
                         [ CodeGen.Annotation.type_ "Url"
-                        , CodeGen.Annotation.type_ "Route"
+                        , CodeGen.Annotation.type_ "Path"
                         ]
                 , arguments = [ CodeGen.Argument.new "url" ]
                 , expression =
@@ -973,8 +979,38 @@ routeElmModule data =
                         ]
                 }
             , CodeGen.Declaration.function
+                { name = "toString"
+                , annotation = CodeGen.Annotation.function [ CodeGen.Annotation.type_ "Path", CodeGen.Annotation.type_ "String" ]
+                , arguments = [ CodeGen.Argument.new "path" ]
+                , expression =
+                    CodeGen.Expression.letIn
+                        { let_ =
+                            [ { argument = CodeGen.Argument.new "pieces"
+                              , annotation = Nothing
+                              , expression =
+                                    CodeGen.Expression.caseExpression
+                                        { value = CodeGen.Argument.new "path"
+                                        , branches = toRoutePathToStringBranches data.pages
+                                        }
+                              }
+                            ]
+                        , in_ =
+                            CodeGen.Expression.pipeline
+                                [ CodeGen.Expression.value "pieces"
+                                , CodeGen.Expression.function
+                                    { name = "String.join"
+                                    , arguments = [ CodeGen.Expression.string "/" ]
+                                    }
+                                , CodeGen.Expression.function
+                                    { name = "String.append"
+                                    , arguments = [ CodeGen.Expression.string "/" ]
+                                    }
+                                ]
+                        }
+                }
+            , CodeGen.Declaration.function
                 { name = "parser"
-                , annotation = CodeGen.Annotation.type_ "Url.Parser.Parser (Route -> a) a"
+                , annotation = CodeGen.Annotation.type_ "Url.Parser.Parser (Path -> a) a"
                 , arguments = []
                 , expression =
                     CodeGen.Expression.multilineFunction
@@ -989,6 +1025,52 @@ routeElmModule data =
                 }
             ]
         }
+
+
+toRoutePathToStringBranches : List PageFile -> List CodeGen.Expression.Branch
+toRoutePathToStringBranches files =
+    List.map toRoutePathToStringBranch files
+        ++ [ { name = "NotFound_"
+             , arguments = []
+             , expression = CodeGen.Expression.list [ CodeGen.Expression.string "404" ]
+             }
+           ]
+
+
+toRoutePathToStringBranch : PageFile -> CodeGen.Expression.Branch
+toRoutePathToStringBranch file =
+    let
+        filepath : Filepath
+        filepath =
+            PageFile.toFilepath file
+    in
+    { name = Filepath.toRouteVariantName filepath
+    , arguments =
+        if Filepath.hasDynamicParameters filepath then
+            [ CodeGen.Argument.new "params" ]
+
+        else
+            []
+    , expression =
+        if Filepath.toRouteVariantName filepath == "Home_" then
+            CodeGen.Expression.list []
+
+        else
+            CodeGen.Expression.list
+                (Filepath.toList filepath
+                    |> List.map
+                        (\piece ->
+                            if String.endsWith "_" piece then
+                                CodeGen.Expression.value
+                                    ("params."
+                                        ++ (piece |> String.dropRight 1 |> Extras.String.fromPascalCaseToKebabCase)
+                                    )
+
+                            else
+                                CodeGen.Expression.string (Extras.String.fromPascalCaseToKebabCase piece)
+                        )
+                )
+    }
 
 
 {-|
