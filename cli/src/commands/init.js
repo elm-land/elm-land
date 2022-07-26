@@ -60,8 +60,28 @@ let run = async (options = {}) => {
         },
         {
           kind: 'file',
-          name: `${name}/.elm-land/src/ElmLand/Page.elm`,
-          content: await Files.readFromCliFolder('src/templates/_elm-land/src/ElmLand/Page.elm')
+          name: `${name}/.elm-land/src/Effect.elm`,
+          content: await Files.readFromCliFolder('src/templates/_elm-land/src/Effect.elm')
+        },
+        {
+          kind: 'file',
+          name: `${name}/.elm-land/src/Shared.elm`,
+          content: await Files.readFromCliFolder('src/templates/_elm-land/src/Shared.elm')
+        },
+        {
+          kind: 'file',
+          name: `${name}/.elm-land/src/Route.elm`,
+          content: await Files.readFromCliFolder('src/templates/_elm-land/src/Route.elm')
+        },
+        {
+          kind: 'file',
+          name: `${name}/.elm-land/src/Route/Path.elm`,
+          content: await Files.readFromCliFolder('src/templates/_elm-land/src/Route/Path.elm')
+        },
+        {
+          kind: 'file',
+          name: `${name}/.elm-land/src/Route/Query.elm`,
+          content: await Files.readFromCliFolder('src/templates/_elm-land/src/Route/Query.elm')
         }
       ],
       effects: []
