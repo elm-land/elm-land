@@ -75,11 +75,6 @@ let run = async (options = {}) => {
         },
         {
           kind: 'file',
-          name: `${name}/.elm-land/src/Route/Path.elm`,
-          content: await Files.readFromCliFolder('src/templates/_elm-land/src/Route/Path.elm')
-        },
-        {
-          kind: 'file',
           name: `${name}/.elm-land/src/Route/Query.elm`,
           content: await Files.readFromCliFolder('src/templates/_elm-land/src/Route/Query.elm')
         }
