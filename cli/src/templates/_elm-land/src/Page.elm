@@ -1,4 +1,4 @@
-module ElmLand.Page exposing
+module Page exposing
     ( Page, new
     , sandbox, element
     , init, update, view, subscriptions

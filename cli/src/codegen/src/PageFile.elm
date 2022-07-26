@@ -134,7 +134,7 @@ isSandboxOrElementElmLandPage (PageFile { contents }) =
                 case expression of
                     Elm.Syntax.Expression.Application (node :: _) ->
                         case Elm.Syntax.Node.value node of
-                            Elm.Syntax.Expression.FunctionOrValue [ "ElmLand", "Page" ] name ->
+                            Elm.Syntax.Expression.FunctionOrValue [ "Page" ] name ->
                                 name == "sandbox" || name == "element"
 
                             _ ->
@@ -190,7 +190,7 @@ isAdvancedElmLandPage (PageFile { contents }) =
                 case expression of
                     Elm.Syntax.Expression.Application (node :: _) ->
                         case Elm.Syntax.Node.value node of
-                            Elm.Syntax.Expression.FunctionOrValue [ "ElmLand", "Page" ] "new" ->
+                            Elm.Syntax.Expression.FunctionOrValue [ "Page" ] "new" ->
                                 True
 
                             _ ->

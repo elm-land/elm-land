@@ -1,6 +1,6 @@
 # State Management
 
-## ElmLand.Page.sandbox
+## Page.sandbox
 
 All the pages we saw in the guide so far were rendering HTML. If you are building a real world application, you'll likely need to track some client-side state.
 
@@ -24,7 +24,7 @@ npx elm-land add page:sandbox /counter
 module Pages.Counter exposing (Model, Msg, page)
 
 import Html exposing (Html)
-import ElmLand.Page exposing (Page)
+import Page exposing (Page)
 import View exposing (View)
 
 
@@ -34,7 +34,7 @@ import View exposing (View)
 
 page : Page Model Msg
 page =
-    ElmLand.Page.sandbox
+    Page.sandbox
         { init = init
         , update = update
         , view = view
@@ -93,7 +93,7 @@ Here's a breakdown of the new types and functions in our file:
 - __`update`__ - a function that returns an updated `Model`, based on which `Msg` was sent from our `view` function
 - __`view`__ - converts the latest version of our `Model` into some HTML, that can send `Msg` values
 
-To tie these five things together, we have the `page` function, which uses `ElmLand.Page.sandbox`. If you have used Elm before, this is just like Elm's [Browser.sandbox](https://package.elm-lang.org/packages/elm/browser/latest/Browser#sandbox) function.
+To tie these five things together, we have the `page` function, which uses `Page.sandbox`. If you have used Elm before, this is just like Elm's [Browser.sandbox](https://package.elm-lang.org/packages/elm/browser/latest/Browser#sandbox) function.
 
 ## Making a counter app
 
@@ -109,7 +109,7 @@ module Pages.Counter exposing (Model, Msg, page)
 
 import Html exposing (Html)
 import Html.Events
-import ElmLand.Page exposing (Page)
+import Page exposing (Page)
 import View exposing (View)
 
 
@@ -119,7 +119,7 @@ import View exposing (View)
 
 page : Page Model Msg
 page =
-    ElmLand.Page.sandbox
+    Page.sandbox
         { init = init
         , update = update
         , view = view

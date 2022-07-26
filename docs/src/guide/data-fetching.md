@@ -1,6 +1,6 @@
 # Data Fetching
 
-## ElmLand.Page.element
+## Page.element
 
 When it comes time to talk to an API, you'll need a page that can send HTTP requests. For example, if you want to use the [PokeAPI](https://pokeapi.co/) to fetch 'em all, you can do that by creating a new page.
 
@@ -17,7 +17,7 @@ npx elm-land add page:element /pokemon
 module Pages.Pokemon exposing (Model, Msg, page)
 
 import Html exposing (Html)
-import ElmLand.Page exposing (Page)
+import Page exposing (Page)
 import View exposing (View)
 
 
@@ -26,7 +26,7 @@ import View exposing (View)
 
 page : Page Model Msg
 page =
-    ElmLand.Page.element
+    Page.element
         { init = init
         , update = update
         , subscriptions = subscriptions
@@ -131,7 +131,7 @@ module Pages.Pokemon exposing (Model, Msg, page)
 
 import Api
 import Api.Pokemon exposing (Pokemon)
-import ElmLand.Page exposing (Page)
+import Page exposing (Page)
 import Html exposing (Html)
 import View exposing (View)
 
@@ -142,7 +142,7 @@ import View exposing (View)
 
 page : Page Model Msg
 page =
-    ElmLand.Page.element
+    Page.element
         { init = init
         , update = update
         , subscriptions = subscriptions

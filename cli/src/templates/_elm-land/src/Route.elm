@@ -16,7 +16,7 @@ import Url.Parser exposing ((</>), query)
 type alias Route params =
     { path : Route.Path.Path
     , params : params
-    , query : Dict String String
+    , query : Dict String (Maybe String)
     , hash : Maybe String
     , url : Url
     }
@@ -32,16 +32,10 @@ fromUrl params url =
     }
 
 
-toString :
-    { route
-        | path : Route.Path.Path
-        , query : Dict String String
-        , hash : Maybe String
-    }
-    -> String
+toString : Route params -> String
 toString route =
     String.join ""
         [ Route.Path.toString route.path
-        , Route.Query.toString route.query |> Maybe.withDefault ""
+        , Route.Query.toStringFromDict route.query |> Maybe.withDefault ""
         , route.hash |> Maybe.map (String.append "#") |> Maybe.withDefault ""
         ]

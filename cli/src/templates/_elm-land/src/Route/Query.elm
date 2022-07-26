@@ -1,11 +1,11 @@
-module Route.Query exposing (fromUrl, toString)
+module Route.Query exposing (fromUrl, toStringFromDict, toStringFromList)
 
 import Dict exposing (Dict)
 import Url exposing (Url)
 import Url.Parser exposing (query)
 
 
-fromUrl : Url -> Dict String String
+fromUrl : Url -> Dict String (Maybe String)
 fromUrl url =
     case url.query of
         Nothing ->
@@ -25,29 +25,44 @@ fromUrl url =
                     |> String.split "&"
                     |> List.filterMap
                         (String.split "="
-                            >> (\eq ->
-                                    Maybe.map2 Tuple.pair
-                                        (List.head eq)
-                                        (eq |> List.drop 1 |> List.head |> Maybe.withDefault "" |> Just)
+                            >> (\pieces ->
+                                    case pieces of
+                                        [] ->
+                                            Nothing
+
+                                        key :: [] ->
+                                            Just ( decode key, Nothing )
+
+                                        key :: value :: _ ->
+                                            Just ( decode key, Just (decode value) )
                                )
                         )
-                    |> List.map (Tuple.mapBoth decode decode)
                     |> Dict.fromList
 
 
-toString : Dict String String -> Maybe String
-toString query =
-    if Dict.isEmpty query then
+toStringFromDict : Dict String (Maybe String) -> Maybe String
+toStringFromDict query =
+    toStringFromList (Dict.toList query)
+
+
+toStringFromList : List ( String, Maybe String ) -> Maybe String
+toStringFromList queryParameterList =
+    if List.isEmpty queryParameterList then
         Nothing
 
     else
-        Dict.toList query
+        queryParameterList
             |> List.map
-                (\( key, value ) ->
-                    String.join "="
-                        [ Url.percentEncode key
-                        , Url.percentEncode value
-                        ]
+                (\( key, maybeValue ) ->
+                    case maybeValue of
+                        Nothing ->
+                            Url.percentEncode key
+
+                        Just value ->
+                            String.join "="
+                                [ Url.percentEncode key
+                                , Url.percentEncode value
+                                ]
                 )
             |> String.join "&"
             |> String.append "?"

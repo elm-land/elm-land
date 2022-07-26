@@ -74,14 +74,24 @@ fromSharedMsg =
     Shared
 
 
-pushRoute : { path : Route.Path.Path, query : Dict String String, hash : Maybe String } -> Effect msg
+pushRoute :
+    { path : Route.Path.Path
+    , query : List ( String, Maybe String )
+    , hash : Maybe String
+    }
+    -> Effect msg
 pushRoute route =
-    PushUrl (Route.toString route)
+    PushUrl (toStringFromRouteFragment route)
 
 
-replaceRoute : { path : Route.Path.Path, query : Dict String String, hash : Maybe String } -> Effect msg
+replaceRoute :
+    { path : Route.Path.Path
+    , query : List ( String, Maybe String )
+    , hash : Maybe String
+    }
+    -> Effect msg
 replaceRoute route =
-    ReplaceUrl (Route.toString route)
+    ReplaceUrl (toStringFromRouteFragment route)
 
 
 loadExternalUrl : String -> Effect msg
@@ -128,3 +138,21 @@ toCmd options effect =
 
         Batch list ->
             Cmd.batch (List.map (toCmd options) list)
+
+
+
+-- INTERNALS
+
+
+toStringFromRouteFragment :
+    { path : Route.Path.Path
+    , query : List ( String, Maybe String )
+    , hash : Maybe String
+    }
+    -> String
+toStringFromRouteFragment route =
+    String.join ""
+        [ Route.Path.toString route.path
+        , Route.Query.toStringFromList route.query |> Maybe.withDefault ""
+        , route.hash |> Maybe.map (String.append "#") |> Maybe.withDefault ""
+        ]

@@ -295,7 +295,7 @@ import Shared
 
 page : Shared.Model -> Request () -> Page Model Msg
 page shared req =
-    ElmLand.Page.new
+    Page.new
         { init = init
         , update = update
         , view = view shared

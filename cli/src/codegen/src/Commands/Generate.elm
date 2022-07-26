@@ -44,7 +44,7 @@ mainElmModule data =
                   , CodeGen.Import.new [ "Browser", "Navigation" ]
                   , CodeGen.Import.new [ "Effect" ]
                         |> CodeGen.Import.withExposing [ "Effect" ]
-                  , CodeGen.Import.new [ "ElmLand", "Page" ]
+                  , CodeGen.Import.new [ "Page" ]
                   , CodeGen.Import.new [ "Html" ]
                         |> CodeGen.Import.withExposing [ "Html" ]
                   , CodeGen.Import.new [ "Json", "Decode" ]
@@ -591,7 +591,7 @@ toUpdatePageCaseExpression pages =
                             ]
                         , CodeGen.Expression.parens
                             [ CodeGen.Expression.function
-                                { name = "ElmLand.Page.update"
+                                { name = "Page.update"
                                 , arguments =
                                     [ callSandboxOrElementPageFunction filepath
                                     , CodeGen.Expression.value "pageMsg"
@@ -631,7 +631,7 @@ toUpdatePageCaseExpression pages =
                             ]
                         , CodeGen.Expression.parens
                             [ CodeGen.Expression.function
-                                { name = "ElmLand.Page.update"
+                                { name = "Page.update"
                                 , arguments =
                                     [ callAdvancedPageFunction "model.shared" "model.url" filepath
                                     , CodeGen.Expression.value "pageMsg"
@@ -759,7 +759,7 @@ toInitPageCaseExpression pages =
                         ]
                     , CodeGen.Expression.parens
                         [ CodeGen.Expression.function
-                            { name = "ElmLand.Page.init"
+                            { name = "Page.init"
                             , arguments =
                                 [ callSandboxOrElementPageFunction filepath
                                 , CodeGen.Expression.value "()"
@@ -787,7 +787,7 @@ toInitPageCaseExpression pages =
                         ]
                     , CodeGen.Expression.parens
                         [ CodeGen.Expression.function
-                            { name = "ElmLand.Page.init"
+                            { name = "Page.init"
                             , arguments =
                                 [ callAdvancedPageFunction "sharedModel" "url" filepath
                                 , CodeGen.Expression.value "()"
@@ -900,7 +900,7 @@ toPageModelMapper options =
     in
     CodeGen.Expression.pipeline
         [ CodeGen.Expression.function
-            { name = "ElmLand.Page." ++ options.function
+            { name = "Page." ++ options.function
             , arguments =
                 [ if options.isAdvancedElmLandPage then
                     CodeGen.Expression.parens

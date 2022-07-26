@@ -142,7 +142,7 @@ newSandboxPageModule filepath url =
                         []
                 , expression =
                     CodeGen.Expression.multilineFunction
-                        { name = "ElmLand.Page.sandbox"
+                        { name = "Page.sandbox"
                         , arguments =
                             [ CodeGen.Expression.multilineRecord
                                 [ ( "init", CodeGen.Expression.value "init" )
@@ -225,7 +225,7 @@ newSandboxPageModule filepath url =
         { name = "Pages" :: Filepath.toList filepath
         , exposing_ = [ "Model", "Msg", "page" ]
         , imports =
-            [ CodeGen.Import.new [ "ElmLand", "Page" ]
+            [ CodeGen.Import.new [ "Page" ]
                 |> CodeGen.Import.withExposing [ "Page" ]
             , CodeGen.Import.new [ "Html" ]
                 |> CodeGen.Import.withExposing [ "Html" ]
@@ -270,7 +270,7 @@ newElementPageModule filepath url =
                         []
                 , expression =
                     CodeGen.Expression.multilineFunction
-                        { name = "ElmLand.Page.element"
+                        { name = "Page.element"
                         , arguments =
                             [ CodeGen.Expression.multilineRecord
                                 [ ( "init", CodeGen.Expression.value "init" )
@@ -374,7 +374,7 @@ newElementPageModule filepath url =
         { name = "Pages" :: Filepath.toList filepath
         , exposing_ = [ "Model", "Msg", "page" ]
         , imports =
-            [ CodeGen.Import.new [ "ElmLand", "Page" ]
+            [ CodeGen.Import.new [ "Page" ]
                 |> CodeGen.Import.withExposing [ "Page" ]
             , CodeGen.Import.new [ "Html" ]
                 |> CodeGen.Import.withExposing [ "Html" ]
@@ -424,7 +424,7 @@ newAdvancedPageModule filepath url =
                     [ CodeGen.Argument.new "shared", CodeGen.Argument.new "req" ]
                 , expression =
                     CodeGen.Expression.multilineFunction
-                        { name = "ElmLand.Page.new"
+                        { name = "Page.new"
                         , arguments =
                             [ CodeGen.Expression.multilineRecord
                                 [ ( "init", CodeGen.Expression.value "init" )
@@ -530,7 +530,7 @@ newAdvancedPageModule filepath url =
         , imports =
             [ CodeGen.Import.new [ "Effect" ]
                 |> CodeGen.Import.withExposing [ "Effect" ]
-            , CodeGen.Import.new [ "ElmLand", "Page" ]
+            , CodeGen.Import.new [ "Page" ]
                 |> CodeGen.Import.withExposing [ "Page" ]
             , CodeGen.Import.new [ "ElmLand", "Request" ]
                 |> CodeGen.Import.withExposing [ "Request" ]

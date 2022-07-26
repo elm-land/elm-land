@@ -61,7 +61,7 @@ load helpers
   expectFileExists "src/Pages/SignIn.elm"
   expectFileContains "src/Pages/SignIn.elm" "module Pages.SignIn exposing (Model, Msg, page)"
   expectFileContains "src/Pages/SignIn.elm" "page : Page Model Msg"
-  expectFileContains "src/Pages/SignIn.elm" "ElmLand.Page.sandbox"
+  expectFileContains "src/Pages/SignIn.elm" "Page.sandbox"
 
   cd ../..
   rm -r tmp
@@ -83,7 +83,7 @@ load helpers
   expectFileExists "src/Pages/SignIn.elm"
   expectFileContains "src/Pages/SignIn.elm" "module Pages.SignIn exposing (Model, Msg, page)"
   expectFileContains "src/Pages/SignIn.elm" "page : Page Model Msg"
-  expectFileContains "src/Pages/SignIn.elm" "ElmLand.Page.element"
+  expectFileContains "src/Pages/SignIn.elm" "Page.element"
 
   cd ../..
   rm -r tmp
