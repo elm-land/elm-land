@@ -9,13 +9,7 @@ let run = async ({ moduleName } = {}) => {
     return Promise.reject(Utils.notInElmLandProject)
   }
 
-  let customizableFiles = {
-    'shared': 'Shared.elm',
-    'not-found': 'Pages/NotFound_.elm',
-    'view': 'View.elm',
-    'effect': 'Effect.elm',
-  }
-  let filepath = customizableFiles[moduleName]
+  let filepath = Utils.customizableFiles[moduleName]
 
   if (!filepath) {
     return Promise.reject(Utils.didNotRecognizeCommand({
@@ -25,7 +19,7 @@ let run = async ({ moduleName } = {}) => {
           : undefined,
       subcommandList: [
         'Here are the available options:',
-        ...Object.keys(customizableFiles)
+        ...Object.keys(Utils.customizableFiles)
           .map(key => `• elm-land customize ${key}`)
       ]
     }))

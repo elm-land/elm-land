@@ -4,6 +4,7 @@ const Vite = require('vite')
 const ElmVitePlugin = require('./vite-plugin/index.js')
 const { Codegen } = require('./codegen')
 const { Files } = require('./files')
+const { Utils } = require('./commands/_utils')
 
 
 let srcPagesFolderFilepath = path.join(process.cwd(), 'src', 'Pages')
@@ -175,6 +176,26 @@ const customize = async (filepath) => {
 }
 
 const build = async (config) => {
+
+  // Create default files in `.elm-land/src` if they aren't already 
+  // defined by the user in the `src` folder
+  let defaultFilepaths = Object.values(Utils.customizableFiles)
+
+  await Promise.all(defaultFilepaths.map(async filepath => {
+    let fileInUsersSrcFolder = path.join(process.cwd(), 'src', ...filepath.split('/'))
+    let fileInTemplatesFolder = path.join(__dirname, 'templates', '_elm-land', 'customizable', ...filepath.split('/'))
+    let fileInElmLandSrcFolder = path.join(process.cwd(), '.elm-land', 'src', ...filepath.split('/'))
+
+    let userSrcFileExists = await Files.exists(fileInUsersSrcFolder)
+
+    if (!userSrcFileExists) {
+      return Files.copyPasteFile({
+        source: fileInTemplatesFolder,
+        destination: fileInElmLandSrcFolder
+      })
+    }
+  }))
+
   // Make sure initial files are up-to-date
   await Files.copyPasteFolder({
     source: path.join(__dirname, 'templates', '_elm-land', 'server'),

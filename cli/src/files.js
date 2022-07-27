@@ -47,6 +47,19 @@ let copyPasteFolder = async ({ source, destination }) => {
 }
 
 let copyPasteFile = async ({ source, destination }) => {
+
+  // Ensure folder exists before pasting file
+  let destinationFolder = destination.split(path.sep).slice(0, -1).join(path.sep)
+  await new Promise((resolve, reject) => {
+    fs.mkdir(destinationFolder, { recursive: true }, (err, path) => {
+      if (err) {
+        reject(err)
+      } else {
+        resolve(path)
+      }
+    })
+  })
+
   return copyFileSync(source, destination)
 }
 

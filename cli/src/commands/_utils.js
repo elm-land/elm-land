@@ -18,6 +18,18 @@ let notInElmLandProject = [
   `✨ npx elm-land init my-project`,
 ].join('\n')
 
-module.exports = {
-  Utils: { didNotRecognizeCommand, notInElmLandProject }
+let customizableFiles = {
+  'shared': 'Shared.elm',
+  'not-found': 'Pages/NotFound_.elm',
+  'view': 'View.elm',
+  'effect': 'Effect.elm',
 }
+
+module.exports = {
+  Utils: {
+    didNotRecognizeCommand,
+    notInElmLandProject,
+    customizableFiles
+  }
+}
+
