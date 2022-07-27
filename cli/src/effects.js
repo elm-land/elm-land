@@ -17,7 +17,7 @@ let runServer = async (options) => {
 
     // If not, create a new one with the initial files
     if (!hasElmLandJsAlready) {
-      await Files.copyPaste({
+      await Files.copyPasteFolder({
         source: path.join(__dirname, 'templates', '_elm-land', 'server'),
         destination: path.join(process.cwd(), '.elm-land'),
       })
@@ -151,13 +151,36 @@ const attempt = (fn) => {
   }
 }
 
+const customize = async (filepath) => {
+  let source = path.join(__dirname, 'templates', '_elm-land', 'customizable', ...filepath.split('/'))
+  let destination = path.join(process.cwd(), 'src', ...filepath.split('/'))
+
+  let alreadyExists = await Files.exists(destination)
+
+  if (!alreadyExists) {
+    // Copy the default into the user's `src` folder
+    await Files.copyPasteFile({
+      source,
+      destination,
+    })
+  }
+
+  try {
+    await Files.remove(path.join(process.cwd(), '.elm-land', 'src', ...filepath.split('/')))
+  } catch (_) {
+    // If the file isn't there, no worries
+  }
+
+  return { problem: null }
+}
+
 const build = async (config) => {
   // Make sure initial files are up-to-date
-  await Files.copyPaste({
+  await Files.copyPasteFolder({
     source: path.join(__dirname, 'templates', '_elm-land', 'server'),
     destination: path.join(process.cwd(), '.elm-land'),
   })
-  await Files.copyPaste({
+  await Files.copyPasteFolder({
     source: path.join(__dirname, 'templates', '_elm-land', 'src'),
     destination: path.join(process.cwd(), '.elm-land'),
   })
@@ -295,6 +318,9 @@ let run = async (effects) => {
         break
       case 'build':
         results.push(await build(effect.config))
+        break
+      case 'customize':
+        results.push(await customize(effect.filepath))
         break
       default:
         results.push({ problem: `❗️ Unrecognized effect: ${effect.kind}` })

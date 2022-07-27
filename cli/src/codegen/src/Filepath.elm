@@ -2,6 +2,7 @@ module Filepath exposing
     ( Filepath
     , decoder
     , hasDynamicParameters
+    , isNotFoundPage
     , toList
     , toPageModuleName
     , toParamsRecordAnnotation
@@ -26,6 +27,11 @@ decoder : Json.Decode.Decoder Filepath
 decoder =
     Json.Decode.map Filepath
         (Json.Decode.list Json.Decode.string)
+
+
+isNotFoundPage : Filepath -> Bool
+isNotFoundPage (Filepath list) =
+    list == [ "NotFound_" ]
 
 
 hasDynamicParameters : Filepath -> Bool

@@ -103,17 +103,17 @@ We tell Elm Land which layout we'd like to use by defining a `layout` function w
 <code-group>
 <code-block title="src/Pages/Home_.elm">
 
-```elm{3,8-10}
+```elm{4,8-10}
 module Pages.Home_ exposing (page)
 
-import ElmLand.Layout exposing (Layout)
 import Html exposing (Html)
+import Layout exposing (Layout)
 import View exposing (View)
 
 
 layout : Layout
 layout =
-    ElmLand.Layout.Sidebar
+    Layout.Sidebar
 
 
 page : View msg
@@ -138,17 +138,17 @@ Let's do the same thing on our `Profile` and `Settings` pages, so that as we use
 <code-group>
 <code-block title="src/Pages/Profile/Username_.elm">
 
-```elm{3,8-10}
+```elm{4,8-10}
 module Pages.Profile.Username_ exposing (page)
 
-import ElmLand.Layout exposing (Layout)
 import Html exposing (Html)
+import Layout exposing (Layout)
 import View exposing (View)
 
 
 layout : Layout
 layout =
-    ElmLand.Layout.Sidebar
+    Layout.Sidebar
 
 
 page : View msg
@@ -161,17 +161,17 @@ page =
 </code-block>
 <code-block title="src/Pages/Settings/Account.elm">
 
-```elm{3,8-10}
+```elm{4,8-10}
 module Pages.Settings.Account exposing (page)
 
-import ElmLand.Layout exposing (Layout)
 import Html exposing (Html)
+import Layout exposing (Layout)
 import View exposing (View)
 
 
 layout : Layout
 layout =
-    ElmLand.Layout.Sidebar
+    Layout.Sidebar
 
 
 page : View msg

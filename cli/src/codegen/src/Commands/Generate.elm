@@ -20,13 +20,12 @@ run json =
             List.concat
                 [ [ mainElmModule data
                   , routePathElmModule data
-                  , notFoundModule
                   ]
                 , if List.isEmpty data.layouts then
                     []
 
                   else
-                    [ elmLandLayoutsElmModule data ]
+                    [ layoutsElmModule data ]
                 ]
 
         Err _ ->
@@ -1075,17 +1074,17 @@ toRoutePathToStringBranch file =
 
 {-|
 
-    module ElmLand.Layout exposing (Layout(..))
+    module Layout exposing (Layout(..))
 
     type Layout
         = Default
         | Sidebar
 
 -}
-elmLandLayoutsElmModule : Data -> CodeGen.Module
-elmLandLayoutsElmModule data =
+layoutsElmModule : Data -> CodeGen.Module
+layoutsElmModule data =
     CodeGen.Module.new
-        { name = [ "ElmLand", "Layout" ]
+        { name = [ "Layout" ]
         , exposing_ = [ "Layout(..)" ]
         , imports = []
         , declarations =
@@ -1094,39 +1093,6 @@ elmLandLayoutsElmModule data =
                 , variants =
                     data.layouts
                         |> List.map Filepath.toRouteVariant
-                }
-            ]
-        }
-
-
-notFoundModule : CodeGen.Module
-notFoundModule =
-    CodeGen.Module.new
-        { name = [ "Pages", "NotFound_" ]
-        , exposing_ = [ "page" ]
-        , imports =
-            [ CodeGen.Import.new [ "Html" ]
-                |> CodeGen.Import.withExposing [ "Html" ]
-            , CodeGen.Import.new [ "View" ]
-                |> CodeGen.Import.withExposing [ "View" ]
-            ]
-        , declarations =
-            [ CodeGen.Declaration.function
-                { name = "page"
-                , arguments = []
-                , annotation = CodeGen.Annotation.type_ "View msg"
-                , expression =
-                    CodeGen.Expression.multilineRecord
-                        [ ( "title", CodeGen.Expression.string "404" )
-                        , ( "body"
-                          , CodeGen.Expression.list
-                                [ CodeGen.Expression.function
-                                    { name = "Html.text"
-                                    , arguments = [ CodeGen.Expression.string "Page not found..." ]
-                                    }
-                                ]
-                          )
-                        ]
                 }
             ]
         }
@@ -1141,5 +1107,15 @@ type alias Data =
 decoder : Json.Decode.Decoder Data
 decoder =
     Json.Decode.map2 Data
-        (Json.Decode.field "pages" (Json.Decode.list PageFile.decoder))
+        (Json.Decode.field "pages"
+            (Json.Decode.list PageFile.decoder
+                |> Json.Decode.map ignoreNotFoundPage
+            )
+        )
         (Json.Decode.field "layouts" (Json.Decode.list Filepath.decoder))
+
+
+ignoreNotFoundPage : List PageFile -> List PageFile
+ignoreNotFoundPage pageFiles =
+    pageFiles
+        |> List.filter (PageFile.isNotFoundPage >> not)

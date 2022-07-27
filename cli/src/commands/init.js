@@ -50,23 +50,28 @@ let run = async (options = {}) => {
         },
         {
           kind: 'file',
+          name: `${name}/.elm-land/src/Pages/NotFound_.elm`,
+          content: await Files.readFromCliFolder('src/templates/_elm-land/customizable/Pages/NotFound_.elm')
+        },
+        {
+          kind: 'file',
           name: `${name}/.elm-land/src/Main.elm`,
           content: await Files.readFromCliFolder('src/templates/_elm-land/src/Main.elm')
         },
         {
           kind: 'file',
           name: `${name}/.elm-land/src/View.elm`,
-          content: await Files.readFromCliFolder('src/templates/_elm-land/src/View.elm')
+          content: await Files.readFromCliFolder('src/templates/_elm-land/customizable/View.elm')
         },
         {
           kind: 'file',
           name: `${name}/.elm-land/src/Effect.elm`,
-          content: await Files.readFromCliFolder('src/templates/_elm-land/src/Effect.elm')
+          content: await Files.readFromCliFolder('src/templates/_elm-land/customizable/Effect.elm')
         },
         {
           kind: 'file',
           name: `${name}/.elm-land/src/Shared.elm`,
-          content: await Files.readFromCliFolder('src/templates/_elm-land/src/Shared.elm')
+          content: await Files.readFromCliFolder('src/templates/_elm-land/customizable/Shared.elm')
         },
         {
           kind: 'file',

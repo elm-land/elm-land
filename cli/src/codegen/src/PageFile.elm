@@ -2,6 +2,7 @@ module PageFile exposing
     ( PageFile
     , decoder
     , isAdvancedElmLandPage
+    , isNotFoundPage
     , isSandboxOrElementElmLandPage
     , toFilepath
     , toLayoutName
@@ -40,6 +41,11 @@ decoder =
             (Json.Decode.field "filepath" Filepath.decoder)
             (Json.Decode.field "contents" Json.Decode.string)
         )
+
+
+isNotFoundPage : PageFile -> Bool
+isNotFoundPage (PageFile { filepath }) =
+    Filepath.isNotFoundPage filepath
 
 
 toFilepath : PageFile -> Filepath
@@ -82,7 +88,7 @@ toLayoutName (PageFile { contents }) =
             in
             if functionName == "layout" then
                 case expression of
-                    Elm.Syntax.Expression.FunctionOrValue [ "ElmLand", "Layout" ] name ->
+                    Elm.Syntax.Expression.FunctionOrValue [ "Layout" ] name ->
                         Just name
 
                     _ ->

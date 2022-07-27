@@ -32,7 +32,7 @@ Sometimes, you'll want to share data across multiple pages. That's where the __S
 By default, an empty `Shared` module is generated for you in the background. When you are ready to share data across pages, you can run this `elm-land` command to "eject" that default file into your `src/` folder. From there, it can be customized however you like:
 
 ```sh
-elm-land eject shared
+elm-land customize shared
 ```
 
 
@@ -41,8 +41,7 @@ elm-land eject shared
 <code-block title="Terminal output">
 
 ```txt
-🌈 Shared module is ready to customize at:
-     ./src/Shared.elm
+🌈 File is now customizable at ./src/Shared.elm
 ```
 
 </code-block>

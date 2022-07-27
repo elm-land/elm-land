@@ -225,10 +225,10 @@ newSandboxPageModule filepath url =
         { name = "Pages" :: Filepath.toList filepath
         , exposing_ = [ "Model", "Msg", "page" ]
         , imports =
-            [ CodeGen.Import.new [ "Page" ]
-                |> CodeGen.Import.withExposing [ "Page" ]
-            , CodeGen.Import.new [ "Html" ]
+            [ CodeGen.Import.new [ "Html" ]
                 |> CodeGen.Import.withExposing [ "Html" ]
+            , CodeGen.Import.new [ "Page" ]
+                |> CodeGen.Import.withExposing [ "Page" ]
             , CodeGen.Import.new [ "View" ]
                 |> CodeGen.Import.withExposing [ "View" ]
             ]
@@ -374,10 +374,10 @@ newElementPageModule filepath url =
         { name = "Pages" :: Filepath.toList filepath
         , exposing_ = [ "Model", "Msg", "page" ]
         , imports =
-            [ CodeGen.Import.new [ "Page" ]
-                |> CodeGen.Import.withExposing [ "Page" ]
-            , CodeGen.Import.new [ "Html" ]
+            [ CodeGen.Import.new [ "Html" ]
                 |> CodeGen.Import.withExposing [ "Html" ]
+            , CodeGen.Import.new [ "Page" ]
+                |> CodeGen.Import.withExposing [ "Page" ]
             , CodeGen.Import.new [ "View" ]
                 |> CodeGen.Import.withExposing [ "View" ]
             ]
@@ -530,11 +530,11 @@ newAdvancedPageModule filepath url =
         , imports =
             [ CodeGen.Import.new [ "Effect" ]
                 |> CodeGen.Import.withExposing [ "Effect" ]
+            , CodeGen.Import.new [ "Route" ]
+                |> CodeGen.Import.withExposing [ "Route" ]
+            , CodeGen.Import.new [ "Html" ]
             , CodeGen.Import.new [ "Page" ]
                 |> CodeGen.Import.withExposing [ "Page" ]
-            , CodeGen.Import.new [ "ElmLand", "Request" ]
-                |> CodeGen.Import.withExposing [ "Request" ]
-            , CodeGen.Import.new [ "Html" ]
             , CodeGen.Import.new [ "Shared" ]
             , CodeGen.Import.new [ "View" ]
                 |> CodeGen.Import.withExposing [ "View" ]
