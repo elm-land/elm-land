@@ -57,8 +57,8 @@ type_ str =
         [ CodeGen.Annotation.type_ "msg"
         ]
 
-    -- Request { username : String }
-    CodeGen.Annotation.genericType "Request"
+    -- Route { username : String }
+    CodeGen.Annotation.genericType "Route"
         [ CodeGen.Annotation.record
             [ ( "username", CodeGen.Annotation.string )
             ]

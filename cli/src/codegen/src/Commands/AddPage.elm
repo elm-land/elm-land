@@ -405,23 +405,19 @@ newAdvancedPageModule filepath url =
             CodeGen.Declaration.function
                 { name = "page"
                 , annotation =
-                    if Filepath.hasDynamicParameters filepath then
-                        CodeGen.Annotation.function
-                            [ CodeGen.Annotation.type_ "Shared.Model"
-                            , CodeGen.Annotation.genericType "Request"
-                                [ Filepath.toParamsRecordAnnotation filepath
-                                ]
-                            , CodeGen.Annotation.type_ "Page Model Msg"
-                            ]
+                    CodeGen.Annotation.function
+                        [ CodeGen.Annotation.type_ "Shared.Model"
+                        , CodeGen.Annotation.genericType "Route"
+                            [ if Filepath.hasDynamicParameters filepath then
+                                Filepath.toParamsRecordAnnotation filepath
 
-                    else
-                        CodeGen.Annotation.function
-                            [ CodeGen.Annotation.type_ "Shared.Model"
-                            , CodeGen.Annotation.type_ "Request ()"
-                            , CodeGen.Annotation.type_ "Page Model Msg"
+                              else
+                                CodeGen.Annotation.type_ "()"
                             ]
+                        , CodeGen.Annotation.type_ "Page Model Msg"
+                        ]
                 , arguments =
-                    [ CodeGen.Argument.new "shared", CodeGen.Argument.new "req" ]
+                    [ CodeGen.Argument.new "shared", CodeGen.Argument.new "route" ]
                 , expression =
                     CodeGen.Expression.multilineFunction
                         { name = "Page.new"

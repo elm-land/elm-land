@@ -12,6 +12,9 @@ let srcLayoutsFolderFilepath = path.join(process.cwd(), 'src', 'Layouts')
 
 let runServer = async (options) => {
   try {
+    let rawConfig = await Files.readFromUserFolder('elm-land.json')
+    let config = JSON.parse(rawConfig)
+
     // Check if `.elm-land` folder exists
     let hasElmLandJsAlready =
       await Files.exists(path.join(process.cwd(), '.elm-land', 'server', 'main.js'))
@@ -47,10 +50,9 @@ let runServer = async (options) => {
     })
 
     configFileWatcher.on('change', async () => {
-
       try {
         let rawConfig = await Files.readFromUserFolder('elm-land.json')
-        let config = JSON.parse(rawConfig)
+        config = JSON.parse(rawConfig)
         let result = await generateHtml(config)
         if (result.problem) {
           console.info(result.problem)
@@ -68,6 +70,17 @@ let runServer = async (options) => {
     srcPagesAndLayoutsFolderWatcher.on('all', generateElmFiles)
     await generateElmFiles()
 
+    // Check config for Elm debugger options
+    let debug = false
+
+    try {
+      if (process.env.NODE_ENV === 'production') {
+        debug = config.app.elm.production.debugger
+      } else {
+        debug = config.app.elm.development.debugger
+      }
+    } catch (_) { }
+
     // Run the vite server on options.port 
     const server = await Vite.createServer({
       configFile: false,
@@ -79,14 +92,12 @@ let runServer = async (options) => {
       },
       plugins: [
         ElmVitePlugin.plugin({
-          debug: false,
+          debug,
           optimize: false
         })
       ],
       logLevel: 'silent'
     })
-
-
 
     await server.listen()
 
