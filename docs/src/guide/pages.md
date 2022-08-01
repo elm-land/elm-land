@@ -1,4 +1,4 @@
-# Pages
+# Adding more pages
 
 ## One app, many pages
 

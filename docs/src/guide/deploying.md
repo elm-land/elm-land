@@ -1,4 +1,4 @@
-# Deploying to Production
+# Deploying to production
 
 ## Building your app
 

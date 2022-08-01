@@ -1,4 +1,4 @@
-# Layouts
+# Reusing UI with layouts
 
 ## Reusing UI across pages
 

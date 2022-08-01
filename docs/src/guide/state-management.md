@@ -1,4 +1,4 @@
-# State Management
+# Handling user interaction
 
 ## Page.sandbox
 
