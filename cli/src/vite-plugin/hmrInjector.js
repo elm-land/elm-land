@@ -33,27 +33,21 @@ if (import.meta.hot) {
   }
   const instances = import.meta.hot.data ? import.meta.hot.data.instances || {} : {}
   let uid = import.meta.hot.data ? import.meta.hot.data.uid || 0 : 0
-  if (Object.keys(instances).length === 0) console.log("[vite-plugin-elm] HMR enabled")
   const cancellers = []
   let initializingInstance = null
   let swappingInstance = null
   import.meta.hot.accept()
   import.meta.hot.accept([
     "${dependencies.join('", "')}"
-  ], () => { console.log("[vite-plugin-elm] Dependency is updated") })
-  import.meta.hot.on('hot-update-dependents', (data) => {
-    console.log("[vite-plugin-elm] Request to hot update dependents: " + data.join(", "))
-  })
+  ], () => { })
   import.meta.hot.dispose((data) => {
     data.instances = instances
     data.uid = uid
     _Scheduler_binding = () => _Scheduler_fail(new Error("[vite-plugin-elm] Inactive Elm instance."))
     if (cancellers.length) {
-      console.log("[vite-plugin-elm] Killing " + cancellers.length + " running processes...")
       try {
         cancellers.forEach((cancel) => { cancel() })
       } catch (e) {
-        console.warn("[vite-plugin-elm] Kill process error: ", e.message)
       }
     }
   })
@@ -112,11 +106,9 @@ if (import.meta.hot) {
         return elm
       }
     } else {
-      console.error("Could not find a public module to wrap at path " + path)
     }
   }
   const swap = (Elm, instance) => {
-    console.log("[vite-plugin-elm] Hot-swapping module:", instance.path)
     swappingInstance = instance
     const containerNode = instance.domNode
     while (containerNode.lastChild) {
@@ -137,24 +129,19 @@ if (import.meta.hot) {
         if (portName in elm.ports && 'subscribe' in elm.ports[portName]) {
           const handlers = instance.portSubscribes[portName]
           if (!handlers.length) return
-          console.log("[vite-plugin-elm] Reconnect", handlers.length + " handlers(s) to port '" + portName + "' (" + instance.path + ").")
           handlers.forEach(elm.ports[portName].subscribe)
         } else {
           delete instance.portSubscribes[portName]
-          console.log("[vite-plugin-elm] Port was removed:", portName)
         }
       })
       Object.keys(instance.portSends).forEach((portName) => {
         if (portName in elm.ports && 'send' in elm.ports[portName]) {
-          console.log("[vite-plugin-elm] Replace old port send with the new send")
           instance.portSends[portName] = elm.ports[portName].send
         } else {
           delete instance.portSends[portName]
-          console.log("[vite-plugin-elm] Port was removed:", portName)
         }
       })
     } else {
-      console.log("[vite-plugin-elm] Module was removed:", instance.path)
     }
     swappingInstance = null
   }
@@ -169,7 +156,6 @@ if (import.meta.hot) {
           const unsubscribe = port.unsubscribe
           elm.ports[portName] = Object.assign(port, {
             subscribe: (handler) => {
-              console.log("[vite-plugin-elm] ports.", portName + ".subscribe called")
               if (!portSubscribes[portName]) {
                 portSubscribes[portName] = [handler]
               } else {
@@ -178,12 +164,9 @@ if (import.meta.hot) {
               return subscribe.call(port, handler)
             },
             unsubscribe: (handler) => {
-              console.log("[vite-plugin-elm] ports.", portName + ".unsubscribe called.")
               const list = portSubscribes[portName]
               if (list && list.indexOf(handler) !== -1) {
                 list.splice(list.lastIndexOf(handler), 1)
-              } else {
-                console.warn("[vite-plugin-elm] ports.", portName + ".unsubscribe: handler not subscribed")
               }
               return unsubscribe.call(port, handler)
             }
@@ -238,7 +221,6 @@ if (import.meta.hot) {
         let oldModel = swappingInstance.lastState
         const newModel = initialStateTuple.a
         if (JSON.stringify(newModel.state?.a ? newModel.state.a : newModel) !== swappingInstance.initialState) {
-          console.log("[vite-plugin-elm] Initial state seems to be updated. Refreshes page")
           import.meta.hot.invalidate()
         }
         if (typeof elmSymbol("elm$browser$Browser$application") !== "undefined" && typeof elmSymbol("elm$browser$Browser$Navigation") !== "undefined") {
@@ -259,7 +241,6 @@ if (import.meta.hot) {
             oldParent[lastSegment] = newKeyLoc.value
           }
           if (error !== null) {
-            console.error("[vite-plugin-elm] Hot-swapping", instance.path + " not possible: " + error)
             oldModel = newModel
           }
         }

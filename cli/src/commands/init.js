@@ -75,6 +75,11 @@ let run = async (options = {}) => {
         },
         {
           kind: 'file',
+          name: `${name}/.elm-land/src/Auth.elm`,
+          content: await Files.readFromCliFolder('src/templates/_elm-land/customizable/Auth.elm')
+        },
+        {
+          kind: 'file',
           name: `${name}/.elm-land/src/Page.elm`,
           content: await Files.readFromCliFolder('src/templates/_elm-land/src/Page.elm')
         },

@@ -1,5 +1,6 @@
 module Pages.SignIn exposing (Model, Msg, page)
 
+import Api.User
 import Effect exposing (Effect)
 import Html exposing (Html)
 import Html.Attributes as Attr
@@ -55,6 +56,7 @@ type Msg
     = UserUpdatedInput Field String
     | UserSubmittedForm
     | SignInApiResponded (Result (List FormError) String)
+    | UserApiResponded (Result Http.Error Api.User.User)
 
 
 type Field
@@ -106,12 +108,18 @@ update msg model =
                     { key = "token"
                     , value = Json.Encode.string token
                     }
-                , Effect.pushRoute
-                    { path = Route.Path.Home_
-                    , query = []
-                    , hash = Nothing
-                    }
+                , Effect.fromCmd
+                    (Api.User.getCurrentUser
+                        { token = token
+                        , onResponse = UserApiResponded
+                        }
+                    )
                 ]
+            )
+
+        UserApiResponded result ->
+            ( model
+            , Effect.fromSharedMsg (Shared.SignInPageSignedInUser result)
             )
 
 

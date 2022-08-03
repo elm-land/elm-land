@@ -2,6 +2,7 @@ module PageFile exposing
     ( PageFile
     , decoder
     , isAdvancedElmLandPage
+    , isAuthProtectedPage
     , isNotFoundPage
     , isSandboxOrElementElmLandPage
     , toFilepath
@@ -203,6 +204,76 @@ isAdvancedElmLandPage (PageFile { contents }) =
                                 False
 
                     _ ->
+                        False
+
+            else
+                False
+    in
+    contents
+        |> Elm.Parser.parse
+        |> Result.map (Elm.Processing.process Elm.Processing.init)
+        |> Result.toMaybe
+        |> Maybe.map isElmLandPageFromFile
+        |> Maybe.withDefault False
+
+
+isAuthProtectedPage : PageFile -> Bool
+isAuthProtectedPage (PageFile { contents }) =
+    let
+        isElmLandPageFromFile : Elm.Syntax.File.File -> Bool
+        isElmLandPageFromFile file =
+            file.declarations
+                |> List.map Elm.Syntax.Node.value
+                |> List.any isElmLandPageFromDeclaration
+
+        isElmLandPageFromDeclaration : Elm.Syntax.Declaration.Declaration -> Bool
+        isElmLandPageFromDeclaration decl =
+            case decl of
+                Elm.Syntax.Declaration.FunctionDeclaration func ->
+                    isElmLandPageFromFunction func
+
+                _ ->
+                    False
+
+        isElmLandPageFromFunction : Elm.Syntax.Expression.Function -> Bool
+        isElmLandPageFromFunction func =
+            let
+                functionName : String
+                functionName =
+                    func.declaration
+                        |> Elm.Syntax.Node.value
+                        |> .name
+                        |> Elm.Syntax.Node.value
+            in
+            if functionName == "page" then
+                case func.signature of
+                    Just node ->
+                        let
+                            functionTypeAnnotation : Elm.Syntax.TypeAnnotation.TypeAnnotation
+                            functionTypeAnnotation =
+                                Elm.Syntax.Node.value node
+                                    |> .typeAnnotation
+                                    |> Elm.Syntax.Node.value
+                        in
+                        case functionTypeAnnotation of
+                            Elm.Syntax.TypeAnnotation.FunctionTypeAnnotation functionNode _ ->
+                                let
+                                    typeAnnotation : Elm.Syntax.TypeAnnotation.TypeAnnotation
+                                    typeAnnotation =
+                                        functionNode
+                                            |> Elm.Syntax.Node.value
+                                in
+                                case typeAnnotation of
+                                    Elm.Syntax.TypeAnnotation.Typed node1 _ ->
+                                        Elm.Syntax.Node.value node1 == ( [ "Auth" ], "User" )
+
+                                    _ ->
+                                        False
+
+                            _ ->
+                                False
+
+                    Nothing ->
                         False
 
             else

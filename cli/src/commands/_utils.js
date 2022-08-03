@@ -23,6 +23,7 @@ let customizableFiles = {
   'not-found': 'Pages/NotFound_.elm',
   'view': 'View.elm',
   'effect': 'Effect.elm',
+  'auth': 'Auth.elm',
 }
 
 module.exports = {

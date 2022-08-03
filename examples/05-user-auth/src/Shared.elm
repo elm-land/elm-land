@@ -2,6 +2,7 @@ module Shared exposing
     ( Flags
     , Model, Msg(..)
     , init, update, subscriptions
+    , SignInStatus(..)
     )
 
 {-|
@@ -10,11 +11,16 @@ module Shared exposing
 @docs Model, Msg
 @docs init, update, subscriptions
 
+@docs SignInStatus
+
 -}
 
+import Api.User exposing (User)
+import Browser.Navigation
 import Http
 import Json.Decode
 import Route exposing (Route)
+import Route.Path
 
 
 
@@ -48,23 +54,6 @@ type SignInStatus
     | FailedToSignIn Http.Error
 
 
-type alias User =
-    { id : Int
-    , name : String
-    , profileImageUrl : String
-    , email : String
-    }
-
-
-userDecoder : Json.Decode.Decoder User
-userDecoder =
-    Json.Decode.map4 User
-        (Json.Decode.field "id" Json.Decode.int)
-        (Json.Decode.field "name" Json.Decode.string)
-        (Json.Decode.field "profileImageUrl" Json.Decode.string)
-        (Json.Decode.field "email" Json.Decode.string)
-
-
 init : Flags -> Route () -> ( Model, Cmd Msg )
 init json req =
     let
@@ -87,9 +76,9 @@ init json req =
       }
     , case flags.token of
         Just token ->
-            Http.get
-                { url = "http://localhost:5000/api/me?token=" ++ token
-                , expect = Http.expectJson UserApiResponded userDecoder
+            Api.User.getCurrentUser
+                { token = token
+                , onResponse = UserApiResponded
                 }
 
         Nothing ->
@@ -103,10 +92,11 @@ init json req =
 
 type Msg
     = UserApiResponded (Result Http.Error User)
+    | SignInPageSignedInUser (Result Http.Error User)
 
 
-update : Route () -> Msg -> Model -> ( Model, Cmd Msg )
-update req msg model =
+update : Browser.Navigation.Key -> Route () -> Msg -> Model -> ( Model, Cmd Msg )
+update key route msg model =
     case msg of
         UserApiResponded (Ok user) ->
             ( { model | signInStatus = SignedInWithUser user }
@@ -114,6 +104,17 @@ update req msg model =
             )
 
         UserApiResponded (Err httpError) ->
+            ( { model | signInStatus = FailedToSignIn httpError }
+            , Cmd.none
+            )
+
+        SignInPageSignedInUser (Ok user) ->
+            ( { model | signInStatus = SignedInWithUser user }
+            , Browser.Navigation.pushUrl key
+                (Route.Path.toString Route.Path.Home_)
+            )
+
+        SignInPageSignedInUser (Err httpError) ->
             ( { model | signInStatus = FailedToSignIn httpError }
             , Cmd.none
             )

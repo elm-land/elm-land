@@ -43,12 +43,14 @@ app.use('/api/sign-in', (req, res) => {
 // This endpoint returns a User, but needs a token!
 app.get('/api/me', (req, res) => {
   if (req.query.token === SECRET_TOKEN_EXAMPLE) {
-    res.status(200).json({
-      id: 1,
-      name: 'Ryan Haskell-Glatz',
-      profileImageUrl: 'https://avatars.githubusercontent.com/u/6187256?v=4',
-      email: 'ryan@elm.land'
-    })
+    setTimeout(() => {
+      res.status(200).json({
+        id: 1,
+        name: 'Ryan Haskell-Glatz',
+        profileImageUrl: 'https://avatars.githubusercontent.com/u/6187256?v=4',
+        email: 'ryan@elm.land'
+      })
+    }, 1000)
   } else {
     res.status(401).json({
       message: 'Token is required to access /api/me'
