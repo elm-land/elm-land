@@ -96,8 +96,7 @@ mainElmModule data =
                 { name = "Model"
                 , annotation =
                     CodeGen.Annotation.multilineRecord
-                        [ ( "flags", CodeGen.Annotation.type_ "Flags" )
-                        , ( "key", CodeGen.Annotation.type_ "Browser.Navigation.Key" )
+                        [ ( "key", CodeGen.Annotation.type_ "Browser.Navigation.Key" )
                         , ( "url", CodeGen.Annotation.type_ "Url" )
                         , ( "page", CodeGen.Annotation.type_ "PageModel" )
                         , ( "shared", CodeGen.Annotation.type_ "Shared.Model" )
@@ -153,8 +152,7 @@ mainElmModule data =
                         , in_ =
                             CodeGen.Expression.multilineTuple
                                 [ CodeGen.Expression.multilineRecord
-                                    [ ( "flags", CodeGen.Expression.value "flags" )
-                                    , ( "url", CodeGen.Expression.value "url" )
+                                    [ ( "url", CodeGen.Expression.value "url" )
                                     , ( "key", CodeGen.Expression.value "key" )
                                     , ( "page", CodeGen.Expression.value "pageModel" )
                                     , ( "shared", CodeGen.Expression.value "sharedModel" )

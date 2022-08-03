@@ -101,11 +101,17 @@ update msg model =
 
         SignInApiResponded (Ok token) ->
             ( model
-            , Effect.pushRoute
-                { path = Route.Path.Home_
-                , query = []
-                , hash = Nothing
-                }
+            , Effect.batch
+                [ Effect.save
+                    { key = "token"
+                    , value = Json.Encode.string token
+                    }
+                , Effect.pushRoute
+                    { path = Route.Path.Home_
+                    , query = []
+                    , hash = Nothing
+                    }
+                ]
             )
 
 
