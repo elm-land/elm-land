@@ -191,7 +191,7 @@ mainElmModule data =
                 , arguments = [ CodeGen.Argument.new "model" ]
                 , expression = toInitPageCaseExpression data.pages
                 }
-            , initWithAuthDeclaration
+            , runWhenAuthenticatedDeclaration
             , CodeGen.Declaration.comment [ "UPDATE" ]
             , CodeGen.Declaration.customType
                 { name = "Msg"
@@ -334,7 +334,6 @@ mainElmModule data =
                                             CodeGen.Expression.caseExpression
                                                 { value = CodeGen.Argument.new "model.page"
                                                 , branches =
-                                                   
                                                     [ { name = "Loading"
                                                       , arguments = [ CodeGen.Argument.new "_" ]
                                                       , expression =
@@ -512,13 +511,13 @@ toPageModelCustomType pages =
         ]
 
 
-initWithAuthDeclaration : CodeGen.Declaration
-initWithAuthDeclaration =
+runWhenAuthenticatedDeclaration : CodeGen.Declaration
+runWhenAuthenticatedDeclaration =
     CodeGen.Declaration.function
-        { name = "initWithAuth"
+        { name = "runWhenAuthenticated"
         , annotation =
             CodeGen.Annotation.function
-                [ CodeGen.Annotation.type_ "{ shared : Shared.Model, url : Url, key : Browser.Navigation.Key }"
+                [ CodeGen.Annotation.type_ "{ model | shared : Shared.Model, url : Url, key : Browser.Navigation.Key }"
                 , CodeGen.Annotation.type_ "(Auth.User -> ( PageModel, Cmd Msg ))"
                 , CodeGen.Annotation.type_ "( PageModel, Cmd Msg )"
                 ]
@@ -623,24 +622,29 @@ toViewCaseExpression pages =
             { name = "PageModel" ++ Filepath.toRouteVariantName filepath
             , arguments = toPageModelArgs page filepath
             , expression =
-                conditionallyWrapInLayout page
-                    (toPageModelMapper
-                        { filepath = filepath
-                        , isAdvancedElmLandPage = isAdvancedElmLandPage
-                        , function = "view"
-                        , mapper = "View.map"
-                        }
-                    )
+                toPageModelMapper
+                    { filepath = filepath
+                    , isAdvancedElmLandPage = isAdvancedElmLandPage
+                    , isAuthProtectedPage = PageFile.isAuthProtectedPage page
+                    , function = "view"
+                    , mapper = "View.map"
+                    }
+                    |> conditionallyWrapInAuthView page
+                    |> conditionallyWrapInLayout page
             }
 
         conditionallyWrapInAuthView : PageFile -> CodeGen.Expression -> CodeGen.Expression
         conditionallyWrapInAuthView page expression =
             if PageFile.isAuthProtectedPage page then
-                
                 CodeGen.Expression.multilineFunction
                     { name = "Auth.Action.view"
                     , arguments =
-                        [ expression
+                        [ CodeGen.Expression.parens
+                            [ CodeGen.Expression.lambda
+                                { arguments = [ CodeGen.Argument.new "user" ]
+                                , expression = expression
+                                }
+                            ]
                         , CodeGen.Expression.value "(Auth.onPageLoad model.shared (Route.fromUrl () model.url))"
                         ]
                     }
@@ -653,7 +657,7 @@ toViewCaseExpression pages =
             { name = "PageModel" ++ Filepath.toRouteVariantName filepath
             , arguments = toPageModelArgs page filepath
             , expression =
-                callSandboxOrElementPageFunction filepath
+                callSandboxOrElementPageFunction page filepath
                     |> conditionallyWrapInAuthView page
                     |> conditionallyWrapInLayout page
             }
@@ -763,7 +767,7 @@ toUpdatePageCaseExpression pages =
                             [ CodeGen.Expression.function
                                 { name = "Page.update"
                                 , arguments =
-                                    [ callSandboxOrElementPageFunction filepath
+                                    [ callSandboxOrElementPageFunction page filepath
                                     , CodeGen.Expression.value "pageMsg"
                                     , CodeGen.Expression.value "pageModel"
                                     ]
@@ -771,6 +775,7 @@ toUpdatePageCaseExpression pages =
                             ]
                         ]
                     }
+                    |> conditionallyWrapInRunWhenAuthenticated page
             }
 
         toBranchForAdvancedElmLandPage : PageFile -> Filepath -> CodeGen.Expression.Branch
@@ -803,7 +808,7 @@ toUpdatePageCaseExpression pages =
                             [ CodeGen.Expression.function
                                 { name = "Page.update"
                                 , arguments =
-                                    [ callAdvancedPageFunction "model.shared" "model.url" filepath
+                                    [ callAdvancedPageFunction page "model.url" filepath
                                     , CodeGen.Expression.value "pageMsg"
                                     , CodeGen.Expression.value "pageModel"
                                     ]
@@ -811,6 +816,7 @@ toUpdatePageCaseExpression pages =
                             ]
                         ]
                     }
+                    |> conditionallyWrapInRunWhenAuthenticated page
             }
 
         toBranch : PageFile -> CodeGen.Expression.Branch
@@ -865,11 +871,32 @@ toSubscriptionPageCaseExpression pages =
             , expression =
                 toPageModelMapper
                     { isAdvancedElmLandPage = isAdvancedElmLandPage
+                    , isAuthProtectedPage = PageFile.isAuthProtectedPage page
                     , filepath = filepath
                     , function = "subscriptions"
                     , mapper = "Sub.map"
                     }
+                    |> conditionallyWrapInAuthSubscriptions page
             }
+
+        conditionallyWrapInAuthSubscriptions : PageFile -> CodeGen.Expression -> CodeGen.Expression
+        conditionallyWrapInAuthSubscriptions page expression =
+            if PageFile.isAuthProtectedPage page then
+                CodeGen.Expression.multilineFunction
+                    { name = "Auth.Action.subscriptions"
+                    , arguments =
+                        [ CodeGen.Expression.parens
+                            [ CodeGen.Expression.lambda
+                                { arguments = [ CodeGen.Argument.new "user" ]
+                                , expression = expression
+                                }
+                            ]
+                        , CodeGen.Expression.value "(Auth.onPageLoad model.shared (Route.fromUrl () model.url))"
+                        ]
+                    }
+
+            else
+                expression
 
         toBranch : PageFile -> CodeGen.Expression.Branch
         toBranch page =
@@ -919,8 +946,8 @@ toInitPageCaseExpression pages =
                 , CodeGen.Expression.value "Cmd.none"
                 ]
 
-        toBranchForSandboxOrElementElmLandPage : Filepath -> CodeGen.Expression
-        toBranchForSandboxOrElementElmLandPage filepath =
+        toBranchForSandboxOrElementElmLandPage : PageFile -> Filepath -> CodeGen.Expression
+        toBranchForSandboxOrElementElmLandPage pageFile filepath =
             CodeGen.Expression.multilineFunction
                 { name = "Tuple.mapBoth"
                 , arguments =
@@ -939,7 +966,7 @@ toInitPageCaseExpression pages =
                         [ CodeGen.Expression.function
                             { name = "Page.init"
                             , arguments =
-                                [ callSandboxOrElementPageFunction filepath
+                                [ callSandboxOrElementPageFunction pageFile filepath
                                 , CodeGen.Expression.value "()"
                                 ]
                             }
@@ -947,8 +974,8 @@ toInitPageCaseExpression pages =
                     ]
                 }
 
-        toBranchForAdvancedElmLandPage : Filepath -> CodeGen.Expression
-        toBranchForAdvancedElmLandPage filepath =
+        toBranchForAdvancedElmLandPage : PageFile -> Filepath -> CodeGen.Expression
+        toBranchForAdvancedElmLandPage page filepath =
             CodeGen.Expression.multilineFunction
                 { name = "Tuple.mapBoth"
                 , arguments =
@@ -967,30 +994,13 @@ toInitPageCaseExpression pages =
                         [ CodeGen.Expression.function
                             { name = "Page.init"
                             , arguments =
-                                [ callAdvancedPageFunction "model.shared" "model.url" filepath
+                                [ callAdvancedPageFunction page "model.url" filepath
                                 , CodeGen.Expression.value "()"
                                 ]
                             }
                         ]
                     ]
                 }
-
-        conditionallyWrapInAuthInit : PageFile -> CodeGen.Expression -> CodeGen.Expression
-        conditionallyWrapInAuthInit page expression =
-            if PageFile.isAuthProtectedPage page then
-                CodeGen.Expression.multilineFunction
-                    { name = "initWithAuth"
-                    , arguments =
-                        [ CodeGen.Expression.value "model"
-                        , CodeGen.Expression.lambda
-                            { arguments = [ CodeGen.Argument.new "user" ]
-                            , expression = expression
-                            }
-                        ]
-                    }
-
-            else
-                expression
 
         toBranch : PageFile -> CodeGen.Expression.Branch
         toBranch page =
@@ -1001,15 +1011,16 @@ toInitPageCaseExpression pages =
 
                 branchExpression : CodeGen.Expression
                 branchExpression =
-                    if PageFile.isSandboxOrElementElmLandPage page then
-                        toBranchForSandboxOrElementElmLandPage filepath
+                    conditionallyWrapInRunWhenAuthenticated page
+                        (if PageFile.isSandboxOrElementElmLandPage page then
+                            toBranchForSandboxOrElementElmLandPage page filepath
 
-                    else if PageFile.isAdvancedElmLandPage page then
-                        toBranchForAdvancedElmLandPage filepath
+                         else if PageFile.isAdvancedElmLandPage page then
+                            toBranchForAdvancedElmLandPage page filepath
 
-                    else
-                        conditionallyWrapInAuthInit page
-                            (toBranchExpressionForStaticPage filepath)
+                         else
+                            toBranchExpressionForStaticPage filepath
+                        )
             in
             if Filepath.hasDynamicParameters filepath then
                 { name = "Route.Path." ++ Filepath.toRouteVariantName filepath
@@ -1041,6 +1052,24 @@ toInitPageCaseExpression pages =
         }
 
 
+conditionallyWrapInRunWhenAuthenticated : PageFile -> CodeGen.Expression -> CodeGen.Expression
+conditionallyWrapInRunWhenAuthenticated page expression =
+    if PageFile.isAuthProtectedPage page then
+        CodeGen.Expression.multilineFunction
+            { name = "runWhenAuthenticated"
+            , arguments =
+                [ CodeGen.Expression.value "model"
+                , CodeGen.Expression.lambda
+                    { arguments = [ CodeGen.Argument.new "user" ]
+                    , expression = expression
+                    }
+                ]
+            }
+
+    else
+        expression
+
+
 pageModelConstructor : Filepath -> CodeGen.Expression
 pageModelConstructor filepath =
     if Filepath.hasDynamicParameters filepath then
@@ -1055,23 +1084,41 @@ pageModelConstructor filepath =
         CodeGen.Expression.value ("PageModel" ++ Filepath.toRouteVariantName filepath)
 
 
-callSandboxOrElementPageFunction : Filepath -> CodeGen.Expression
-callSandboxOrElementPageFunction filepath =
-    if Filepath.hasDynamicParameters filepath then
-        CodeGen.Expression.parens
-            [ CodeGen.Expression.value (Filepath.toPageModuleName filepath ++ ".page")
-            , CodeGen.Expression.value "params"
-            ]
+callSandboxOrElementPageFunction : PageFile -> Filepath -> CodeGen.Expression
+callSandboxOrElementPageFunction pageFile filepath =
+    let
+        arguments : List CodeGen.Expression
+        arguments =
+            List.concat
+                [ if PageFile.isAuthProtectedPage pageFile then
+                    [ CodeGen.Expression.value "user" ]
 
-    else
-        CodeGen.Expression.value (Filepath.toPageModuleName filepath ++ ".page")
+                  else
+                    []
+                , if Filepath.hasDynamicParameters filepath then
+                    [ CodeGen.Expression.value "params" ]
+
+                  else
+                    []
+                ]
+    in
+    CodeGen.Expression.parens
+        [ CodeGen.Expression.function
+            { name = Filepath.toPageModuleName filepath ++ ".page"
+            , arguments = arguments
+            }
+        ]
 
 
-callAdvancedPageFunction : String -> String -> Filepath -> CodeGen.Expression
-callAdvancedPageFunction sharedVarName urlVarName filepath =
+callAdvancedPageFunction : PageFile -> String -> Filepath -> CodeGen.Expression
+callAdvancedPageFunction page urlVarName filepath =
     CodeGen.Expression.parens
         [ CodeGen.Expression.value (Filepath.toPageModuleName filepath ++ ".page")
-        , CodeGen.Expression.value sharedVarName
+        , if PageFile.isAuthProtectedPage page then
+            CodeGen.Expression.value "user model.shared"
+
+          else
+            CodeGen.Expression.value "model.shared"
         , if Filepath.hasDynamicParameters filepath then
             CodeGen.Expression.value ("(Route.fromUrl params " ++ urlVarName ++ ")")
 
@@ -1082,6 +1129,7 @@ callAdvancedPageFunction sharedVarName urlVarName filepath =
 
 toPageModelMapper :
     { isAdvancedElmLandPage : Bool
+    , isAuthProtectedPage : Bool
     , filepath : Filepath
     , function : String
     , mapper : String
@@ -1102,7 +1150,11 @@ toPageModelMapper options =
                 [ if options.isAdvancedElmLandPage then
                     CodeGen.Expression.parens
                         [ CodeGen.Expression.value (pageModuleName ++ ".page")
-                        , CodeGen.Expression.value "model.shared"
+                        , if options.isAuthProtectedPage then
+                            CodeGen.Expression.value "user model.shared"
+
+                          else
+                            CodeGen.Expression.value "model.shared"
                         , if Filepath.hasDynamicParameters options.filepath then
                             CodeGen.Expression.value "(Route.fromUrl params model.url)"
 
@@ -1113,7 +1165,16 @@ toPageModelMapper options =
                   else if Filepath.hasDynamicParameters options.filepath then
                     CodeGen.Expression.parens
                         [ CodeGen.Expression.value (pageModuleName ++ ".page")
-                        , CodeGen.Expression.value "params"
+                        , if options.isAuthProtectedPage then
+                            CodeGen.Expression.value "user params"
+
+                          else
+                            CodeGen.Expression.value "params"
+                        ]
+
+                  else if options.isAuthProtectedPage then
+                    CodeGen.Expression.parens
+                        [ CodeGen.Expression.value (pageModuleName ++ ".page user")
                         ]
 
                   else
