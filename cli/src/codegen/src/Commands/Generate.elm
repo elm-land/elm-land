@@ -753,6 +753,7 @@ toUpdatePageCaseExpression pages =
                                 args
                                     |> List.map CodeGen.Argument.toString
                                     |> String.join " "
+                                    |> String.append " "
                         )
             , arguments = []
             , expression =
