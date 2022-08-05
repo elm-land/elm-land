@@ -1,15 +1,18 @@
 module Effect exposing
-    ( Effect, none, map, batch
-    , fromCmd, fromSharedMsg
+    ( Effect, none, batch, map
+    , fromCmd
+    , Msg(..), fromEffectMsg
     , pushRoute, replaceRoute, loadExternalUrl
     , toCmd
     )
 
 {-|
 
-@docs Effect, none, map, batch
-@docs fromCmd, fromSharedMsg
+@docs Effect, none, batch, map
+@docs fromCmd
+@docs Msg, fromEffectMsg
 @docs pushRoute, replaceRoute, loadExternalUrl
+
 @docs toCmd
 
 -}
@@ -19,24 +22,32 @@ import Dict exposing (Dict)
 import Route exposing (Route)
 import Route.Path
 import Route.Query
-import Shared
 import Task
 import Url exposing (Url)
 
 
 type Effect msg
     = None
+    | Batch (List (Effect msg))
     | Cmd (Cmd msg)
+    | Effect Msg
     | PushUrl String
     | ReplaceUrl String
     | LoadExternalUrl String
-    | Shared Shared.Msg
-    | Batch (List (Effect msg))
+
+
+type Msg
+    = ExampleMsgReplaceMe
 
 
 none : Effect msg
 none =
     None
+
+
+batch : List (Effect msg) -> Effect msg
+batch =
+    Batch
 
 
 map : (msg1 -> msg2) -> Effect msg1 -> Effect msg2
@@ -45,8 +56,14 @@ map fn effect =
         None ->
             None
 
+        Batch list ->
+            Batch (List.map (map fn) list)
+
         Cmd cmd ->
             Cmd (Cmd.map fn cmd)
+
+        Effect msg ->
+            Effect msg
 
         PushUrl url ->
             PushUrl url
@@ -57,21 +74,19 @@ map fn effect =
         LoadExternalUrl url ->
             LoadExternalUrl url
 
-        Shared msg ->
-            Shared msg
-
-        Batch list ->
-            Batch (List.map (map fn) list)
-
 
 fromCmd : Cmd msg -> Effect msg
 fromCmd =
     Cmd
 
 
-fromSharedMsg : Shared.Msg -> Effect msg
-fromSharedMsg =
-    Shared
+fromEffectMsg : Msg -> Effect msg
+fromEffectMsg =
+    Effect
+
+
+
+-- ROUTING
 
 
 pushRoute :
@@ -99,18 +114,13 @@ loadExternalUrl =
     LoadExternalUrl
 
 
-batch : List (Effect msg) -> Effect msg
-batch =
-    Batch
-
-
 
 -- Used by Main.elm
 
 
 toCmd :
     { key : Browser.Navigation.Key
-    , fromSharedMsg : Shared.Msg -> mainMsg
+    , fromEffectMsg : Msg -> mainMsg
     , fromPageMsg : msg -> mainMsg
     }
     -> Effect msg
@@ -123,6 +133,13 @@ toCmd options effect =
         Cmd cmd ->
             Cmd.map options.fromPageMsg cmd
 
+        Batch list ->
+            Cmd.batch (List.map (toCmd options) list)
+
+        Effect msg ->
+            Task.succeed msg
+                |> Task.perform options.fromEffectMsg
+
         PushUrl url ->
             Browser.Navigation.pushUrl options.key url
 
@@ -131,13 +148,6 @@ toCmd options effect =
 
         LoadExternalUrl url ->
             Browser.Navigation.load url
-
-        Shared msg ->
-            Task.succeed msg
-                |> Task.perform options.fromSharedMsg
-
-        Batch list ->
-            Cmd.batch (List.map (toCmd options) list)
 
 
 

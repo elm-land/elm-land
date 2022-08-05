@@ -70,13 +70,9 @@ mainElmModule data =
                   ]
                 ]
         , declarations =
-            [ CodeGen.Declaration.typeAlias
-                { name = "Flags"
-                , annotation = CodeGen.Annotation.type_ "Shared.Flags"
-                }
-            , CodeGen.Declaration.function
+            [ CodeGen.Declaration.function
                 { name = "main"
-                , annotation = CodeGen.Annotation.type_ "Program Flags Model Msg"
+                , annotation = CodeGen.Annotation.type_ "Program Json.Decode.Value Model Msg"
                 , arguments = []
                 , expression =
                     CodeGen.Expression.multilineFunction
@@ -112,26 +108,37 @@ mainElmModule data =
                 { name = "init"
                 , annotation =
                     CodeGen.Annotation.function
-                        [ CodeGen.Annotation.type_ "Flags"
+                        [ CodeGen.Annotation.type_ "Json.Decode.Value"
                         , CodeGen.Annotation.type_ "Url"
                         , CodeGen.Annotation.type_ "Browser.Navigation.Key"
                         , CodeGen.Annotation.type_ "( Model, Cmd Msg )"
                         ]
                 , arguments =
-                    [ CodeGen.Argument.new "flags"
+                    [ CodeGen.Argument.new "json"
                     , CodeGen.Argument.new "url"
                     , CodeGen.Argument.new "key"
                     ]
                 , expression =
                     CodeGen.Expression.letIn
                         { let_ =
-                            [ { argument = CodeGen.Argument.new "( sharedModel, sharedEffect )"
+                            [ { argument = CodeGen.Argument.new "flagsResult"
+                              , annotation = Just (CodeGen.Annotation.type_ "Result Json.Decode.Error Shared.Flags")
+                              , expression =
+                                    CodeGen.Expression.function
+                                        { name = "Json.Decode.decodeValue"
+                                        , arguments =
+                                            [ CodeGen.Expression.value "Shared.decoder"
+                                            , CodeGen.Expression.value "json"
+                                            ]
+                                        }
+                              }
+                            , { argument = CodeGen.Argument.new "( sharedModel, sharedEffect )"
                               , annotation = Nothing
                               , expression =
                                     CodeGen.Expression.function
                                         { name = "Shared.init"
                                         , arguments =
-                                            [ CodeGen.Expression.value "flags"
+                                            [ CodeGen.Expression.value "flagsResult"
                                             , CodeGen.Expression.parens [ CodeGen.Expression.value "Route.fromUrl () url" ]
                                             ]
                                         }

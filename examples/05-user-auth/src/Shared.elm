@@ -1,5 +1,5 @@
 module Shared exposing
-    ( Flags
+    ( Flags, decoder
     , Model, Msg
     , init, update, subscriptions
     , handleEffectMsg
@@ -8,7 +8,7 @@ module Shared exposing
 
 {-|
 
-@docs Flags
+@docs Flags, decoder
 @docs Model, Msg
 @docs init, update, subscriptions
 @docs handleEffectMsg
@@ -31,17 +31,13 @@ import Route.Path
 
 
 type alias Flags =
-    Json.Decode.Value
-
-
-type alias SafeFlags =
     { token : Maybe String
     }
 
 
-flagsDecoder : Json.Decode.Decoder SafeFlags
-flagsDecoder =
-    Json.Decode.map SafeFlags
+decoder : Json.Decode.Decoder Flags
+decoder =
+    Json.Decode.map Flags
         (Json.Decode.maybe (Json.Decode.field "token" Json.Decode.string))
 
 
@@ -57,13 +53,12 @@ type SignInStatus
     | FailedToSignIn Http.Error
 
 
-init : Flags -> Route () -> ( Model, Effect Msg )
-init json req =
+init : Result Json.Decode.Error Flags -> Route () -> ( Model, Effect Msg )
+init flagsResult route =
     let
-        flags : SafeFlags
+        flags : Flags
         flags =
-            json
-                |> Json.Decode.decodeValue flagsDecoder
+            flagsResult
                 |> Result.withDefault { token = Nothing }
 
         signInStatus : SignInStatus

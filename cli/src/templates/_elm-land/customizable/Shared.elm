@@ -1,18 +1,23 @@
 module Shared exposing
-    ( Flags
-    , Model, Msg(..)
+    ( Flags, decoder
+    , Model, Msg
     , init, update, subscriptions
+    , handleEffectMsg
     )
 
 {-|
 
-@docs Flags
+@docs Flags, decoder
 @docs Model, Msg
 @docs init, update, subscriptions
+@docs handleEffectMsg
 
 -}
 
+import Effect exposing (Effect)
+import Json.Decode
 import Route exposing (Route)
+import Route.Path
 
 
 
@@ -20,16 +25,23 @@ import Route exposing (Route)
 
 
 type alias Flags =
-    ()
+    {}
+
+
+decoder : Json.Decode.Decoder Flags
+decoder =
+    Json.Decode.succeed {}
 
 
 type alias Model =
     {}
 
 
-init : Flags -> Route () -> ( Model, Cmd Msg )
-init flags req =
-    ( {}, Cmd.none )
+init : Result Json.Decode.Error Flags -> Route () -> ( Model, Effect Msg )
+init flagsResult route =
+    ( {}
+    , Effect.none
+    )
 
 
 
@@ -37,14 +49,21 @@ init flags req =
 
 
 type Msg
-    = ExampleMsgReplaceMe
+    = FromEffect Effect.Msg
 
 
-update : Route () -> Msg -> Model -> ( Model, Cmd Msg )
-update req msg model =
+handleEffectMsg : Effect.Msg -> Msg
+handleEffectMsg =
+    FromEffect
+
+
+update : Route () -> Msg -> Model -> ( Model, Effect Msg )
+update route msg model =
     case msg of
-        ExampleMsgReplaceMe ->
-            ( model, Cmd.none )
+        FromEffect Effect.ExampleMsgReplaceMe ->
+            ( model
+            , Effect.none
+            )
 
 
 
@@ -52,5 +71,5 @@ update req msg model =
 
 
 subscriptions : Route () -> Model -> Sub Msg
-subscriptions req model =
+subscriptions route model =
     Sub.none
