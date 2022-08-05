@@ -125,7 +125,7 @@ mainElmModule data =
                 , expression =
                     CodeGen.Expression.letIn
                         { let_ =
-                            [ { argument = CodeGen.Argument.new "( sharedModel, sharedCmd )"
+                            [ { argument = CodeGen.Argument.new "( sharedModel, sharedEffect )"
                               , annotation = Nothing
                               , expression =
                                     CodeGen.Expression.function
@@ -165,10 +165,10 @@ mainElmModule data =
                                         [ CodeGen.Expression.multilineList
                                             [ CodeGen.Expression.value "pageCmd"
                                             , CodeGen.Expression.function
-                                                { name = "Cmd.map"
+                                                { name = "fromSharedEffect"
                                                 , arguments =
-                                                    [ CodeGen.Expression.value "SharedSentMsg"
-                                                    , CodeGen.Expression.value "sharedCmd"
+                                                    [ CodeGen.Expression.value "key"
+                                                    , CodeGen.Expression.value "sharedEffect"
                                                     ]
                                                 }
                                             ]
@@ -199,7 +199,7 @@ mainElmModule data =
                     [ ( "UrlRequested", [ CodeGen.Annotation.type_ "Browser.UrlRequest" ] )
                     , ( "UrlChanged", [ CodeGen.Annotation.type_ "Url" ] )
                     , ( "PageSent", [ CodeGen.Annotation.type_ "PageMsg" ] )
-                    , ( "SharedSentMsg", [ CodeGen.Annotation.type_ "Shared.Msg" ] )
+                    , ( "SharedSent", [ CodeGen.Annotation.type_ "Shared.Msg" ] )
                     ]
                 }
             , CodeGen.Declaration.customType
@@ -311,19 +311,18 @@ mainElmModule data =
                                                 ]
                                         }
                               }
-                            , { name = "SharedSentMsg"
+                            , { name = "SharedSent"
                               , arguments = [ CodeGen.Argument.new "sharedMsg" ]
                               , expression =
                                     CodeGen.Expression.letIn
                                         { let_ =
-                                            [ { argument = CodeGen.Argument.new "( sharedModel, sharedCmd )"
+                                            [ { argument = CodeGen.Argument.new "( sharedModel, sharedEffect )"
                                               , annotation = Nothing
                                               , expression =
                                                     CodeGen.Expression.function
                                                         { name = "Shared.update"
                                                         , arguments =
-                                                            [ CodeGen.Expression.value "model.key"
-                                                            , CodeGen.Expression.parens [ CodeGen.Expression.value "Route.fromUrl () model.url" ]
+                                                            [ CodeGen.Expression.parens [ CodeGen.Expression.value "Route.fromUrl () model.url" ]
                                                             , CodeGen.Expression.value "sharedMsg"
                                                             , CodeGen.Expression.value "model.shared"
                                                             ]
@@ -353,7 +352,7 @@ mainElmModule data =
                                                                             , arguments =
                                                                                 [ CodeGen.Expression.multilineList
                                                                                     [ CodeGen.Expression.value "pageCmd"
-                                                                                    , CodeGen.Expression.value "Cmd.map SharedSentMsg sharedCmd"
+                                                                                    , CodeGen.Expression.value "fromSharedEffect model.key sharedEffect"
                                                                                     ]
                                                                                 ]
                                                                             }
@@ -371,10 +370,10 @@ mainElmModule data =
                                                                         ]
                                                                     }
                                                                 , CodeGen.Expression.function
-                                                                    { name = "Cmd.map"
+                                                                    { name = "fromSharedEffect"
                                                                     , arguments =
-                                                                        [ CodeGen.Expression.value "SharedSentMsg"
-                                                                        , CodeGen.Expression.value "sharedCmd"
+                                                                        [ CodeGen.Expression.value "model.key"
+                                                                        , CodeGen.Expression.value "sharedEffect"
                                                                         ]
                                                                     }
                                                                 ]
@@ -422,32 +421,51 @@ mainElmModule data =
                 , expression = toViewCaseExpression data.pages
                 }
             , CodeGen.Declaration.comment [ "INTERNALS" ]
-            , CodeGen.Declaration.function
-                { name = "fromEffect"
-                , annotation =
-                    CodeGen.Annotation.function
-                        [ CodeGen.Annotation.type_ "Browser.Navigation.Key"
-                        , CodeGen.Annotation.type_ "Effect PageMsg"
-                        , CodeGen.Annotation.type_ "Cmd Msg"
-                        ]
-                , arguments =
-                    [ CodeGen.Argument.new "key"
-                    , CodeGen.Argument.new "effect"
-                    ]
-                , expression =
-                    CodeGen.Expression.multilineFunction
-                        { name = "Effect.toCmd"
-                        , arguments =
-                            [ CodeGen.Expression.multilineRecord
-                                [ ( "key", CodeGen.Expression.value "key" )
-                                , ( "fromPageMsg", CodeGen.Expression.value "PageSent" )
-                                , ( "fromSharedMsg", CodeGen.Expression.value "SharedSentMsg" )
-                                ]
-                            , CodeGen.Expression.value "effect"
-                            ]
-                        }
+            , fromEffectDeclaration
+                { name = "fromPageEffect"
+                , msgType = "PageMsg"
+                , fromPageMsg = "PageSent"
+                }
+            , fromEffectDeclaration
+                { name = "fromSharedEffect"
+                , msgType = "Shared.Msg"
+                , fromPageMsg = "SharedSent"
                 }
             ]
+        }
+
+
+fromEffectDeclaration :
+    { name : String
+    , msgType : String
+    , fromPageMsg : String
+    }
+    -> CodeGen.Declaration
+fromEffectDeclaration options =
+    CodeGen.Declaration.function
+        { name = options.name
+        , annotation =
+            CodeGen.Annotation.function
+                [ CodeGen.Annotation.type_ "Browser.Navigation.Key"
+                , CodeGen.Annotation.type_ ("Effect " ++ options.msgType)
+                , CodeGen.Annotation.type_ "Cmd Msg"
+                ]
+        , arguments =
+            [ CodeGen.Argument.new "key"
+            , CodeGen.Argument.new "effect"
+            ]
+        , expression =
+            CodeGen.Expression.multilineFunction
+                { name = "Effect.toCmd"
+                , arguments =
+                    [ CodeGen.Expression.multilineRecord
+                        [ ( "key", CodeGen.Expression.value "key" )
+                        , ( "fromPageMsg", CodeGen.Expression.value options.fromPageMsg )
+                        , ( "fromEffectMsg", CodeGen.Expression.value "Shared.handleEffectMsg >> SharedSent" )
+                        ]
+                    , CodeGen.Expression.value "effect"
+                    ]
+                }
         }
 
 
@@ -537,7 +555,7 @@ runWhenAuthenticatedDeclaration =
                                 , arguments =
                                     [ CodeGen.Expression.multilineRecord
                                         [ ( "key", CodeGen.Expression.value "model.key" )
-                                        , ( "fromSharedMsg", CodeGen.Expression.value "SharedSentMsg" )
+                                        , ( "fromEffectMsg", CodeGen.Expression.value "Shared.handleEffectMsg >> SharedSent" )
                                         , ( "fromPageMsg", CodeGen.Expression.value "identity" )
                                         ]
                                     ]
@@ -761,7 +779,7 @@ toUpdatePageCaseExpression pages =
                                     ]
                                 }
                             , CodeGen.Expression.operator ">>"
-                            , CodeGen.Expression.value "fromEffect model.key"
+                            , CodeGen.Expression.value "fromPageEffect model.key"
                             ]
                         , CodeGen.Expression.parens
                             [ CodeGen.Expression.function
@@ -802,7 +820,7 @@ toUpdatePageCaseExpression pages =
                                     ]
                                 }
                             , CodeGen.Expression.operator ">>"
-                            , CodeGen.Expression.value "fromEffect model.key"
+                            , CodeGen.Expression.value "fromPageEffect model.key"
                             ]
                         , CodeGen.Expression.parens
                             [ CodeGen.Expression.function
@@ -960,7 +978,7 @@ toInitPageCaseExpression pages =
                                 ]
                             }
                         , CodeGen.Expression.operator ">>"
-                        , CodeGen.Expression.value "fromEffect model.key"
+                        , CodeGen.Expression.value "fromPageEffect model.key"
                         ]
                     , CodeGen.Expression.parens
                         [ CodeGen.Expression.function
@@ -988,7 +1006,7 @@ toInitPageCaseExpression pages =
                                 ]
                             }
                         , CodeGen.Expression.operator ">>"
-                        , CodeGen.Expression.value "fromEffect model.key"
+                        , CodeGen.Expression.value "fromPageEffect model.key"
                         ]
                     , CodeGen.Expression.parens
                         [ CodeGen.Expression.function

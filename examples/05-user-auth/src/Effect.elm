@@ -1,6 +1,7 @@
 port module Effect exposing
     ( Effect, none, map, batch
-    , fromCmd, fromSharedMsg
+    , fromCmd
+    , Msg(..), fromEffectMsg
     , pushRoute, replaceRoute, loadExternalUrl
     , save
     , toCmd
@@ -9,33 +10,39 @@ port module Effect exposing
 {-|
 
 @docs Effect, none, map, batch
-@docs fromCmd, fromSharedMsg
+@docs fromCmd
+@docs Msg, fromEffectMsg
 @docs pushRoute, replaceRoute, loadExternalUrl
 @docs save
 @docs toCmd
 
 -}
 
+import Api.User
 import Browser.Navigation
 import Dict exposing (Dict)
+import Http
 import Json.Encode
 import Route exposing (Route)
 import Route.Path
 import Route.Query
-import Shared
 import Task
 import Url exposing (Url)
 
 
 type Effect msg
     = None
+    | Batch (List (Effect msg))
     | Cmd (Cmd msg)
+    | Effect Msg
     | PushUrl String
     | ReplaceUrl String
     | LoadExternalUrl String
-    | Shared Shared.Msg
     | SaveToLocalStorage { key : String, value : Json.Encode.Value }
-    | Batch (List (Effect msg))
+
+
+type Msg
+    = SignInPageSignedInUser (Result Http.Error Api.User.User)
 
 
 none : Effect msg
@@ -61,8 +68,8 @@ map fn effect =
         LoadExternalUrl url ->
             LoadExternalUrl url
 
-        Shared msg ->
-            Shared msg
+        Effect msg ->
+            Effect msg
 
         Batch list ->
             Batch (List.map (map fn) list)
@@ -76,9 +83,9 @@ fromCmd =
     Cmd
 
 
-fromSharedMsg : Shared.Msg -> Effect msg
-fromSharedMsg =
-    Shared
+fromEffectMsg : Msg -> Effect msg
+fromEffectMsg =
+    Effect
 
 
 
@@ -130,7 +137,7 @@ batch =
 
 toCmd :
     { key : Browser.Navigation.Key
-    , fromSharedMsg : Shared.Msg -> mainMsg
+    , fromEffectMsg : Msg -> mainMsg
     , fromPageMsg : msg -> mainMsg
     }
     -> Effect msg
@@ -152,9 +159,9 @@ toCmd options effect =
         LoadExternalUrl url ->
             Browser.Navigation.load url
 
-        Shared msg ->
+        Effect msg ->
             Task.succeed msg
-                |> Task.perform options.fromSharedMsg
+                |> Task.perform options.fromEffectMsg
 
         Batch list ->
             Cmd.batch (List.map (toCmd options) list)

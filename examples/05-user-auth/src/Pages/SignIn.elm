@@ -119,7 +119,7 @@ update msg model =
 
         UserApiResponded result ->
             ( model
-            , Effect.fromSharedMsg (Shared.SignInPageSignedInUser result)
+            , Effect.fromEffectMsg (Effect.SignInPageSignedInUser result)
             )
 
 

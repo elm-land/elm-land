@@ -1,7 +1,8 @@
 module Shared exposing
     ( Flags
-    , Model, Msg(..)
+    , Model, Msg
     , init, update, subscriptions
+    , handleEffectMsg
     , SignInStatus(..)
     )
 
@@ -10,6 +11,7 @@ module Shared exposing
 @docs Flags
 @docs Model, Msg
 @docs init, update, subscriptions
+@docs handleEffectMsg
 
 @docs SignInStatus
 
@@ -17,6 +19,7 @@ module Shared exposing
 
 import Api.User exposing (User)
 import Browser.Navigation
+import Effect exposing (Effect)
 import Http
 import Json.Decode
 import Route exposing (Route)
@@ -54,7 +57,7 @@ type SignInStatus
     | FailedToSignIn Http.Error
 
 
-init : Flags -> Route () -> ( Model, Cmd Msg )
+init : Flags -> Route () -> ( Model, Effect Msg )
 init json req =
     let
         flags : SafeFlags
@@ -76,13 +79,15 @@ init json req =
       }
     , case flags.token of
         Just token ->
-            Api.User.getCurrentUser
-                { token = token
-                , onResponse = UserApiResponded
-                }
+            Effect.fromCmd
+                (Api.User.getCurrentUser
+                    { token = token
+                    , onResponse = UserApiResponded
+                    }
+                )
 
         Nothing ->
-            Cmd.none
+            Effect.none
     )
 
 
@@ -92,31 +97,39 @@ init json req =
 
 type Msg
     = UserApiResponded (Result Http.Error User)
-    | SignInPageSignedInUser (Result Http.Error User)
+    | FromEffect Effect.Msg
 
 
-update : Browser.Navigation.Key -> Route () -> Msg -> Model -> ( Model, Cmd Msg )
-update key route msg model =
+handleEffectMsg : Effect.Msg -> Msg
+handleEffectMsg =
+    FromEffect
+
+
+update : Route () -> Msg -> Model -> ( Model, Effect Msg )
+update route msg model =
     case msg of
         UserApiResponded (Ok user) ->
             ( { model | signInStatus = SignedInWithUser user }
-            , Cmd.none
+            , Effect.none
             )
 
         UserApiResponded (Err httpError) ->
             ( { model | signInStatus = FailedToSignIn httpError }
-            , Cmd.none
+            , Effect.none
             )
 
-        SignInPageSignedInUser (Ok user) ->
+        FromEffect (Effect.SignInPageSignedInUser (Ok user)) ->
             ( { model | signInStatus = SignedInWithUser user }
-            , Browser.Navigation.pushUrl key
-                (Route.Path.toString Route.Path.Home_)
+            , Effect.pushRoute
+                { path = Route.Path.Home_
+                , query = []
+                , hash = Nothing
+                }
             )
 
-        SignInPageSignedInUser (Err httpError) ->
+        FromEffect (Effect.SignInPageSignedInUser (Err httpError)) ->
             ( { model | signInStatus = FailedToSignIn httpError }
-            , Cmd.none
+            , Effect.none
             )
 
 
