@@ -1,6 +1,7 @@
 module Pages.SignIn exposing (Model, Msg, page)
 
 import Api.User
+import Dict
 import Effect exposing (Effect)
 import Html exposing (Html)
 import Html.Attributes as Attr
@@ -16,12 +17,12 @@ import View exposing (View)
 
 
 page : Shared.Model -> Route () -> Page Model Msg
-page shared req =
+page shared route =
     Page.new
         { init = init
         , update = update
         , subscriptions = subscriptions
-        , view = view
+        , view = view route
         }
 
 
@@ -119,7 +120,7 @@ update msg model =
 
         UserApiResponded result ->
             ( model
-            , Effect.fromEffectMsg (Effect.SignInPageSignedInUser result)
+            , Effect.fromSharedMsg (Effect.SignInPageSignedInUser result)
             )
 
 
@@ -232,23 +233,28 @@ subscriptions model =
 -- VIEW
 
 
-view : Model -> View Msg
-view model =
+view : Route () -> Model -> View Msg
+view route model =
     { title = "Sign in"
     , body =
-        [ viewPage model
+        [ viewPage route model
         ]
     }
 
 
-viewPage : Model -> Html Msg
-viewPage model =
-    Html.div [ Attr.class "columns is-mobile is-centered" ]
-        [ Html.div [ Attr.class "column is-narrow" ]
-            [ Html.div [ Attr.class "section" ]
-                [ Html.h1 [ Attr.class "title" ] [ Html.text "Sign in" ]
-                , viewForm model
-                ]
+viewPage : Route () -> Model -> Html Msg
+viewPage route model =
+    Html.div [ Attr.class "is-flex hero is-light is-align-items-center is-justify-content-center", Attr.style "height" "100vh" ]
+        [ Html.div [ Attr.class "p-4 pb-6" ]
+            [ Html.h1 [ Attr.class "title" ] [ Html.text "Sign in" ]
+            , case Dict.get "from" route.query of
+                Just (Just originalUrl) ->
+                    Html.h2 [ Attr.class "subtitle is-size-6" ]
+                        [ Html.text ("Redirected from " ++ originalUrl) ]
+
+                _ ->
+                    Html.text ""
+            , viewForm model
             ]
         ]
 

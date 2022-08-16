@@ -1,5 +1,14 @@
 # Getting started
 
+### What we'll learn
+
+- How to install Elm Land 
+- How to create our first project
+- How to run the project in our browser
+
+<BrowserWindow src="./pages/hello-world.jpg" alt="Homepage" url="http://localhost:1234" />
+
+
 ## Prerequisites
 
 - [Node.js v16 or higher](https://nodejs.org)
@@ -49,8 +58,6 @@ npx elm-land server
 </code-group>
 
 Visiting [http://localhost:1234](http://localhost:1234) in your browser will show you your new web app!
-
-![Browser showing "Hello world!" message on the homepage](./pages/home.png)
 
 ### You did it! :tada:
 

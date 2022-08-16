@@ -1,7 +1,7 @@
 port module Effect exposing
     ( Effect, none, map, batch
     , fromCmd
-    , Msg(..), fromEffectMsg
+    , SharedMsg(..), fromSharedMsg
     , pushRoute, replaceRoute, loadExternalUrl
     , save
     , toCmd
@@ -11,7 +11,8 @@ port module Effect exposing
 
 @docs Effect, none, map, batch
 @docs fromCmd
-@docs Msg, fromEffectMsg
+@docs SharedMsg, fromSharedMsg
+@docs Msg, fromAction
 @docs pushRoute, replaceRoute, loadExternalUrl
 @docs save
 @docs toCmd
@@ -34,15 +35,16 @@ type Effect msg
     = None
     | Batch (List (Effect msg))
     | Cmd (Cmd msg)
-    | Effect Msg
+    | Shared SharedMsg
     | PushUrl String
     | ReplaceUrl String
     | LoadExternalUrl String
     | SaveToLocalStorage { key : String, value : Json.Encode.Value }
 
 
-type Msg
+type SharedMsg
     = SignInPageSignedInUser (Result Http.Error Api.User.User)
+    | PageSignedOutUser
 
 
 none : Effect msg
@@ -50,32 +52,9 @@ none =
     None
 
 
-map : (msg1 -> msg2) -> Effect msg1 -> Effect msg2
-map fn effect =
-    case effect of
-        None ->
-            None
-
-        Cmd cmd ->
-            Cmd (Cmd.map fn cmd)
-
-        PushUrl url ->
-            PushUrl url
-
-        ReplaceUrl url ->
-            ReplaceUrl url
-
-        LoadExternalUrl url ->
-            LoadExternalUrl url
-
-        Effect msg ->
-            Effect msg
-
-        Batch list ->
-            Batch (List.map (map fn) list)
-
-        SaveToLocalStorage options ->
-            SaveToLocalStorage options
+batch : List (Effect msg) -> Effect msg
+batch =
+    Batch
 
 
 fromCmd : Cmd msg -> Effect msg
@@ -83,9 +62,9 @@ fromCmd =
     Cmd
 
 
-fromEffectMsg : Msg -> Effect msg
-fromEffectMsg =
-    Effect
+fromSharedMsg : SharedMsg -> Effect msg
+fromSharedMsg =
+    Shared
 
 
 
@@ -121,14 +100,44 @@ loadExternalUrl =
 -- LOCAL STORAGE
 
 
+port saveToLocalStorage : { key : String, value : Json.Encode.Value } -> Cmd msg
+
+
 save : { key : String, value : Json.Encode.Value } -> Effect msg
 save keyValueRecord =
     SaveToLocalStorage keyValueRecord
 
 
-batch : List (Effect msg) -> Effect msg
-batch =
-    Batch
+
+-- MAP
+
+
+map : (msg1 -> msg2) -> Effect msg1 -> Effect msg2
+map fn effect =
+    case effect of
+        None ->
+            None
+
+        Batch list ->
+            Batch (List.map (map fn) list)
+
+        Cmd cmd ->
+            Cmd (Cmd.map fn cmd)
+
+        Shared msg ->
+            Shared msg
+
+        PushUrl url ->
+            PushUrl url
+
+        ReplaceUrl url ->
+            ReplaceUrl url
+
+        LoadExternalUrl url ->
+            LoadExternalUrl url
+
+        SaveToLocalStorage options ->
+            SaveToLocalStorage options
 
 
 
@@ -137,7 +146,7 @@ batch =
 
 toCmd :
     { key : Browser.Navigation.Key
-    , fromEffectMsg : Msg -> mainMsg
+    , fromSharedMsg : SharedMsg -> mainMsg
     , fromPageMsg : msg -> mainMsg
     }
     -> Effect msg
@@ -147,8 +156,15 @@ toCmd options effect =
         None ->
             Cmd.none
 
+        Batch list ->
+            Cmd.batch (List.map (toCmd options) list)
+
         Cmd cmd ->
             Cmd.map options.fromPageMsg cmd
+
+        Shared msg ->
+            Task.succeed msg
+                |> Task.perform options.fromSharedMsg
 
         PushUrl url ->
             Browser.Navigation.pushUrl options.key url
@@ -159,22 +175,8 @@ toCmd options effect =
         LoadExternalUrl url ->
             Browser.Navigation.load url
 
-        Effect msg ->
-            Task.succeed msg
-                |> Task.perform options.fromEffectMsg
-
-        Batch list ->
-            Cmd.batch (List.map (toCmd options) list)
-
         SaveToLocalStorage keyValueRecord ->
             saveToLocalStorage keyValueRecord
-
-
-
--- PORTS
-
-
-port saveToLocalStorage : { key : String, value : Json.Encode.Value } -> Cmd msg
 
 
 

@@ -335,13 +335,21 @@ mainElmModule data =
                                                             ]
                                                         }
                                               }
+                                            , { argument = CodeGen.Argument.new "( oldAction, newAction )"
+                                              , annotation = Nothing
+                                              , expression =
+                                                    CodeGen.Expression.multilineTuple
+                                                        [ CodeGen.Expression.value "Auth.onPageLoad model.shared (Route.fromUrl () model.url)"
+                                                        , CodeGen.Expression.value "Auth.onPageLoad sharedModel (Route.fromUrl () model.url)"
+                                                        ]
+                                              }
                                             ]
                                         , in_ =
                                             CodeGen.Expression.caseExpression
-                                                { value = CodeGen.Argument.new "model.page"
+                                                { value = CodeGen.Argument.new "oldAction /= newAction"
                                                 , branches =
-                                                    [ { name = "Loading"
-                                                      , arguments = [ CodeGen.Argument.new "_" ]
+                                                    [ { name = "True"
+                                                      , arguments = []
                                                       , expression =
                                                             CodeGen.Expression.letIn
                                                                 { let_ =
@@ -366,7 +374,7 @@ mainElmModule data =
                                                                         ]
                                                                 }
                                                       }
-                                                    , { name = "_"
+                                                    , { name = "False"
                                                       , arguments = []
                                                       , expression =
                                                             CodeGen.Expression.multilineTuple
@@ -468,7 +476,7 @@ fromEffectDeclaration options =
                     [ CodeGen.Expression.multilineRecord
                         [ ( "key", CodeGen.Expression.value "key" )
                         , ( "fromPageMsg", CodeGen.Expression.value options.fromPageMsg )
-                        , ( "fromEffectMsg", CodeGen.Expression.value "Shared.handleEffectMsg >> SharedSent" )
+                        , ( "fromSharedMsg", CodeGen.Expression.value "Shared.handleSharedMsg >> SharedSent" )
                         ]
                     , CodeGen.Expression.value "effect"
                     ]
@@ -562,7 +570,7 @@ runWhenAuthenticatedDeclaration =
                                 , arguments =
                                     [ CodeGen.Expression.multilineRecord
                                         [ ( "key", CodeGen.Expression.value "model.key" )
-                                        , ( "fromEffectMsg", CodeGen.Expression.value "Shared.handleEffectMsg >> SharedSent" )
+                                        , ( "fromSharedMsg", CodeGen.Expression.value "Shared.handleSharedMsg >> SharedSent" )
                                         , ( "fromPageMsg", CodeGen.Expression.value "identity" )
                                         ]
                                     ]

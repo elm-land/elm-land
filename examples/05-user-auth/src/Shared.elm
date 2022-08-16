@@ -2,7 +2,7 @@ module Shared exposing
     ( Flags, decoder
     , Model, Msg
     , init, update, subscriptions
-    , handleEffectMsg
+    , handleSharedMsg
     , SignInStatus(..)
     )
 
@@ -11,7 +11,7 @@ module Shared exposing
 @docs Flags, decoder
 @docs Model, Msg
 @docs init, update, subscriptions
-@docs handleEffectMsg
+@docs handleSharedMsg
 
 @docs SignInStatus
 
@@ -22,6 +22,7 @@ import Browser.Navigation
 import Effect exposing (Effect)
 import Http
 import Json.Decode
+import Json.Encode
 import Route exposing (Route)
 import Route.Path
 
@@ -92,11 +93,11 @@ init flagsResult route =
 
 type Msg
     = UserApiResponded (Result Http.Error User)
-    | FromEffect Effect.Msg
+    | FromEffect Effect.SharedMsg
 
 
-handleEffectMsg : Effect.Msg -> Msg
-handleEffectMsg =
+handleSharedMsg : Effect.SharedMsg -> Msg
+handleSharedMsg =
     FromEffect
 
 
@@ -127,11 +128,16 @@ update route msg model =
             , Effect.none
             )
 
+        FromEffect Effect.PageSignedOutUser ->
+            ( { model | signInStatus = NotSignedIn }
+            , Effect.save { key = "token", value = Json.Encode.null }
+            )
+
 
 
 -- SUBSCRIPTIONS
 
 
 subscriptions : Route () -> Model -> Sub Msg
-subscriptions req model =
+subscriptions route model =
     Sub.none

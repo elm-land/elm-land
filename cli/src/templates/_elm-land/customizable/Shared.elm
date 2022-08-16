@@ -2,7 +2,7 @@ module Shared exposing
     ( Flags, decoder
     , Model, Msg
     , init, update, subscriptions
-    , handleEffectMsg
+    , handleSharedMsg
     )
 
 {-|
@@ -10,7 +10,7 @@ module Shared exposing
 @docs Flags, decoder
 @docs Model, Msg
 @docs init, update, subscriptions
-@docs handleEffectMsg
+@docs handleSharedMsg
 
 -}
 
@@ -52,8 +52,8 @@ type Msg
     = FromEffect Effect.Msg
 
 
-handleEffectMsg : Effect.Msg -> Msg
-handleEffectMsg =
+handleSharedMsg : Effect.Msg -> Msg
+handleSharedMsg =
     FromEffect
 
 

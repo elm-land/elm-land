@@ -108,7 +108,7 @@ Let's update our `src/Pages/Pokemon.elm` file to get first 150 pokemon from Poke
 To do that, we're going to add 3 new files:
 
 
-```hs
+```txt
 -- ...
 src/
  |- Api.elm          -- Top-level module for REST API stuff

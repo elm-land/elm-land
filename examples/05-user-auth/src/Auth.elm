@@ -20,7 +20,7 @@ onPageLoad shared route =
         Shared.NotSignedIn ->
             Auth.Action.pushRoute
                 { path = Route.Path.SignIn
-                , query = []
+                , query = [ ( "from", Just route.url.path ) ]
                 , hash = Nothing
                 }
 
@@ -44,6 +44,6 @@ onPageLoad shared route =
         Shared.FailedToSignIn user ->
             Auth.Action.pushRoute
                 { path = Route.Path.SignIn
-                , query = []
+                , query = [ ( "from", Just route.url.path ) ]
                 , hash = Nothing
                 }

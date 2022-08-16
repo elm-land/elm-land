@@ -1,4 +1,10 @@
-# Handling user interaction
+# User input
+
+### What we'll learn
+
+- The three pieces of __the Elm architecture__
+- How to update UI when a __user clicks a button__
+- How to __add more features__ to an existing app
 
 ## Page.sandbox
 
@@ -17,8 +23,7 @@ We can create a page that can keep track of UI state using the `elm-land add` co
 npx elm-land add page:sandbox /counter
 ```
 
-<code-group>
-<code-block title="src/Pages/Counter.elm">
+::: details The new code that got created :point_down:
 
 ```elm
 module Pages.Counter exposing (Model, Msg, page)
@@ -80,8 +85,7 @@ view model =
     }
 ```
 
-</code-block>
-</code-group>
+:::
 
 ### Understanding the code
 

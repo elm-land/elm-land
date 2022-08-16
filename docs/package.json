@@ -1,20 +1,28 @@
 {
-  "name": "elm-land",
-  "version": "0.0.1",
-  "description": "Reliable web apps for everyone",
+  "name": "@elm-land/docs",
+  "version": "1.0.0",
+  "description": "The website at https://elm.land",
   "main": "index.js",
-  "authors": {
-    "name": "Ryan Haskell-Glatz",
-    "email": "ryan.nhg@gmail.com"
-  },
-  "repository": "https://github.com/elm-land/docs",
   "scripts": {
     "start": "npm install && npm run dev",
-    "dev": "vuepress dev src",
-    "build": "vuepress build src"
+    "dev": "vitepress dev .",
+    "build": "vitepress build .",
+    "serve": "vitepress serve ."
   },
-  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/elm-land/elm-land.git"
+  },
+  "keywords": [
+    "elm-land",
+    "website",
+    "elm"
+  ],
+  "author": "Ryan Haskell-Glatz",
+  "license": "ISC",
+  "homepage": "https://elm.land",
   "devDependencies": {
-    "vuepress": "^1.5.3"
+    "vitepress": "1.0.0-alpha.4",
+    "vue": "3.2.37"
   }
 }

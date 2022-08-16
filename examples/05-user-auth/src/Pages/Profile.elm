@@ -1,14 +1,12 @@
-module Pages.Home_ exposing (Model, Msg, page)
+module Pages.Profile exposing (Model, Msg, page)
 
 import Auth
 import Effect exposing (Effect)
-import Html exposing (Html)
+import Html
 import Html.Attributes as Attr
-import Html.Events
 import Layout exposing (Layout)
 import Page exposing (Page)
 import Route exposing (Route)
-import Route.Path
 import Shared
 import View exposing (View)
 
@@ -48,15 +46,15 @@ init () =
 
 
 type Msg
-    = UserClickedSignOut
+    = ExampleMsgReplaceMe
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        UserClickedSignOut ->
+        ExampleMsgReplaceMe ->
             ( model
-            , Effect.fromSharedMsg Effect.PageSignedOutUser
+            , Effect.none
             )
 
 
@@ -75,23 +73,16 @@ subscriptions model =
 
 view : Auth.User -> Model -> View Msg
 view user model =
-    { title = "Dashboard"
-    , body = [ viewPage user ]
-    }
-
-
-viewPage : Auth.User -> Html Msg
-viewPage user =
-    Html.section [ Attr.class "hero is-light" ]
-        [ Html.div [ Attr.class "hero-body has-text-centered" ]
-            [ Html.h1 [ Attr.class "title" ] [ Html.text "Dashboard" ]
-            , Html.h2 [ Attr.class "subtitle" ]
-                [ Html.text ("Welcome back, " ++ user.name ++ "!")
+    { title = "Profile"
+    , body =
+        [ Html.section [ Attr.class "hero is-light" ]
+            [ Html.div [ Attr.class "hero-body has-text-centered is-flex is-flex-direction-column is-align-items-center" ]
+                [ Html.figure [ Attr.class "image is-128x128 is-block p-4" ]
+                    [ Html.img [ Attr.class "is-rounded", Attr.src user.profileImageUrl ] []
+                    ]
+                , Html.h1 [ Attr.class "title" ] [ Html.text user.name ]
+                , Html.h2 [ Attr.class "subtitle" ] [ Html.text user.email ]
                 ]
-            , Html.button
-                [ Attr.class "button"
-                , Html.Events.onClick UserClickedSignOut
-                ]
-                [ Html.text "Sign out" ]
             ]
         ]
+    }

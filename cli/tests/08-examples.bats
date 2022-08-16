@@ -22,8 +22,8 @@ load helpers
   cd ../../cli
 }
 
-@test "'elm-land build' works with the '03-user-interaction' example" {
-  cd ../examples/03-user-interaction
+@test "'elm-land build' works with the '03-user-input' example" {
+  cd ../examples/03-user-input
   run elm-land build
   expectToPass
 
