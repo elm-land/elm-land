@@ -1,22 +1,22 @@
 load helpers
 
 
-@test "'elm-land add layout' fails without a name" {
-  run elm-land add layout
+@test "'elm-land add layout:static' fails without a name" {
+  run elm-land add layout:static
   expectToFail
 
   expectOutputContains "missing a name"
-  expectOutputContains "elm-land add layout Sidebar"
+  expectOutputContains "elm-land add layout:static Sidebar"
 }
 
-@test "'elm-land add layout Sidebar' creates a Sidebar layout" {
+@test "'elm-land add layout:static Sidebar' creates a Sidebar layout" {
   mkdir -p tests/tmp
   cd tests/tmp
   
   run elm-land init hello-world
   cd hello-world
 
-  run elm-land add layout Sidebar
+  run elm-land add layout:static Sidebar
   expectToPass
 
   expectOutputContains "New layout added"

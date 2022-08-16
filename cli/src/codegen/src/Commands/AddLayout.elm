@@ -51,9 +51,7 @@ decoder =
     layout { page } =
         { title = page.title
         , body =
-            [ Html.div
-                [ Attr.class "layout" ]
-                page.body
+            [ Html.div [ Attr.class "page" ] page.body
             ]
         }
 
@@ -87,13 +85,13 @@ newLayoutModule data =
                         [ ( "title", CodeGen.Expression.value "page.title" )
                         , ( "body"
                           , CodeGen.Expression.list
-                                [ CodeGen.Expression.multilineFunction
+                                [ CodeGen.Expression.function
                                     { name = "Html.div"
                                     , arguments =
                                         [ CodeGen.Expression.list
                                             [ CodeGen.Expression.function
                                                 { name = "Attr.class"
-                                                , arguments = [ CodeGen.Expression.string "layout" ]
+                                                , arguments = [ CodeGen.Expression.string "page" ]
                                                 }
                                             ]
                                         , CodeGen.Expression.value "page.body"

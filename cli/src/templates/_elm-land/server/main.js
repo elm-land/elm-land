@@ -78,29 +78,27 @@ if (import.meta.hot) {
 
 let startApp = ({ Interop }) => {
   let env = {}
+  let flags = undefined
 
-  let flags = Interop.flags
-    ? Interop.flags({ env })
-    : undefined
+  if (Interop.flags) {
+    flags = Interop.flags({ env })
+  }
 
-  try {
-    let app = Elm.Main.init({
-      node: document.getElementById('app'),
-      flags
-    })
+  let app = Elm.Main.init({
+    node: document.getElementById('app'),
+    flags
+  })
 
-    if (Interop.onReady) {
-      Interop.onReady({ app, env })
-    }
-  } catch (_) {
-
+  if (Interop.onReady) {
+    Interop.onReady({ app, env })
   }
 }
 
 // If user has defined an interop.js file, use it
+
+let Interop = {}
 try {
-  let Interop = import.meta.globEager('../../src/interop.js')['../../src/interop.js'] || {}
-  startApp({ Interop })
-} catch (_) {
-  startApp({ Interop: {} })
-}
+  Interop = import.meta.globEager('../../src/interop.js')['../../src/interop.js'] || {}
+} catch (_) { }
+
+startApp({ Interop })

@@ -9,6 +9,7 @@ module Util.String exposing
     , toRecord
     , toRecordUpdate
     , toSinglelineList
+    , toSinglelineTuple
     , wrapInParentheses
     )
 
@@ -180,6 +181,16 @@ toSinglelineList options =
         }
 
 
+toSinglelineTuple : { toString : item -> String, items : List item } -> String
+toSinglelineTuple options =
+    toSinglelineListHelper
+        { leftBracket = "("
+        , rightBracket = ")"
+        , toString = options.toString
+        , items = options.items
+        }
+
+
 toMultilineList : { toString : item -> String, items : List item } -> String
 toMultilineList options =
     toMultilineListHelper
@@ -217,7 +228,7 @@ toSinglelineListHelper options =
                 ++ " "
                 ++ (items
                         |> List.map options.toString
-                        |> String.join " , "
+                        |> String.join ", "
                    )
                 ++ " "
                 ++ options.rightBracket

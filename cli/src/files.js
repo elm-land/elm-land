@@ -14,24 +14,25 @@ let create = async (filesAndFolders) => {
   }))
 }
 
+let remove = async (filepath) => {
+  fs.rmSync(filepath)
+}
+
 // Determines if a file or folder exists
 let exists = async (filepath) => {
   try {
-    await new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       fs.access(filepath, (err) => {
-        if (err) {
-          reject(err)
-        } else { resolve(true) }
+        if (err) { resolve(false) } else { resolve(true) }
       })
     })
-    return true
   } catch (e) {
     return false
   }
 }
 
 // Copy the contents of one folder into another
-let copyPaste = async ({ source, destination }) => {
+let copyPasteFolder = async ({ source, destination }) => {
   // Make sure destination folder exists first!
   await new Promise((resolve, reject) => {
     fs.mkdir(destination, { recursive: true }, (err, path) => {
@@ -43,6 +44,23 @@ let copyPaste = async ({ source, destination }) => {
     })
   })
   copyFolderRecursiveSync(source, destination)
+}
+
+let copyPasteFile = async ({ source, destination }) => {
+
+  // Ensure folder exists before pasting file
+  let destinationFolder = destination.split(path.sep).slice(0, -1).join(path.sep)
+  await new Promise((resolve, reject) => {
+    fs.mkdir(destinationFolder, { recursive: true }, (err, path) => {
+      if (err) {
+        reject(err)
+      } else {
+        resolve(path)
+      }
+    })
+  })
+
+  return copyFileSync(source, destination)
 }
 
 function copyFileSync(source, target) {
@@ -189,8 +207,10 @@ module.exports = {
     readFromCliFolder,
     readFromUserFolder,
     create,
+    remove,
     exists,
-    copyPaste,
+    copyPasteFolder,
+    copyPasteFile,
     touch,
     listElmFilepathsInFolder
   }

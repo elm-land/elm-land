@@ -132,7 +132,7 @@ let run = async ({ arguments }) => {
       subCommand,
       subcommandList: [
         '📄 elm-land add page <url> ...... create a new page',
-        '🪆  elm-land add layout <name> ........... add a new layout'
+        '📑 elm-land add layout <name> .... add a new layout'
       ]
     }))
   }

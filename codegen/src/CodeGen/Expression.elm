@@ -8,7 +8,7 @@ module CodeGen.Expression exposing
     , lambda
     , Branch, caseExpression
     , list, multilineList
-    , multilineTuple
+    , tuple, multilineTuple
     , string
     , operator
     , parens, pipeline
@@ -26,7 +26,7 @@ module CodeGen.Expression exposing
 @docs lambda
 @docs Branch, caseExpression
 @docs list, multilineList
-@docs multilineTuple
+@docs tuple, multilineTuple
 @docs string
 @docs operator
 @docs parens, pipeline
@@ -63,6 +63,7 @@ type Expression
         }
     | ListExpression (List Expression)
     | MultiLineListExpression (List Expression)
+    | TupleExpression (List Expression)
     | MultiLineTupleExpression (List Expression)
     | StringExpression String
     | OperatorExpression String
@@ -322,6 +323,25 @@ list expressions =
 multilineList : List Expression -> Expression
 multilineList expressions =
     MultiLineListExpression expressions
+
+
+{-| Create a tuple, where all items are on the same line
+
+    {-
+
+        ( "Hello", "darkness", "my old friend" )
+
+    -}
+    Elm.CodeGen.Expression.tuple
+        ( Elm.CodeGen.Expression "Hello"
+        , Elm.CodeGen.Expression "darkness"
+        , Elm.CodeGen.Expression "my old friend"
+        )
+
+-}
+tuple : List Expression -> Expression
+tuple expressions =
+    TupleExpression expressions
 
 
 {-| Create a tuple, where each item is on a new line
@@ -594,6 +614,12 @@ toString expression =
 
         MultiLineListExpression expressions ->
             Util.String.toMultilineList
+                { toString = toString
+                , items = expressions
+                }
+
+        TupleExpression expressions ->
+            Util.String.toSinglelineTuple
                 { toString = toString
                 , items = expressions
                 }

@@ -26,7 +26,11 @@ load helpers
   expectFileExists "hello-world/src/Pages/Home_.elm"
   expectFileExists "hello-world/.elm-land/src/Main.elm"
   expectFileExists "hello-world/.elm-land/src/View.elm"
-  expectFileExists "hello-world/.elm-land/src/ElmLand/Page.elm"
+  expectFileExists "hello-world/.elm-land/src/Effect.elm"
+  expectFileExists "hello-world/.elm-land/src/Shared.elm"
+  expectFileExists "hello-world/.elm-land/src/Route.elm"
+  expectFileExists "hello-world/.elm-land/src/Route/Query.elm"
+  expectFileExists "hello-world/.elm-land/src/Page.elm"
 
   cd ..
   rm -r tmp

@@ -2,6 +2,7 @@ const { Init } = require('./commands/init')
 const { Add } = require('./commands/add')
 const { Server } = require('./commands/server')
 const { Build } = require('./commands/build')
+const { Customize } = require('./commands/customize')
 const { Utils } = require('./commands/_utils')
 
 let { version } = require('../package.json')
@@ -13,7 +14,8 @@ let subcommandList = [
   '🚀 elm-land server ................ run a local dev server',
   '📦 elm-land build .......... build your app for production',
   '📄 elm-land add page <url> ................ add a new page',
-  '🪆 elm-land add layout <name> ........... add a new layout',
+  '📑 elm-land add layout <name> ........... add a new layout',
+  '🔧 elm-land customize <name> .. customize a default module',
   ''
 ]
 
@@ -34,6 +36,9 @@ let run = async (commandFromCli) => {
     },
     'build': (args) => {
       return Build.run({})
+    },
+    'customize': ([moduleName] = []) => {
+      return Customize.run({ moduleName })
     },
     'add': (args) => {
       return Add.run({ arguments: args })

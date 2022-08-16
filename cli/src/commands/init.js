@@ -50,18 +50,48 @@ let run = async (options = {}) => {
         },
         {
           kind: 'file',
+          name: `${name}/.elm-land/src/Pages/NotFound_.elm`,
+          content: await Files.readFromCliFolder('src/templates/_elm-land/customizable/Pages/NotFound_.elm')
+        },
+        {
+          kind: 'file',
           name: `${name}/.elm-land/src/Main.elm`,
           content: await Files.readFromCliFolder('src/templates/_elm-land/src/Main.elm')
         },
         {
           kind: 'file',
           name: `${name}/.elm-land/src/View.elm`,
-          content: await Files.readFromCliFolder('src/templates/_elm-land/src/View.elm')
+          content: await Files.readFromCliFolder('src/templates/_elm-land/customizable/View.elm')
         },
         {
           kind: 'file',
-          name: `${name}/.elm-land/src/ElmLand/Page.elm`,
-          content: await Files.readFromCliFolder('src/templates/_elm-land/src/ElmLand/Page.elm')
+          name: `${name}/.elm-land/src/Effect.elm`,
+          content: await Files.readFromCliFolder('src/templates/_elm-land/customizable/Effect.elm')
+        },
+        {
+          kind: 'file',
+          name: `${name}/.elm-land/src/Shared.elm`,
+          content: await Files.readFromCliFolder('src/templates/_elm-land/customizable/Shared.elm')
+        },
+        {
+          kind: 'file',
+          name: `${name}/.elm-land/src/Auth.elm`,
+          content: await Files.readFromCliFolder('src/templates/_elm-land/customizable/Auth.elm')
+        },
+        {
+          kind: 'file',
+          name: `${name}/.elm-land/src/Page.elm`,
+          content: await Files.readFromCliFolder('src/templates/_elm-land/src/Page.elm')
+        },
+        {
+          kind: 'file',
+          name: `${name}/.elm-land/src/Route.elm`,
+          content: await Files.readFromCliFolder('src/templates/_elm-land/src/Route.elm')
+        },
+        {
+          kind: 'file',
+          name: `${name}/.elm-land/src/Route/Query.elm`,
+          content: await Files.readFromCliFolder('src/templates/_elm-land/src/Route/Query.elm')
         }
       ],
       effects: []
