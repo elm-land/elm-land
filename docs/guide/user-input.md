@@ -6,7 +6,9 @@
 - How to update UI when a __user clicks a button__
 - How to __add more features__ to an existing app
 
-## Page.sandbox
+<BrowserWindow src="./state-management/screenshot.gif" alt="Demo of the counter app example" />
+
+## HTML that can change
 
 All the pages we saw in the guide so far were rendering HTML. If you are building a real world application, you'll likely need to track some client-side state.
 
@@ -15,7 +17,6 @@ All Elm Land projects use the [Elm Architecture](https://guide.elm-lang.org/arch
 Let's start with a simple example: __Making a counter app!__
 
 
-![A counter app with working buttons](./state-management/counter-app.gif)
 
 We can create a page that can keep track of UI state using the `elm-land add` command. This time, we'll use `page:sandbox` instead of just `page`:
 

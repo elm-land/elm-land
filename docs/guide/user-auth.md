@@ -1,5 +1,14 @@
 # User authentication
 
+### What we'll learn
+
+- How to make a sign-in form
+- How to store a JWT fetched from a REST API
+- How to redirect when a page should only be seen by signed-in users
+
+<BrowserWindow src="./user-auth/screenshot.gif" alt="Demo of sign-in flow" />
+
+
 Some applications require a signed-in user to render certain pages. For example, your app's `Dashboard` page should only be seen by folks who have signed in. In contrast, there are pages like the `SignIn` page that should be available even for signed-out users.
 
 This guide will walk you through how to build a complete sign-in process for a REST API that returns JSON web tokens (JWTs). Here are the things we'll make together:

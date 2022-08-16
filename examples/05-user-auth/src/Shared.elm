@@ -19,6 +19,7 @@ module Shared exposing
 
 import Api.User exposing (User)
 import Browser.Navigation
+import Dict
 import Effect exposing (Effect)
 import Http
 import Json.Decode
@@ -116,11 +117,16 @@ update route msg model =
 
         FromEffect (Effect.SignInPageSignedInUser (Ok user)) ->
             ( { model | signInStatus = SignedInWithUser user }
-            , Effect.pushRoute
-                { path = Route.Path.Home_
-                , query = []
-                , hash = Nothing
-                }
+            , case Dict.get "from" route.query of
+                Just (Just redirectUrlPath) ->
+                    Effect.pushUrlPath redirectUrlPath
+
+                _ ->
+                    Effect.pushRoute
+                        { path = Route.Path.Home_
+                        , query = []
+                        , hash = Nothing
+                        }
             )
 
         FromEffect (Effect.SignInPageSignedInUser (Err httpError)) ->

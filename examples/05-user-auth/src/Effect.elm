@@ -3,6 +3,7 @@ port module Effect exposing
     , fromCmd
     , SharedMsg(..), fromSharedMsg
     , pushRoute, replaceRoute, loadExternalUrl
+    , pushUrlPath
     , save
     , toCmd
     )
@@ -14,6 +15,7 @@ port module Effect exposing
 @docs SharedMsg, fromSharedMsg
 @docs Msg, fromAction
 @docs pushRoute, replaceRoute, loadExternalUrl
+@docs pushUrlPath
 @docs save
 @docs toCmd
 
@@ -69,6 +71,11 @@ fromSharedMsg =
 
 
 -- ROUTING
+
+
+pushUrlPath : String -> Effect msg
+pushUrlPath str =
+    PushUrl str
 
 
 pushRoute :

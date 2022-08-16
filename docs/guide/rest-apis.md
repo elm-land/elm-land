@@ -1,5 +1,14 @@
 # Working with a REST API
 
+### What we'll learn
+
+- How to send HTTP requests
+- How to decode JSON from a REST API
+- How to use custom Elm types
+
+
+<BrowserWindow src="./data-fetching/screenshot.gif" alt="Demo of Pokemon API data" />
+
 ## Page.element
 
 When it comes time to talk to an API, you'll need a page that can send HTTP requests. For example, if you want to use the [PokeAPI](https://pokeapi.co/) to fetch 'em all, you can do that by creating a new page.

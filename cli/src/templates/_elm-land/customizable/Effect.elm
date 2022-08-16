@@ -1,7 +1,7 @@
 module Effect exposing
     ( Effect, none, batch, map
     , fromCmd
-    , SharedMsg(..), fromSharedMsg
+    , Msg(..), fromSharedMsg
     , pushRoute, replaceRoute, loadExternalUrl
     , toCmd
     )
@@ -10,7 +10,7 @@ module Effect exposing
 
 @docs Effect, none, batch, map
 @docs fromCmd
-@docs SharedMsg, fromSharedMsg
+@docs Msg, fromSharedMsg
 @docs pushRoute, replaceRoute, loadExternalUrl
 
 @docs toCmd
@@ -30,13 +30,13 @@ type Effect msg
     = None
     | Batch (List (Effect msg))
     | Cmd (Cmd msg)
-    | Effect SharedMsg
+    | Effect Msg
     | PushUrl String
     | ReplaceUrl String
     | LoadExternalUrl String
 
 
-type SharedMsg
+type Msg
     = ExampleMsgReplaceMe
 
 
@@ -80,7 +80,7 @@ fromCmd =
     Cmd
 
 
-fromSharedMsg : SharedMsg -> Effect msg
+fromSharedMsg : Msg -> Effect msg
 fromSharedMsg =
     Effect
 
@@ -120,7 +120,7 @@ loadExternalUrl =
 
 toCmd :
     { key : Browser.Navigation.Key
-    , fromSharedMsg : SharedMsg -> mainMsg
+    , fromSharedMsg : Msg -> mainMsg
     , fromPageMsg : msg -> mainMsg
     }
     -> Effect msg

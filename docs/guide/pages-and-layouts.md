@@ -6,7 +6,7 @@
 - How to use __layouts__ to reuse UI across pages
 - How to style a page with __CSS__
 
-<BrowserWindow src="./pages/hello-world.jpg" alt="Homepage" />
+<BrowserWindow src="./pages/screenshot.gif" alt="Demo of pages and layouts" />
 
 ## How routing works
 
