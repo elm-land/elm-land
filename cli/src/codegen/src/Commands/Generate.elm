@@ -1231,9 +1231,11 @@ routePathElmModule : Data -> CodeGen.Module
 routePathElmModule data =
     CodeGen.Module.new
         { name = [ "Route", "Path" ]
-        , exposing_ = [ "Path(..)", "fromUrl", "toString" ]
+        , exposing_ = [ "Path(..)", "fromUrl", "toString", "href" ]
         , imports =
-            [ CodeGen.Import.new [ "Url" ]
+            [ CodeGen.Import.new [ "Html" ]
+            , CodeGen.Import.new [ "Html.Attributes" ]
+            , CodeGen.Import.new [ "Url" ]
                 |> CodeGen.Import.withExposing [ "Url" ]
             , CodeGen.Import.new [ "Url.Parser" ]
                 |> CodeGen.Import.withExposing [ "(</>)" ]
@@ -1273,6 +1275,12 @@ routePathElmModule data =
                                 ]
                             }
                         ]
+                }
+            , CodeGen.Declaration.function
+                { name = "href"
+                , annotation = CodeGen.Annotation.function [ CodeGen.Annotation.type_ "Path", CodeGen.Annotation.type_ "Html.Attribute msg" ]
+                , arguments = [ CodeGen.Argument.new "path" ]
+                , expression = CodeGen.Expression.value "Html.Attributes.href (toString path)"
                 }
             , CodeGen.Declaration.function
                 { name = "toString"

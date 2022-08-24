@@ -15,17 +15,8 @@ let runServer = async (options) => {
     let rawConfig = await Files.readFromUserFolder('elm-land.json')
     let config = JSON.parse(rawConfig)
 
-    // Check if `.elm-land` folder exists
-    let hasElmLandJsAlready =
-      await Files.exists(path.join(process.cwd(), '.elm-land', 'server', 'main.js'))
-
-    // If not, create a new one with the initial files
-    if (!hasElmLandJsAlready) {
-      await Files.copyPasteFolder({
-        source: path.join(__dirname, 'templates', '_elm-land', 'server'),
-        destination: path.join(process.cwd(), '.elm-land'),
-      })
-    }
+    // Handle missing defaults
+    await handleElmLandFiles()
 
     // Expose ENV variables to Vite explicitly allowed by the user
     attemptToLoadEnvVariablesFromUserConfig()
@@ -186,10 +177,7 @@ const customize = async (filepath) => {
   return { problem: null }
 }
 
-const build = async (config) => {
-
-  // Create default files in `.elm-land/src` if they aren't already 
-  // defined by the user in the `src` folder
+const handleElmLandFiles = async () => {
   let defaultFilepaths = Object.values(Utils.customizableFiles)
 
   await Promise.all(defaultFilepaths.map(async filepath => {
@@ -207,7 +195,6 @@ const build = async (config) => {
     }
   }))
 
-  // Make sure initial files are up-to-date
   await Files.copyPasteFolder({
     source: path.join(__dirname, 'templates', '_elm-land', 'server'),
     destination: path.join(process.cwd(), '.elm-land'),
@@ -216,6 +203,13 @@ const build = async (config) => {
     source: path.join(__dirname, 'templates', '_elm-land', 'src'),
     destination: path.join(process.cwd(), '.elm-land'),
   })
+}
+
+const build = async (config) => {
+
+  // Create default files in `.elm-land/src` if they aren't already 
+  // defined by the user in the `src` folder
+  await handleElmLandFiles()
 
   // Load ENV variables
   attemptToLoadEnvVariablesFromUserConfig()

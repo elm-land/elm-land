@@ -1,4 +1,4 @@
-module Api.Pokemon exposing (Pokemon, getAll)
+module Api.Pokemon exposing (Pokemon, getFirst150)
 
 import Api
 import Http
@@ -10,10 +10,10 @@ type alias Pokemon =
     }
 
 
-getAll : { onResponse : Api.Data (List Pokemon) -> msg } -> Cmd msg
-getAll options =
+getFirst150 : { onResponse : Api.Data (List Pokemon) -> msg } -> Cmd msg
+getFirst150 options =
     Api.get
-        { url = "https://pokeapi.co/api/v2/pokemon?limit=150"
+        { url = "http://localhost:5000/api/v2/pokemon?limit=150"
         , onResponse = options.onResponse
         , decoder = Json.Decode.field "results" pokemonListDecoder
         }

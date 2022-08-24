@@ -443,15 +443,15 @@ body {
 }
 ```
 
-Now that we've added in some CSS, we should see our full example working. 
+Now that we've added in some CSS, we should see our full example working. We can use our sidebar to navigate from one page to another.
 
-We can use our sidebar to navigate from one page to another.
+<BrowserWindow src="./pages/screenshot.gif" alt="Demo of pages and layouts" />
 
-
+See the full example in the [examples/02-pages-and-layouts](https://github.com/elm-land/elm-land/tree/main/examples/02-pages-and-layouts) folder on GitHub.
 
 ### Congratulations! :tada:
 
-You just made a multi-page application in Elm Land! To see the complete example, take a look at [examples/02-pages-and-layouts](https://github.com/elm-land/elm-land/tree/main/examples/02-pages-and-layouts).
+You just made a multi-page application in Elm Land! 
 
 Next up, let's take a look at how we can handle user input using The Elm Architecture!
 
