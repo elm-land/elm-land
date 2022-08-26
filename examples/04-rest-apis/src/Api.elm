@@ -1,4 +1,4 @@
-module Api exposing (Data(..), get)
+module Api exposing (Data(..), toHelpfulMessage)
 
 import Http
 import Json.Decode
@@ -20,20 +20,24 @@ fromResult result =
             Failure httpError
 
 
-get :
-    { url : String
-    , onResponse : Data value -> msg
-    , decoder : Json.Decode.Decoder value
-    }
-    -> Cmd msg
-get options =
-    Http.get
-        { url = options.url
-        , expect =
-            Http.expectJson
-                (\httpResult ->
-                    options.onResponse
-                        (fromResult httpResult)
-                )
-                options.decoder
-        }
+toHelpfulMessage : Http.Error -> String
+toHelpfulMessage httpError =
+    case httpError of
+        Http.BadUrl _ ->
+            "Something is wrong with the API URL"
+
+        Http.Timeout ->
+            "API response timed out"
+
+        Http.NetworkError ->
+            "Could not connect to API"
+
+        Http.BadStatus code ->
+            if code == 404 then
+                "Not found"
+
+            else
+                "Server returned bad status code"
+
+        Http.BadBody _ ->
+            "Unexpected JSON response from API"

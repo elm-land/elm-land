@@ -14,12 +14,26 @@ type alias Pokemon =
     }
 
 
-get : { name : String, onResponse : Api.Data Pokemon -> msg } -> Cmd msg
+get :
+    { name : String
+    , onSuccess : Pokemon -> msg
+    , onFailure : Http.Error -> msg
+    }
+    -> Cmd msg
 get options =
-    Api.get
+    Http.get
         { url = "http://localhost:5000/api/v2/pokemon/" ++ options.name
-        , onResponse = options.onResponse
-        , decoder = pokemonDecoder
+        , expect =
+            Http.expectJson
+                (\result ->
+                    case result of
+                        Ok data ->
+                            options.onSuccess data
+
+                        Err httpError ->
+                            options.onFailure httpError
+                )
+                pokemonDecoder
         }
 
 

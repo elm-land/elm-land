@@ -1,10 +1,11 @@
 module Pages.Home_ exposing (Model, Msg, page)
 
 import Api
-import Api.Pokemon exposing (Pokemon)
+import Api.PokemonList exposing (Pokemon)
 import Components.Hero
 import Html exposing (Html)
 import Html.Attributes exposing (alt, class, href, src)
+import Http
 import Page exposing (Page)
 import Route.Path
 import View exposing (View)
@@ -37,7 +38,7 @@ init : ( Model, Cmd Msg )
 init =
     ( { pokemonData = Api.Loading
       }
-    , Api.Pokemon.getFirst150
+    , Api.PokemonList.getFirst150
         { onResponse = PokeApiResponded
         }
     )
@@ -48,14 +49,19 @@ init =
 
 
 type Msg
-    = PokeApiResponded (Api.Data (List Pokemon))
+    = PokeApiResponded (Result Http.Error (List Pokemon))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        PokeApiResponded data ->
-            ( { model | pokemonData = data }
+        PokeApiResponded (Ok listOfPokemon) ->
+            ( { model | pokemonData = Api.Success listOfPokemon }
+            , Cmd.none
+            )
+
+        PokeApiResponded (Err httpError) ->
+            ( { model | pokemonData = Api.Failure httpError }
             , Cmd.none
             )
 
@@ -96,7 +102,7 @@ viewPageContent pokemonData =
             viewPokemonList pokemon
 
         Api.Failure httpError ->
-            Html.div [ class "has-text-centered p-6" ] [ Html.text "Something went wrong..." ]
+            Html.div [ class "has-text-centered p-6" ] [ Html.text (Api.toHelpfulMessage httpError) ]
 
 
 viewPokemonList : List Pokemon -> Html Msg

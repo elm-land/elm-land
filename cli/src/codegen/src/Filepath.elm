@@ -51,7 +51,11 @@ toDynamicParameterList (Filepath list) =
 
 toList : Filepath -> List String
 toList (Filepath list) =
-    list
+    if List.isEmpty list then
+        [ "Home_" ]
+
+    else
+        list
 
 
 toParamsRecordAnnotation : Filepath -> CodeGen.Annotation
@@ -152,63 +156,10 @@ toUrlParser ((Filepath list) as filepath) =
                 }
 
 
-
--- CodeGen.Expression.function
---     [ { name = "Url.Parser.map"
---       , arguments =
---             [ CodeGen.Expression.value "Home_"
---             , CodeGen.Expression.value "Url.Parser.top"
---             ]
---       }
---     , CodeGen.Expression.function
---         { name = "Url.Parser.map"
---         , arguments =
---             [ CodeGen.Expression.value "SignIn"
---             , CodeGen.Expression.parens
---                 [ CodeGen.Expression.value "Url.Parser.s"
---                 , CodeGen.Expression.string "sign-in"
---                 ]
---             ]
---         }
--- , CodeGen.Expression.function
---     { name = "Url.Parser.map"
---     , arguments =
---         [ CodeGen.Expression.value "Settings__Account"
---         , CodeGen.Expression.parens
---             [ CodeGen.Expression.value "Url.Parser.s"
---             , CodeGen.Expression.string "settings"
---             , CodeGen.Expression.operator "</>"
---             , CodeGen.Expression.value "Url.Parser.s"
---             , CodeGen.Expression.string "account"
---             ]
---         ]
---     }
---     , CodeGen.Expression.function
---         { name = "Url.Parser.map"
---         , arguments =
---             [ CodeGen.Expression.lambda
---                 { arguments = [ CodeGen.Argument.new "param1" ]
---                 , expression =
---                     CodeGen.Expression.function
---                         { name = "Profile__Username_"
---                         , arguments =
---                             [ CodeGen.Expression.record
---                                 [ ( "username", CodeGen.Expression.value "param1" )
---                                 ]
---                             ]
---                         }
---                 }
---             , CodeGen.Expression.parens
---                 [ CodeGen.Expression.value "Url.Parser.s"
---                 , CodeGen.Expression.string "profile"
---                 , CodeGen.Expression.operator "</>"
---                 , CodeGen.Expression.value "Url.Parser.string"
---                 ]
---             ]
---         }
---     ]
-
-
 toPageModuleName : Filepath -> String
 toPageModuleName (Filepath list) =
-    "Pages." ++ String.join "." list
+    if List.isEmpty list then
+        "Pages.Home_"
+
+    else
+        "Pages." ++ String.join "." list

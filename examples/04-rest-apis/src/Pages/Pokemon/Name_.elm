@@ -6,6 +6,7 @@ import Components.Hero
 import Domain.PokemonType
 import Html exposing (Html)
 import Html.Attributes exposing (alt, class, src, style)
+import Http
 import Page exposing (Page)
 import Route.Path
 import View exposing (View)
@@ -35,7 +36,8 @@ init params =
     ( { pokemonData = Api.Loading }
     , Api.PokemonDetail.get
         { name = params.name
-        , onResponse = PokeApiResponded
+        , onSuccess = PokeApiSucceeded
+        , onFailure = PokeApiFailed
         }
     )
 
@@ -45,14 +47,20 @@ init params =
 
 
 type Msg
-    = PokeApiResponded (Api.Data Pokemon)
+    = PokeApiSucceeded Pokemon
+    | PokeApiFailed Http.Error
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        PokeApiResponded data ->
-            ( { model | pokemonData = data }
+        PokeApiSucceeded pokemon ->
+            ( { model | pokemonData = Api.Success pokemon }
+            , Cmd.none
+            )
+
+        PokeApiFailed httpError ->
+            ( { model | pokemonData = Api.Failure httpError }
             , Cmd.none
             )
 

@@ -84,14 +84,25 @@ let startApp = ({ Interop }) => {
     flags = Interop.flags({ env })
   }
 
-  let app = Elm.Main.init({
-    node: document.getElementById('app'),
-    flags
-  })
+  if (Elm && Elm.Main && Elm.Main.init) {
+    let app = Elm.Main.init({
+      node: document.getElementById('app'),
+      flags
+    })
 
-  if (Interop.onReady) {
-    Interop.onReady({ app, env })
+    if (Interop.onReady) {
+      Interop.onReady({ app, env })
+    }
+  } else if (import.meta.env.DEV) {
+    // Ensure error overlay shows in dev mode
+    setTimeout(() => {
+      let overlay = document.querySelector('elm-error-overlay')
+      if (!overlay) {
+        window.location.reload()
+      }
+    }, 300)
   }
+
 }
 
 // If user has defined an interop.js file, use it

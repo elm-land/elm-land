@@ -1,7 +1,6 @@
 const { toESModule } = require('elm-esm')
 const compiler = require('node-elm-compiler')
 const { relative } = require('path')
-const { injectHMR } = require('./hmrInjector')
 const { acquireLock } = require('./mutex')
 const { default: ElmErrorJson } = require('./elm-error-json.js')
 const terser = require('terser')
@@ -135,7 +134,7 @@ const plugin = (opts) => {
           }
         } else {
           return {
-            code: trimDebugMessage(injectHMR(esm, dependencies.map(viteProjectPath))),
+            code: trimDebugMessage(esm, dependencies.map(viteProjectPath)),
             map: null,
           }
         }
