@@ -5,23 +5,23 @@ load helpers
   run elm-land add
   expectToFail
 
-  expectOutputContains "elm-land add page"
+  expectOutputContains "Here are the commands:"
 }
 
 @test "'elm-land add page' fails without a URL" {
   run elm-land add page
   expectToFail
 
-  expectOutputContains "command is missing a URL"
-  expectOutputContains "elm-land add page /sign-in"
+  expectOutputContains "expected a"
+  expectOutputContains "<url>"
+  expectOutputContains "argument"
 }
 
 @test "'elm-land add page /sign-in' fails when not run in an Elm Land project folder" {
   run elm-land add page /sign-in
   expectToFail
 
-  expectOutputContains "🌈 Elm Land couldn't find a \"elm-land.json\""
-  expectOutputContains "elm-land init my-project"
+  expectOutputContains "couldn't find a project"
 }
 
 @test "'elm-land add page:static /sign-in' creates a static SignIn page" {
@@ -34,8 +34,9 @@ load helpers
   run elm-land add page:static /sign-in
   expectToPass
 
-  expectOutputContains "New page added"
-  expectOutputContains "SignIn.elm"
+  expectOutputContains "added a new page"
+  expectOutputContains "/sign-in"
+  expectOutputContains "src/Pages/SignIn.elm"
 
   expectFileExists "src/Pages/SignIn.elm"
   expectFileContains "src/Pages/SignIn.elm" "module Pages.SignIn exposing (page)"
@@ -55,8 +56,9 @@ load helpers
   run elm-land add page:sandbox /sign-in
   expectToPass
 
-  expectOutputContains "New page added"
-  expectOutputContains "SignIn.elm"
+  expectOutputContains "added a new page"
+  expectOutputContains "/sign-in"
+  expectOutputContains "src/Pages/SignIn.elm"
 
   expectFileExists "src/Pages/SignIn.elm"
   expectFileContains "src/Pages/SignIn.elm" "module Pages.SignIn exposing (Model, Msg, page)"
@@ -77,8 +79,9 @@ load helpers
   run elm-land add page:element /sign-in
   expectToPass
 
-  expectOutputContains "New page added"
-  expectOutputContains "SignIn.elm"
+  expectOutputContains "added a new page"
+  expectOutputContains "/sign-in"
+  expectOutputContains "src/Pages/SignIn.elm"
 
   expectFileExists "src/Pages/SignIn.elm"
   expectFileContains "src/Pages/SignIn.elm" "module Pages.SignIn exposing (Model, Msg, page)"
@@ -100,8 +103,9 @@ load helpers
   run elm-land add page:static /profile/:username
   expectToPass
 
-  expectOutputContains "New page added"
-  expectOutputContains "Profile/Username_.elm"
+  expectOutputContains "added a new page"
+  expectOutputContains "/profile/:username"
+  expectOutputContains "src/Pages/Profile/Username_.elm"
 
   expectFileExists "src/Pages/Profile/Username_.elm"
   expectFileContains "src/Pages/Profile/Username_.elm" "module Pages.Profile.Username_ exposing (page)"
@@ -122,8 +126,9 @@ load helpers
   run elm-land add page:sandbox /profile/:username
   expectToPass
 
-  expectOutputContains "New page added"
-  expectOutputContains "Profile/Username_.elm"
+  expectOutputContains "added a new page"
+  expectOutputContains "/profile/:username"
+  expectOutputContains "src/Pages/Profile/Username_.elm"
 
   expectFileExists "src/Pages/Profile/Username_.elm"
   expectFileContains "src/Pages/Profile/Username_.elm" "module Pages.Profile.Username_ exposing (Model, Msg, page)"
@@ -144,8 +149,9 @@ load helpers
   run elm-land add page:element /profile/:username
   expectToPass
 
-  expectOutputContains "New page added"
-  expectOutputContains "Profile/Username_.elm"
+  expectOutputContains "added a new page"
+  expectOutputContains "/profile/:username"
+  expectOutputContains "src/Pages/Profile/Username_.elm"
 
   expectFileExists "src/Pages/Profile/Username_.elm"
   expectFileContains "src/Pages/Profile/Username_.elm" "module Pages.Profile.Username_ exposing (Model, Msg, page)"

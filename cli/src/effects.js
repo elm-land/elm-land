@@ -178,7 +178,7 @@ const customize = async (filepath) => {
 }
 
 const handleElmLandFiles = async () => {
-  let defaultFilepaths = Object.values(Utils.customizableFiles)
+  let defaultFilepaths = Object.values(Utils.customizableFiles).map(obj => obj.filepath)
 
   await Promise.all(defaultFilepaths.map(async filepath => {
     let fileInUsersSrcFolder = path.join(process.cwd(), 'src', ...filepath.split('/'))

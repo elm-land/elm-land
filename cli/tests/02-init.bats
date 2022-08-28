@@ -6,7 +6,7 @@ load helpers
 @test "'elm-land init' fails without folder name" {
   run elm-land init
   expectToFail
-  expectOutputContains "Please provide a folder name for your new project"
+  expectOutputContains "init my-cool-app"
 }
 
 @test "'elm-land init' hello-world creates a new hello-world project" {
@@ -45,7 +45,7 @@ load helpers
   run elm-land init hello-world
   expectToFail
   expectOutputContains "non-empty folder"
-  expectOutputContains "please run this command when that folder is empty"
+  expectOutputContains "no changes have been made"
 
   cd ..
   rm -r tmp

@@ -1,16 +1,18 @@
 const { Files } = require("../files")
-const { Utils } = require("./_utils")
+const { Utils, Terminal } = require("./_utils")
 const path = require('path')
 const { Codegen } = require("../codegen")
 
-let addNewLayout = async ([name]) => {
+let addNewLayout = (kind) => async ([name]) => {
   if (!name) {
     return Promise.reject([
-      `🌈 This layout is missing a name...`,
       '',
-      'Here are some examples:',
-      '1️⃣  elm-land add layout Default',
-      '2️⃣  elm-land add layout Sidebar',
+      Utils.intro.error(`expected a ${Terminal.cyan(`<module-name>`)} argument`),
+      '    Here are some examples:',
+      '',
+      `    elm-land add ${kind === 'new' ? 'layout' : `layout:${kind}`} ${Terminal.pink(`Default`)}`,
+      `    elm-land add ${kind === 'new' ? 'layout' : `layout:${kind}`} ${Terminal.pink(`Sidebar`)}`,
+      ''
     ].join('\n'))
   }
 
@@ -22,6 +24,7 @@ let addNewLayout = async ([name]) => {
   }
 
   let [generatedFile] = await Codegen.addNewLayout({
+    kind,
     name
   })
 
@@ -29,10 +32,11 @@ let addNewLayout = async ([name]) => {
 
   return {
     message: [
-      `🌈 New layout added!`,
       '',
-      'You can edit your layout here:',
-      `👉 ./${relativeFilepath}`
+      Utils.intro.success(`added a new layout!`),
+      '    You can edit your layout here:',
+      `    ./${relativeFilepath}`,
+      ''
     ].join('\n'),
     files: [
       {
@@ -48,11 +52,13 @@ let addNewLayout = async ([name]) => {
 let addNewPage = (kind) => async ([url]) => {
   if (!url) {
     return Promise.reject([
-      `🌈 This command is missing a URL...`,
       '',
-      'Here are some examples:',
-      '1️⃣  elm-land add page /sign-in',
-      '2️⃣  elm-land add page /users/:id'
+      Utils.intro.error(`expected a ${Terminal.cyan('<url>')} argument`),
+      '    Here are some examples:',
+      '',
+      `    elm-land add ${kind === 'new' ? 'page' : `page:${kind}`} ${Terminal.pink(`/sign-in`)}`,
+      `    elm-land add ${kind === 'new' ? 'page' : `page:${kind}`} ${Terminal.pink(`/users/:id`)}`,
+      ''
     ].join('\n'))
   }
 
@@ -81,10 +87,11 @@ let addNewPage = (kind) => async ([url]) => {
 
   return {
     message: [
-      `🌈 New page added at ${url}`,
       '',
-      'You can edit your new page here:',
-      `👉 ./${relativeFilepath}`
+      Utils.intro.success(`added a new page at ${Terminal.cyan(url)}`),
+      '    You can edit your new page here:',
+      Terminal.pink(`    ./${relativeFilepath}`),
+      ''
     ].join('\n'),
     files: [newFile],
     effects: []
@@ -120,7 +127,7 @@ let run = async ({ arguments }) => {
     'page:static': addNewPage('static'),
     'page:sandbox': addNewPage('sandbox'),
     'page:element': addNewPage('element'),
-    'layout': addNewLayout
+    'layout:static': addNewLayout('static')
   }
 
   let handler = subCommandHandlers[subCommand]
@@ -129,59 +136,29 @@ let run = async ({ arguments }) => {
     return handler(otherArgs)
   } else {
     return Promise.reject(Utils.didNotRecognizeCommand({
-      subCommand,
+      baseCommand: 'elm-land add',
+      subCommand: subCommand,
       subcommandList: [
-        '📄 elm-land add page <url> ...... create a new page',
-        '📑 elm-land add layout <name> .... add a new layout'
+        '    Here are the commands:',
+        '',
+        `    elm-land add ${Terminal.pink('page <url>')} ......................... add a new page`,
+        ``,
+        ``,
+        `    🌱 If you are learning with the guide at ${Terminal.cyan('https://elm.land/guide')}`,
+        `    here are some other commands you'll see in the examples:`,
+        ``,
+        `    elm-land add ${Terminal.pink('page:static <url>')} ........ add a new read-only page`,
+        `    elm-land add ${Terminal.pink('page:sandbox <url>')} ........ add a new stateful page`,
+        `    elm-land add ${Terminal.pink('page:element <url>')} ..... add a new side-effect page`,
+        ``,
+        `    elm-land add ${Terminal.pink('layout:static <name>')} ... add a new read-only layout`,
       ]
     }))
   }
 }
 
-
-let testElmCodegen = async () => {
-  let worker = undefined
-  try {
-    // Import worker, silence Elm warning while testing
-    let originalWarnFn = console.warn
-    console.warn = () => { }
-    worker = require('../../dist/elm/add-page-worker')
-    console.warn = originalWarnFn
-  } catch (_) { }
-
-  if (!worker) {
-    return {
-      message: '❗ Could not find Elm worker file...',
-      files: [],
-      effects: []
-    }
-  }
-
-  let output = await new Promise((resolve, reject) => {
-    let pagesFolder = path.join(process.cwd(), 'src', 'Pages')
-    let app = worker.Elm.AddPageWorker.init({
-      flags: { pageFilepaths: Files.listElmFilepathsInFolder(pagesFolder) }
-    })
-
-    if (app.ports.onSuccess) {
-      app.ports.onSuccess.subscribe(resolve)
-    }
-    if (app.ports.onFailure) {
-      app.ports.onFailure.subscribe(reject)
-    }
-  })
-
-
-  return {
-    message: '🧪 Testing codegen... \n\n' + JSON.stringify(output, null, 2),
-    files: [],
-    effects: []
-  }
-}
-
 module.exports = {
   Add: {
-    run,
-    testElmCodegen
+    run
   }
 }

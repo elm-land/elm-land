@@ -18,7 +18,7 @@ let run = async () => {
   }
 
   return {
-    message: ({ port }) => `🌈 Server ready at http://localhost:${port}`,
+    message: ({ port }) => Utils.intro.success(`is ready at http://localhost:${port}`),
     files: [],
     effects: [
       { kind: 'generateHtml', config },

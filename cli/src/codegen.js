@@ -30,14 +30,14 @@ let addNewPage = async ({ kind, url, filepath }) => {
   return newFiles
 }
 
-let addNewLayout = async ({ name }) => {
+let addNewLayout = async ({ kind, name }) => {
   let { Elm } = require('../dist/worker.js')
 
   let newFiles = await new Promise((resolve, reject) => {
     let app = Elm.Worker.init({
       flags: {
         tag: 'add-layout',
-        data: { name }
+        data: { kind, name }
       }
     })
     app.ports.onComplete.subscribe(resolve)

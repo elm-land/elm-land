@@ -10,6 +10,7 @@ import Page exposing (Page)
 import Route exposing (Route)
 import Route.Path
 import Shared
+import Shared.Msg
 import View exposing (View)
 
 
@@ -56,7 +57,7 @@ update msg model =
     case msg of
         UserClickedSignOut ->
             ( model
-            , Effect.fromSharedMsg Effect.PageSignedOutUser
+            , Effect.fromSharedMsg Shared.Msg.PageSignedOutUser
             )
 
 

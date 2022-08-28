@@ -5,7 +5,7 @@ load helpers
   run elm-land build
   expectToPass
 
-  expectOutputContains "🌈 Build was successful!"
+  expectOutputContains "successfully built"
 
   rm -r .elm-land elm-stuff dist
   cd ../../cli
@@ -16,7 +16,7 @@ load helpers
   run elm-land build
   expectToPass
 
-  expectOutputContains "🌈 Build was successful!"
+  expectOutputContains "successfully built"
 
   rm -r .elm-land elm-stuff dist
   cd ../../cli
@@ -27,7 +27,7 @@ load helpers
   run elm-land build
   expectToPass
 
-  expectOutputContains "🌈 Build was successful!"
+  expectOutputContains "successfully built"
 
   rm -r .elm-land elm-stuff dist
   cd ../../cli
@@ -38,7 +38,7 @@ load helpers
   run elm-land build
   expectToPass
 
-  expectOutputContains "🌈 Build was successful!"
+  expectOutputContains "successfully built"
 
   rm -r .elm-land elm-stuff dist
   cd ../../cli
@@ -49,7 +49,7 @@ load helpers
   run elm-land build
   expectToPass
 
-  expectOutputContains "🌈 Build was successful!"
+  expectOutputContains "successfully built"
 
   rm -r .elm-land elm-stuff dist
   cd ../../cli

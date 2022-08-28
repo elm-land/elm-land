@@ -2,7 +2,6 @@ module Shared exposing
     ( Flags, decoder
     , Model, Msg
     , init, update, subscriptions
-    , handleSharedMsg
     , SignInStatus(..)
     )
 
@@ -26,6 +25,7 @@ import Json.Decode
 import Json.Encode
 import Route exposing (Route)
 import Route.Path
+import Shared.Msg exposing (Msg(..))
 
 
 
@@ -92,14 +92,8 @@ init flagsResult route =
 -- UPDATE
 
 
-type Msg
-    = UserApiResponded (Result Http.Error User)
-    | FromEffect Effect.SharedMsg
-
-
-handleSharedMsg : Effect.SharedMsg -> Msg
-handleSharedMsg =
-    FromEffect
+type alias Msg =
+    Shared.Msg.Msg
 
 
 update : Route () -> Msg -> Model -> ( Model, Effect Msg )
@@ -115,7 +109,7 @@ update route msg model =
             , Effect.none
             )
 
-        FromEffect (Effect.SignInPageSignedInUser (Ok user)) ->
+        SignInPageSignedInUser (Ok user) ->
             ( { model | signInStatus = SignedInWithUser user }
             , case Dict.get "from" route.query of
                 Just (Just redirectUrlPath) ->
@@ -129,12 +123,12 @@ update route msg model =
                         }
             )
 
-        FromEffect (Effect.SignInPageSignedInUser (Err httpError)) ->
+        SignInPageSignedInUser (Err httpError) ->
             ( { model | signInStatus = FailedToSignIn httpError }
             , Effect.none
             )
 
-        FromEffect Effect.PageSignedOutUser ->
+        PageSignedOutUser ->
             ( { model | signInStatus = NotSignedIn }
             , Effect.save { key = "token", value = Json.Encode.null }
             )

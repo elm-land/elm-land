@@ -13,6 +13,7 @@ import Page exposing (Page)
 import Route exposing (Route)
 import Route.Path
 import Shared
+import Shared.Msg
 import View exposing (View)
 
 
@@ -120,7 +121,7 @@ update msg model =
 
         UserApiResponded result ->
             ( model
-            , Effect.fromSharedMsg (Effect.SignInPageSignedInUser result)
+            , Effect.fromSharedMsg (Shared.Msg.SignInPageSignedInUser result)
             )
 
 

@@ -50,7 +50,7 @@ init flagsResult route =
 -- UPDATE
 
 
-type alias Msg
+type Msg
     = ExampleMsgReplaceMe
 
 

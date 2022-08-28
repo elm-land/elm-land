@@ -5,8 +5,9 @@ load helpers
   run elm-land add layout:static
   expectToFail
 
-  expectOutputContains "missing a name"
-  expectOutputContains "elm-land add layout:static Sidebar"
+  expectOutputContains "<module-name>"
+  expectOutputContains "Here are some examples:"
+  expectOutputContains "elm-land add layout:static"
 }
 
 @test "'elm-land add layout:static Sidebar' creates a Sidebar layout" {
@@ -19,8 +20,8 @@ load helpers
   run elm-land add layout:static Sidebar
   expectToPass
 
-  expectOutputContains "New layout added"
-  expectOutputContains "Sidebar.elm"
+  expectOutputContains "added a new layout"
+  expectOutputContains "./src/Layouts/Sidebar.elm"
 
   expectFileExists "src/Layouts/Sidebar.elm"
   expectFileContains "src/Layouts/Sidebar.elm" "module Layouts.Sidebar exposing (layout)"

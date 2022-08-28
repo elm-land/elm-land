@@ -1,7 +1,6 @@
 port module Effect exposing
     ( Effect, none, map, batch
-    , fromCmd
-    , SharedMsg(..), fromSharedMsg
+    , fromCmd, fromSharedMsg
     , pushRoute, replaceRoute, loadExternalUrl
     , pushUrlPath
     , save
@@ -11,8 +10,7 @@ port module Effect exposing
 {-|
 
 @docs Effect, none, map, batch
-@docs fromCmd
-@docs SharedMsg, fromSharedMsg
+@docs fromCmd, fromSharedMsg
 @docs Msg, fromAction
 @docs pushRoute, replaceRoute, loadExternalUrl
 @docs pushUrlPath
@@ -29,6 +27,7 @@ import Json.Encode
 import Route exposing (Route)
 import Route.Path
 import Route.Query
+import Shared.Msg
 import Task
 import Url exposing (Url)
 
@@ -37,16 +36,11 @@ type Effect msg
     = None
     | Batch (List (Effect msg))
     | Cmd (Cmd msg)
-    | Shared SharedMsg
+    | Shared Shared.Msg.Msg
     | PushUrl String
     | ReplaceUrl String
     | LoadExternalUrl String
     | SaveToLocalStorage { key : String, value : Json.Encode.Value }
-
-
-type SharedMsg
-    = SignInPageSignedInUser (Result Http.Error Api.User.User)
-    | PageSignedOutUser
 
 
 none : Effect msg
@@ -64,7 +58,7 @@ fromCmd =
     Cmd
 
 
-fromSharedMsg : SharedMsg -> Effect msg
+fromSharedMsg : Shared.Msg.Msg -> Effect msg
 fromSharedMsg =
     Shared
 
@@ -85,7 +79,7 @@ pushRoute :
     }
     -> Effect msg
 pushRoute route =
-    PushUrl (toStringFromRouteFragment route)
+    PushUrl (Route.toString route)
 
 
 replaceRoute :
@@ -95,7 +89,7 @@ replaceRoute :
     }
     -> Effect msg
 replaceRoute route =
-    ReplaceUrl (toStringFromRouteFragment route)
+    ReplaceUrl (Route.toString route)
 
 
 loadExternalUrl : String -> Effect msg
@@ -153,7 +147,7 @@ map fn effect =
 
 toCmd :
     { key : Browser.Navigation.Key
-    , fromSharedMsg : SharedMsg -> mainMsg
+    , fromSharedMsg : Shared.Msg.Msg -> mainMsg
     , fromPageMsg : msg -> mainMsg
     }
     -> Effect msg
@@ -184,21 +178,3 @@ toCmd options effect =
 
         SaveToLocalStorage keyValueRecord ->
             saveToLocalStorage keyValueRecord
-
-
-
--- INTERNALS
-
-
-toStringFromRouteFragment :
-    { path : Route.Path.Path
-    , query : List ( String, Maybe String )
-    , hash : Maybe String
-    }
-    -> String
-toStringFromRouteFragment route =
-    String.join ""
-        [ Route.Path.toString route.path
-        , Route.Query.toStringFromList route.query |> Maybe.withDefault ""
-        , route.hash |> Maybe.map (String.append "#") |> Maybe.withDefault ""
-        ]

@@ -1,5 +1,5 @@
 const { Files } = require("../files")
-const { Utils } = require("./_utils")
+const { Utils, Terminal } = require("./_utils")
 
 let run = async ({ moduleName } = {}) => {
 
@@ -9,27 +9,36 @@ let run = async ({ moduleName } = {}) => {
     return Promise.reject(Utils.notInElmLandProject)
   }
 
-  let filepath = Utils.customizableFiles[moduleName]
+  let obj = Utils.customizableFiles[moduleName]
 
-  if (!filepath) {
+
+  if (!obj) {
     return Promise.reject(Utils.didNotRecognizeCommand({
-      subCommand:
-        (moduleName)
-          ? `elm-land customize ${moduleName}`
-          : undefined,
+      baseCommand: 'elm-land customize',
+      subCommand: moduleName,
       subcommandList: [
-        'Here are the available options:',
-        ...Object.keys(Utils.customizableFiles)
-          .map(key => `• elm-land customize ${key}`)
+        '   Here are the commands:',
+        '',
+        ...(
+          Object.entries(Utils.customizableFiles)
+            .map(([command, { description }]) =>
+              `   elm-land customize ${Terminal.pink(command)} ${description}`
+            )
+        )
       ]
     }))
   }
 
   return {
-    message: `🌈 File is now customizable at ./src/${filepath}`,
+    message: [
+      '',
+      Utils.intro.success(`created a file at ${Terminal.cyan(`./src/${obj.filepath}`)}`),
+      '    Deleting that file will restore the default module.',
+      '',
+    ].join('\n'),
     files: [],
     effects: [
-      { kind: 'customize', filepath },
+      { kind: 'customize', filepath: obj.filepath },
     ]
   }
 }
