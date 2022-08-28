@@ -1,19 +1,17 @@
 module Effect exposing
-    ( Effect, none, batch, map
+    ( Effect, none, batch
     , fromCmd
-    , Msg(..), fromSharedMsg
     , pushRoute, replaceRoute, loadExternalUrl
-    , toCmd
+    , map, toCmd
     )
 
 {-|
 
-@docs Effect, none, batch, map
+@docs Effect, none, batch
 @docs fromCmd
-@docs Msg, fromSharedMsg
 @docs pushRoute, replaceRoute, loadExternalUrl
 
-@docs toCmd
+@docs map, toCmd
 
 -}
 
@@ -30,14 +28,9 @@ type Effect msg
     = None
     | Batch (List (Effect msg))
     | Cmd (Cmd msg)
-    | Effect Msg
     | PushUrl String
     | ReplaceUrl String
     | LoadExternalUrl String
-
-
-type Msg
-    = ExampleMsgReplaceMe
 
 
 none : Effect msg
@@ -48,6 +41,40 @@ none =
 batch : List (Effect msg) -> Effect msg
 batch =
     Batch
+
+
+fromCmd : Cmd msg -> Effect msg
+fromCmd =
+    Cmd
+
+
+pushRoute :
+    { path : Route.Path.Path
+    , query : List ( String, Maybe String )
+    , hash : Maybe String
+    }
+    -> Effect msg
+pushRoute route =
+    PushUrl (Route.toString route)
+
+
+replaceRoute :
+    { path : Route.Path.Path
+    , query : List ( String, Maybe String )
+    , hash : Maybe String
+    }
+    -> Effect msg
+replaceRoute route =
+    ReplaceUrl (Route.toString route)
+
+
+loadExternalUrl : String -> Effect msg
+loadExternalUrl =
+    LoadExternalUrl
+
+
+
+-- TRANSFORMING EFFECTS
 
 
 map : (msg1 -> msg2) -> Effect msg1 -> Effect msg2
@@ -62,9 +89,6 @@ map fn effect =
         Cmd cmd ->
             Cmd (Cmd.map fn cmd)
 
-        Effect msg ->
-            Effect msg
-
         PushUrl url ->
             PushUrl url
 
@@ -75,52 +99,10 @@ map fn effect =
             LoadExternalUrl url
 
 
-fromCmd : Cmd msg -> Effect msg
-fromCmd =
-    Cmd
-
-
-fromSharedMsg : Msg -> Effect msg
-fromSharedMsg =
-    Effect
-
-
-
--- ROUTING
-
-
-pushRoute :
-    { path : Route.Path.Path
-    , query : List ( String, Maybe String )
-    , hash : Maybe String
-    }
-    -> Effect msg
-pushRoute route =
-    PushUrl (toStringFromRouteFragment route)
-
-
-replaceRoute :
-    { path : Route.Path.Path
-    , query : List ( String, Maybe String )
-    , hash : Maybe String
-    }
-    -> Effect msg
-replaceRoute route =
-    ReplaceUrl (toStringFromRouteFragment route)
-
-
-loadExternalUrl : String -> Effect msg
-loadExternalUrl =
-    LoadExternalUrl
-
-
-
--- Used by Main.elm
-
-
+{-| ( Used by Elm Land internally ) -}
 toCmd :
     { key : Browser.Navigation.Key
-    , fromSharedMsg : Msg -> mainMsg
+    , fromSharedMsg : sharedMsg -> mainMsg
     , fromPageMsg : msg -> mainMsg
     }
     -> Effect msg
@@ -136,10 +118,6 @@ toCmd options effect =
         Batch list ->
             Cmd.batch (List.map (toCmd options) list)
 
-        Effect msg ->
-            Task.succeed msg
-                |> Task.perform options.fromSharedMsg
-
         PushUrl url ->
             Browser.Navigation.pushUrl options.key url
 
@@ -148,21 +126,3 @@ toCmd options effect =
 
         LoadExternalUrl url ->
             Browser.Navigation.load url
-
-
-
--- INTERNALS
-
-
-toStringFromRouteFragment :
-    { path : Route.Path.Path
-    , query : List ( String, Maybe String )
-    , hash : Maybe String
-    }
-    -> String
-toStringFromRouteFragment route =
-    String.join ""
-        [ Route.Path.toString route.path
-        , Route.Query.toStringFromList route.query |> Maybe.withDefault ""
-        , route.hash |> Maybe.map (String.append "#") |> Maybe.withDefault ""
-        ]

@@ -2,7 +2,6 @@ module Shared exposing
     ( Flags, decoder
     , Model, Msg
     , init, update, subscriptions
-    , handleSharedMsg
     )
 
 {-|
@@ -10,7 +9,6 @@ module Shared exposing
 @docs Flags, decoder
 @docs Model, Msg
 @docs init, update, subscriptions
-@docs handleSharedMsg
 
 -}
 
@@ -21,7 +19,7 @@ import Route.Path
 
 
 
--- INIT
+-- FLAGS
 
 
 type alias Flags =
@@ -31,6 +29,10 @@ type alias Flags =
 decoder : Json.Decode.Decoder Flags
 decoder =
     Json.Decode.succeed {}
+
+
+
+-- INIT
 
 
 type alias Model =
@@ -48,19 +50,14 @@ init flagsResult route =
 -- UPDATE
 
 
-type Msg
-    = FromEffect Effect.Msg
-
-
-handleSharedMsg : Effect.Msg -> Msg
-handleSharedMsg =
-    FromEffect
+type alias Msg
+    = ExampleMsgReplaceMe
 
 
 update : Route () -> Msg -> Model -> ( Model, Effect Msg )
 update route msg model =
     case msg of
-        FromEffect Effect.ExampleMsgReplaceMe ->
+        ExampleMsgReplaceMe ->
             ( model
             , Effect.none
             )

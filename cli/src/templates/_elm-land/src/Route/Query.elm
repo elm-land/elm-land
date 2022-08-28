@@ -1,4 +1,4 @@
-module Route.Query exposing (fromUrl, toStringFromDict, toStringFromList)
+module Route.Query exposing (fromUrl, toStringFromList)
 
 import Dict exposing (Dict)
 import Url exposing (Url)
@@ -38,11 +38,6 @@ fromUrl url =
                                )
                         )
                     |> Dict.fromList
-
-
-toStringFromDict : Dict String (Maybe String) -> Maybe String
-toStringFromDict query =
-    toStringFromList (Dict.toList query)
 
 
 toStringFromList : List ( String, Maybe String ) -> Maybe String
