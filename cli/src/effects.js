@@ -11,6 +11,8 @@ let srcPagesFolderFilepath = path.join(process.cwd(), 'src', 'Pages')
 let srcLayoutsFolderFilepath = path.join(process.cwd(), 'src', 'Layouts')
 
 let runServer = async (options) => {
+  let server
+
   try {
     let rawConfig = await Files.readFromUserFolder('elm-land.json')
     let config = JSON.parse(rawConfig)
@@ -28,6 +30,7 @@ let runServer = async (options) => {
       ignoreInitial: true
     })
     let indexHtmlPath = path.join(process.cwd(), '.elm-land', 'server', 'index.html')
+    let mainJsPath = path.join(process.cwd(), '.elm-land', 'server', 'main.js')
 
     staticFolderWatcher.on('all', () => {
       Files.touch(indexHtmlPath)
@@ -45,11 +48,27 @@ let runServer = async (options) => {
         let rawConfig = await Files.readFromUserFolder('elm-land.json')
         config = JSON.parse(rawConfig)
         let result = await generateHtml(config)
+
+        let hadAnyEnvVarChanges = attemptToLoadEnvVariablesFromUserConfig(config)
+        if (hadAnyEnvVarChanges) {
+          server.restart(true)
+        }
+
         if (result.problem) {
           console.info(result.problem)
         }
       } catch (_) { }
+    })
 
+    // Listen for changes to interop file
+    let interopFilepath = path.join(process.cwd(), 'src', 'interop.js')
+    let interopFileWatcher = chokidar.watch(interopFilepath, {
+      ignorePermissionErrors: true,
+      ignoreInitial: true
+    })
+
+    interopFileWatcher.on('change', async () => {
+      Files.touch(mainJsPath)
     })
 
     // Listen for changes to src/Pages and src/Layouts folders
@@ -73,7 +92,7 @@ let runServer = async (options) => {
     } catch (_) { }
 
     // Run the vite server on options.port 
-    const server = await Vite.createServer({
+    server = await Vite.createServer({
       configFile: false,
       root: path.join(process.cwd(), '.elm-land', 'server'),
       publicDir: path.join(process.cwd(), 'static'),
@@ -131,19 +150,34 @@ let generateElmFiles = async () => {
   }
 }
 
-let attemptToLoadEnvVariablesFromUserConfig = () => {
+let lastEnvKeysSeen = []
+
+let attemptToLoadEnvVariablesFromUserConfig = (config) => {
+  let hadAnyEnvVarChanges = false
   try {
-    let config = require(path.join(process.cwd(), 'elm-land.json'))
+    config = config || require(path.join(process.cwd(), 'elm-land.json'))
     if (config) {
       if (config.app && config.app.env && Array.isArray(config.app.env)) {
+        // Remove the old environment variables
+        for (var key of lastEnvKeysSeen) {
+          delete process.env[`VITE_${key}`]
+          hadAnyEnvVarChanges = true
+        }
+
+        // Add new environment variables
         for (var key of config.app.env) {
           if (typeof key === 'string') {
-            process.env[`VITE_${key}`] = process.env[key]
+            process.env[`VITE_${key}`] = process.env[key] || ''
           }
         }
+
+        // Set "lastEnvKeysSeen" for next time
+        lastEnvKeysSeen = config.app.env
       }
     }
   } catch (_) { }
+
+  return hadAnyEnvVarChanges
 }
 
 const attempt = (fn) => {

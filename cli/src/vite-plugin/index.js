@@ -60,7 +60,11 @@ const plugin = (opts) => {
       server.ws.on('connection', () => {
         if (lastErrorSent) {
           server.ws.send('elm:error', {
-            error: ElmErrorJson.toColoredHtmlOutput(lastErrorSent)
+            error: ElmErrorJson.toColoredHtmlOutput(lastErrorSent, {
+              GREEN: 'mediumseagreen',
+              RED: 'indianred',
+              BLUE: 'dodgerblue',
+            })
           })
         }
       })

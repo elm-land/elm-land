@@ -77,7 +77,14 @@ if (import.meta.hot) {
 }
 
 let startApp = ({ Interop }) => {
-  let env = {}
+  // Grab environment variables, but remove the "VITE_" prefix
+  let env = Object.keys(import.meta.env).reduce((env, key) => {
+    if (key.startsWith('VITE_')) {
+      env[key.slice('VITE_'.length)] = import.meta.env[key]
+    }
+    return env
+  }, {})
+
   let flags = undefined
 
   if (Interop.flags) {
@@ -109,7 +116,8 @@ let startApp = ({ Interop }) => {
 
 let Interop = {}
 try {
-  Interop = import.meta.globEager('../../src/interop.js')['../../src/interop.js'] || {}
+  let interopFiles = import.meta.glob('../../src/interop.js', { eager: true })
+  Interop = interopFiles['../../src/interop.js'] || {}
 } catch (_) { }
 
 startApp({ Interop })
