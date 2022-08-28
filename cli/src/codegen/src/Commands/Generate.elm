@@ -476,7 +476,7 @@ fromEffectDeclaration options =
                     [ CodeGen.Expression.multilineRecord
                         [ ( "key", CodeGen.Expression.value "key" )
                         , ( "fromPageMsg", CodeGen.Expression.value options.fromPageMsg )
-                        , ( "fromSharedMsg", CodeGen.Expression.value "Shared.handleSharedMsg >> SharedSent" )
+                        , ( "fromSharedMsg", CodeGen.Expression.value "SharedSent" )
                         ]
                     , CodeGen.Expression.value "effect"
                     ]
@@ -570,7 +570,7 @@ runWhenAuthenticatedDeclaration =
                                 , arguments =
                                     [ CodeGen.Expression.multilineRecord
                                         [ ( "key", CodeGen.Expression.value "model.key" )
-                                        , ( "fromSharedMsg", CodeGen.Expression.value "Shared.handleSharedMsg >> SharedSent" )
+                                        , ( "fromSharedMsg", CodeGen.Expression.value "SharedSent" )
                                         , ( "fromPageMsg", CodeGen.Expression.value "identity" )
                                         ]
                                     ]
