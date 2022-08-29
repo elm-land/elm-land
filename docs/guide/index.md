@@ -40,15 +40,9 @@ The _Elm Land_ CLI tool comes with a dev server built-in, so you can run your ne
 npx elm-land server
 ```
 
-<code-group>
-<code-block title="Terminal output">
-
 ```txt
 🌈  Elm Land is ready at http://localhost:1234
 ```
-
-</code-block>
-</code-group>
 
 Visiting `http://localhost:1234` in your browser will show you your new web app!
 

@@ -41,9 +41,6 @@ With Netlify, you can add a configuration file to describe how you want to build
 
 Add this `netlify.toml`, alongside your `elm-land.json` file, at the root of your project:
 
-<code-group>
-<code-block title="netlify.toml">
-
 ```toml
 # 1️⃣ Tells Netlify how to build your app, and where the files are
 [build]
@@ -56,9 +53,6 @@ Add this `netlify.toml`, alongside your `elm-land.json` file, at the root of you
   to = "/index.html"
   status = 200
 ```
-
-</code-block>
-</code-group>
 
 ### Step 2. Deploy your site
 
