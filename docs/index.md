@@ -7,7 +7,7 @@ hero:
     alt: Elm Land logo
   name: "Reliable web apps"
   text: "for everyone."
-  tagline: A production-ready framework for building Elm applications. Build your next app with confidence, step by step.
+  tagline: A (not yet) production-ready framework for building Elm applications. Build your next app with confidence, step by step.
   actions: 
     - text: Get started
       link: /guide/
