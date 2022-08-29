@@ -40,7 +40,7 @@ This new "element" page will allow us to return HTTP requests from our `init` an
 npx elm-land add page:element /
 ```
 
-Here is the new page that gets created from that command. I've highlighted some things that have changed from the `Page.sandbox` we used in [the last guide on "User input"](/user-input):
+Here is the new page that gets created from that command. I've highlighted some things that have changed from the `Page.sandbox` we used in [the last guide on "User input"](./user-input):
 
 ```elm {13,16,29,32,44,48-50,57-59}
 module Pages.Home_ exposing (Model, Msg, page)

@@ -39,7 +39,7 @@ Now that we have a sign-in page, let's run the dev server:
 npx elm-land server
 ```
 
-Opening [http://localhost:1234/sign-in](http://localhost:1234/sign-in) in a web browser should show us a screen that looks like this:
+Opening `http://localhost:1234/sign-in` in a web browser should show us a screen that looks like this:
 
 ![A screenshot of a webpage reading "/sign-in"](./user-auth/01-sign-in-page.png)
 

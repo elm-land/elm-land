@@ -50,7 +50,7 @@ npx elm-land server
 </code-block>
 </code-group>
 
-Visiting [http://localhost:1234](http://localhost:1234) in your browser will show you your new web app!
+Visiting `http://localhost:1234` in your browser will show you your new web app!
 
 ### You did it! :tada:
 

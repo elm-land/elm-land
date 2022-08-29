@@ -270,7 +270,7 @@ view model =
 
 :::
 
-When we open our web browser at [http://localhost:1234/counter](http://localhost:1234/counter), we'll see an interactive counter application that looks like this:
+When we open our web browser at `http://localhost:1234/counter`, we'll see an interactive counter application that looks like this:
 
 <BrowserWindow src="./state-management/screenshot.gif" alt="Demo of the counter app example" url="http://localhost:1234/counter" />
 
