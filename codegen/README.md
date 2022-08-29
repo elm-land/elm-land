@@ -3,7 +3,8 @@
 
 ## __Installation__
 
-```
+```sh
+# Note: not published yet!
 elm install elm-land/codegen
 ```
 
@@ -89,7 +90,7 @@ app.ports.onSuccess(files => {
 
 ### 3. __Running the Node.js program__
 
-1. __Compile__ the Elm worker to JavaScript
+1. __Compile__ the Elm worker to a JavaScript file
 
     ```txt
     $ elm make src/Worker.elm --output=dist/elm-worker.js

@@ -1,5 +1,5 @@
 const { Files } = require("../files")
-const { Utils } = require("./_utils")
+const { Utils, Terminal } = require("./_utils")
 
 let run = async () => {
 
@@ -18,7 +18,10 @@ let run = async () => {
   }
 
   return {
-    message: `🌈 Build was successful!`,
+    message: [
+      '',
+      Utils.intro.success(`successfully built your project at ${Terminal.cyan('./dist')}`)
+    ].join('\n'),
     files: [],
     effects: [
       { kind: 'generateHtml', config },

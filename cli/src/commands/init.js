@@ -1,5 +1,6 @@
 const path = require('path')
 const { Files } = require("../files")
+const { Utils, Terminal } = require('./_utils')
 
 let run = async (options = {}) => {
   let { name } = options
@@ -10,19 +11,24 @@ let run = async (options = {}) => {
 
     if (isNonEmptyFolder) {
       return Promise.reject([
-        `🌈 It looks like ./${name} is a non-empty folder`,
         '',
-        'I don\'t want to delete anything important, so',
-        'please run this command when that folder is empty.',
+        Utils.intro.error(`detected a ${Terminal.cyan('non-empty folder')}`),
+        `    I don't want to delete anything important in ${Terminal.cyan(`./${name}`)}`,
+        '    so no changes have been made.',
+        '',
+        '    Please try again with an empty folder.',
+        ''
       ].join('\n'))
     }
 
     let message = [
-      `🌈 New project created in ./${name}`,
       '',
-      'Here are some next steps:',
-      `📂 cd ${name}`,
-      '🚀 npx elm-land server'
+      Utils.intro.success(`created a new project in ${Terminal.cyan(`./${name}`)}`),
+      '    Here are some next steps:',
+      '',
+      `    📂 cd ${name}`,
+      '    🚀 elm-land server',
+      ''
     ].join('\n')
 
     return {
@@ -50,29 +56,61 @@ let run = async (options = {}) => {
         },
         {
           kind: 'file',
+          name: `${name}/.elm-land/src/Pages/NotFound_.elm`,
+          content: await Files.readFromCliFolder('src/templates/_elm-land/customizable/Pages/NotFound_.elm')
+        },
+        {
+          kind: 'file',
           name: `${name}/.elm-land/src/Main.elm`,
           content: await Files.readFromCliFolder('src/templates/_elm-land/src/Main.elm')
         },
         {
           kind: 'file',
           name: `${name}/.elm-land/src/View.elm`,
-          content: await Files.readFromCliFolder('src/templates/_elm-land/src/View.elm')
+          content: await Files.readFromCliFolder('src/templates/_elm-land/customizable/View.elm')
         },
         {
           kind: 'file',
-          name: `${name}/.elm-land/src/ElmLand/Page.elm`,
-          content: await Files.readFromCliFolder('src/templates/_elm-land/src/ElmLand/Page.elm')
+          name: `${name}/.elm-land/src/Effect.elm`,
+          content: await Files.readFromCliFolder('src/templates/_elm-land/customizable/Effect.elm')
+        },
+        {
+          kind: 'file',
+          name: `${name}/.elm-land/src/Shared.elm`,
+          content: await Files.readFromCliFolder('src/templates/_elm-land/customizable/Shared.elm')
+        },
+        {
+          kind: 'file',
+          name: `${name}/.elm-land/src/Auth.elm`,
+          content: await Files.readFromCliFolder('src/templates/_elm-land/customizable/Auth.elm')
+        },
+        {
+          kind: 'file',
+          name: `${name}/.elm-land/src/Page.elm`,
+          content: await Files.readFromCliFolder('src/templates/_elm-land/src/Page.elm')
+        },
+        {
+          kind: 'file',
+          name: `${name}/.elm-land/src/Route.elm`,
+          content: await Files.readFromCliFolder('src/templates/_elm-land/src/Route.elm')
+        },
+        {
+          kind: 'file',
+          name: `${name}/.elm-land/src/Route/Query.elm`,
+          content: await Files.readFromCliFolder('src/templates/_elm-land/src/Route/Query.elm')
         }
       ],
       effects: []
     }
   } else {
     return Promise.reject([
-      `🌈 Please provide a folder name for your new project.`,
       '',
-      `💁 Here\'s an example:`,
+      Utils.intro.error(`expected ${Terminal.red('a folder name')} for your project`),
+      `    For example, if your project was called "${Terminal.cyan('my-cool-app')}"`,
+      `    you'd run this command to get started:`,
       '',
-      'npx elm-land init my-project'
+      `    elm-land ${Terminal.pink('init my-cool-app')}`,
+      '',
     ].join('\n'))
   }
 }

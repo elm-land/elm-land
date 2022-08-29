@@ -4,24 +4,21 @@ const Vite = require('vite')
 const ElmVitePlugin = require('./vite-plugin/index.js')
 const { Codegen } = require('./codegen')
 const { Files } = require('./files')
+const { Utils } = require('./commands/_utils')
 
 
 let srcPagesFolderFilepath = path.join(process.cwd(), 'src', 'Pages')
 let srcLayoutsFolderFilepath = path.join(process.cwd(), 'src', 'Layouts')
 
 let runServer = async (options) => {
-  try {
-    // Check if `.elm-land` folder exists
-    let hasElmLandJsAlready =
-      await Files.exists(path.join(process.cwd(), '.elm-land', 'server', 'main.js'))
+  let server
 
-    // If not, create a new one with the initial files
-    if (!hasElmLandJsAlready) {
-      await Files.copyPaste({
-        source: path.join(__dirname, 'templates', '_elm-land', 'server'),
-        destination: path.join(process.cwd(), '.elm-land'),
-      })
-    }
+  try {
+    let rawConfig = await Files.readFromUserFolder('elm-land.json')
+    let config = JSON.parse(rawConfig)
+
+    // Handle missing defaults
+    await handleElmLandFiles()
 
     // Expose ENV variables to Vite explicitly allowed by the user
     attemptToLoadEnvVariablesFromUserConfig()
@@ -33,6 +30,7 @@ let runServer = async (options) => {
       ignoreInitial: true
     })
     let indexHtmlPath = path.join(process.cwd(), '.elm-land', 'server', 'index.html')
+    let mainJsPath = path.join(process.cwd(), '.elm-land', 'server', 'main.js')
 
     staticFolderWatcher.on('all', () => {
       Files.touch(indexHtmlPath)
@@ -46,16 +44,31 @@ let runServer = async (options) => {
     })
 
     configFileWatcher.on('change', async () => {
-
       try {
         let rawConfig = await Files.readFromUserFolder('elm-land.json')
-        let config = JSON.parse(rawConfig)
+        config = JSON.parse(rawConfig)
         let result = await generateHtml(config)
+
+        let hadAnyEnvVarChanges = attemptToLoadEnvVariablesFromUserConfig(config)
+        if (hadAnyEnvVarChanges) {
+          server.restart(true)
+        }
+
         if (result.problem) {
           console.info(result.problem)
         }
       } catch (_) { }
+    })
 
+    // Listen for changes to interop file
+    let interopFilepath = path.join(process.cwd(), 'src', 'interop.js')
+    let interopFileWatcher = chokidar.watch(interopFilepath, {
+      ignorePermissionErrors: true,
+      ignoreInitial: true
+    })
+
+    interopFileWatcher.on('change', async () => {
+      Files.touch(mainJsPath)
     })
 
     // Listen for changes to src/Pages and src/Layouts folders
@@ -67,8 +80,19 @@ let runServer = async (options) => {
     srcPagesAndLayoutsFolderWatcher.on('all', generateElmFiles)
     await generateElmFiles()
 
+    // Check config for Elm debugger options
+    let debug = false
+
+    try {
+      if (process.env.NODE_ENV === 'production') {
+        debug = config.app.elm.production.debugger
+      } else {
+        debug = config.app.elm.development.debugger
+      }
+    } catch (_) { }
+
     // Run the vite server on options.port 
-    const server = await Vite.createServer({
+    server = await Vite.createServer({
       configFile: false,
       root: path.join(process.cwd(), '.elm-land', 'server'),
       publicDir: path.join(process.cwd(), 'static'),
@@ -78,14 +102,12 @@ let runServer = async (options) => {
       },
       plugins: [
         ElmVitePlugin.plugin({
-          debug: false,
+          debug,
           optimize: false
         })
       ],
       logLevel: 'silent'
     })
-
-
 
     await server.listen()
 
@@ -128,19 +150,34 @@ let generateElmFiles = async () => {
   }
 }
 
-let attemptToLoadEnvVariablesFromUserConfig = () => {
+let lastEnvKeysSeen = []
+
+let attemptToLoadEnvVariablesFromUserConfig = (config) => {
+  let hadAnyEnvVarChanges = false
   try {
-    let config = require(path.join(process.cwd(), 'elm-land.json'))
+    config = config || require(path.join(process.cwd(), 'elm-land.json'))
     if (config) {
       if (config.app && config.app.env && Array.isArray(config.app.env)) {
+        // Remove the old environment variables
+        for (var key of lastEnvKeysSeen) {
+          delete process.env[`VITE_${key}`]
+          hadAnyEnvVarChanges = true
+        }
+
+        // Add new environment variables
         for (var key of config.app.env) {
           if (typeof key === 'string') {
-            process.env[`VITE_${key}`] = process.env[key]
+            process.env[`VITE_${key}`] = process.env[key] || ''
           }
         }
+
+        // Set "lastEnvKeysSeen" for next time
+        lastEnvKeysSeen = config.app.env
       }
     }
   } catch (_) { }
+
+  return hadAnyEnvVarChanges
 }
 
 const attempt = (fn) => {
@@ -151,16 +188,62 @@ const attempt = (fn) => {
   }
 }
 
-const build = async (config) => {
-  // Make sure initial files are up-to-date
-  await Files.copyPaste({
+const customize = async (filepath) => {
+  let source = path.join(__dirname, 'templates', '_elm-land', 'customizable', ...filepath.split('/'))
+  let destination = path.join(process.cwd(), 'src', ...filepath.split('/'))
+
+  let alreadyExists = await Files.exists(destination)
+
+  if (!alreadyExists) {
+    // Copy the default into the user's `src` folder
+    await Files.copyPasteFile({
+      source,
+      destination,
+    })
+  }
+
+  try {
+    await Files.remove(path.join(process.cwd(), '.elm-land', 'src', ...filepath.split('/')))
+  } catch (_) {
+    // If the file isn't there, no worries
+  }
+
+  return { problem: null }
+}
+
+const handleElmLandFiles = async () => {
+  let defaultFilepaths = Object.values(Utils.customizableFiles).map(obj => obj.filepath)
+
+  await Promise.all(defaultFilepaths.map(async filepath => {
+    let fileInUsersSrcFolder = path.join(process.cwd(), 'src', ...filepath.split('/'))
+    let fileInTemplatesFolder = path.join(__dirname, 'templates', '_elm-land', 'customizable', ...filepath.split('/'))
+    let fileInElmLandSrcFolder = path.join(process.cwd(), '.elm-land', 'src', ...filepath.split('/'))
+
+    let userSrcFileExists = await Files.exists(fileInUsersSrcFolder)
+
+    if (!userSrcFileExists) {
+      return Files.copyPasteFile({
+        source: fileInTemplatesFolder,
+        destination: fileInElmLandSrcFolder
+      })
+    }
+  }))
+
+  await Files.copyPasteFolder({
     source: path.join(__dirname, 'templates', '_elm-land', 'server'),
     destination: path.join(process.cwd(), '.elm-land'),
   })
-  await Files.copyPaste({
+  await Files.copyPasteFolder({
     source: path.join(__dirname, 'templates', '_elm-land', 'src'),
     destination: path.join(process.cwd(), '.elm-land'),
   })
+}
+
+const build = async (config) => {
+
+  // Create default files in `.elm-land/src` if they aren't already 
+  // defined by the user in the `src` folder
+  await handleElmLandFiles()
 
   // Load ENV variables
   attemptToLoadEnvVariablesFromUserConfig()
@@ -295,6 +378,9 @@ let run = async (effects) => {
         break
       case 'build':
         results.push(await build(effect.config))
+        break
+      case 'customize':
+        results.push(await customize(effect.filepath))
         break
       default:
         results.push({ problem: `❗️ Unrecognized effect: ${effect.kind}` })

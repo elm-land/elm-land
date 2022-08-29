@@ -2,7 +2,8 @@
 
 > Convert Elm compiler JSON into formatted HTML or terminal output
 
-```
+```sh
+# Note: not published yet!
 npm install @elm-land/elm-error-json
 ```
 

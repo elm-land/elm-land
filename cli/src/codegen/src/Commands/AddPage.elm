@@ -49,7 +49,7 @@ newPageModule { url, filepath, kind } =
             newElementPageModule filepath url
 
         New ->
-            newStaticPageModule filepath url
+            newAdvancedPageModule filepath url
 
 
 newStaticPageModule : Filepath -> String -> CodeGen.Module
@@ -142,7 +142,7 @@ newSandboxPageModule filepath url =
                         []
                 , expression =
                     CodeGen.Expression.multilineFunction
-                        { name = "ElmLand.Page.sandbox"
+                        { name = "Page.sandbox"
                         , arguments =
                             [ CodeGen.Expression.multilineRecord
                                 [ ( "init", CodeGen.Expression.value "init" )
@@ -225,10 +225,10 @@ newSandboxPageModule filepath url =
         { name = "Pages" :: Filepath.toList filepath
         , exposing_ = [ "Model", "Msg", "page" ]
         , imports =
-            [ CodeGen.Import.new [ "ElmLand", "Page" ]
-                |> CodeGen.Import.withExposing [ "Page" ]
-            , CodeGen.Import.new [ "Html" ]
+            [ CodeGen.Import.new [ "Html" ]
                 |> CodeGen.Import.withExposing [ "Html" ]
+            , CodeGen.Import.new [ "Page" ]
+                |> CodeGen.Import.withExposing [ "Page" ]
             , CodeGen.Import.new [ "View" ]
                 |> CodeGen.Import.withExposing [ "View" ]
             ]
@@ -270,7 +270,7 @@ newElementPageModule filepath url =
                         []
                 , expression =
                     CodeGen.Expression.multilineFunction
-                        { name = "ElmLand.Page.element"
+                        { name = "Page.element"
                         , arguments =
                             [ CodeGen.Expression.multilineRecord
                                 [ ( "init", CodeGen.Expression.value "init" )
@@ -374,10 +374,164 @@ newElementPageModule filepath url =
         { name = "Pages" :: Filepath.toList filepath
         , exposing_ = [ "Model", "Msg", "page" ]
         , imports =
-            [ CodeGen.Import.new [ "ElmLand", "Page" ]
-                |> CodeGen.Import.withExposing [ "Page" ]
-            , CodeGen.Import.new [ "Html" ]
+            [ CodeGen.Import.new [ "Html" ]
                 |> CodeGen.Import.withExposing [ "Html" ]
+            , CodeGen.Import.new [ "Page" ]
+                |> CodeGen.Import.withExposing [ "Page" ]
+            , CodeGen.Import.new [ "View" ]
+                |> CodeGen.Import.withExposing [ "View" ]
+            ]
+        , declarations =
+            [ pageFunctionDeclaration
+            , CodeGen.Declaration.comment [ "INIT" ]
+            , modelTypeDeclaration
+            , initFunctionDeclaration
+            , CodeGen.Declaration.comment [ "UPDATE" ]
+            , msgTypeDeclaration
+            , updateFunctionDeclaration
+            , CodeGen.Declaration.comment [ "SUBSCRIPTIONS" ]
+            , subscriptionsFunctionDeclaration
+            , CodeGen.Declaration.comment [ "VIEW" ]
+            , viewFunctionDeclaration
+            ]
+        }
+
+
+newAdvancedPageModule : Filepath -> String -> CodeGen.Module
+newAdvancedPageModule filepath url =
+    let
+        pageFunctionDeclaration : CodeGen.Declaration
+        pageFunctionDeclaration =
+            CodeGen.Declaration.function
+                { name = "page"
+                , annotation =
+                    CodeGen.Annotation.function
+                        [ CodeGen.Annotation.type_ "Shared.Model"
+                        , CodeGen.Annotation.genericType "Route"
+                            [ if Filepath.hasDynamicParameters filepath then
+                                Filepath.toParamsRecordAnnotation filepath
+
+                              else
+                                CodeGen.Annotation.type_ "()"
+                            ]
+                        , CodeGen.Annotation.type_ "Page Model Msg"
+                        ]
+                , arguments =
+                    [ CodeGen.Argument.new "shared", CodeGen.Argument.new "route" ]
+                , expression =
+                    CodeGen.Expression.multilineFunction
+                        { name = "Page.new"
+                        , arguments =
+                            [ CodeGen.Expression.multilineRecord
+                                [ ( "init", CodeGen.Expression.value "init" )
+                                , ( "update", CodeGen.Expression.value "update" )
+                                , ( "subscriptions", CodeGen.Expression.value "subscriptions" )
+                                , ( "view", CodeGen.Expression.value "view" )
+                                ]
+                            ]
+                        }
+                }
+
+        modelTypeDeclaration : CodeGen.Declaration
+        modelTypeDeclaration =
+            CodeGen.Declaration.typeAlias
+                { name = "Model"
+                , annotation = CodeGen.Annotation.multilineRecord []
+                }
+
+        initFunctionDeclaration : CodeGen.Declaration
+        initFunctionDeclaration =
+            CodeGen.Declaration.function
+                { name = "init"
+                , annotation = CodeGen.Annotation.type_ "() -> ( Model, Effect Msg )"
+                , arguments = [ CodeGen.Argument.new "()" ]
+                , expression =
+                    CodeGen.Expression.multilineTuple
+                        [ CodeGen.Expression.record []
+                        , CodeGen.Expression.value "Effect.none"
+                        ]
+                }
+
+        msgTypeDeclaration : CodeGen.Declaration
+        msgTypeDeclaration =
+            CodeGen.Declaration.customType
+                { name = "Msg"
+                , variants =
+                    [ ( "ExampleMsgReplaceMe", [] )
+                    ]
+                }
+
+        updateFunctionDeclaration =
+            CodeGen.Declaration.function
+                { name = "update"
+                , annotation =
+                    CodeGen.Annotation.function
+                        [ CodeGen.Annotation.type_ "Msg"
+                        , CodeGen.Annotation.type_ "Model"
+                        , CodeGen.Annotation.type_ "( Model, Effect Msg )"
+                        ]
+                , arguments =
+                    [ CodeGen.Argument.new "msg"
+                    , CodeGen.Argument.new "model"
+                    ]
+                , expression =
+                    CodeGen.Expression.caseExpression
+                        { value = CodeGen.Argument.new "msg"
+                        , branches =
+                            [ { name = "ExampleMsgReplaceMe"
+                              , arguments = []
+                              , expression =
+                                    CodeGen.Expression.multilineTuple
+                                        [ CodeGen.Expression.value "model"
+                                        , CodeGen.Expression.value "Effect.none"
+                                        ]
+                              }
+                            ]
+                        }
+                }
+
+        subscriptionsFunctionDeclaration : CodeGen.Declaration
+        subscriptionsFunctionDeclaration =
+            CodeGen.Declaration.function
+                { name = "subscriptions"
+                , annotation =
+                    CodeGen.Annotation.function
+                        [ CodeGen.Annotation.type_ "Model"
+                        , CodeGen.Annotation.type_ "Sub Msg"
+                        ]
+                , arguments = [ CodeGen.Argument.new "model" ]
+                , expression = CodeGen.Expression.value "Sub.none"
+                }
+
+        viewFunctionDeclaration : CodeGen.Declaration
+        viewFunctionDeclaration =
+            CodeGen.Declaration.function
+                { name = "view"
+                , annotation =
+                    CodeGen.Annotation.function
+                        [ CodeGen.Annotation.type_ "Model"
+                        , CodeGen.Annotation.type_ "View Msg"
+                        ]
+                , arguments = [ CodeGen.Argument.new "model" ]
+                , expression =
+                    viewExpressionWithContent
+                        { title = Filepath.toPageModuleName filepath
+                        , expression = CodeGen.Expression.string url
+                        }
+                }
+    in
+    CodeGen.Module.new
+        { name = "Pages" :: Filepath.toList filepath
+        , exposing_ = [ "Model", "Msg", "page" ]
+        , imports =
+            [ CodeGen.Import.new [ "Effect" ]
+                |> CodeGen.Import.withExposing [ "Effect" ]
+            , CodeGen.Import.new [ "Route" ]
+                |> CodeGen.Import.withExposing [ "Route" ]
+            , CodeGen.Import.new [ "Html" ]
+            , CodeGen.Import.new [ "Page" ]
+                |> CodeGen.Import.withExposing [ "Page" ]
+            , CodeGen.Import.new [ "Shared" ]
             , CodeGen.Import.new [ "View" ]
                 |> CodeGen.Import.withExposing [ "View" ]
             ]

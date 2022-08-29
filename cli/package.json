@@ -1,6 +1,6 @@
 {
   "name": "elm-land",
-  "version": "0.15.0",
+  "version": "0.16.0",
   "description": "Reliable web apps for everyone",
   "main": "index.js",
   "bin": {
@@ -40,6 +40,6 @@
     "elm-esm": "1.1.4",
     "node-elm-compiler": "5.0.6",
     "terser": "5.14.0",
-    "vite": "2.9.8"
+    "vite": "3.0.9"
   }
 }

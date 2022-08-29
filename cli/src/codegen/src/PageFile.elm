@@ -1,7 +1,10 @@
 module PageFile exposing
     ( PageFile
     , decoder
-    , isElmLandPage
+    , isAdvancedElmLandPage
+    , isAuthProtectedPage
+    , isNotFoundPage
+    , isSandboxOrElementElmLandPage
     , toFilepath
     , toLayoutName
     )
@@ -39,6 +42,11 @@ decoder =
             (Json.Decode.field "filepath" Filepath.decoder)
             (Json.Decode.field "contents" Json.Decode.string)
         )
+
+
+isNotFoundPage : PageFile -> Bool
+isNotFoundPage (PageFile { filepath }) =
+    Filepath.isNotFoundPage filepath
 
 
 toFilepath : PageFile -> Filepath
@@ -81,7 +89,7 @@ toLayoutName (PageFile { contents }) =
             in
             if functionName == "layout" then
                 case expression of
-                    Elm.Syntax.Expression.FunctionOrValue [ "ElmLand", "Layout" ] name ->
+                    Elm.Syntax.Expression.FunctionOrValue [ "Layout" ] name ->
                         Just name
 
                     _ ->
@@ -97,8 +105,8 @@ toLayoutName (PageFile { contents }) =
         |> Maybe.andThen toLayoutNameFromFile
 
 
-isElmLandPage : PageFile -> Bool
-isElmLandPage (PageFile { contents }) =
+isSandboxOrElementElmLandPage : PageFile -> Bool
+isSandboxOrElementElmLandPage (PageFile { contents }) =
     let
         isElmLandPageFromFile : Elm.Syntax.File.File -> Bool
         isElmLandPageFromFile file =
@@ -133,13 +141,139 @@ isElmLandPage (PageFile { contents }) =
                 case expression of
                     Elm.Syntax.Expression.Application (node :: _) ->
                         case Elm.Syntax.Node.value node of
-                            Elm.Syntax.Expression.FunctionOrValue [ "ElmLand", "Page" ] _ ->
+                            Elm.Syntax.Expression.FunctionOrValue [ "Page" ] name ->
+                                name == "sandbox" || name == "element"
+
+                            _ ->
+                                False
+
+                    _ ->
+                        False
+
+            else
+                False
+    in
+    contents
+        |> Elm.Parser.parse
+        |> Result.map (Elm.Processing.process Elm.Processing.init)
+        |> Result.toMaybe
+        |> Maybe.map isElmLandPageFromFile
+        |> Maybe.withDefault False
+
+
+isAdvancedElmLandPage : PageFile -> Bool
+isAdvancedElmLandPage (PageFile { contents }) =
+    let
+        isElmLandPageFromFile : Elm.Syntax.File.File -> Bool
+        isElmLandPageFromFile file =
+            file.declarations
+                |> List.map Elm.Syntax.Node.value
+                |> List.any isElmLandPageFromDeclaration
+
+        isElmLandPageFromDeclaration : Elm.Syntax.Declaration.Declaration -> Bool
+        isElmLandPageFromDeclaration decl =
+            case decl of
+                Elm.Syntax.Declaration.FunctionDeclaration func ->
+                    isElmLandPageFromFunction func
+
+                _ ->
+                    False
+
+        isElmLandPageFromFunction : Elm.Syntax.Expression.Function -> Bool
+        isElmLandPageFromFunction func =
+            let
+                functionName : String
+                functionName =
+                    func.declaration
+                        |> Elm.Syntax.Node.value
+                        |> .name
+                        |> Elm.Syntax.Node.value
+
+                expression : Elm.Syntax.Expression.Expression
+                expression =
+                    Elm.Syntax.Node.value (Elm.Syntax.Node.value func.declaration).expression
+            in
+            if functionName == "page" then
+                case expression of
+                    Elm.Syntax.Expression.Application (node :: _) ->
+                        case Elm.Syntax.Node.value node of
+                            Elm.Syntax.Expression.FunctionOrValue [ "Page" ] "new" ->
                                 True
 
                             _ ->
                                 False
 
                     _ ->
+                        False
+
+            else
+                False
+    in
+    contents
+        |> Elm.Parser.parse
+        |> Result.map (Elm.Processing.process Elm.Processing.init)
+        |> Result.toMaybe
+        |> Maybe.map isElmLandPageFromFile
+        |> Maybe.withDefault False
+
+
+isAuthProtectedPage : PageFile -> Bool
+isAuthProtectedPage (PageFile { contents }) =
+    let
+        isElmLandPageFromFile : Elm.Syntax.File.File -> Bool
+        isElmLandPageFromFile file =
+            file.declarations
+                |> List.map Elm.Syntax.Node.value
+                |> List.any isElmLandPageFromDeclaration
+
+        isElmLandPageFromDeclaration : Elm.Syntax.Declaration.Declaration -> Bool
+        isElmLandPageFromDeclaration decl =
+            case decl of
+                Elm.Syntax.Declaration.FunctionDeclaration func ->
+                    isElmLandPageFromFunction func
+
+                _ ->
+                    False
+
+        isElmLandPageFromFunction : Elm.Syntax.Expression.Function -> Bool
+        isElmLandPageFromFunction func =
+            let
+                functionName : String
+                functionName =
+                    func.declaration
+                        |> Elm.Syntax.Node.value
+                        |> .name
+                        |> Elm.Syntax.Node.value
+            in
+            if functionName == "page" then
+                case func.signature of
+                    Just node ->
+                        let
+                            functionTypeAnnotation : Elm.Syntax.TypeAnnotation.TypeAnnotation
+                            functionTypeAnnotation =
+                                Elm.Syntax.Node.value node
+                                    |> .typeAnnotation
+                                    |> Elm.Syntax.Node.value
+                        in
+                        case functionTypeAnnotation of
+                            Elm.Syntax.TypeAnnotation.FunctionTypeAnnotation functionNode _ ->
+                                let
+                                    typeAnnotation : Elm.Syntax.TypeAnnotation.TypeAnnotation
+                                    typeAnnotation =
+                                        functionNode
+                                            |> Elm.Syntax.Node.value
+                                in
+                                case typeAnnotation of
+                                    Elm.Syntax.TypeAnnotation.Typed node1 _ ->
+                                        Elm.Syntax.Node.value node1 == ( [ "Auth" ], "User" )
+
+                                    _ ->
+                                        False
+
+                            _ ->
+                                False
+
+                    Nothing ->
                         False
 
             else

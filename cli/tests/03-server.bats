@@ -6,8 +6,8 @@ load helpers
   run elm-land server
   expectToFail
 
-  expectOutputContains "🌈 Elm Land couldn't find a \"elm-land.json\""
-  expectOutputContains "elm-land init my-project"
+  expectOutputContains "couldn't find a project"
+  expectOutputContains "init <folder>"
 }
 
 @test "'elm-land server' generates files when run" {

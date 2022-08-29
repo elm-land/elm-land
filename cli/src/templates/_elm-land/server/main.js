@@ -77,13 +77,21 @@ if (import.meta.hot) {
 }
 
 let startApp = ({ Interop }) => {
-  let env = {}
+  // Grab environment variables, but remove the "VITE_" prefix
+  let env = Object.keys(import.meta.env).reduce((env, key) => {
+    if (key.startsWith('VITE_')) {
+      env[key.slice('VITE_'.length)] = import.meta.env[key]
+    }
+    return env
+  }, {})
 
-  let flags = Interop.flags
-    ? Interop.flags({ env })
-    : undefined
+  let flags = undefined
 
-  try {
+  if (Interop.flags) {
+    flags = Interop.flags({ env })
+  }
+
+  if (Elm && Elm.Main && Elm.Main.init) {
     let app = Elm.Main.init({
       node: document.getElementById('app'),
       flags
@@ -92,15 +100,24 @@ let startApp = ({ Interop }) => {
     if (Interop.onReady) {
       Interop.onReady({ app, env })
     }
-  } catch (_) {
-
+  } else if (import.meta.env.DEV) {
+    // Ensure error overlay shows in dev mode
+    setTimeout(() => {
+      let overlay = document.querySelector('elm-error-overlay')
+      if (!overlay) {
+        window.location.reload()
+      }
+    }, 300)
   }
+
 }
 
 // If user has defined an interop.js file, use it
+
+let Interop = {}
 try {
-  let Interop = import.meta.globEager('../../src/interop.js')['../../src/interop.js'] || {}
-  startApp({ Interop })
-} catch (_) {
-  startApp({ Interop: {} })
-}
+  let interopFiles = import.meta.glob('../../src/interop.js', { eager: true })
+  Interop = interopFiles['../../src/interop.js'] || {}
+} catch (_) { }
+
+startApp({ Interop })
