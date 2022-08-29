@@ -7,7 +7,7 @@
 - How to __handle errors__ without crashing
 
 
-<BrowserWindow src="./data-fetching/screenshot.gif" alt="Demo of Pokemon API data" />
+<BrowserWindow src="/images/guide/rest-apis.gif" alt="Demo of Pokemon API data" />
 
 ## Let's make a Pokemon app
 
@@ -302,7 +302,7 @@ view model =
 
 When we go to `http://localhost:1234`, our web browser should show the message "Loading..."
 
-![A webpage showing the message "Loading..."](./data-fetching/loading.png)
+![A webpage showing the message "Loading..."](./rest-apis/loading.png)
 
 To see the actual data, we'll need to make an HTTP request and handle the JSON response.
 
@@ -546,7 +546,7 @@ pokemonDecoder =
 
 When you visit `http://localhost:1234` in your browser, you should see "Loading...", followed by a "Fetched 150 pokemon!" message:
 
-![A webpage showing the message "Fetched 150 pokemon!"](./data-fetching/fetched-150-pokemon.png)
+![A webpage showing the message "Fetched 150 pokemon!"](./rest-apis/fetched-150-pokemon.png)
 
 ## Making it pretty with CSS
 
@@ -644,7 +644,7 @@ viewPokemon index pokemon =
 
 After you add all that code, you should see something beautiful waiting for you at `http://localhost:1234`:
 
-![The homepage, showing a grid of all 150 Pokemon](./data-fetching/homepage.png)
+![The homepage, showing a grid of all 150 Pokemon](./rest-apis/homepage.png)
 
 ## Handling HTTP errors
 
@@ -970,7 +970,7 @@ view params model =
 
 When we go back to our browser, here's what we should see:
 
-<BrowserWindow src="./data-fetching/pokemon-detail.gif" alt="Demo of Pokemon tiles linking to detail pages" />
+<BrowserWindow src="/images/guide/rest-apis/pokemon-detail.gif" alt="Demo of Pokemon tiles linking to detail pages" />
 
 ## Fetching a Pokemon's details
 
@@ -1322,7 +1322,7 @@ viewPokemonType pokemonType =
 
 That was the last step, if we check our web browser, here's what we'll see:
 
-<BrowserWindow src="./data-fetching/screenshot.gif" alt="Demo of Pokemon API data" />
+<BrowserWindow src="/images/guide/rest-apis.gif" alt="Demo of Pokemon API data" />
 
 ### You did it! :tada:
 

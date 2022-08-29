@@ -6,7 +6,7 @@
 - How to create our first project
 - How to run the project in our browser
 
-<BrowserWindow src="./pages/hello-world.jpg" alt="Homepage" url="http://localhost:1234" />
+<BrowserWindow src="/images/guide/hello-world.jpg" alt="Homepage" url="http://localhost:1234" />
 
 
 ## Prerequisites

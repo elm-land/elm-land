@@ -6,7 +6,7 @@
 - How to store a JWT fetched from a REST API
 - How to redirect when a page should only be seen by signed-in users
 
-<BrowserWindow src="./user-auth/screenshot.gif" alt="Demo of sign-in flow" />
+<BrowserWindow src="/images/guide/user-auth.gif" alt="Demo of sign-in flow" />
 
 
 Some applications require a signed-in user to render certain pages. For example, your app's `Dashboard` page should only be seen by folks who have signed in. In contrast, there are pages like the `SignIn` page that should be available even for signed-out users.
