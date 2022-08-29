@@ -16,7 +16,7 @@ For this project, we'll be using the free, open-source [PokeAPI](https://pokeapi
 Let's create a new project and get started!
 
 ```sh
-npx elm-land init rest-apis
+elm-land init rest-apis
 ```
 
 ```sh
@@ -24,7 +24,7 @@ cd rest-apis
 ```
 
 ```sh
-npx elm-land server
+elm-land server
 ```
 
 Running those 3 commands will run our new Elm Land project at `http://localhost:1234`
@@ -37,7 +37,7 @@ This new "element" page will allow us to return HTTP requests from our `init` an
 
 
 ```sh
-npx elm-land add page:element /
+elm-land add page:element /
 ```
 
 Here is the new page that gets created from that command. I've highlighted some things that have changed from the `Page.sandbox` we used in [the last guide on "User input"](./user-input):

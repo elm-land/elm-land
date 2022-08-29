@@ -37,13 +37,13 @@ In this guide, we'll learn how to use the Elm Land CLI to add new pages by speci
 Let's create a new project with the CLI, then run a local development server:
 
 ```sh
-npx elm-land init pages-and-layouts
+elm-land init pages-and-layouts
 ```
 ```sh
 cd pages-and-layouts
 ```
 ```sh
-npx elm-land server
+elm-land server
 ```
 
 Now that we have a new Elm Land project, and a server running at `http://localhost:1234` we can use the CLI to add a new page.
@@ -55,7 +55,7 @@ To get started, let's start with a page that is displayed when a user visits the
 We can create our sign-in page using the `elm-land add page` command shown below:
 
 ```sh
-npx elm-land add page:static /sign-in
+elm-land add page:static /sign-in
 ```
 
 ```txt
@@ -98,7 +98,7 @@ Some pages in our app need a URL like `/settings/account` or `/settings/notifica
 A __nested route__ is what we call a route with more than one slash in the URL. Let's add a nested route for account settings:
 
 ```sh
-npx elm-land add page:static /settings/account
+elm-land add page:static /settings/account
 ```
 
 ```txt
@@ -151,7 +151,7 @@ When we need a page to handle URLs like `/profile/ryan`, `/profile/duncan`, or `
 A __dynamic route__ passes in URL parameters (like `username`) to your page as an input, so it can handle the dynamic values.
 
 ```sh
-npx elm-land add page:static /profile/:username
+elm-land add page:static /profile/:username
 ```
 
 ![Browser window showing the profile page](./pages/profile-ryan.png)
@@ -243,7 +243,7 @@ For that reason, let's make a sidebar layout with convenient links to the "Homep
 We can start by using the `elm-land add` command again, but this time to create a new __layout__:
 
 ```sh
-npx elm-land add layout:static Sidebar
+elm-land add layout:static Sidebar
 ```
 
 ```txt

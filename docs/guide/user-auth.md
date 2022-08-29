@@ -22,7 +22,7 @@ This guide will walk you through how to build a complete sign-in process for a R
 To get started, let's create a new Elm Land project using the CLI:
 
 ```sh
-npx elm-land init user-auth
+elm-land init user-auth
 ```
 
 ## Creating a sign-in page
@@ -30,13 +30,13 @@ npx elm-land init user-auth
 We can use the CLI to create a new page at `/sign-in`:
 
 ```sh
-npx elm-land add page /sign-in
+elm-land add page /sign-in
 ```
 
 Now that we have a sign-in page, let's run the dev server:
 
 ```sh
-npx elm-land server
+elm-land server
 ```
 
 Opening `http://localhost:1234/sign-in` in a web browser should show us a screen that looks like this:

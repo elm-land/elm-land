@@ -15,12 +15,28 @@
 - A code editor like [VS code](https://code.visualstudio.com/)
 
 
+## Installation
+
+To get started, install the latest version of Elm Land via NPM:
+
+```sh
+npm install -g elm-land@latest
+```
+
+This will give you access to the `elm-land` command in your terminal! 
+
+::: warning Issues with NPM?
+
+If you see a scary `EACCES` error, check out this [guide from NPM](https://docs.npmjs.com/resolving-eacces-permissions-errors-when-installing-packages-globally) on how to fix it!
+
+:::
+
 ## Your first project
 
 You can get started with _Elm Land_ using the official CLI tool available on [NPM](https://npmjs.org/elm-land). Let's start by using the `elm-land init` command to create our first project:
 
 ```sh
-npx elm-land init hello-world
+elm-land init hello-world
 ```
 
 ```txt
@@ -37,7 +53,7 @@ npx elm-land init hello-world
 The _Elm Land_ CLI tool comes with a dev server built-in, so you can run your new project in the browser with the `elm-land server` command:
 
 ```sh
-npx elm-land server
+elm-land server
 ```
 
 ```txt
