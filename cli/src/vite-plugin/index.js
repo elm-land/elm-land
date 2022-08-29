@@ -4,6 +4,7 @@ const { relative } = require('path')
 const { acquireLock } = require('./mutex')
 const { default: ElmErrorJson } = require('./elm-error-json.js')
 const terser = require('terser')
+const path = require('path')
 
 const trimDebugMessage = (code) => code.replace(/(console\.warn\('Compiled in DEBUG mode)/, '// $1')
 const viteProjectPath = (dependency) => `/${relative(process.cwd(), dependency)}`
@@ -103,6 +104,7 @@ const plugin = (opts) => {
       const isBuild = process.env.NODE_ENV === 'production'
       try {
         const compiled = await compiler.compileToString(targets, {
+          pathToElm: path.join(__dirname, '..', '..', 'node_modules', '.bin', 'elm'),
           output: '.js',
           optimize: typeof optimize === 'boolean' ? optimize : !debug && isBuild,
           verbose: false,
