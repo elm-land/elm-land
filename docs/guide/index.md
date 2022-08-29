@@ -23,21 +23,14 @@ You can get started with _Elm Land_ using the official CLI tool available on [NP
 npx elm-land init hello-world
 ```
 
-<code-group>
-<code-block title="Terminal output">
-
 ```txt
-🌈 New project created in ./hello-world
+🌈  Elm Land created a new project in ./hello-world
+    ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
+    Here are some next steps:
 
-Here are some next steps:
-📂 cd hello-world
-🚀 npx elm-land server
+    📂 cd hello-world
+    🚀 elm-land server
 ```
-
-</code-block>
-</code-group>
-
-
 
 ## Running the dev server
 
@@ -51,7 +44,7 @@ npx elm-land server
 <code-block title="Terminal output">
 
 ```txt
-🌈 Server ready at http://localhost:1234
+🌈  Elm Land is ready at http://localhost:1234
 ```
 
 </code-block>

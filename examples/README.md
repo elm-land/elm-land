@@ -41,6 +41,6 @@ Learn how to get JSON responses from a HTTP REST API
 
 Learn how to build a sign-in page, store JWTs, and have pages automatically redirect.
 
-[Example code](./05-user-auth/) • [The guide](https://elm.land/guide/user-auth)
+[Example code](./05-user-auth/) • (Guide in progress!)
 
 [![An animated GIF of the user authentication example](./05-user-auth/screenshot.gif)](./05-user-auth/)

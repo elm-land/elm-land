@@ -1,18 +1,13 @@
 module Pages.Home_ exposing (Model, Msg, page)
 
 import Api
-import Api.PokemonList exposing (Pokemon)
-import Components.Hero
+import Api.PokemonList
 import Html exposing (Html)
-import Html.Attributes exposing (alt, class, href, src)
+import Html.Attributes exposing (alt, class, src)
 import Http
 import Page exposing (Page)
 import Route.Path
 import View exposing (View)
-
-
-
--- PAGE
 
 
 page : Page Model Msg
@@ -34,10 +29,14 @@ type alias Model =
     }
 
 
+type alias Pokemon =
+    { name : String
+    }
+
+
 init : ( Model, Cmd Msg )
 init =
-    ( { pokemonData = Api.Loading
-      }
+    ( { pokemonData = Api.Loading }
     , Api.PokemonList.getFirst150
         { onResponse = PokeApiResponded
         }
@@ -83,26 +82,23 @@ view : Model -> View Msg
 view model =
     { title = "Pokemon"
     , body =
-        [ Components.Hero.view
-            { title = "Pokemon"
-            , subtitle = "Gotta fetch 'em all!"
-            }
-        , viewPageContent model.pokemonData
+        [ Html.div [ class "hero is-danger py-6 has-text-centered" ]
+            [ Html.h1 [ class "title is-1" ] [ Html.text "Pokemon" ]
+            , Html.h2 [ class "subtitle is-4" ] [ Html.text "Gotta fetch em all!" ]
+            ]
+        , case model.pokemonData of
+            Api.Loading ->
+                Html.div [ class "has-text-centered p-6" ]
+                    [ Html.text "Loading..." ]
+
+            Api.Success pokemon ->
+                viewPokemonList pokemon
+
+            Api.Failure httpError ->
+                Html.div [ class "has-text-centered p-6" ]
+                    [ Html.text (Api.toUserFriendlyMessage httpError) ]
         ]
     }
-
-
-viewPageContent : Api.Data (List Pokemon) -> Html Msg
-viewPageContent pokemonData =
-    case pokemonData of
-        Api.Loading ->
-            Html.div [ class "has-text-centered p-6" ] [ Html.text "Loading..." ]
-
-        Api.Success pokemon ->
-            viewPokemonList pokemon
-
-        Api.Failure httpError ->
-            Html.div [ class "has-text-centered p-6" ] [ Html.text (Api.toHelpfulMessage httpError) ]
 
 
 viewPokemonList : List Pokemon -> Html Msg
@@ -120,20 +116,20 @@ viewPokemon index pokemon =
         pokedexNumber =
             index + 1
 
-        pokemonDetailPage : Route.Path.Path
-        pokemonDetailPage =
-            Route.Path.Pokemon__Name_
-                { name = pokemon.name
-                }
-
         pokemonImageUrl : String
         pokemonImageUrl =
             "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/"
                 ++ String.fromInt pokedexNumber
                 ++ ".png"
+
+        pokemonDetailRoute : Route.Path.Path
+        pokemonDetailRoute =
+            Route.Path.Pokemon__Name_
+                { name = pokemon.name
+                }
     in
     Html.div [ class "column is-4-desktop is-6-tablet" ]
-        [ Html.a [ Route.Path.href pokemonDetailPage ]
+        [ Html.a [ Route.Path.href pokemonDetailRoute ]
             [ Html.div [ class "card" ]
                 [ Html.div [ class "card-content" ]
                     [ Html.div [ class "media" ]

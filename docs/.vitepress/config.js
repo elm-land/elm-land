@@ -41,7 +41,7 @@ export default {
             { text: 'Pages and layouts', link: '/guide/pages-and-layouts' },
             { text: 'User input', link: '/guide/user-input' },
             { text: 'Working with REST APIs', link: '/guide/rest-apis' },
-            { text: 'User authentication', link: '/guide/user-auth' },
+            // { text: 'User authentication', link: '/guide/user-auth' },
             { text: 'Deploying to production', link: '/guide/deploying' },
           ]
         }

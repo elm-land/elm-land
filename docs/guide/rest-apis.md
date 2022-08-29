@@ -4,7 +4,7 @@
 
 - How to __send an HTTP request__
 - How to __read data from JSON__ responses
-- How to use custom Elm types
+- How to __handle errors__ without crashing
 
 
 <BrowserWindow src="./data-fetching/screenshot.gif" alt="Demo of Pokemon API data" />
@@ -794,7 +794,7 @@ Elm includes helpful information about each error case in the `Http.Error` value
 
 :::
 
-## Adding a "Pokemon Detail" page
+## Adding a detail page
 
 Our new homepage works great– but what if users want to see more detailed information about a Pokemon on a separate page?
 
@@ -971,3 +971,361 @@ view params model =
 When we go back to our browser, here's what we should see:
 
 <BrowserWindow src="./data-fetching/pokemon-detail.gif" alt="Demo of Pokemon tiles linking to detail pages" />
+
+## Fetching a Pokemon's details
+
+The PokeAPI has URLs for all our Pokemon, including things like their "Pokedex ID", "Name", "Types", and more. If we want to get more details on `bulbasaur`, here's the URL we would make a request to:
+
+```txt
+GET http://localhost:5000/api/v2/pokemon/bulbasaur
+```
+
+That endpoint will have a _huge_ JSON response, but I've highlighted the four fields we will be using in our detail page:
+
+```jsonc {3-4,12,20,27}
+{
+    // ...
+    "name": "bulbasaur",
+    "order": 1,
+    // ...
+    "sprites": {
+        // ...
+        "other": {
+            // ...
+            "official-artwork": {
+                // ...
+                "front_default": ".../bulbasaur.png"
+            }
+        }
+    },
+    "types": [
+        {
+            "slot": 1,
+            "type": {
+                "name": "grass",
+                "url": "http://localhost:5000/api/v2/type/12/"
+            }
+        },
+        {
+            "slot": 1,
+            "type": {
+                "name": "poison",
+                "url": "http://localhost:5000/api/v2/type/4/"
+            }
+        }
+    ]
+}
+```
+
+### Decoding the JSON
+
+For this detail page, we're asking for four fields for each Pokemon. We define a `type alias` to keep track of the order of those fields and what values we expect for each one:
+
+```elm
+type alias Pokemon =
+    { name : String
+    , pokedexId : Int
+    , spriteUrl : String
+    , types : List String
+    }
+```
+
+To follow the JSON structure shown above, this is the `decoder` function we'll write:
+
+```elm
+decoder : Json.Decode.Decoder Pokemon
+decoder =
+    Json.Decode.map4 Pokemon
+        nameFieldDecoder
+        pokedexIdFieldDecoder
+        spriteUrlFieldDecoder
+        typesFieldDecoder
+```
+
+Because our new `Pokemon` record has four fields, our decoder will use `Json.Decode.map4`. The `map4` function needs to be provided four decoders of it's own, one for each field. Once we write a decoder for each field, we can pass them along to the `Pokemon` constructor.
+
+
+### Decoding the `name` field
+
+```elm
+nameFieldDecoder : Json.Decode.Decoder String
+nameFieldDecoder =
+    Json.Decode.field "name" Json.Decode.string
+```
+
+Just like with our `PokemonList` decoder, we'll start with by getting our Pokemon's `name` field. This decoder looks for an object field at `"name"` and is expecting a `String` value there.
+
+### Decoding the `pokedexId` field
+
+```elm
+pokedexIdFieldDecoder : Json.Decode.Decoder Int
+pokedexIdFieldDecoder =
+    Json.Decode.field "order" Json.Decode.int
+```
+
+Just like our "name" decoder, the "pokedexId" decoder will use `Json.Decode.field` to look for an object field by its name. This time, we'll look for a field named `"order"` and expect an `Int` value there.
+
+### Decoding the `spriteUrl` field
+
+```elm
+spriteUrlFieldDecoder : Json.Decode.Decoder String
+spriteUrlFieldDecoder =
+    Json.Decode.at
+        [ "sprites", "other", "official-artwork", "front_default" ]
+        Json.Decode.string
+```
+
+Getting our `spriteUrl` introduces a new challenge: Accessing nested JSON fields! Instead of nesting four `Json.Decode.field` calls like this:
+
+```elm
+-- The hard way!
+(Json.Decode.field "sprites"
+    (Json.Decode.field "other"
+        (Json.Decode.field "official-artwork"
+            (Json.Decode.field "front_default" Json.Decode.string)
+        )
+    )
+)
+```
+
+We can use the built-in [`Json.Decode.at`](https://package.elm-lang.org/packages/elm/json/latest/Json-Decode#at) function which does this with a `List String` instead. Our decoder will drill down deep into the JSON value, and look for a `String` there.
+
+### Decoding the `types` field
+
+```elm
+typesFieldDecoder : Json.Decode.Decoder (List String)
+typesFieldDecoder =
+    Json.Decode.field "types" (Json.Decode.list pokemonTypeDecoder)
+```
+
+To get a `List` of values instead of just a single `String` or `Int` value– we'll need to use [`Json.Decode.list`](https://package.elm-lang.org/packages/elm/json/latest/Json-Decode#list).
+
+The `Json.Decode.list` function takes _another_ decoder as it's input. That inner decoder will describe how to get JSON for each element in the list.
+
+Because the `types` field is a `List String`, we'll need to make a `String` decoder for each element that looks something like this:
+
+```elm
+pokemonTypeDecoder : Json.Decode.Decoder String
+pokemonTypeDecoder =
+    Json.Decode.at [ "type", "name" ] Json.Decode.string
+```
+
+### Putting it all together
+
+Now that we took care of the hard part (decoding the JSON), we can create a new `./src/Api/PokemonDetail.elm` file, so our detail page can use it!
+
+
+```elm
+module Api.PokemonDetail exposing (Pokemon, get)
+
+import Http
+import Json.Decode
+
+
+type alias Pokemon =
+    { name : String
+    , pokedexId : Int
+    , spriteUrl : String
+    , types : List String
+    }
+
+
+get :
+    { name : String
+    , onResponse : Result Http.Error Pokemon -> msg 
+    }
+    -> Cmd msg
+get options =
+    Http.get
+        { url = "http://localhost:5000/api/v2/pokemon/" ++ options.name
+        , expect = Http.expectJson options.onResponse decoder
+        }
+
+
+
+-- JSON DECODERS
+
+
+decoder : Json.Decode.Decoder Pokemon
+decoder =
+    Json.Decode.map4 Pokemon
+        nameFieldDecoder
+        pokedexIdFieldDecoder
+        spriteUrlFieldDecoder
+        typesFieldDecoder
+
+
+nameFieldDecoder : Json.Decode.Decoder String
+nameFieldDecoder =
+    Json.Decode.field "name" Json.Decode.string
+
+
+pokedexIdFieldDecoder : Json.Decode.Decoder Int
+pokedexIdFieldDecoder =
+    Json.Decode.field "order" Json.Decode.int
+
+
+spriteUrlFieldDecoder : Json.Decode.Decoder String
+spriteUrlFieldDecoder =
+    Json.Decode.at
+        [ "sprites", "other", "official-artwork", "front_default" ]
+        Json.Decode.string
+
+
+typesFieldDecoder : Json.Decode.Decoder (List String)
+typesFieldDecoder =
+    Json.Decode.field "types" (Json.Decode.list pokemonTypeDecoder)
+
+
+pokemonTypeDecoder : Json.Decode.Decoder String
+pokemonTypeDecoder =
+    Json.Decode.at [ "type", "name" ] Json.Decode.string
+```
+
+## Seeing the final detail page
+
+Let's update a few lines in `./src/Pokemon/Name_.elm` and fetch detailed data for each Pokemon:
+
+```elm {3-4,6-7,16,27-29,32-39,47,52-61,88-98,103-131}
+module Pages.Pokemon.Name_ exposing (Model, Msg, page)
+
+import Api
+import Api.PokemonDetail exposing (Pokemon)
+import Html exposing (Html)
+import Html.Attributes exposing (alt, class, src, style)
+import Http
+import Page exposing (Page)
+import Route.Path
+import View exposing (View)
+
+
+page : { name : String } -> Page Model Msg
+page params =
+    Page.element
+        { init = init params
+        , update = update
+        , subscriptions = subscriptions
+        , view = view params
+        }
+
+
+
+-- INIT
+
+
+type alias Model =
+    { pokemonData : Api.Data Pokemon
+    }
+
+
+init : { name : String } -> ( Model, Cmd Msg )
+init params =
+    ( { pokemonData = Api.Loading }
+    , Api.PokemonDetail.get
+        { name = params.name
+        , onResponse = PokeApiResponded
+        }
+    )
+
+
+
+-- UPDATE
+
+
+type Msg
+    = PokeApiResponded (Result Http.Error Pokemon)
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        PokeApiResponded (Ok pokemon) ->
+            ( { model | pokemonData = Api.Success pokemon }
+            , Cmd.none
+            )
+
+        PokeApiResponded (Err httpError) ->
+            ( { model | pokemonData = Api.Failure httpError }
+            , Cmd.none
+            )
+
+
+
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.none
+
+
+
+-- VIEW
+
+
+view : { name : String } -> Model -> View Msg
+view params model =
+    { title = params.name ++ " | Pokemon"
+    , body =
+        [ Html.div [ class "hero is-danger py-6 has-text-centered" ]
+            [ Html.h1 [ class "title is-1" ] [ Html.text params.name ]
+            , Html.h2 [ class "subtitle is-6 is-underlined" ]
+                [ Html.a [ Route.Path.href Route.Path.Home_ ]
+                    [ Html.text "Back to pokemon" ]
+                ]
+            ]
+        , case model.pokemonData of
+            Api.Loading ->
+                Html.div [ class "has-text-centered p-6" ]
+                    [ Html.text "Loading..." ]
+
+            Api.Success pokemon ->
+                viewPokemon pokemon
+
+            Api.Failure httpError ->
+                Html.div [ class "has-text-centered p-6" ]
+                    [ Html.text (Api.toUserFriendlyMessage httpError) ]
+        ]
+    }
+
+
+viewPokemon : Pokemon -> Html msg
+viewPokemon pokemon =
+    Html.div [ class "container p-6 has-text-centered" ]
+        [ viewPokemonImage pokemon
+        , Html.p [] [ Html.text ("Pokedex No. " ++ String.fromInt pokemon.pokedexId) ]
+        , viewPokemonTypes pokemon.types
+        ]
+
+
+viewPokemonImage : Pokemon -> Html msg
+viewPokemonImage pokemon =
+    Html.figure
+        [ class "image my-5 mx-auto"
+        , style "width" "256px"
+        , style "height" "256px"
+        ]
+        [ Html.img [ src pokemon.spriteUrl, alt pokemon.name ] []
+        ]
+
+
+viewPokemonTypes : List String -> Html msg
+viewPokemonTypes pokemonTypes =
+    Html.div [ class "tags is-centered py-4" ]
+        (List.map viewPokemonType pokemonTypes)
+
+
+viewPokemonType : String -> Html msg
+viewPokemonType pokemonType =
+    Html.span [ class "tag" ] [ Html.text pokemonType ]
+```
+
+That was the last step, if we check our web browser, here's what we'll see:
+
+<BrowserWindow src="./data-fetching/screenshot.gif" alt="Demo of Pokemon API data" />
+
+### You did it! :tada:
+
+You are now both a Pokemon _and_ JSON decoding master! Getting comfortable with JSON decoding takes times, but now you're ready for the next exciting guide!
+
+See you there!

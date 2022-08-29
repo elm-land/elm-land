@@ -2,8 +2,6 @@ module Pages.Pokemon.Name_ exposing (Model, Msg, page)
 
 import Api
 import Api.PokemonDetail exposing (Pokemon)
-import Components.Hero
-import Domain.PokemonType
 import Html exposing (Html)
 import Html.Attributes exposing (alt, class, src, style)
 import Http
@@ -36,8 +34,7 @@ init params =
     ( { pokemonData = Api.Loading }
     , Api.PokemonDetail.get
         { name = params.name
-        , onSuccess = PokeApiSucceeded
-        , onFailure = PokeApiFailed
+        , onResponse = PokeApiResponded
         }
     )
 
@@ -47,19 +44,18 @@ init params =
 
 
 type Msg
-    = PokeApiSucceeded Pokemon
-    | PokeApiFailed Http.Error
+    = PokeApiResponded (Result Http.Error Pokemon)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        PokeApiSucceeded pokemon ->
+        PokeApiResponded (Ok pokemon) ->
             ( { model | pokemonData = Api.Success pokemon }
             , Cmd.none
             )
 
-        PokeApiFailed httpError ->
+        PokeApiResponded (Err httpError) ->
             ( { model | pokemonData = Api.Failure httpError }
             , Cmd.none
             )
@@ -82,37 +78,54 @@ view : { name : String } -> Model -> View Msg
 view params model =
     { title = params.name ++ " | Pokemon"
     , body =
-        case model.pokemonData of
+        [ Html.div [ class "hero is-danger py-6 has-text-centered" ]
+            [ Html.h1 [ class "title is-1" ] [ Html.text params.name ]
+            , Html.h2 [ class "subtitle is-6 is-underlined" ]
+                [ Html.a [ Route.Path.href Route.Path.Home_ ]
+                    [ Html.text "Back to pokemon" ]
+                ]
+            ]
+        , case model.pokemonData of
             Api.Loading ->
-                [ Components.Hero.view
-                    { title = params.name
-                    , subtitle = "Loading..."
-                    }
-                ]
-
-            Api.Failure _ ->
-                [ Components.Hero.view
-                    { title = params.name
-                    , subtitle = "We couldn't find that one..."
-                    }
-                ]
+                Html.div [ class "has-text-centered p-6" ]
+                    [ Html.text "Loading..." ]
 
             Api.Success pokemon ->
-                [ Components.Hero.view
-                    { title = pokemon.name
-                    , subtitle = "No. " ++ String.fromInt pokemon.number
-                    }
-                , Html.div [ class "container p-6 has-text-centered" ]
-                    [ viewPokemonImage pokemon
-                    , Domain.PokemonType.viewTags pokemon.types
-                    , Html.a [ class "link", Route.Path.href Route.Path.Home_ ] [ Html.text "Back to all Pokemon" ]
-                    ]
-                ]
+                viewPokemon pokemon
+
+            Api.Failure httpError ->
+                Html.div [ class "has-text-centered p-6" ]
+                    [ Html.text (Api.toUserFriendlyMessage httpError) ]
+        ]
     }
+
+
+viewPokemon : Pokemon -> Html msg
+viewPokemon pokemon =
+    Html.div [ class "container p-6 has-text-centered" ]
+        [ viewPokemonImage pokemon
+        , Html.p [] [ Html.text ("Pokedex No. " ++ String.fromInt pokemon.pokedexId) ]
+        , viewPokemonTypes pokemon.types
+        ]
 
 
 viewPokemonImage : Pokemon -> Html msg
 viewPokemonImage pokemon =
-    Html.figure [ class "image my-5 mx-auto", style "width" "256px", style "height" "256px" ]
-        [ Html.img [ src pokemon.imageUrl, alt pokemon.name ] []
+    Html.figure
+        [ class "image my-5 mx-auto"
+        , style "width" "256px"
+        , style "height" "256px"
         ]
+        [ Html.img [ src pokemon.spriteUrl, alt pokemon.name ] []
+        ]
+
+
+viewPokemonTypes : List String -> Html msg
+viewPokemonTypes pokemonTypes =
+    Html.div [ class "tags is-centered py-4" ]
+        (List.map viewPokemonType pokemonTypes)
+
+
+viewPokemonType : String -> Html msg
+viewPokemonType pokemonType =
+    Html.span [ class "tag" ] [ Html.text pokemonType ]

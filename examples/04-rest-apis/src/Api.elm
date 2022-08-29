@@ -1,7 +1,6 @@
-module Api exposing (Data(..), toHelpfulMessage)
+module Api exposing (Data(..), toUserFriendlyMessage)
 
 import Http
-import Json.Decode
 
 
 type Data value
@@ -10,34 +9,29 @@ type Data value
     | Failure Http.Error
 
 
-fromResult : Result Http.Error value -> Data value
-fromResult result =
-    case result of
-        Ok value ->
-            Success value
-
-        Err httpError ->
-            Failure httpError
-
-
-toHelpfulMessage : Http.Error -> String
-toHelpfulMessage httpError =
+toUserFriendlyMessage : Http.Error -> String
+toUserFriendlyMessage httpError =
     case httpError of
         Http.BadUrl _ ->
-            "Something is wrong with the API URL"
+            -- The URL is malformed, probably caused by a typo
+            "This page requested a bad URL"
 
         Http.Timeout ->
-            "API response timed out"
+            -- Happens after
+            "Request took too long to respond"
 
         Http.NetworkError ->
-            "Could not connect to API"
+            -- Happens if the user is offline or the API isn't online
+            "Could not connect to the API"
 
         Http.BadStatus code ->
+            -- Connected to the API, but something went wrong
             if code == 404 then
-                "Not found"
+                "Item not found"
 
             else
-                "Server returned bad status code"
+                "API returned an error code"
 
         Http.BadBody _ ->
-            "Unexpected JSON response from API"
+            -- Our JSON decoder didn't match what the API sent
+            "Unexpected response from API"

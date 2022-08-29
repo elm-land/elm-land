@@ -59,10 +59,10 @@ npx elm-land add page:static /sign-in
 ```
 
 ```txt
-🌈 New page added at /sign-in
-
-You can edit your new page here:
-👉 ./src/Pages/SignIn.elm
+🌈  Elm Land added a new page at /sign-in
+    ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
+    You can edit your new page here:
+    ./src/Pages/SignIn.elm
 ```
 
 The `elm-land add page:static` command created a view-only page that allows us to customize two things:
@@ -102,10 +102,10 @@ npx elm-land add page:static /settings/account
 ```
 
 ```txt
-🌈 New page added at /settings/account
-
-You can edit your new page here:
-👉 ./src/Pages/Settings/Account.elm
+🌈  Elm Land added a new page at /settings/account
+    ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
+    You can edit your new page here:
+    ./src/Pages/Settings/Account.elm
 ```
 
 Here is the code generated at `./src/Pages/Settings/Account.elm`:
@@ -247,10 +247,10 @@ npx elm-land add layout:static Sidebar
 ```
 
 ```txt
-🌈 New layout added!
-
-You can edit your new layout here:
-👉 ./src/Layouts/Sidebar.elm
+🌈  Elm Land added a new layout!
+    ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
+    You can edit your layout here:
+    ./src/Layouts/Sidebar.elm
 ```
 
 The `elm-land add layout` command creates a simple layout that we will be able to reuse across multiple pages. Here's the new file that was created in our `src/Layouts` folder:

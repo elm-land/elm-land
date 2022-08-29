@@ -1,6 +1,5 @@
-module Api.PokemonList exposing (Pokemon, getFirst150)
+module Api.PokemonList exposing (getFirst150)
 
-import Api
 import Http
 import Json.Decode
 
