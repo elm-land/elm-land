@@ -23,7 +23,7 @@ export default {
         items: [
           { text: 'NPM', link: `https://www.npmjs.com/package/elm-land/v/${version}` },
           { text: 'GitHub', link: `https://github.com/elm-land/elm-land/releases/tag/v${version}` },
-          { text: `About this release`, link: `/blog/releases/${version}` }
+          // { text: `About this release`, link: `/blog/releases/${version}` }
         ]
       }
     ],
