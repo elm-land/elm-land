@@ -274,7 +274,7 @@ layout { page } =
 
 Our new layout file allows us to embed a `page` anywhere we'd like. If you're familiar with Vue.js, this is similar to the idea of "slots"– which allow you to embed one component inside another.
 
-In the default example, we are wrapping the page's content in a `div` with the class `"layout"`
+In the default example, we are wrapping the page's content in a `div` with the class `"page"`
 
 ### Adding a sidebar
 
