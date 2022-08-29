@@ -1,7 +1,7 @@
 # Elm Land
 > Reliable web apps for everyone
 
-![](../elm-land-banner.jpg)
+![Elm Land logo](https://github.com/elm-land/elm-land/raw/main/elm-land-banner.jpg)
 
 ### Alpha release
 
@@ -14,17 +14,21 @@ Feedback is welcome anytime in the [Elm slack](https://elmlang.herokuapp.com/). 
 The `elm-land` CLI tool has everything you need to create your next Elm application:
 
 ```
-$ npx elm-land
+$ elm-land
 
-🌈 Welcome to Elm Land! (v0.16.0)
+🌈  Welcome to Elm Land! (v0.16.1)
+    ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
+    Here are the available commands:
 
-Here are the commands:
-✨ elm-land init <folder-name> ...... create a new project
-🚀 elm-land server ................ run a local dev server
-📦 elm-land build .......... build your app for production
-📄 elm-land add page <url> ................ add a new page
-📑 elm-land add layout <name> ........... add a new layout
-🔧 elm-land customize <name> .. customize a default module
+    ✨ elm-land init <folder-name> ...... create a new project
+    🚀 elm-land server ................ run a local dev server
+    📦 elm-land build .......... build your app for production
+    📄 elm-land add page <url> ................ add a new page
+    📑 elm-land add layout <name> ........... add a new layout
+    🔧 elm-land customize <name> .. customize a default module
+
+    Want to learn more? Visit https://elm.land/guide
+
 ```
 
 ## The source code
