@@ -11,8 +11,8 @@ hero:
   actions: 
     - text: Get started
       link: /guide/
-    - text: Latest news
-      link: /blog/
+    - text: Follow for updates
+      link: https://twitter.com/elmland_
       theme: alt
 features:
 - icon: 🪄
