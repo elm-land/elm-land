@@ -6,7 +6,7 @@
 - How to use __layouts__ to reuse UI across pages
 - How to style a page with __CSS__
 
-<BrowserWindow src="./pages/screenshot.gif" alt="Demo of pages and layouts" />
+<BrowserWindow src="/images/guide/pages-and-layouts.gif" alt="Demo of pages and layouts" />
 
 ## How routing works
 
@@ -445,7 +445,7 @@ body {
 
 Now that we've added in some CSS, we should see our full example working. We can use our sidebar to navigate from one page to another.
 
-<BrowserWindow src="./pages/screenshot.gif" alt="Demo of pages and layouts" />
+<BrowserWindow src="/images/guide/pages-and-layouts.gif" alt="Demo of pages and layouts" />
 
 See the full example in the [examples/02-pages-and-layouts](https://github.com/elm-land/elm-land/tree/main/examples/02-pages-and-layouts) folder on GitHub.
 

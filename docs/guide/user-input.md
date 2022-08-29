@@ -6,7 +6,7 @@
 - How to update UI when a __user clicks a button__
 - How to __add more features__ to an existing app
 
-<BrowserWindow src="./state-management/screenshot.gif" alt="Demo of the counter app example" />
+<BrowserWindow src="/images/guide/user-input.gif" alt="Demo of the counter app example" url="http://localhost:1234/counter" />
 
 ## Making HTML interactive
 
@@ -272,7 +272,7 @@ view model =
 
 When we open our web browser at `http://localhost:1234/counter`, we'll see an interactive counter application that looks like this:
 
-<BrowserWindow src="./state-management/screenshot.gif" alt="Demo of the counter app example" url="http://localhost:1234/counter" />
+<BrowserWindow src="/images/guide/user-input.gif" alt="Demo of the counter app example" url="http://localhost:1234/counter" />
 
 See the full example in the [examples/03-user-input](https://github.com/elm-land/elm-land/tree/main/examples/03-user-input) folder on GitHub.
 
