@@ -10,6 +10,15 @@ const fs = require('fs')
 const trimDebugMessage = (code) => code.replace(/(console\.warn\('Compiled in DEBUG mode)/, '// $1')
 const viteProjectPath = (dependency) => `/${relative(process.cwd(), dependency)}`
 
+const pkgRoot = path.join(__dirname, '..', '..')
+const npmElmPath = path.join('.bin', 'elm')
+// When installed with `npm install -g elm-land`, node_modules is in this package
+let pathToElm = path.join(pkgRoot, 'node_modules', npmElmPath)
+// When installed in in a node project with `npm install -D elm-land` node_modules is the parent of this package
+if (!fs.existsSync(pathToElm)) {
+  pathToElm = path.join(pkgRoot, '..', npmElmPath)
+}
+
 const parseImportId = (id) => {
   const parsedId = new URL(id, 'file://')
   const pathname = parsedId.pathname
@@ -103,14 +112,6 @@ const plugin = (opts) => {
 
       const releaseLock = await acquireLock()
       const isBuild = process.env.NODE_ENV === 'production'
-      const pkgRoot = path.join(__dirname, '..', '..')
-      const npmElmPath = path.join('.bin', 'elm')
-      // When installed with `npm install -g elm-land`, node_modules is in this package
-      let pathToElm = path.join(pkgRoot, 'node_modules', npmElmPath)
-      // When installed in in a node project with `npm install -D elm-land` node_modules is the parent of this package
-      if (!fs.existsSync(pathToElm)) {
-        pathToElm = path.join(pkgRoot, '..', npmElmPath)
-      }
       try {
         const compiled = await compiler.compileToString(targets, {
           pathToElm: pathToElm,
