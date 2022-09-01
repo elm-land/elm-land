@@ -5,9 +5,19 @@ const { acquireLock } = require('./mutex')
 const { default: ElmErrorJson } = require('./elm-error-json.js')
 const terser = require('terser')
 const path = require('path')
+const fs = require('fs')
 
 const trimDebugMessage = (code) => code.replace(/(console\.warn\('Compiled in DEBUG mode)/, '// $1')
 const viteProjectPath = (dependency) => `/${relative(process.cwd(), dependency)}`
+
+const pkgRoot = path.join(__dirname, '..', '..')
+const npmElmPath = path.join('.bin', 'elm')
+// When installed with `npm install -g elm-land`, node_modules is in this package
+let pathToElm = path.join(pkgRoot, 'node_modules', npmElmPath)
+// When installed in in a node project with `npm install -D elm-land` node_modules is the parent of this package
+if (!fs.existsSync(pathToElm)) {
+  pathToElm = path.join(pkgRoot, '..', npmElmPath)
+}
 
 const parseImportId = (id) => {
   const parsedId = new URL(id, 'file://')
@@ -104,7 +114,7 @@ const plugin = (opts) => {
       const isBuild = process.env.NODE_ENV === 'production'
       try {
         const compiled = await compiler.compileToString(targets, {
-          pathToElm: path.join(__dirname, '..', '..', 'node_modules', '.bin', 'elm'),
+          pathToElm: pathToElm,
           output: '.js',
           optimize: typeof optimize === 'boolean' ? optimize : !debug && isBuild,
           verbose: false,
