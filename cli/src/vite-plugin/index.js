@@ -79,6 +79,17 @@ const plugin = (opts) => {
           })
         }
       })
+      server.ws.on('elm:missing-error', () => {
+        if (lastErrorSent) {
+          server.ws.send('elm:error', {
+            error: ElmErrorJson.toColoredHtmlOutput(lastErrorSent, {
+              GREEN: 'mediumseagreen',
+              RED: 'indianred',
+              BLUE: 'dodgerblue',
+            })
+          })
+        }
+      })
     },
     async load(id) {
       const { valid, pathname, withParams } = parseImportId(id)

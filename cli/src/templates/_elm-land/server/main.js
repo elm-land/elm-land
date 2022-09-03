@@ -105,7 +105,7 @@ let startApp = ({ Interop }) => {
     setTimeout(() => {
       let overlay = document.querySelector('elm-error-overlay')
       if (!overlay) {
-        window.location.reload()
+        import.meta.hot.send('elm:missing-error')
       }
     }, 300)
   }
