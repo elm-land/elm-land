@@ -364,7 +364,7 @@ const generateHtml = async (config) => {
 let run = async (effects) => {
   // 1. Perform all effects, one at a time
   let results = []
-  let port = process.env.PORT || 1234
+  let port = undefined;
 
   for (let effect of effects) {
     switch (effect.kind) {

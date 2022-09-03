@@ -17,6 +17,8 @@ let run = async () => {
     // TODO: Warn user about invalid config JSON
   }
 
+  let port = process.env.PORT || 1234
+
   return {
     message: ({ port }) => [
       '',
@@ -25,7 +27,7 @@ let run = async () => {
     files: [],
     effects: [
       { kind: 'generateHtml', config },
-      { kind: 'runServer', options: { port: 1234 } }
+      { kind: 'runServer', options: { port: port } }
     ]
   }
 }
