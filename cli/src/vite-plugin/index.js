@@ -68,18 +68,7 @@ const plugin = (opts) => {
     },
     configureServer(server_) {
       server = server_
-      server.ws.on('connection', () => {
-        if (lastErrorSent) {
-          server.ws.send('elm:error', {
-            error: ElmErrorJson.toColoredHtmlOutput(lastErrorSent, {
-              GREEN: 'mediumseagreen',
-              RED: 'indianred',
-              BLUE: 'dodgerblue',
-            })
-          })
-        }
-      })
-      server.ws.on('elm:missing-error', () => {
+      server.ws.on('elm:client-ready', () => {
         if (lastErrorSent) {
           server.ws.send('elm:error', {
             error: ElmErrorJson.toColoredHtmlOutput(lastErrorSent, {
