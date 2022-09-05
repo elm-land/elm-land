@@ -1367,7 +1367,7 @@ toRoutePathToStringBranch file =
                             if String.endsWith "_" piece then
                                 CodeGen.Expression.value
                                     ("params."
-                                        ++ (piece |> String.dropRight 1 |> Extras.String.fromPascalCaseToKebabCase)
+                                        ++ (piece |> String.dropRight 1 |> Extras.String.fromPascalCaseToCamelCase)
                                     )
 
                             else

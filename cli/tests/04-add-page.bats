@@ -161,6 +161,23 @@ load helpers
   rm -r tmp
 }
 
+@test "Pages with camel-case path parameters generate code that compiles" {
+  mkdir -p tests/tmp
+  cd tests/tmp
+  
+  run elm-land init hello-world
+  cd hello-world
+
+  run elm-land add page:sandbox /user/:userId
+  expectToPass
+
+  run elm-land build
+  expectToPass
+
+  cd ../..
+  rm -r tmp
+}
+
 
 @test "cleanup" {
   cleanupTmpFolder
