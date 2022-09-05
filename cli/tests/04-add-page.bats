@@ -168,7 +168,7 @@ load helpers
   run elm-land init hello-world
   cd hello-world
 
-  run elm-land add page:sandbox /user/userId
+  run elm-land add page:sandbox /user/:userId
   expectToPass
 
   run elm-land build
