@@ -100,14 +100,10 @@ let startApp = ({ Interop }) => {
     if (Interop.onReady) {
       Interop.onReady({ app, env })
     }
-  } else if (import.meta.env.DEV) {
-    // Ensure error overlay shows in dev mode
-    setTimeout(() => {
-      let overlay = document.querySelector('elm-error-overlay')
-      if (!overlay) {
-        window.location.reload()
-      }
-    }, 300)
+  }
+
+  if (import.meta.env.DEV) {
+    import.meta.hot.send('elm:client-ready')
   }
 
 }
