@@ -4,10 +4,6 @@
 >     - Before opening a PR, please share the problem you are hoping to solve in the [#elm-land](https://discord.com/channels/534524278847045633/750847823238398003) Discord channel.
 >     Some code changes can be better solved with a quick conversation, a clearer guide, etc.
 > 1. Every PR should follow the "Problem/Solution/Notes" outline below!
-> 1. Please add a `bug`, `feature`, or `chore` label
->     - `bug` – fixes a problem with an existing feature
->     - `feature` - adds a user-facing capability 
->     - `chore` - improves code for Elm Land maintainers
 >
 > ( You can delete this big intro section after reading! )
 
