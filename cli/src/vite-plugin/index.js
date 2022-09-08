@@ -10,14 +10,20 @@ const fs = require('fs')
 const trimDebugMessage = (code) => code.replace(/(console\.warn\('Compiled in DEBUG mode)/, '// $1')
 const viteProjectPath = (dependency) => `/${relative(process.cwd(), dependency)}`
 
-const pkgRoot = path.join(__dirname, '..', '..')
-const npmElmPath = path.join('.bin', 'elm')
-// When installed with `npm install -g elm-land`, node_modules is in this package
-let pathToElm = path.join(pkgRoot, 'node_modules', npmElmPath)
-// When installed in in a node project with `npm install -D elm-land` node_modules is the parent of this package
-if (!fs.existsSync(pathToElm)) {
-  pathToElm = path.join(pkgRoot, '..', npmElmPath)
+// Here's where we'll expect to find the Elm binary installed
+const elmPaths = {
+  // When locally installed with `npm install -D elm-land`
+  // ✅ Tested with npm install -D, yarn, pnpm i
+  local: path.join(__dirname, '..', '..', '..', 'elm', 'bin', 'elm'),
+  // When globally installed with `npm install -g elm-land`
+  // ✅ Tested with npm install -g, yarn, pnpm
+  global: path.join(__dirname, '..', '..', 'node_modules', '.bin', 'elm'),
 }
+
+const pathToElm =
+  fs.existsSync(elmPaths.global)
+    ? elmPaths.global
+    : elmPaths.local
 
 const parseImportId = (id) => {
   const parsedId = new URL(id, 'file://')
@@ -116,7 +122,7 @@ const plugin = (opts) => {
       const isBuild = process.env.NODE_ENV === 'production'
       try {
         const compiled = await compiler.compileToString(targets, {
-          pathToElm: pathToElm,
+          pathToElm,
           output: '.js',
           optimize: typeof optimize === 'boolean' ? optimize : !debug && isBuild,
           verbose: false,

@@ -5,7 +5,7 @@ function expectToPass {
 }
 
 function expectToFail {
-  [ "$status" -eq 1 ]
+  [ "$status" -ne 0 ]
 }
 
 function expectFileExists {
