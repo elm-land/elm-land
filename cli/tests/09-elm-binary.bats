@@ -80,7 +80,7 @@ load helpers
   cd ../examples/01-local-hello
   echo '{ "dependencies": { "elm-land": "file:../../cli/elm-land-0.16.3.tgz" } }' > package.json
   npm install -g pnpm
-  pnpm
+  pnpm install
 
   run npx elm-land build
   expectToPass
