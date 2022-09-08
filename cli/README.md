@@ -7,7 +7,7 @@
 
 Although this framework is still a work-in-progress, please feel free to tinker around until `v1.0.0` is released!
 
-Feedback is welcome anytime in the [Elm slack](https://elmlang.herokuapp.com/). Drop a comment in the `#elm-spa-users` channel and tag `@ryan` if you like!
+Feedback is welcome anytime in the [Incremental Elm Discord](https://discord.com/invite/Fwmn84xD?utm_source=Discord%20Widget&utm_medium=Connect). Come say hi in the `#elm-land` channel!
 
 ## Using the CLI
 
@@ -16,7 +16,7 @@ The `elm-land` CLI tool has everything you need to create your next Elm applicat
 ```
 $ elm-land
 
-🌈  Welcome to Elm Land! (v0.16.1)
+🌈  Welcome to Elm Land! (v0.16.3)
     ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
     Here are the available commands:
 
