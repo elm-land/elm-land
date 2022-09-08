@@ -22,6 +22,19 @@ load helpers
   cd ../../cli
 }
 
+@test "'elm-land build' should pass even if elm is globally installed with npm" {
+  npm link
+  npm install -g elm
+
+  cd ../examples/01-hello-world
+  run elm-land build
+  expectToPass
+
+  # Cleanup
+  rm -r .elm-land elm-stuff dist
+  cd ../../cli
+}
+
 @test "'elm-land build' should pass if elm-land is locally installed with npm" {
   npm rm -g elm-land
   npm pack
