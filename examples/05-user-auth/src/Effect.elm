@@ -74,7 +74,7 @@ pushUrlPath str =
 
 pushRoute :
     { path : Route.Path.Path
-    , query : List ( String, Maybe String )
+    , query : Dict String String
     , hash : Maybe String
     }
     -> Effect msg
@@ -84,7 +84,7 @@ pushRoute route =
 
 replaceRoute :
     { path : Route.Path.Path
-    , query : List ( String, Maybe String )
+    , query : Dict String String
     , hash : Maybe String
     }
     -> Effect msg

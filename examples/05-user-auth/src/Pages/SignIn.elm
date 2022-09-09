@@ -249,7 +249,7 @@ viewPage route model =
         [ Html.div [ Attr.class "p-4 pb-6" ]
             [ Html.h1 [ Attr.class "title" ] [ Html.text "Sign in" ]
             , case Dict.get "from" route.query of
-                Just (Just originalUrl) ->
+                Just originalUrl ->
                     Html.h2 [ Attr.class "subtitle is-size-6" ]
                         [ Html.text ("Redirected from " ++ originalUrl) ]
 

@@ -259,34 +259,43 @@ mainElmModule data =
                             , { name = "UrlChanged"
                               , arguments = [ CodeGen.Argument.new "url" ]
                               , expression =
-                                    CodeGen.Expression.letIn
-                                        { let_ =
-                                            [ { argument = CodeGen.Argument.new "( pageModel, pageCmd )"
-                                              , annotation = Nothing
-                                              , expression =
-                                                    CodeGen.Expression.function
-                                                        { name = "initPage"
-                                                        , arguments =
-                                                            [ CodeGen.Expression.record
-                                                                [ ( "key", CodeGen.Expression.value "model.key" )
-                                                                , ( "shared", CodeGen.Expression.value "model.shared" )
-                                                                , ( "url", CodeGen.Expression.value "url" )
-                                                                ]
-                                                            ]
-                                                        }
-                                              }
-                                            ]
-                                        , in_ =
+                                    CodeGen.Expression.ifElse
+                                        { condition = CodeGen.Expression.value "url.path == model.url.path"
+                                        , ifBranch =
                                             CodeGen.Expression.multilineTuple
-                                                [ CodeGen.Expression.recordUpdate
-                                                    { value = "model"
-                                                    , fields =
-                                                        [ ( "url", CodeGen.Expression.value "url" )
-                                                        , ( "page", CodeGen.Expression.value "pageModel" )
-                                                        ]
-                                                    }
-                                                , CodeGen.Expression.value "pageCmd"
+                                                [ CodeGen.Expression.value "{ model | url = url }"
+                                                , CodeGen.Expression.value "Cmd.none"
                                                 ]
+                                        , elseBranch =
+                                            CodeGen.Expression.letIn
+                                                { let_ =
+                                                    [ { argument = CodeGen.Argument.new "( pageModel, pageCmd )"
+                                                      , annotation = Nothing
+                                                      , expression =
+                                                            CodeGen.Expression.function
+                                                                { name = "initPage"
+                                                                , arguments =
+                                                                    [ CodeGen.Expression.record
+                                                                        [ ( "key", CodeGen.Expression.value "model.key" )
+                                                                        , ( "shared", CodeGen.Expression.value "model.shared" )
+                                                                        , ( "url", CodeGen.Expression.value "url" )
+                                                                        ]
+                                                                    ]
+                                                                }
+                                                      }
+                                                    ]
+                                                , in_ =
+                                                    CodeGen.Expression.multilineTuple
+                                                        [ CodeGen.Expression.recordUpdate
+                                                            { value = "model"
+                                                            , fields =
+                                                                [ ( "url", CodeGen.Expression.value "url" )
+                                                                , ( "page", CodeGen.Expression.value "pageModel" )
+                                                                ]
+                                                            }
+                                                        , CodeGen.Expression.value "pageCmd"
+                                                        ]
+                                                }
                                         }
                               }
                             , { name = "PageSent"

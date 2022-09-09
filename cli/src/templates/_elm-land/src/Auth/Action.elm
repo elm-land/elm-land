@@ -14,6 +14,7 @@ module Auth.Action exposing
 -}
 
 import Browser.Navigation
+import Dict exposing (Dict)
 import Route.Path
 import Shared
 import Url exposing (Url)
@@ -24,12 +25,12 @@ type Action user
     = LoadPageWithUser user
     | ReplaceRoute
         { path : Route.Path.Path
-        , query : List ( String, Maybe String )
+        , query : Dict String String
         , hash : Maybe String
         }
     | PushRoute
         { path : Route.Path.Path
-        , query : List ( String, Maybe String )
+        , query : Dict String String
         , hash : Maybe String
         }
     | ShowLoadingPage (View Never)
@@ -42,7 +43,7 @@ loadPageWithUser =
 
 replaceRoute :
     { path : Route.Path.Path
-    , query : List ( String, Maybe String )
+    , query : Dict String String
     , hash : Maybe String
     }
     -> Action user
@@ -52,7 +53,7 @@ replaceRoute =
 
 pushRoute :
     { path : Route.Path.Path
-    , query : List ( String, Maybe String )
+    , query : Dict String String
     , hash : Maybe String
     }
     -> Action user

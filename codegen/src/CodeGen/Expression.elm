@@ -2,7 +2,7 @@ module CodeGen.Expression exposing
     ( Expression
     , function, multilineFunction
     , value
-    , letIn
+    , letIn, ifElse
     , record, multilineRecord
     , recordUpdate
     , lambda
@@ -20,7 +20,7 @@ module CodeGen.Expression exposing
 @docs Expression
 @docs function, multilineFunction
 @docs value
-@docs letIn
+@docs letIn, ifElse
 @docs record, multilineRecord
 @docs recordUpdate
 @docs lambda
@@ -54,6 +54,11 @@ type Expression
     | LetInExpression
         { let_ : List LetDeclaration
         , in_ : Expression
+        }
+    | IfElseExpression
+        { condition : Expression
+        , ifBranch : Expression
+        , elseBranch : Expression
         }
     | RecordExpression (List ( String, Expression ))
     | MultilineRecordExpression (List ( String, Expression ))
@@ -186,9 +191,9 @@ type alias LetDeclaration =
         ]
         , in = CodeGen.Expression.parens
             [ CodeGen.Expression.string "Hello, "
-            , CodeGen.Expreession.operator "++"
+            , CodeGen.Expression.operator "++"
             , CodeGen.Expression.value "name"
-            , CodeGen.Expreession.operator "++"
+            , CodeGen.Expression.operator "++"
             , CodeGen.Expression.string "!"
             ]
         }
@@ -206,6 +211,32 @@ letIn :
     -> Expression
 letIn options =
     LetInExpression options
+
+
+{-| Create a if-else conditional expression
+
+    {-
+        if List.member person friends then
+            "Hello, friend!"
+
+        else
+            "Hello, stranger!"
+    -}
+    CodeGen.Expression.ifElse
+        { condition = CodeGen.Expression.value "List.member person friends"
+        , ifBranch = CodeGen.Expression.string "Hello, friend!"
+        , elseBranch = CodeGen.Expression.string "Hello, stranger!"
+        }
+
+-}
+ifElse :
+    { condition : Expression
+    , ifBranch : Expression
+    , elseBranch : Expression
+    }
+    -> Expression
+ifElse options =
+    IfElseExpression options
 
 
 {-| Create a record value with a list of fields
@@ -581,6 +612,20 @@ toString expression =
                                 |> Util.String.indent 4
                             )
                         |> String.replace "{{finalExpression}}" (toString options.in_)
+
+        IfElseExpression options ->
+            "if {{condition}} then\n{{ifBranch}}\n\nelse\n{{elseBranch}}"
+                |> String.replace "{{condition}}" (toString options.condition)
+                |> String.replace "{{ifBranch}}"
+                    (options.ifBranch
+                        |> toString
+                        |> Util.String.indent 4
+                    )
+                |> String.replace "{{elseBranch}}"
+                    (options.elseBranch
+                        |> toString
+                        |> Util.String.indent 4
+                    )
 
         RecordExpression fields ->
             Util.String.toRecord

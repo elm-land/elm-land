@@ -112,13 +112,13 @@ update route msg model =
         SignInPageSignedInUser (Ok user) ->
             ( { model | signInStatus = SignedInWithUser user }
             , case Dict.get "from" route.query of
-                Just (Just redirectUrlPath) ->
+                Just redirectUrlPath ->
                     Effect.pushUrlPath redirectUrlPath
 
-                _ ->
+                Nothing ->
                     Effect.pushRoute
                         { path = Route.Path.Home_
-                        , query = []
+                        , query = Dict.empty
                         , hash = Nothing
                         }
             )
