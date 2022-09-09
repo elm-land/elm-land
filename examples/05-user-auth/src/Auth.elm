@@ -2,6 +2,7 @@ module Auth exposing (User, onPageLoad)
 
 import Api.User
 import Auth.Action
+import Dict
 import Html
 import Html.Attributes as Attr
 import Route exposing (Route)
@@ -20,7 +21,7 @@ onPageLoad shared route =
         Shared.NotSignedIn ->
             Auth.Action.pushRoute
                 { path = Route.Path.SignIn
-                , query = [ ( "from", Just route.url.path ) ]
+                , query = Dict.fromList [ ( "from", route.url.path ) ]
                 , hash = Nothing
                 }
 
@@ -44,6 +45,6 @@ onPageLoad shared route =
         Shared.FailedToSignIn user ->
             Auth.Action.pushRoute
                 { path = Route.Path.SignIn
-                , query = [ ( "from", Just route.url.path ) ]
+                , query = Dict.fromList [ ( "from", route.url.path ) ]
                 , hash = Nothing
                 }
