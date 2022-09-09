@@ -5,7 +5,7 @@ import Effect exposing (Effect)
 import Fruit.Color
 import Fruit.Column
 import Html exposing (..)
-import Html.Attributes exposing (alt, attribute, class, classList, disabled, placeholder, selected, src, style, value)
+import Html.Attributes exposing (alt, attribute, class, classList, disabled, placeholder, selected, src, style, type_, value)
 import Html.Events
 import Page exposing (Page)
 import Route exposing (Route)
@@ -207,77 +207,78 @@ viewFilters route model =
     in
     div [ class "level" ]
         [ div [ class "level-left" ]
-            [ div [ class "is-flex" ]
-                [ viewSearchbar model
-                , viewFilter
-                    { label = "Filter by color"
-                    , placeholder = "Select a color..."
-                    , toLabel = Fruit.Color.toString
-                    , choices = Fruit.Color.list
-                    , selected = toMaybeColor route
-                    , onItemSelect = UserSelectedColor
-                    }
+            [ div [ class "level-item" ]
+                [ div [ class "is-flex" ]
+                    [ viewSearchbar model
+                    , viewColorFilter route
+                    ]
                 ]
             ]
         , div [ class "level-right" ]
-            [ button
-                [ class "button is-link is-small"
-                , disabled hasNoActiveFilters
-                , Html.Events.onClick UserClickedClearFilters
+            [ div [ class "level-item" ]
+                [ button
+                    [ class "button is-light is-small"
+                    , disabled hasNoActiveFilters
+                    , Html.Events.onClick UserClickedClearFilters
+                    ]
+                    [ span [] [ text "Clear filters" ]
+                    , span [ class "icon is-small" ] [ i [ class "fas fa-times" ] [] ]
+                    ]
                 ]
-                [ text "Clear filters" ]
             ]
         ]
 
 
+viewSearchbar : Model -> Html Msg
 viewSearchbar model =
     form [ class "mr-4", Html.Events.onSubmit UserSubmittedSearch ]
         [ label [ class "field" ]
             [ span [ class "label" ] [ text "Search by name" ]
             , div [ class "control" ]
-                [ input [ class "input", Html.Events.onInput UserChangedSearchInput, value model.searchInput ] []
+                [ input
+                    [ class "input"
+                    , type_ "search"
+                    , Html.Events.onInput UserChangedSearchInput
+                    , value model.searchInput
+                    ]
+                    []
                 ]
             ]
         ]
 
 
-viewFilter :
-    { label : String
-    , placeholder : String
-    , choices : List choice
-    , toLabel : choice -> String
-    , selected : Maybe choice
-    , onItemSelect : Maybe choice -> Msg
-    }
-    -> Html Msg
-viewFilter options =
+viewColorFilter : Route () -> Html Msg
+viewColorFilter route =
     let
-        viewSelectOption : choice -> Html Msg
+        selectedColor : Maybe Fruit.Color.Color
+        selectedColor =
+            toMaybeColor route
+
+        viewSelectOption : Fruit.Color.Color -> Html Msg
         viewSelectOption choice =
             option
-                [ selected (Just choice == options.selected) ]
-                [ text (options.toLabel choice)
+                [ selected (Just choice == selectedColor) ]
+                [ text (Fruit.Color.toString choice)
                 ]
 
-        fromStringToChoice : String -> Maybe choice
+        fromStringToChoice : String -> Maybe Fruit.Color.Color
         fromStringToChoice selectedLabel =
-            options.choices
-                |> List.filter (\choice -> options.toLabel choice == selectedLabel)
+            Fruit.Color.list
+                |> List.filter (\color -> Fruit.Color.toString color == selectedLabel)
                 |> List.head
 
         onInput : String -> Msg
         onInput selectedLabel =
-            options.onItemSelect (fromStringToChoice selectedLabel)
+            UserSelectedColor (fromStringToChoice selectedLabel)
     in
     label [ class "field" ]
-        [ span [ class "label" ] [ text options.label ]
+        [ span [ class "label" ] [ text "Filter by color" ]
         , div [ class "control" ]
             [ div [ class "select" ]
                 [ select [ Html.Events.onInput onInput ]
-                    ([ option []
-                        [ text options.placeholder ]
+                    ([ option [] [ text "Select a color..." ]
                      ]
-                        ++ List.map viewSelectOption options.choices
+                        ++ List.map viewSelectOption Fruit.Color.list
                     )
                 ]
             ]
@@ -302,6 +303,8 @@ allFruits =
     , { id = 6, emoji = "🍋", name = "Lemon", color = Fruit.Color.Yellow }
     , { id = 7, emoji = "🍐", name = "Pear", color = Fruit.Color.Green }
     , { id = 8, emoji = "🍓", name = "Strawberry", color = Fruit.Color.Red }
+    , { id = 9, emoji = "🍇", name = "Grapes", color = Fruit.Color.Purple }
+    , { id = 10, emoji = "🥑", name = "Avocado", color = Fruit.Color.Green }
     ]
 
 
@@ -386,7 +389,7 @@ viewTable route =
     case fruits of
         [] ->
             div [ class "py-4" ]
-                [ p [] [ text "No results found." ]
+                [ p [] [ text "Couldn't find any fruit matching those filters." ]
                 ]
 
         _ ->

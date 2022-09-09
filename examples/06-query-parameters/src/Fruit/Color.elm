@@ -9,6 +9,7 @@ type Color
     | Yellow
     | Green
     | Blue
+    | Purple
 
 
 list : List Color
@@ -17,6 +18,7 @@ list =
     , Yellow
     , Green
     , Blue
+    , Purple
     ]
 
 
@@ -29,6 +31,7 @@ viewBadge color =
             , ( "is-success", color == Green )
             , ( "is-info", color == Blue )
             , ( "is-warning", color == Yellow )
+            , ( "is-link", color == Purple )
             ]
         ]
         [ text (toString color) ]
@@ -49,6 +52,9 @@ toString color =
         Blue ->
             "Blue"
 
+        Purple ->
+            "Purple"
+
 
 fromString : String -> Maybe Color
 fromString string =
@@ -64,6 +70,9 @@ fromString string =
 
         "Blue" ->
             Just Blue
+
+        "Purple" ->
+            Just Purple
 
         _ ->
             Nothing
