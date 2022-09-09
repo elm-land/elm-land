@@ -179,10 +179,6 @@ subscriptions model =
 
 view : Route () -> Model -> View Msg
 view route model =
-    let
-        _ =
-            Debug.log "query" route.query
-    in
     { title = "Fruit vibes"
     , body =
         [ div [ class "container p-6" ]
