@@ -44,3 +44,11 @@ Learn how to build a sign-in page, store JWTs, and have pages automatically redi
 [Example code](./05-user-auth/) • (Guide in progress!)
 
 [![An animated GIF of the user authentication example](./05-user-auth/screenshot.gif)](./05-user-auth/)
+
+## 6. Query parameters
+
+Learn how to work with URL parameters to build an interactive table with filtering and sorting.
+
+[Example code](./06-query-parameters/) • (Guide coming soon!)
+
+[![An animated GIF of the Fruit Vibes app](./06-query-parameters/screenshot.gif)](./06-query-parameters/)

@@ -54,3 +54,14 @@ load helpers
   rm -r .elm-land elm-stuff dist
   cd ../../cli
 }
+
+@test "'elm-land build' works with the '06-query-parameters' example" {
+  cd ../examples/06-query-parameters
+  run elm-land build
+  expectToPass
+
+  expectOutputContains "successfully built"
+
+  rm -r .elm-land elm-stuff dist
+  cd ../../cli
+}
