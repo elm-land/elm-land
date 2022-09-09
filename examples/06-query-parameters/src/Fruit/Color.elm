@@ -1,4 +1,4 @@
-module Fruit.Color exposing (Color(..), compare, list, toString, viewBadge)
+module Fruit.Color exposing (Color(..), compare, fromString, list, toString, viewBadge)
 
 import Html exposing (..)
 import Html.Attributes exposing (class, classList)
@@ -48,6 +48,25 @@ toString color =
 
         Blue ->
             "Blue"
+
+
+fromString : String -> Maybe Color
+fromString string =
+    case string of
+        "Red" ->
+            Just Red
+
+        "Yellow" ->
+            Just Yellow
+
+        "Green" ->
+            Just Green
+
+        "Blue" ->
+            Just Blue
+
+        _ ->
+            Nothing
 
 
 compare : Color -> Color -> Basics.Order

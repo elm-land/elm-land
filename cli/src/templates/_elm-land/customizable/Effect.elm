@@ -50,7 +50,7 @@ fromCmd =
 
 pushRoute :
     { path : Route.Path.Path
-    , query : List ( String, Maybe String )
+    , query : Dict String String
     , hash : Maybe String
     }
     -> Effect msg
@@ -60,7 +60,7 @@ pushRoute route =
 
 replaceRoute :
     { path : Route.Path.Path
-    , query : List ( String, Maybe String )
+    , query : Dict String String
     , hash : Maybe String
     }
     -> Effect msg
@@ -99,7 +99,8 @@ map fn effect =
             LoadExternalUrl url
 
 
-{-| ( Used by Elm Land internally ) -}
+{-| ( Used by Elm Land internally )
+-}
 toCmd :
     { key : Browser.Navigation.Key
     , fromSharedMsg : sharedMsg -> mainMsg

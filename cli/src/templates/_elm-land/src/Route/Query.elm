@@ -1,11 +1,11 @@
-module Route.Query exposing (fromUrl, toStringFromList)
+module Route.Query exposing (fromUrl, toString)
 
 import Dict exposing (Dict)
 import Url exposing (Url)
 import Url.Parser exposing (query)
 
 
-fromUrl : Url -> Dict String (Maybe String)
+fromUrl : Url -> Dict String String
 fromUrl url =
     case url.query of
         Nothing ->
@@ -31,33 +31,33 @@ fromUrl url =
                                             Nothing
 
                                         key :: [] ->
-                                            Just ( decode key, Nothing )
+                                            Just ( decode key, "" )
 
                                         key :: value :: _ ->
-                                            Just ( decode key, Just (decode value) )
+                                            Just ( decode key, decode value )
                                )
                         )
                     |> Dict.fromList
 
 
-toStringFromList : List ( String, Maybe String ) -> Maybe String
-toStringFromList queryParameterList =
-    if List.isEmpty queryParameterList then
+toString : Dict String String -> Maybe String
+toString queryParameterList =
+    if Dict.isEmpty queryParameterList then
         Nothing
 
     else
         queryParameterList
+            |> Dict.toList
             |> List.map
-                (\( key, maybeValue ) ->
-                    case maybeValue of
-                        Nothing ->
-                            Url.percentEncode key
+                (\( key, value ) ->
+                    if String.isEmpty value then
+                        Url.percentEncode key
 
-                        Just value ->
-                            String.join "="
-                                [ Url.percentEncode key
-                                , Url.percentEncode value
-                                ]
+                    else
+                        String.join "="
+                            [ Url.percentEncode key
+                            , Url.percentEncode value
+                            ]
                 )
             |> String.join "&"
             |> String.append "?"

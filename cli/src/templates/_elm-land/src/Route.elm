@@ -22,7 +22,7 @@ import Url.Parser exposing ((</>), query)
 type alias Route params =
     { path : Route.Path.Path
     , params : params
-    , query : Dict String (Maybe String)
+    , query : Dict String String
     , hash : Maybe String
     , url : Url
     }
@@ -40,7 +40,7 @@ fromUrl params url =
 
 href :
     { path : Route.Path.Path
-    , query : List ( String, Maybe String )
+    , query : Dict String String
     , hash : Maybe String
     }
     -> Html.Attribute msg
@@ -51,13 +51,13 @@ href route =
 toString :
     { route
         | path : Route.Path.Path
-        , query : List ( String, Maybe String )
+        , query : Dict String String
         , hash : Maybe String
     }
     -> String
 toString route =
     String.join ""
         [ Route.Path.toString route.path
-        , Route.Query.toStringFromList route.query |> Maybe.withDefault ""
+        , route.query |> Route.Query.toString |> Maybe.withDefault ""
         , route.hash |> Maybe.map (String.append "#") |> Maybe.withDefault ""
         ]
