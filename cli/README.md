@@ -16,7 +16,7 @@ The `elm-land` CLI tool has everything you need to create your next Elm applicat
 ```
 $ elm-land
 
-🌈  Welcome to Elm Land! (v0.16.3)
+🌈  Welcome to Elm Land! (v0.17.0)
     ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
     Here are the available commands:
 
