@@ -1,4 +1,4 @@
-import { version } from '../../cli/package.json'
+const version = '0.17.0'
 
 export default {
   title: 'Elm Land',
