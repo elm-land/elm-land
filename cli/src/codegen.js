@@ -1,3 +1,6 @@
+const path = require('path')
+const { Files } = require('./files')
+
 let generateElmLandFiles = async ({ pages, layouts }) => {
   let { Elm } = require('../dist/worker.js')
 
@@ -17,11 +20,18 @@ let generateElmLandFiles = async ({ pages, layouts }) => {
 let addNewPage = async ({ kind, url, filepath }) => {
   let { Elm } = require('../dist/worker.js')
 
+  let hasViewBeenCustomized = await Files.exists(path.join(process.cwd(), 'src', 'View.elm'))
+
   let newFiles = await new Promise((resolve, reject) => {
     let app = Elm.Worker.init({
       flags: {
         tag: 'add-page',
-        data: { kind, filepath, url }
+        data: {
+          hasViewBeenCustomized,
+          kind,
+          filepath,
+          url
+        }
       }
     })
     app.ports.onComplete.subscribe(resolve)

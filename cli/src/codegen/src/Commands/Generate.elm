@@ -81,7 +81,7 @@ mainElmModule data =
                             [ CodeGen.Expression.multilineRecord
                                 [ ( "init", CodeGen.Expression.value "init" )
                                 , ( "update", CodeGen.Expression.value "update" )
-                                , ( "view", CodeGen.Expression.value "view" )
+                                , ( "view", CodeGen.Expression.value "View.toBrowserDocument << view" )
                                 , ( "subscriptions", CodeGen.Expression.value "subscriptions" )
                                 , ( "onUrlChange", CodeGen.Expression.value "UrlChanged" )
                                 , ( "onUrlRequest", CodeGen.Expression.value "UrlRequested" )
@@ -439,7 +439,7 @@ mainElmModule data =
                 , annotation =
                     CodeGen.Annotation.function
                         [ CodeGen.Annotation.type_ "Model"
-                        , CodeGen.Annotation.type_ "Browser.Document Msg"
+                        , CodeGen.Annotation.type_ "View Msg"
                         ]
                 , arguments = [ CodeGen.Argument.new "model" ]
                 , expression = toViewCaseExpression data.pages
