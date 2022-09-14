@@ -11,7 +11,11 @@ html:not(.dark) {
   --vp-c-bg-soft: hsl(150, 64%, 94%);
   --vp-c-bg-mute: hsl(150, 55%, 90%);
   --vp-c-bg-alt: var(--vp-c-bg-soft);
+  
+  --vp-custom-block-warning-text: hsl(45deg 85% 30%);
   --vp-c-yellow-dimm-3: rgb(250, 253, 214, 0.75);
+
+  --vp-c-brand: hsl(153, 47%, 33%);
   /* --vp-code-block-bg: var(--vp-c-white);
   --vp-code-line-number-color: #24292F88; */
 }
