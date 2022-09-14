@@ -62,6 +62,37 @@ load helpers
   rm -r tmp
 }
 
+@test "'elm-land add page' uses 'View.fromString' if the View module is customized" {
+
+  # Create a new project
+  mkdir -p tests/tmp
+  cd tests/tmp
+  run elm-land init hello-world
+  expectToPass
+  cd hello-world
+
+  # Generating a page before customizing View.elm
+  # should use the standard { title = "...", body = [...] }
+  run elm-land add page /test
+  expectFileExists "src/Pages/Test.elm"
+  expectFileContains "src/Pages/Test.elm" "{ title = "
+
+  # Customize the View module
+  run elm-land customize view
+  expectToPass
+  expectFileExists "src/View.elm"
+
+  # Generate a page after customizing View.elm
+  # should use the 'View.fromString' function defined by the user
+  run elm-land add page /test
+  expectFileExists "src/Pages/Test.elm"
+  expectFileContains "src/Pages/Test.elm" "View.fromString"
+
+  # Clean up tmp folder
+  cd ../..
+  rm -r tmp
+}
+
 @test "cleanup" {
   cleanupTmpFolder
 }

@@ -23,7 +23,8 @@ run json =
 
 
 type alias Data =
-    { kind : PageKind
+    { hasViewBeenCustomized : Bool
+    , kind : PageKind
     , url : String
     , filepath : Filepath
     }
@@ -37,23 +38,23 @@ type PageKind
 
 
 newPageModule : Data -> CodeGen.Module
-newPageModule { url, filepath, kind } =
-    case kind of
+newPageModule data =
+    case data.kind of
         Static ->
-            newStaticPageModule filepath url
+            newStaticPageModule data
 
         Sandbox ->
-            newSandboxPageModule filepath url
+            newSandboxPageModule data
 
         Element ->
-            newElementPageModule filepath url
+            newElementPageModule data
 
         New ->
-            newAdvancedPageModule filepath url
+            newAdvancedPageModule data
 
 
-newStaticPageModule : Filepath -> String -> CodeGen.Module
-newStaticPageModule filepath url =
+newStaticPageModule : Data -> CodeGen.Module
+newStaticPageModule { hasViewBeenCustomized, filepath, url } =
     let
         moduleName : String
         moduleName =
@@ -71,7 +72,7 @@ newStaticPageModule filepath url =
                             ]
                     , arguments = [ CodeGen.Argument.new "params" ]
                     , expression =
-                        viewExpressionWithContent
+                        viewExpressionWithContent hasViewBeenCustomized
                             { title = moduleName
                             , expression =
                                 CodeGen.Expression.parens
@@ -97,7 +98,7 @@ newStaticPageModule filepath url =
                     , annotation = CodeGen.Annotation.type_ "View msg"
                     , arguments = []
                     , expression =
-                        viewExpressionWithContent
+                        viewExpressionWithContent hasViewBeenCustomized
                             { title = moduleName
                             , expression = CodeGen.Expression.string url
                             }
@@ -118,8 +119,8 @@ newStaticPageModule filepath url =
         }
 
 
-newSandboxPageModule : Filepath -> String -> CodeGen.Module
-newSandboxPageModule filepath url =
+newSandboxPageModule : Data -> CodeGen.Module
+newSandboxPageModule { hasViewBeenCustomized, filepath, url } =
     let
         pageFunctionDeclaration : CodeGen.Declaration
         pageFunctionDeclaration =
@@ -215,7 +216,7 @@ newSandboxPageModule filepath url =
                         ]
                 , arguments = [ CodeGen.Argument.new "model" ]
                 , expression =
-                    viewExpressionWithContent
+                    viewExpressionWithContent hasViewBeenCustomized
                         { title = Filepath.toPageModuleName filepath
                         , expression = CodeGen.Expression.string url
                         }
@@ -246,8 +247,8 @@ newSandboxPageModule filepath url =
         }
 
 
-newElementPageModule : Filepath -> String -> CodeGen.Module
-newElementPageModule filepath url =
+newElementPageModule : Data -> CodeGen.Module
+newElementPageModule { hasViewBeenCustomized, filepath, url } =
     let
         pageFunctionDeclaration : CodeGen.Declaration
         pageFunctionDeclaration =
@@ -364,7 +365,7 @@ newElementPageModule filepath url =
                         ]
                 , arguments = [ CodeGen.Argument.new "model" ]
                 , expression =
-                    viewExpressionWithContent
+                    viewExpressionWithContent hasViewBeenCustomized
                         { title = Filepath.toPageModuleName filepath
                         , expression = CodeGen.Expression.string url
                         }
@@ -397,8 +398,8 @@ newElementPageModule filepath url =
         }
 
 
-newAdvancedPageModule : Filepath -> String -> CodeGen.Module
-newAdvancedPageModule filepath url =
+newAdvancedPageModule : Data -> CodeGen.Module
+newAdvancedPageModule { hasViewBeenCustomized, filepath, url } =
     let
         pageFunctionDeclaration : CodeGen.Declaration
         pageFunctionDeclaration =
@@ -514,7 +515,7 @@ newAdvancedPageModule filepath url =
                         ]
                 , arguments = [ CodeGen.Argument.new "model" ]
                 , expression =
-                    viewExpressionWithContent
+                    viewExpressionWithContent hasViewBeenCustomized
                         { title = Filepath.toPageModuleName filepath
                         , expression = CodeGen.Expression.string url
                         }
@@ -551,21 +552,28 @@ newAdvancedPageModule filepath url =
         }
 
 
-viewExpressionWithContent : { title : String, expression : CodeGen.Expression } -> CodeGen.Expression
-viewExpressionWithContent options =
-    CodeGen.Expression.multilineRecord
-        [ ( "title", CodeGen.Expression.string options.title )
-        , ( "body"
-          , CodeGen.Expression.list
-                [ CodeGen.Expression.function
-                    { name = "Html.text"
-                    , arguments =
-                        [ options.expression
-                        ]
-                    }
-                ]
-          )
-        ]
+viewExpressionWithContent : Bool -> { title : String, expression : CodeGen.Expression } -> CodeGen.Expression
+viewExpressionWithContent hasViewBeenCustomized options =
+    if hasViewBeenCustomized then
+        CodeGen.Expression.function
+            { name = "View.fromString"
+            , arguments = [ CodeGen.Expression.string options.title ]
+            }
+
+    else
+        CodeGen.Expression.multilineRecord
+            [ ( "title", CodeGen.Expression.string options.title )
+            , ( "body"
+              , CodeGen.Expression.list
+                    [ CodeGen.Expression.function
+                        { name = "Html.text"
+                        , arguments =
+                            [ options.expression
+                            ]
+                        }
+                    ]
+              )
+            ]
 
 
 
@@ -574,7 +582,8 @@ viewExpressionWithContent options =
 
 decoder : Json.Decode.Decoder Data
 decoder =
-    Json.Decode.map3 Data
+    Json.Decode.map4 Data
+        (Json.Decode.field "hasViewBeenCustomized" Json.Decode.bool)
         (Json.Decode.field "kind" pageKindDecoder)
         (Json.Decode.field "url" Json.Decode.string)
         (Json.Decode.field "filepath" Filepath.decoder)

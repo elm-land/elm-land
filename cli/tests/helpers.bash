@@ -13,6 +13,11 @@ function expectFileExists {
   expectToPass
 }
 
+function expectFileDoesNotExist {
+  test ! -f $1
+  expectToPass
+}
+
 function expectOutputContains {
   [[ $output == *$1* ]]
 }

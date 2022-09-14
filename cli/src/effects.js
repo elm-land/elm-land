@@ -17,26 +17,27 @@ let runServer = async (options) => {
     let rawConfig = await Files.readFromUserFolder('elm-land.json')
     let config = JSON.parse(rawConfig)
 
-    // Handle missing defaults
+    // Handle any missing '.elm-land' files
     await handleElmLandFiles()
 
-    // Expose ENV variables to Vite explicitly allowed by the user
+    // Expose ENV variables explicitly allowed by the user
     attemptToLoadEnvVariablesFromUserConfig()
 
-    // Listen for changes to static assets too
+    // Listen for changes to static assets too, so the browser
+    // automatically shows the latest CSS changes or other static assets
     let staticFolder = `${path.join(process.cwd(), 'static')}/**`
     let staticFolderWatcher = chokidar.watch(staticFolder, {
       ignorePermissionErrors: true,
       ignoreInitial: true
     })
     let indexHtmlPath = path.join(process.cwd(), '.elm-land', 'server', 'index.html')
-    let mainJsPath = path.join(process.cwd(), '.elm-land', 'server', 'main.js')
 
     staticFolderWatcher.on('all', () => {
       Files.touch(indexHtmlPath)
     })
 
-    // Listen for config changes
+    // Listen for config file changes, regenerating the index.html
+    // and updating any changes to the environment variables
     let configFilepath = path.join(process.cwd(), 'elm-land.json')
     let configFileWatcher = chokidar.watch(configFilepath, {
       ignorePermissionErrors: true,
@@ -60,8 +61,10 @@ let runServer = async (options) => {
       } catch (_) { }
     })
 
-    // Listen for changes to interop file
+    // Listen for changes to interop file, so the page is automatically
+    // refreshed and can see JS changes
     let interopFilepath = path.join(process.cwd(), 'src', 'interop.js')
+    let mainJsPath = path.join(process.cwd(), '.elm-land', 'server', 'main.js')
     let interopFileWatcher = chokidar.watch(interopFilepath, {
       ignorePermissionErrors: true,
       ignoreInitial: true
@@ -71,7 +74,8 @@ let runServer = async (options) => {
       Files.touch(mainJsPath)
     })
 
-    // Listen for changes to src/Pages and src/Layouts folders
+    // Listen for changes to src/Pages and src/Layouts folders, to prevent
+    // generated code from getting out of sync
     let srcPagesAndLayoutsFolderWatcher = chokidar.watch([srcPagesFolderFilepath, srcLayoutsFolderFilepath], {
       ignorePermissionErrors: true,
       ignoreInitial: true
@@ -79,6 +83,17 @@ let runServer = async (options) => {
 
     srcPagesAndLayoutsFolderWatcher.on('all', generateElmFiles)
     await generateElmFiles()
+
+    // Listen for any changes to customizable files, so defaults are recreated
+    // if the customized versions are deleted
+    let customizableFileFilepaths =
+      Object.values(Utils.customizableFiles)
+        .map(({ filepath }) => path.join(process.cwd(), 'src', ...filepath.split('/')))
+    let customizedFilepaths = chokidar.watch(customizableFileFilepaths, {
+      ignorePermissionErrors: true,
+      ignoreInitial: true
+    })
+    customizedFilepaths.on('all', syncCustomizableFiles)
 
     // Check config for Elm debugger options
     let debug = false
@@ -211,7 +226,9 @@ const customize = async (filepath) => {
   return { problem: null }
 }
 
-const handleElmLandFiles = async () => {
+
+
+const syncCustomizableFiles = async () => {
   let defaultFilepaths = Object.values(Utils.customizableFiles).map(obj => obj.filepath)
 
   await Promise.all(defaultFilepaths.map(async filepath => {
@@ -228,6 +245,10 @@ const handleElmLandFiles = async () => {
       })
     }
   }))
+}
+
+const handleElmLandFiles = async () => {
+  await syncCustomizableFiles()
 
   await Files.copyPasteFolder({
     source: path.join(__dirname, 'templates', '_elm-land', 'server'),
