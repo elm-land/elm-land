@@ -6,11 +6,11 @@
 
 html:not(.dark) {
   /* LIGHT MODE */
-  --vp-c-bg: #e5fff2;
-  --vp-c-bg-clear: rgb(229 255 242 / 70%);
-  --vp-c-bg-soft: #d2f5e3;
-  --vp-c-bg-mute: #c5eeda;
-  --vp-c-bg-alt: #d2f5e3;
+  --vp-c-bg: hsl(150, 100%, 98%);
+  --vp-c-bg-clear: hsla(150, 100%, 98%, 0.7);
+  --vp-c-bg-soft: hsl(150, 64%, 94%);
+  --vp-c-bg-mute: hsl(150, 55%, 90%);
+  --vp-c-bg-alt: var(--vp-c-bg-soft);
   --vp-c-yellow-dimm-3: rgb(250, 253, 214, 0.75);
   /* --vp-code-block-bg: var(--vp-c-white);
   --vp-code-line-number-color: #24292F88; */
@@ -90,7 +90,7 @@ details[open] summary {
     filter: drop-shadow(0px 0.25em 3em mediumseagreen);
   }
   60% {
-    filter: drop-shadow(0px 0.25em 6em dodgerblue);
+    filter: drop-shadow(0px 0.25em 5em dodgerblue);
   }
   80% {
     filter: drop-shadow(0px 0.25em 4em violet);
