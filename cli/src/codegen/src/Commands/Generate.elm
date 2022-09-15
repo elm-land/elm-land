@@ -610,6 +610,14 @@ runWhenAuthenticatedDeclaration =
                                         , CodeGen.Expression.value "toCmd (Effect.pushRoute options)"
                                         ]
                               }
+                            , { name = "Auth.Action.ExternalRedirect"
+                              , arguments = [ CodeGen.Argument.new "url" ]
+                              , expression =
+                                    CodeGen.Expression.multilineTuple
+                                        [ CodeGen.Expression.value "Redirecting"
+                                        , CodeGen.Expression.value "toCmd (Effect.loadExternalUrl url)"
+                                        ]
+                              }
                             , { name = "Auth.Action.ShowLoadingPage"
                               , arguments = [ CodeGen.Argument.new "loadingView" ]
                               , expression =

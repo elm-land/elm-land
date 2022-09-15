@@ -33,6 +33,7 @@ type Action user
         , query : Dict String String
         , hash : Maybe String
         }
+    | ExternalRedirect String
     | ShowLoadingPage (View Never)
 
 
@@ -61,6 +62,11 @@ pushRoute =
     PushRoute
 
 
+externalRedirect : String -> Action user
+externalRedirect =
+    ExternalRedirect
+
+
 showLoadingPage : View Never -> Action user
 showLoadingPage =
     ShowLoadingPage
@@ -78,6 +84,9 @@ view toView authAction =
         PushRoute _ ->
             View.none
 
+        ExternalRedirect _ ->
+            View.none
+
         ShowLoadingPage loadingView ->
             View.map never loadingView
 
@@ -92,6 +101,9 @@ subscriptions toView authAction =
             Sub.none
 
         PushRoute _ ->
+            Sub.none
+
+        ExternalRedirect _ ->
             Sub.none
 
         ShowLoadingPage _ ->
