@@ -46,9 +46,16 @@ let runServer = async (options) => {
 
     configFileWatcher.on('change', async () => {
       try {
+        let oldConfig = config
         let rawConfig = await Files.readFromUserFolder('elm-land.json')
         config = JSON.parse(rawConfig)
         let result = await generateHtml(config)
+
+        if (config.app.options != oldConfig.app.options) {
+          //TODO: Why isn't this doing anything?
+          console.log("Regenerating due to option changes", config.app.options)
+          await generateElmLandFiles(config)
+        }
 
         let hadAnyEnvVarChanges = attemptToLoadEnvVariablesFromUserConfig(config)
         if (hadAnyEnvVarChanges) {
@@ -81,8 +88,8 @@ let runServer = async (options) => {
       ignoreInitial: true
     })
 
-    srcPagesAndLayoutsFolderWatcher.on('all', generateElmFiles)
-    await generateElmFiles()
+    srcPagesAndLayoutsFolderWatcher.on('all', () => { generateElmFiles(config) })
+    await generateElmFiles(config)
 
     // Listen for any changes to customizable files, so defaults are recreated
     // if the customized versions are deleted
@@ -136,8 +143,10 @@ let runServer = async (options) => {
 
 }
 
-let generateElmFiles = async () => {
+//TODO: Re-run on config change?
+let generateElmFiles = async (config) => {
   try {
+    let options = config.app.options
     let pageFilepaths = Files.listElmFilepathsInFolder(srcPagesFolderFilepath)
     let layouts = Files.listElmFilepathsInFolder(srcLayoutsFolderFilepath).map(filepath => filepath.split('/'))
 
@@ -151,7 +160,7 @@ let generateElmFiles = async () => {
         }
       }))
 
-    let newFiles = await Codegen.generateElmLandFiles({ pages, layouts })
+    let newFiles = await Codegen.generateElmLandFiles({ pages, layouts, options })
 
     await Files.create(
       newFiles.map(generatedFile => ({
@@ -271,7 +280,7 @@ const build = async (config) => {
   attemptToLoadEnvVariablesFromUserConfig()
 
   // Generate Elm files
-  await generateElmFiles()
+  await generateElmFiles(config)
 
   // Build app in dist folder 
   await Vite.build({
