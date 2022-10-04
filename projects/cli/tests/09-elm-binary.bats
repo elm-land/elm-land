@@ -19,7 +19,7 @@ load helpers
 
   # Cleanup
   rm -r .elm-land elm-stuff dist
-  cd ../../cli
+  cd ../../projects/cli
 }
 
 @test "'elm-land build' should pass even if elm is globally installed with npm" {
@@ -32,7 +32,7 @@ load helpers
 
   # Cleanup
   rm -r .elm-land elm-stuff dist
-  cd ../../cli
+  cd ../../projects/cli
 }
 
 @test "'elm-land build' should pass if elm-land is locally installed with npm" {
@@ -50,7 +50,7 @@ load helpers
   # Cleanup
   cd ..
   rm -r 01-local-hello
-  cd ../cli
+  cd ../projects/cli
 }
 
 @test "'elm-land build' should pass if elm-land is locally installed with yarn" {
@@ -69,7 +69,7 @@ load helpers
   # Cleanup
   cd ..
   rm -r 01-local-hello
-  cd ../cli
+  cd ../projects/cli
 }
 
 @test "'elm-land build' should pass if elm-land is locally installed with pnpm" {
@@ -88,5 +88,5 @@ load helpers
   # Cleanup
   cd ..
   rm -r 01-local-hello
-  cd ../cli
+  cd ../projects/cli
 }

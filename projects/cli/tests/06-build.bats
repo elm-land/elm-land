@@ -9,7 +9,7 @@ load helpers
   expectOutputContains "successfully built"
 
   rm -r .elm-land elm-stuff dist
-  cd ../../cli
+  cd ../../projects/cli
 }
 
 @test "'elm-land build' still works after customizing a file" {
@@ -24,7 +24,7 @@ load helpers
   expectOutputContains "successfully built"
 
   rm -r .elm-land elm-stuff dist src/Effect.elm
-  cd ../../cli
+  cd ../../projects/cli
 }
 
 @test "cleanup" {

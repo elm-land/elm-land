@@ -8,7 +8,7 @@ load helpers
   expectOutputContains "successfully built"
 
   rm -r .elm-land elm-stuff dist
-  cd ../../cli
+  cd ../../projects/cli
 }
 
 @test "'elm-land build' works with the '02-pages-and-layouts' example" {
@@ -19,7 +19,7 @@ load helpers
   expectOutputContains "successfully built"
 
   rm -r .elm-land elm-stuff dist
-  cd ../../cli
+  cd ../../projects/cli
 }
 
 @test "'elm-land build' works with the '03-user-input' example" {
@@ -30,7 +30,7 @@ load helpers
   expectOutputContains "successfully built"
 
   rm -r .elm-land elm-stuff dist
-  cd ../../cli
+  cd ../../projects/cli
 }
 
 @test "'elm-land build' works with the '04-rest-apis' example" {
@@ -41,7 +41,7 @@ load helpers
   expectOutputContains "successfully built"
 
   rm -r .elm-land elm-stuff dist
-  cd ../../cli
+  cd ../../projects/cli
 }
 
 @test "'elm-land build' works with the '05-user-auth' example" {
@@ -52,7 +52,7 @@ load helpers
   expectOutputContains "successfully built"
 
   rm -r .elm-land elm-stuff dist
-  cd ../../cli
+  cd ../../projects/cli
 }
 
 @test "'elm-land build' works with the '06-query-parameters' example" {
@@ -63,5 +63,5 @@ load helpers
   expectOutputContains "successfully built"
 
   rm -r .elm-land elm-stuff dist
-  cd ../../cli
+  cd ../../projects/cli
 }
