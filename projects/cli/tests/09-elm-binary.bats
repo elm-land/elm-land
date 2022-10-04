@@ -41,7 +41,7 @@ load helpers
 
   cp -r ../../examples/01-hello-world ../../examples/01-local-hello
   cd ../../examples/01-local-hello
-  echo '{ "dependencies": { "elm-land": "file:../../cli/elm-land-0.17.1.tgz" } }' > package.json
+  echo '{ "dependencies": { "elm-land": "file:../../projects/cli/elm-land-0.17.1.tgz" } }' > package.json
   npm install
 
   run npx elm-land build
@@ -59,7 +59,7 @@ load helpers
 
   cp -r ../../examples/01-hello-world ../../examples/01-local-hello
   cd ../../examples/01-local-hello
-  echo '{ "dependencies": { "elm-land": "file:../../cli/elm-land-0.17.1.tgz" } }' > package.json
+  echo '{ "dependencies": { "elm-land": "file:../../projects/cli/elm-land-0.17.1.tgz" } }' > package.json
   npm install -g yarn
   yarn
 
@@ -78,7 +78,7 @@ load helpers
 
   cp -r ../../examples/01-hello-world ../../examples/01-local-hello
   cd ../../examples/01-local-hello
-  echo '{ "dependencies": { "elm-land": "file:../../cli/elm-land-0.17.1.tgz" } }' > package.json
+  echo '{ "dependencies": { "elm-land": "file:../../projects/cli/elm-land-0.17.1.tgz" } }' > package.json
   npm install -g pnpm
   pnpm install
 
