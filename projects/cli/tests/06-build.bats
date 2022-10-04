@@ -2,7 +2,7 @@
 load helpers
 
 @test "'elm-land build' works with hello world example" {
-  cd ../examples/01-hello-world
+  cd ../../examples/01-hello-world
   run elm-land build
   expectToPass
 
@@ -13,7 +13,7 @@ load helpers
 }
 
 @test "'elm-land build' still works after customizing a file" {
-  cd ../examples/01-hello-world
+  cd ../../examples/01-hello-world
 
   run elm-land customize effect
   expectToPass
