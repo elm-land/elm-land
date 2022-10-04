@@ -1,17 +1,18 @@
 # Elm Land
-> Reliable web apps for everyone
 
-![Elm Land logo](https://github.com/elm-land/elm-land/raw/main/elm-land-banner.jpg)
+[![Discord](https://badgen.net/badge/icon/discord?icon=discord&label&color=7289da)](https://discord.gg/vnmYFfySbH) [![Twitter](https://badgen.net/badge/icon/twitter?icon=twitter&label&color=00acee)](https://twitter.com/elmland_) [![GitHub](https://badgen.net/badge/icon/github?icon=github&label&color=4078c0)](https://www.github.com/elm-land/elm-land) 
 
-### Alpha release
+[![Elm Land: Reliable web apps for everyone](https://github.com/elm-land/elm-land/raw/main/elm-land-banner.jpg)](https://elm.land)
 
-Although this framework is still a work-in-progress, please feel free to tinker around until `v1.0.0` is released!
+### Alpha release 🌱
 
-Feedback is welcome anytime in the [Incremental Elm Discord](https://discord.com/invite/Fwmn84xD?utm_source=Discord%20Widget&utm_medium=Connect). Come say hi in the `#elm-land` channel!
+Although Elm Land is still a work-in-progress, please feel free to tinker around until the big `v1.0.0` release!
+
+If you're excited to try things out– come join the [Elm Land Discord](https://discord.gg/vnmYFfySbH) to get help or share your experience! 
 
 ## Using the CLI
 
-The `elm-land` CLI tool has everything you need to create your next Elm application:
+The `elm-land` CLI comes with everything you need to create your next web application:
 
 ```
 $ elm-land
@@ -35,9 +36,9 @@ $ elm-land
 
 If you would like to see how it works, all the code is available and [open-source on GitHub](https://github.com/elm-land/elm-land). 
 
-The CLI, docs website, and other related Elm Land projects can all be found in that single repo.
+The CLI, docs website, and all the other Elm Land projects can all be found in that single GitHub repo.
 
-### Running the test suite
+### Running the tests
 
 The tests in this project are designed to verify that the [official guide](https://elm.land/guide) and [all of the examples](https://github.com/elm-land/elm-land/tree/main/examples) are accurate for users.
 

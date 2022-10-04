@@ -1,7 +1,7 @@
 # This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
 
-name: "Elm Land CLI"
+name: "elm-land"
 
 on:
   push:
@@ -13,7 +13,7 @@ jobs:
   build:
     defaults:
       run:
-        working-directory: cli
+        working-directory: projects/cli
 
     runs-on: ubuntu-latest
 
@@ -29,7 +29,7 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-        cache-dependency-path: cli/package-lock.json
+        cache-dependency-path: projects/cli/package-lock.json
     - run: npm install
     - run: npm run setup
     - run: npm link

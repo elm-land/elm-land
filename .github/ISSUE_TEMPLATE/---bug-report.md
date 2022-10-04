@@ -7,14 +7,21 @@ assignees: ryannhg
 
 ---
 
-> ### Thank you for improving Elm Land! ❤️
+> ### 🌈 Welcome to Elm Land!
+>
+> There are only two rules for all GitHub issues:
 >
 > 1. __Start a conversation!__ 
->     - Before opening an issue, please share the problem you are hoping to solve in the [#elm-land](https://discord.com/channels/534524278847045633/750847823238398003) Discord channel.
->     Some problems can be solved better with a quick conversation, a clearer guide, etc.
-> 1. Every issue should follow the "Problem/Solution/Notes" outline below!
 >
-> ( You can delete this big intro section after reading! )
+>    Before opening an issue, share the problem you are having in __the official [Elm Land Discord channel](https://discord.gg/vnmYFfySbH)__.
+>
+>     Many problems can be solved faster with a quick conversation!
+>
+> 1. __This PR template matters!__
+>
+>    Every issue should follow the "Problem/Setup" outline below!
+>
+> ( You can delete this intro section after reading! )
 
 ## Problem
 

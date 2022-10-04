@@ -1,0 +1,7 @@
+query FetchCurrentUser {
+	viewer {
+		name
+		email
+		avatarUrl
+	}
+}

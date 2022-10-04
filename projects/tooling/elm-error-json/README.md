@@ -4,11 +4,11 @@
 
 ```sh
 # Note: not published yet!
-npm install @elm-land/elm-error-json
+npm install @elm-land/tooling
 ```
 
 ```js
-import ElmErrorJson from '@elm-land/elm-error-json'
+import { ElmErrorJson } from '@elm-land/tooling'
 
 let error = ElmErrorJson.compile('src/Main.elm')
 
