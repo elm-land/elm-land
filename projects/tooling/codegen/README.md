@@ -1,14 +1,5 @@
-# __@elm-land__/codegen
+# @elm-land/codegen
 > Generate Elm code with Elm code
-
-## __Installation__
-
-```sh
-# Note: not published yet!
-elm install elm-land/codegen
-```
-
-( See [notable alternatives](#notable-alternatives) below! )
 
 ## __Basic usage__
 
@@ -124,14 +115,14 @@ This package was designed for use in [Elm Land](https://elm.land). Our use case 
 
 However, you might prefer one of these more powerful solutions for use in your next codegen project:
 
-1. [the-sett/elm-syntax-dsl](https://package.elm-lang.org/packages/the-sett/elm-syntax-dsl/latest) 
-    - __Benefits:__
-      - More type-safe, less strings
-      - Aims to be compatable with elm-format
-2. [mdgriffith/elm-codegen](https://github.com/mdgriffith/elm-codegen)
+1. [mdgriffith/elm-codegen](https://github.com/mdgriffith/elm-codegen)
     - __Benefits:__
       - Automatic imports
       - Inferred type annotations
       - Built-in CLI tool for getting started
+      - More type-safe, less strings
+      - Aims to be compatable with elm-format
+1. [the-sett/elm-syntax-dsl](https://package.elm-lang.org/packages/the-sett/elm-syntax-dsl/latest) 
+    - __Benefits:__
       - More type-safe, less strings
       - Aims to be compatable with elm-format

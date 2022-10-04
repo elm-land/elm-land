@@ -11,7 +11,7 @@ jobs:
   build:
     defaults:
       run:
-        working-directory: cli
+        working-directory: projects/cli
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -26,7 +26,7 @@ jobs:
   publish-npm:
     defaults:
       run:
-        working-directory: cli
+        working-directory: projects/cli
     needs: build
     runs-on: ubuntu-latest
     steps:

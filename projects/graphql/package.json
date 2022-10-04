@@ -1,0 +1,27 @@
+{
+  "name": "@elm-land/graphql",
+  "version": "0.17.1",
+  "description": "Generate Elm code from GraphQL files",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "npx bats"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/elm-land/elm-land.git"
+  },
+  "keywords": [
+    "elm",
+    "graphql",
+    "elm-land"
+  ],
+  "author": "Ryan Haskell-Glatz",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/elm-land/elm-land/issues"
+  },
+  "homepage": "https://github.com/elm-land/elm-land#readme",
+  "dependencies": {
+    "graphql": "16.6.0"
+  }
+}

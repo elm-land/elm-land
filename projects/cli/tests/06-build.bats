@@ -2,18 +2,18 @@
 load helpers
 
 @test "'elm-land build' works with hello world example" {
-  cd ../examples/01-hello-world
+  cd ../../examples/01-hello-world
   run elm-land build
   expectToPass
 
   expectOutputContains "successfully built"
 
   rm -r .elm-land elm-stuff dist
-  cd ../../cli
+  cd ../../projects/cli
 }
 
 @test "'elm-land build' still works after customizing a file" {
-  cd ../examples/01-hello-world
+  cd ../../examples/01-hello-world
 
   run elm-land customize effect
   expectToPass
@@ -24,7 +24,7 @@ load helpers
   expectOutputContains "successfully built"
 
   rm -r .elm-land elm-stuff dist src/Effect.elm
-  cd ../../cli
+  cd ../../projects/cli
 }
 
 @test "cleanup" {
