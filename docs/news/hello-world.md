@@ -48,7 +48,7 @@ In the top-left corner, he added "ML languages" (things like Haskell or OCaml) a
 
 Evan suggested that there's an ideal place, somewhere in the top-right corner of the graph, where a language could be __both usable _and_ easy to maintain__. Evan asked the audience another question: __how do we get functional programmers over here, to this happy place?__ 
 
-After a brief pause, he revealed that it was a trick question– that goal might not make sense:
+After a brief pause, he revealed that it was a trick question: this goal might not make sense.
 
 ![A line drawn from "ML languages" to a happy rainbow logo, scribbled out with red marker](/images/news/hello-world/ml-to-rainbow.jpg)
 
