@@ -44,13 +44,15 @@ His light-hearted question was greeted with laughter, and it resonated with the 
 
 In the bottom-right corner, Evan added "JavaScript". With a quick demo, he showed the room how JavaScript is __incredibly usable__. Evan switched to Google Chrome, opened the dev console, typed `4 + 4`, hit enter, and the number `8` printed to the screen. Getting started with JS is really _that_ easy!
 
-In the top-left corner, he added "ML languages" (things like Haskell or OCaml) and explained how despite having a steep learning curve, their users are able to make applications that are easy to refactor and maintain.
+In the top-left corner, he added "ML family" (things like Haskell or OCaml) and explained how despite having a steep learning curve, their users are able to make applications that are easy to refactor and maintain.
 
-Evan suggested that there's an ideal place, somewhere in the top-right corner of the graph, where a language could be __both usable _and_ easy to maintain__. Evan asked the audience another question: __how do we get functional programmers over here, to this happy place?__ 
+Evan suggested that there's an ideal place, somewhere in the top-right corner of the graph, where a language could be __both usable _and_ easy to maintain__. To represent that ideal spot, Evan drew a little rainbow:
 
-After a brief pause, he revealed that it was a trick question: this goal might not make sense.
+![A graph, showing a happy rainbow in the top right, that looks oddly like the Elm Land logo...](../public/images/news/hello-world/empty-graph.jpg)
 
-![A line drawn from "ML languages" to a happy rainbow logo, scribbled out with red marker](/images/news/hello-world/ml-to-rainbow.jpg)
+Evan asked the audience another question: how do we get __those functional programmers__ to this happy place? After a brief pause, he revealed that it was a trick question: this goal might not make sense.
+
+![A line drawn from "ML family" to a happy rainbow logo, scribbled out with red marker](/images/news/hello-world/ml-to-rainbow.jpg)
 
 Why isn't this Evan's goal? Here's how he explains the problem in his talk:
 
@@ -73,11 +75,11 @@ The ["Let's be Mainstream!"](https://www.youtube.com/watch?v=oYk8CKH7OhE) talk h
 
 Fast-forward to 2022, and so much of the JavaScript landscape has evolved. Projects like [TypeScript](https://typescriptlang.org) have taken off, and many folks have leaned into the tradeoff of writing extra code in exchange for better refactoring experiences.
 
-In terms of JS frameworks, React and Vue.js are still overwhelmingly popular– and for __great__ reason! The ecosystem of tooling around each framework has also evolved to keep pace with developer's needs. Each of these communities have access to great libraries, guides, dev servers, and application frameworks.
+In terms of JS frameworks, React and Vue.js are still overwhelmingly popular– and for __great__ reason! The ecosystem of tooling around each framework has also evolved to keep pace with developers' needs. Each of these communities have access to great libraries, guides, dev servers, and application frameworks.
 
 For example, the Vue.js community has an application framework called [Nuxt.js](https://nuxtjs.org). Nuxt makes it easy for beginners to get up-and-running with only a few terminal commands. Each new concept in the framework comes with comprehensive guides on how to design components, work with APIs, and handle common frontend challenges like user authentication.
 
-As a newcomer to a JS community, trying to choose a framework can be intimidating. Projects like Nuxt.js do an excellent job of convincing folks they can get build awesome stuff!
+As a newcomer to a JS community, trying to choose a framework can be intimidating. Projects like Nuxt.js do an excellent job of convincing folks they can build awesome stuff!
 
 Luckily for Elm Land, the success of the JavaScript ecosystem means that the _Elm Land_ project has a lot sources of inspiration to draw from. What concepts are easy to learn? What are common challenges these projects help address?
 
