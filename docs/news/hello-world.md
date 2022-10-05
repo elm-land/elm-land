@@ -105,24 +105,26 @@ At the time of writing, Elm Land is still in its early stages. The current relea
 So when will Elm Land be ready for `v1.0.0`? __When we can create GitHub from scratch.__
 
 GitHub is a great app to build, because it has plenty of features and real-world problems that need solving. Here are some of the features we will need to make a GitHub clone:
-- ✅ Creating a new project
-- ✅ Adding new pages
-- ⬜️ Supporting stateful layouts
-- ⬜️ Supporting catch-all routes (`/:user/:repo/blog/:branch/*`)
-- ⬜️ Talking to the [GitHub GraphQL API](https://docs.github.com/en/graphql) with the `@elm-land/graphql` plugin
-- ⬜️ Building [GitHub's design system](https://primer.style/design/foundations/color) from scratch with the `@elm-land/ui` plugin
-- ✅ Deploying an app to production
+- Creating a new project
+- Adding new pages
+- Supporting stateful layouts
+- Supporting catch-all routes (`/:user/:repo/blog/:branch/*`)
+- Talking to the [GitHub GraphQL API](https://docs.github.com/en/graphql) with the `@elm-land/graphql` plugin
+- Building [GitHub's design system](https://primer.style/design/foundations/color) from scratch with the `@elm-land/ui` plugin
+- Deploying an app to production
 
 
 ## Community
 
 One of the biggest things I'm excited about is creating a welcoming space for the Elm Land community. For folks using Elm Land, I'm hoping that space can emphasize these core values:
 
-1. Preferring conversations to code changes.
-1. Building and sharing real projects.
+1. Preferring conversations to code changes
+1. Building and sharing real projects
 1. Being friendly, welcoming, and kind!
 
-### Conversation over code contribution
+Let's quickly dive into more details for each of those values!
+
+###  Preferring conversations to code changes
 
 Many successful open source projects are centered around GitHub. The Elm Land GitHub repo is a great place to find examples, browse source code, and see what's in progress.
 
@@ -132,24 +134,26 @@ Whether it's sharing new feature ideas, giving feedback, or reporting bugs, ever
 
 The community Discord is a dedicated space designed to help folks learn, contribute, and share results with one another. Stop by and say hello!
 
-### A focus on building apps
+### Building and sharing real projects
 
 Elm Land is about building real things, and so is the official guide!
 
-In each section, we cover building a full project from scratch. At first, the project is just an app that says "Hello, world!". As you go, the guide is structured to help you build more advanced projects, and introduce you to features of the framework in context.
+In each section, we cover building a full project from scratch. At first, the project is just an app that says "Hello, world". As you go, the guide is structured to help you build more advanced projects, and introduce you to features of the framework in context.
 
 I want to foster the "build real things" mindset in the Elm Land community, and encourage everyone to share what they build!
 
 My __favorite__ kind of tweets have always been the ones that show off cool projects built with Elm. If you are excited about your Elm Land application, game, or anything else– be sure to tag [@ElmLand_](https://twitter.com/elmland_) when you share it. I cannot wait to see the cool stuff that you make!
 
-### Contributors are secretly just people
+### Being friendly, welcoming, and kind!
 
 Finally, I want to make sure to set clear expectations up front! Currently, the Elm Land team is made up of a few people, working on nights and weekends, building free stuff for the internet.
 
 All the source code, guides, examples, and design docs are publically available on [the official repo](https://github.com/elm-land/elm-land). You can read or modify _anything_ you'd like for your own personal use, and forks are totally welcome!
 
-Even though the framework is free to use, choosing Elm Land for your next project does not come with free labor. __The mental health and personal well-being of _all_ Elm Land community members is my top priority__. I love collaborating with wonderful people, and have zero tolerance for anyone harassing or bullying those people.
+Even though the framework is free to use, choosing Elm Land for your next project does not come with free labor. __The mental health and personal well-being of _all_ Elm Land community members is my top priority__. I love collaborating with wonderful people, and I want them to have a positive experience.
 
-Want to join the project? Reporting bugs, fixing documentation, adding features, and sharing your experience using Elm Land are _all_ forms of contribution. Hop in the `#welcome` channel of [the Elm Land Discord server](https://discord.gg/vnmYFfySbH) and introduce yourself– I'm excited to meet you!
+### Want to join the project?
+
+Reporting bugs, fixing documentation, adding features, and sharing your experience using Elm Land are _all_ forms of contribution. Hop in the `#welcome` channel of [the Elm Land Discord server](https://discord.gg/vnmYFfySbH) and introduce yourself– I'm excited to meet you!
 
 We're all here to have a good time, build cool stuff, and make friends along the way. __Let's be mainstream!__
