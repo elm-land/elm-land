@@ -108,7 +108,7 @@ GitHub is a great app to build, because it has plenty of features and real-world
 - Creating a new project
 - Adding new pages
 - Supporting stateful layouts
-- Supporting catch-all routes (`/:user/:repo/blog/:branch/*`)
+- Supporting catch-all routes (`/:user/:repo/tree/:branch/*`)
 - Talking to the [GitHub GraphQL API](https://docs.github.com/en/graphql) with the `@elm-land/graphql` plugin
 - Building [GitHub's design system](https://primer.style/design/foundations/color) from scratch with the `@elm-land/ui` plugin
 - Deploying an app to production
