@@ -22,7 +22,7 @@
   "license": "ISC",
   "homepage": "https://elm.land",
   "devDependencies": {
-    "vitepress": "1.0.0-alpha.12",
+    "vitepress": "1.0.0-alpha.19",
     "vue": "3.2.37"
   },
   "volta": {

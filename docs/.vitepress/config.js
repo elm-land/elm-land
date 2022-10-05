@@ -17,7 +17,7 @@ export default {
     logo: '/images/logo-256.png',
     nav: [
       { text: 'Guide', link: '/guide/' },
-      // { text: 'News', link: '/news/' },
+      { text: 'News', link: '/news/' },
       {
         text: `v${version}`,
         items: [
@@ -29,7 +29,8 @@ export default {
     ],
     socialLinks: [
       { icon: 'github', link: 'https://github.com/elm-land/elm-land' },
-      { icon: 'twitter', link: 'https://twitter.com/elmland_' }
+      { icon: 'twitter', link: 'https://twitter.com/elmland_' },
+      { icon: 'discord', link: 'https://discord.gg/vnmYFfySbH' }
     ],
     sidebar: {
       '/guide/': [
