@@ -92,7 +92,7 @@ In addition to the core Elm tooling, the Elm community has created plenty of gre
 - __elm-graphql__ - a CLI tool that generates GraphQL from Elm code
 - __elm-spa__ - a framework for building single page apps
 
-Just like with libraries from the JS ecosystem, each of these tools were built by a separate person. For example, [Matt Griffith](https://github.com/mdgriffith) built _elm-ui_ and [Dillon Kearns](https://github.com/dillonkearns) built _elm-graphql_ completely in isolation from one another. Despite the lack of coordination, both projects still plug-in well to any Elm codebase, because they each focused on tacking a specific problem.
+Just like with libraries from the JS ecosystem, each of these tools were built by a separate person. For example, [Matt Griffith](https://github.com/mdgriffith) built _elm-ui_ and [Dillon Kearns](https://github.com/dillonkearns) built _elm-graphql_ completely in isolation from one another. Despite the lack of coordination, both projects still plug in well to any Elm codebase, because they each focused on tackling a specific problem.
 
 If we look at the popular application frameworks from the JS ecosystem, we see that the folks behind _Nuxt.js_ or _Next.js_ are answering a different question: __How do I put all these libraries together to build stuff?__
 
