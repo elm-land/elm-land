@@ -1,6 +1,6 @@
 {
   "name": "elm-land",
-  "version": "0.17.1",
+  "version": "0.17.2",
   "description": "Reliable web apps for everyone",
   "main": "index.js",
   "bin": {

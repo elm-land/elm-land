@@ -23,7 +23,7 @@ npm install -g elm-land@latest
 ```txt
 $ elm-land graphql
 
-🌈 Elm Land (v0.17.1) wants to add a plugin!
+🌈 Elm Land (v0.17.2) wants to add a plugin!
    ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
    To use the `@elm-land/graphql` plugin, I'll need
    to install the NPM package and add a bit of JSON
@@ -35,14 +35,14 @@ $ elm-land graphql
 ```txt
 $ elm-land graphql generate
 
-🌈  Elm Land (v0.17.1) successfully generated Elm files
+🌈  Elm Land (v0.17.2) successfully generated Elm files
     ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
 ```
 
 ```txt
 $ elm-land graphql watch
 
-🌈  Elm Land (v0.17.1) is watching "./graphql/*" for changes...
+🌈  Elm Land (v0.17.2) is watching "./graphql/*" for changes...
     ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
 ```
 
