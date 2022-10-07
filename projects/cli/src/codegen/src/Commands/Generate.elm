@@ -431,7 +431,34 @@ mainElmModule data =
                         , CodeGen.Annotation.type_ "Sub Msg"
                         ]
                 , arguments = [ CodeGen.Argument.new "model" ]
-                , expression = toSubscriptionPageCaseExpression data.pages
+                , expression =
+                    CodeGen.Expression.letIn
+                        { let_ =
+                            [ { argument = CodeGen.Argument.new "subscriptionsFromPage"
+                              , annotation = Just (CodeGen.Annotation.type_ "Sub Msg")
+                              , expression = toSubscriptionPageCaseExpression data.pages
+                              }
+                            ]
+                        , in_ =
+                            CodeGen.Expression.multilineFunction
+                                { name = "Sub.batch"
+                                , arguments =
+                                    [ CodeGen.Expression.multilineList
+                                        [ CodeGen.Expression.pipeline
+                                            [ CodeGen.Expression.function
+                                                { name = "Shared.subscriptions"
+                                                , arguments =
+                                                    [ CodeGen.Expression.parens [ CodeGen.Expression.value "Route.fromUrl () model.url" ]
+                                                    , CodeGen.Expression.value "model.shared"
+                                                    ]
+                                                }
+                                            , CodeGen.Expression.value "Sub.map SharedSent"
+                                            ]
+                                        , CodeGen.Expression.value "subscriptionsFromPage"
+                                        ]
+                                    ]
+                                }
+                        }
                 }
             , CodeGen.Declaration.comment [ "VIEW" ]
             , CodeGen.Declaration.function
