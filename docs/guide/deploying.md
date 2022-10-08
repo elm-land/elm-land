@@ -69,3 +69,18 @@ Once GitHub and Netlify are connected, anytime you make a commit to the main bra
 
 We're excited to see all the awesome stuff you create! :heart:
 
+## Deploying with Vercel
+
+Some folks also use [Vercel](https://vercel.com) to host their frontend projects. The general setup is the same, except rather than using a `netlify.toml` configuration file, you'll want to create a `vercel.json` file at your project root (right next to `elm-land.json`)
+
+To make sure that 404 requests work as expected, we recommend using this configuration file:
+
+```json
+{
+  "buildCommand": "npx elm-land build",
+  "outputDirectory": "dist",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/" }
+  ]
+}
+```
