@@ -68,3 +68,20 @@ If your Elm Land project is already hosted on [GitHub](https://github.com/), fol
 Once GitHub and Netlify are connected, anytime you make a commit to the main branch of your repo your changes will automatically be deployed. If you are making something you are excited about, be sure to share it with us on Twitter at [@ElmLand_](https://twitter.com/elmland_)
 
 We're excited to see all the awesome stuff you create! :heart:
+
+
+## Deploying with Vercel
+
+Some folks also use [Vercel](https://vercel.com) to host their frontend projects. The general setup is the same, except rather than using a `netlify.toml` configuration file, you'll want to create a `vercel.json` file at your project root (right next to `elm-land.json`)
+
+To make sure that 404 requests work as expected, we recommend using this configuration file:
+
+```json
+{
+  "buildCommand": "npx elm-land build",
+  "outputDirectory": "dist",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/" }
+  ]
+}
+```
