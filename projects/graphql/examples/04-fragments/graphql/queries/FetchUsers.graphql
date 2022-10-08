@@ -1,0 +1,16 @@
+query FetchUsers {
+  users {
+    id
+    username
+    avatarUrl
+    followers {
+      ...Follower
+    }
+  }
+}
+
+fragment Follower on User {
+  id
+  username
+  avatarUrl
+}

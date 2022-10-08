@@ -1,0 +1,14 @@
+type Mutation {
+  signIn(form: UserSignInForm!): User
+}
+
+input UserSignInForm {
+  email: String!
+  password: String!
+}
+
+type User {
+  id: ID!
+  email: String!
+  avatarUrl: String
+}
