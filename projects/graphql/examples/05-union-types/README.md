@@ -14,7 +14,7 @@ type Query {
 }
 
 union UserResult
-	= User
+  = User
   | NotSignedIn
 
 type User {
