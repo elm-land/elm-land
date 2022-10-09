@@ -138,7 +138,7 @@ You can nest routes as much as you like, it doesn't have to be only two-levels d
 elm-land add page:static /something/really/nested/like/super/nested
 ```
 
-That command will create a file in a __bunch__ of nested folders inside your `src/Pages` directory, and be available when visting the provided URL.
+That command will create a file in a __bunch__ of nested folders inside your `src/Pages` directory, and be available when visiting the provided URL.
 
 :::
 
