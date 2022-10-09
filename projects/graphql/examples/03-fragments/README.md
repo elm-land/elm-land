@@ -2,7 +2,7 @@
 
 ## Context
 
-Elm Land GraphQL does its best to generate Elm types based on your schema, but to prevent conflicts, it can sometimes can generate less-readable names like `User` and `Followers_User` if the same GraphQL type is used twice in one query.
+Elm Land GraphQL does its best to generate Elm types based on your schema, but to prevent conflicts, it can sometimes generate less-readable names like `User` and `Followers_User` if the same GraphQL type is used twice in one query.
 
 Here is the auto-naming strategy it uses:
 - Create a type exactly matching what's in the GraphQL schema
