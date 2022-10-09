@@ -1,0 +1,18 @@
+type Query {
+  currentUser: UserResult!
+}
+
+union UserResult
+	= User
+  | NotSignedIn
+
+type User {
+  id: ID!
+  name: String!
+  email: String!
+  avatarUrl: String
+}
+
+type NotSignedIn {
+  message: String!
+}
