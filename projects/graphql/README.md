@@ -46,9 +46,53 @@ $ elm-land graphql watch
     ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
 ```
 
+## Providing a schema
+
+If you try to run the `elm-land graphql` command you’ll see that all Elm Land needs is a way to access your GraphQL schema, which contains information about the kind of data your GraphQL server will return.
+
+Here’s what running the CLI looks like when there’s no schema provided:
+
+```
+$ elm-land graphql build
+
+🌈 Elm Land (v0.17.2) needs a GraphQL schema
+   ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
+   You can provide one by customizing the "elm-land.json"
+   file to include a "graphql.schema" field.
+
+   Here's an example with a **local file**:
+
+   {
+     ...,
+     "graphql": {
+       "schema": "../backend/schema.graphql"
+     }
+   }
+
+   And here's another example with a **URL**:
+
+   {
+     ...,
+     "graphql": {
+       "schema": {
+         "method": "POST",
+         "url": "https://api.github.com/graphql",
+         "headers": {
+           "User-Agent": "$GITHUB_USERNAME",
+           "Authorization": "Bearer $GITHUB_API_TOKEN"
+         }
+       }
+     }
+   }
+```
+
+Once you’ve updated your `elm-land.json` to point to your GraphQL schema, Elm Land will be able to automatically generate the API code for you ( including all the JSON decoding! )
+
 
 ## The source code
 
 If you would like to see how this package works, all the code is available and [open-source on GitHub](https://github.com/elm-land/elm-land). 
 
 The CLI, docs website, and all other Elm Land projects can all be found in that single repo.
+
+
