@@ -33,7 +33,7 @@ $ elm-land graphql
 ```
 
 ```txt
-$ elm-land graphql generate
+$ elm-land graphql build
 
 🌈  Elm Land (v0.17.2) successfully generated Elm files
     ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
