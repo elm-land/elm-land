@@ -237,4 +237,4 @@ Now the server will respond with JSON that looks like this:
 }
 ```
 
-Now that the JSON response includes the `__typename`, Elm Land GraphQL can correctly assign the correct value to the correct `CreateTweetResult` custom type value!
+Now that the JSON response includes the `__typename`, Elm Land GraphQL can reliably assign the response to the correct `CreateTweetResult` custom type value!
