@@ -1,13 +1,15 @@
 module Auth.Action exposing
     ( Action(..)
-    , loadPageWithUser, pushRoute, replaceRoute, showLoadingPage, openExternalUrl
+    , loadPageWithUser, showLoadingPage
+    , replaceRoute, pushRoute, loadExternalUrl
     , view, subscriptions
     )
 
 {-|
 
 @docs Action
-@docs loadPageWithUser, pushRoute, replaceRoute, showLoadingPage
+@docs loadPageWithUser, showLoadingPage
+@docs replaceRoute, pushRoute, loadExternalUrl
 
 @docs view, subscriptions
 
@@ -67,8 +69,8 @@ pushRoute =
     PushRoute
 
 
-openExternalUrl : String -> Action user
-openExternalUrl =
+loadExternalUrl : String -> Action user
+loadExternalUrl =
     LoadExternalUrl
 
 
