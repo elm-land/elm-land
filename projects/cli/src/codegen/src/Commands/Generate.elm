@@ -621,6 +621,14 @@ runWhenAuthenticatedDeclaration =
                               , arguments = [ CodeGen.Argument.new "user" ]
                               , expression = CodeGen.Expression.value "toTuple user"
                               }
+                            , { name = "Auth.Action.ShowLoadingPage"
+                              , arguments = [ CodeGen.Argument.new "loadingView" ]
+                              , expression =
+                                    CodeGen.Expression.multilineTuple
+                                        [ CodeGen.Expression.value "Loading loadingView"
+                                        , CodeGen.Expression.value "Cmd.none"
+                                        ]
+                              }
                             , { name = "Auth.Action.ReplaceRoute"
                               , arguments = [ CodeGen.Argument.new "options" ]
                               , expression =
@@ -637,12 +645,12 @@ runWhenAuthenticatedDeclaration =
                                         , CodeGen.Expression.value "toCmd (Effect.pushRoute options)"
                                         ]
                               }
-                            , { name = "Auth.Action.ShowLoadingPage"
-                              , arguments = [ CodeGen.Argument.new "loadingView" ]
+                            , { name = "Auth.Action.OpenExternalUrl"
+                              , arguments = [ CodeGen.Argument.new "externalUrl" ]
                               , expression =
                                     CodeGen.Expression.multilineTuple
-                                        [ CodeGen.Expression.value "Loading loadingView"
-                                        , CodeGen.Expression.value "Cmd.none"
+                                        [ CodeGen.Expression.value "Redirecting"
+                                        , CodeGen.Expression.value "Browser.Navigation.load externalUrl"
                                         ]
                               }
                             ]
