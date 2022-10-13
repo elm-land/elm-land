@@ -5,7 +5,7 @@
 >
 > 1. __Start a conversation!__ 
 >
->    Before opening a pull request, share the problem you are having in __the official [Elm Land Discord channel](https://discord.gg/vnmYFfySbH)__.
+>    Before opening a pull request, share the problem you are having in __the official [Elm Land Discord channel](https://join.elm.land)__.
 >
 >     Some problems can be solved faster with a quick conversation, a tweak to the docs, etc!
 >

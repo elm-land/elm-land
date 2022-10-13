@@ -30,7 +30,7 @@ export default {
     socialLinks: [
       { icon: 'github', link: 'https://github.com/elm-land/elm-land' },
       { icon: 'twitter', link: 'https://twitter.com/elmland_' },
-      { icon: 'discord', link: 'https://discord.gg/vnmYFfySbH' }
+      { icon: 'discord', link: 'https://join.elm.land' }
     ],
     sidebar: {
       '/guide/': [

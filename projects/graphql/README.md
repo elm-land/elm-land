@@ -1,6 +1,6 @@
 # @elm-land/graphql
 
-[![Discord](https://badgen.net/badge/icon/discord?icon=discord&label&color=7289da)](https://discord.gg/vnmYFfySbH) [![Twitter](https://badgen.net/badge/icon/twitter?icon=twitter&label&color=00acee)](https://twitter.com/elmland_) [![GitHub](https://badgen.net/badge/icon/github?icon=github&label&color=4078c0)](https://www.github.com/elm-land/elm-land) 
+[![Discord](https://badgen.net/badge/icon/discord?icon=discord&label&color=7289da)](https://join.elm.land) [![Twitter](https://badgen.net/badge/icon/twitter?icon=twitter&label&color=00acee)](https://twitter.com/elmland_) [![GitHub](https://badgen.net/badge/icon/github?icon=github&label&color=4078c0)](https://www.github.com/elm-land/elm-land) 
 
 [![Elm Land: Reliable web apps for everyone](https://github.com/elm-land/elm-land/raw/main/elm-land-banner.jpg)](https://elm.land)
 
@@ -8,7 +8,7 @@
 
 Although Elm Land is still a work-in-progress, please feel free to tinker around until the big `v1.0.0` release!
 
-If you're excited to try things out– come join the [Elm Land Discord](https://discord.gg/vnmYFfySbH) to get help or share your experience! 
+If you're excited to try things out– come join the [Elm Land Discord](https://join.elm.land) to get help or share your experience! 
 
 ## Installation
 

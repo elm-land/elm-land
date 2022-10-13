@@ -128,7 +128,7 @@ Let's quickly dive into more details for each of those values!
 
 Many successful open source projects are centered around GitHub. The Elm Land GitHub repo is a great place to find examples, browse source code, and see what's in progress.
 
-Whether it's sharing new feature ideas, giving feedback, or reporting bugs, everything should start with a conversation in the [offical Elm Land Discord server](https://discord.gg/vnmYFfySbH).
+Whether it's sharing new feature ideas, giving feedback, or reporting bugs, everything should start with a conversation in the [offical Elm Land Discord server](https://join.elm.land).
 
 ![A screenshot of the Discord server's channel list, with the "Beginners" channel currently selected. Section headers include: Learn, Contribute, Share results](/images/news/hello-world/discord.jpg)
 
@@ -154,6 +154,6 @@ Even though the framework is free to use, choosing Elm Land for your next projec
 
 ### Want to join the project?
 
-Reporting bugs, fixing documentation, adding features, and sharing your experience using Elm Land are _all_ forms of contribution. Hop in the `#welcome` channel of [the Elm Land Discord server](https://discord.gg/vnmYFfySbH) and introduce yourself– I'm excited to meet you!
+Reporting bugs, fixing documentation, adding features, and sharing your experience using Elm Land are _all_ forms of contribution. Hop in the `#welcome` channel of [the Elm Land Discord server](https://join.elm.land) and introduce yourself– I'm excited to meet you!
 
 We're all here to have a good time, build cool stuff, and make friends along the way. __Let's be mainstream!__
