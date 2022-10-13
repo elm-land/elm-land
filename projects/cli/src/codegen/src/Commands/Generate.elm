@@ -645,7 +645,7 @@ runWhenAuthenticatedDeclaration =
                                         , CodeGen.Expression.value "toCmd (Effect.pushRoute options)"
                                         ]
                               }
-                            , { name = "Auth.Action.OpenExternalUrl"
+                            , { name = "Auth.Action.LoadExternalUrl"
                               , arguments = [ CodeGen.Argument.new "externalUrl" ]
                               , expression =
                                     CodeGen.Expression.multilineTuple

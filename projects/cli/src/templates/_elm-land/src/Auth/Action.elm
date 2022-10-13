@@ -34,7 +34,7 @@ type Action user
         , query : Dict String String
         , hash : Maybe String
         }
-    | OpenExternalUrl String
+    | LoadExternalUrl String
 
 
 loadPageWithUser : user -> Action user
@@ -69,7 +69,7 @@ pushRoute =
 
 openExternalUrl : String -> Action user
 openExternalUrl =
-    OpenExternalUrl
+    LoadExternalUrl
 
 
 view : (user -> View msg) -> Action user -> View msg
@@ -87,7 +87,7 @@ view toView authAction =
         PushRoute _ ->
             View.none
 
-        OpenExternalUrl _ ->
+        LoadExternalUrl _ ->
             View.none
 
 
@@ -106,5 +106,5 @@ subscriptions toView authAction =
         PushRoute _ ->
             Sub.none
 
-        OpenExternalUrl _ ->
+        LoadExternalUrl _ ->
             Sub.none
