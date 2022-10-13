@@ -1,13 +1,15 @@
 module Auth.Action exposing
     ( Action(..)
-    , loadPageWithUser, pushRoute, replaceRoute, showLoadingPage
+    , loadPageWithUser, showLoadingPage
+    , replaceRoute, pushRoute, loadExternalUrl
     , view, subscriptions
     )
 
 {-|
 
 @docs Action
-@docs loadPageWithUser, pushRoute, replaceRoute, showLoadingPage
+@docs loadPageWithUser, showLoadingPage
+@docs replaceRoute, pushRoute, loadExternalUrl
 
 @docs view, subscriptions
 
@@ -23,6 +25,7 @@ import View exposing (View)
 
 type Action user
     = LoadPageWithUser user
+    | ShowLoadingPage (View Never)
     | ReplaceRoute
         { path : Route.Path.Path
         , query : Dict String String
@@ -33,12 +36,17 @@ type Action user
         , query : Dict String String
         , hash : Maybe String
         }
-    | ShowLoadingPage (View Never)
+    | LoadExternalUrl String
 
 
 loadPageWithUser : user -> Action user
 loadPageWithUser =
     LoadPageWithUser
+
+
+showLoadingPage : View Never -> Action user
+showLoadingPage =
+    ShowLoadingPage
 
 
 replaceRoute :
@@ -61,9 +69,9 @@ pushRoute =
     PushRoute
 
 
-showLoadingPage : View Never -> Action user
-showLoadingPage =
-    ShowLoadingPage
+loadExternalUrl : String -> Action user
+loadExternalUrl =
+    LoadExternalUrl
 
 
 view : (user -> View msg) -> Action user -> View msg
@@ -72,14 +80,17 @@ view toView authAction =
         LoadPageWithUser user ->
             toView user
 
+        ShowLoadingPage loadingView ->
+            View.map never loadingView
+
         ReplaceRoute _ ->
             View.none
 
         PushRoute _ ->
             View.none
 
-        ShowLoadingPage loadingView ->
-            View.map never loadingView
+        LoadExternalUrl _ ->
+            View.none
 
 
 subscriptions : (user -> Sub msg) -> Action user -> Sub msg
@@ -88,11 +99,14 @@ subscriptions toView authAction =
         LoadPageWithUser user ->
             toView user
 
+        ShowLoadingPage _ ->
+            Sub.none
+
         ReplaceRoute _ ->
             Sub.none
 
         PushRoute _ ->
             Sub.none
 
-        ShowLoadingPage _ ->
+        LoadExternalUrl _ ->
             Sub.none
