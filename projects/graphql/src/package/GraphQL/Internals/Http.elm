@@ -365,7 +365,7 @@ with key value (Input dict) =
 
 null : String -> Input -> Input
 null key (Input dict) =
-    Input (Dict.remove key dict)
+    Input (Dict.insert key Encode.null dict)
 
 
 encode : Input -> Json.Value
