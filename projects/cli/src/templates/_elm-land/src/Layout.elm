@@ -1,31 +1,28 @@
-module Page exposing
-    ( Page, new
+module Layout exposing
+    ( Layout, new
     , sandbox, element
-    , withLayout
-    , init, update, view, subscriptions, layout
+    , init, update, view, subscriptions
     )
 
 {-|
 
-@docs Page, new
+@docs Layout, new
 @docs sandbox, element
-@docs withLayout
-@docs init, update, view, subscriptions, layout
+
+@docs init, update, view, subscriptions
 
 -}
 
 import Effect exposing (Effect)
-import Layouts exposing (Layout)
 import View exposing (View)
 
 
-type Page model msg
-    = Page
+type Layout model msg mainMsg
+    = Layout
         { init : () -> ( model, Effect msg )
         , update : msg -> model -> ( model, Effect msg )
         , subscriptions : model -> Sub msg
-        , view : model -> View msg
-        , layout : Maybe Layout
+        , view : { model : model, toMainMsg : msg -> mainMsg, content : View mainMsg } -> View mainMsg
         }
 
 
@@ -33,37 +30,30 @@ new :
     { init : () -> ( model, Effect msg )
     , update : msg -> model -> ( model, Effect msg )
     , subscriptions : model -> Sub msg
-    , view : model -> View msg
+    , view : { model : model, toMainMsg : msg -> mainMsg, content : View mainMsg } -> View mainMsg
     }
-    -> Page model msg
+    -> Layout model msg mainMsg
 new options =
-    Page
+    Layout
         { init = options.init
         , update = options.update
         , subscriptions = options.subscriptions
         , view = options.view
-        , layout = Nothing
         }
-
-
-withLayout : Layout -> Page model msg -> Page model msg
-withLayout layout_ (Page page) =
-    Page { page | layout = Just layout_ }
 
 
 sandbox :
     { init : model
     , update : msg -> model -> model
-    , view : model -> View msg
+    , view : { model : model, toMainMsg : msg -> mainMsg, content : View mainMsg } -> View mainMsg
     }
-    -> Page model msg
+    -> Layout model msg mainMsg
 sandbox options =
-    Page
+    Layout
         { init = \_ -> ( options.init, Effect.none )
         , update = \msg model -> ( options.update msg model, Effect.none )
-        , subscriptions = \_ -> Sub.none
+        , subscriptions = \model -> Sub.none
         , view = options.view
-        , layout = Nothing
         }
 
 
@@ -71,11 +61,11 @@ element :
     { init : ( model, Cmd msg )
     , update : msg -> model -> ( model, Cmd msg )
     , subscriptions : model -> Sub msg
-    , view : model -> View msg
+    , view : { model : model, toMainMsg : msg -> mainMsg, content : View mainMsg } -> View mainMsg
     }
-    -> Page model msg
+    -> Layout model msg mainMsg
 element options =
-    Page
+    Layout
         { init =
             \_ ->
                 options.init
@@ -86,30 +76,27 @@ element options =
                     |> Tuple.mapSecond Effect.fromCmd
         , subscriptions = options.subscriptions
         , view = options.view
-        , layout = Nothing
         }
 
 
-init : Page model msg -> () -> ( model, Effect msg )
-init (Page page) =
+init : Layout model msg mainMsg -> () -> ( model, Effect msg )
+init (Layout page) =
     page.init
 
 
-update : Page model msg -> msg -> model -> ( model, Effect msg )
-update (Page page) =
+update : Layout model msg mainMsg -> msg -> model -> ( model, Effect msg )
+update (Layout page) =
     page.update
 
 
-view : Page model msg -> model -> View msg
-view (Page page) =
+view :
+    Layout model msg mainMsg
+    -> { model : model, toMainMsg : msg -> mainMsg, content : View mainMsg }
+    -> View mainMsg
+view (Layout page) =
     page.view
 
 
-subscriptions : Page model msg -> model -> Sub msg
-subscriptions (Page page) =
+subscriptions : Layout model msg mainMsg -> model -> Sub msg
+subscriptions (Layout page) =
     page.subscriptions
-
-
-layout : Page model msg -> Maybe Layouts.Layout
-layout (Page page) =
-    page.layout

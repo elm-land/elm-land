@@ -13,11 +13,13 @@ module View exposing
 -}
 
 import Browser
-import Html
+import Html exposing (Html)
 
 
 type alias View msg =
-    Browser.Document msg
+    { title : String 
+    , body : List (Html msg)
+    }
 
 
 {-| Used internally by Elm Land to create your application
@@ -25,10 +27,12 @@ so it works with Elm's expected `Browser.Document msg` type.
 -}
 toBrowserDocument : View msg -> Browser.Document msg
 toBrowserDocument view =
-    view
+    { title = view.title
+    , body = view.body
+    }
 
 
-{-| Used internally by Elm Land to wire up your pages together.
+{-| Used internally by Elm Land to connect your pages together.
 -}
 map : (msg1 -> msg2) -> View msg1 -> View msg2
 map fn view =

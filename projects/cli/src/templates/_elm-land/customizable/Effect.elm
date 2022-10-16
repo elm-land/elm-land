@@ -77,6 +77,8 @@ loadExternalUrl =
 -- TRANSFORMING EFFECTS
 
 
+{-| Elm Land needs this function to connect your pages and layouts together into one app
+-}
 map : (msg1 -> msg2) -> Effect msg1 -> Effect msg2
 map fn effect =
     case effect of
@@ -99,12 +101,14 @@ map fn effect =
             LoadExternalUrl url
 
 
-{-| ( Used by Elm Land internally )
+{-| Elm Land needs this function to actually perform your Effects
 -}
 toCmd :
     { key : Browser.Navigation.Key
+    , url : Url
+    , shared : sharedModel
     , fromSharedMsg : sharedMsg -> mainMsg
-    , fromPageMsg : msg -> mainMsg
+    , toMainMsg : msg -> mainMsg
     }
     -> Effect msg
     -> Cmd mainMsg
@@ -114,7 +118,7 @@ toCmd options effect =
             Cmd.none
 
         Cmd cmd ->
-            Cmd.map options.fromPageMsg cmd
+            Cmd.map options.toMainMsg cmd
 
         Batch list ->
             Cmd.batch (List.map (toCmd options) list)

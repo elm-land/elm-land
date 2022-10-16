@@ -3,6 +3,8 @@ module Filepath exposing
     , decoder
     , hasDynamicParameters
     , isNotFoundPage
+    , toLayoutModuleName
+    , toLayoutRouteVariant
     , toList
     , toPageModuleName
     , toParamsRecordAnnotation
@@ -163,3 +165,16 @@ toPageModuleName (Filepath list) =
 
     else
         "Pages." ++ String.join "." list
+
+
+toLayoutModuleName : Filepath -> String
+toLayoutModuleName (Filepath list) =
+    "Layouts." ++ String.join "." list
+
+
+toLayoutRouteVariant : Filepath -> ( String, List CodeGen.Annotation )
+toLayoutRouteVariant filepath =
+    ( toRouteVariantName filepath
+    , [ CodeGen.Annotation.type_ (toLayoutModuleName filepath ++ ".Settings")
+      ]
+    )

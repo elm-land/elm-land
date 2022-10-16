@@ -95,5 +95,5 @@ toString (Module options) =
                 ""
 
              else
-                "\n\n\n" ++ String.join "\n\n\n" (List.map CodeGen.Declaration.toString options.declarations)
+                "\n\n\n" ++ String.join "\n\n\n" (List.filterMap CodeGen.Declaration.toString options.declarations)
             )
