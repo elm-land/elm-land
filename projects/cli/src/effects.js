@@ -51,10 +51,9 @@ let runServer = async (options) => {
         config = JSON.parse(rawConfig)
         let result = await generateHtml(config)
 
-        if (config.app.options != oldConfig.app.options) {
-          //TODO: Why isn't this doing anything?
-          console.log("Regenerating due to option changes", config.app.options)
-          await generateElmLandFiles(config)
+        // We'll need a better way to check options that affect codegen eventually
+        if (config.app.options.useHashRouting != oldConfig.app.options.useHashRouting) {
+          await generateElmFiles(config)
         }
 
         let hadAnyEnvVarChanges = attemptToLoadEnvVariablesFromUserConfig(config)
@@ -143,7 +142,6 @@ let runServer = async (options) => {
 
 }
 
-//TODO: Re-run on config change?
 let generateElmFiles = async (config) => {
   try {
     let options = config.app.options
