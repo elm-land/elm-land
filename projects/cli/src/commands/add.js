@@ -22,6 +22,24 @@ let addNewLayout = (kind) => async ([name]) => {
   if (!inFolderWithElmLandJson) {
     return Promise.reject(Utils.notInElmLandProject)
   }
+  
+  // Capitalize the name if needed
+  if (name.match(/^[a-z]/)) {
+    name = name[0].toUpperCase() + name.slice(1);
+  }
+  
+  if (!name.match(/[A-Z][a-zA-Z0-9]*/)) {
+    return Promise.reject([
+      '',
+      Utils.intro.error('couldn\'t create a layout with that name'),
+      '    Layout names need to start with a letter, and can only contain letters and numbers',
+      '',
+      '    Here are some examples:',
+      '',
+      `    elm-land add ${kind === 'new' ? 'layout' : `layout:${kind}`} ${Terminal.pink(`Sidebar`)}`,
+      `    elm-land add ${kind === 'new' ? 'layout' : `layout:${kind}`} ${Terminal.pink(`HeaderWithTabs`)}`,
+    ].join('\n'))
+  }
 
   let [generatedFile] = await Codegen.addNewLayout({
     kind,
