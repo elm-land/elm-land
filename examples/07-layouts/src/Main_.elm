@@ -71,7 +71,7 @@ init json url key =
             Shared.init flagsResult (Route.fromUrl () url)
 
         { page, layout } =
-            initPage { key = key, url = url, shared = sharedModel }
+            initPageAndLayout { key = key, url = url, shared = sharedModel }
     in
     ( { url = url
       , key = key
@@ -100,8 +100,8 @@ initLayout model layout =
             )
 
 
-initPage : { key : Browser.Navigation.Key, url : Url, shared : Shared.Model } -> { page : ( PageModel, Cmd Msg ), layout : Maybe ( LayoutModel, Cmd Msg ) }
-initPage model =
+initPageAndLayout : { key : Browser.Navigation.Key, url : Url, shared : Shared.Model } -> { page : ( PageModel, Cmd Msg ), layout : Maybe ( LayoutModel, Cmd Msg ) }
+initPageAndLayout model =
     case Route.Path.fromUrl model.url of
         Route.Path.Authors ->
             let
@@ -146,10 +146,7 @@ initPage model =
             }
 
         Route.Path.NotFound_ ->
-            { page =
-                ( PageModelNotFound_
-                , Cmd.none
-                )
+            { page = ( PageModelNotFound_, Cmd.none )
             , layout = Nothing
             }
 
@@ -241,17 +238,21 @@ update msg model =
             else
                 let
                     { page, layout } =
-                        initPage { key = model.key, shared = model.shared, url = url }
+                        initPageAndLayout { key = model.key, shared = model.shared, url = url }
+
+                    ( pageModel, pageCmd ) =
+                        page
+
+                    ( layoutModel, layoutCmd ) =
+                        case layout of
+                            Just ( layoutModel, layoutCmd ) ->
+                                ( Just layoutModel, layoutCmd )
+
+                            Nothing ->
+                                ( Nothing, Cmd.none )
                 in
-                ( { model
-                    | url = url
-                    , page = Tuple.first page
-                    , layout = layout |> Maybe.map Tuple.first
-                  }
-                , Cmd.batch
-                    [ Tuple.second page
-                    , layout |> Maybe.map Tuple.second |> Maybe.withDefault Cmd.none
-                    ]
+                ( { model | url = url, page = pageModel, layout = layoutModel }
+                , Cmd.batch [ pageCmd, layoutCmd ]
                 )
 
         PageSent pageMsg ->
@@ -285,12 +286,15 @@ update msg model =
             case oldAction /= newAction of
                 True ->
                     let
-                        { page, layout } =
-                            initPage { key = model.key, shared = sharedModel, url = model.url }
+                        { page } =
+                            initPageAndLayout { key = model.key, shared = sharedModel, url = model.url }
+
+                        ( pageModel, pageCmd ) =
+                            page
                     in
-                    ( { model | shared = sharedModel, page = Tuple.first page }
+                    ( { model | shared = sharedModel, page = pageModel }
                     , Cmd.batch
-                        [ Tuple.second page
+                        [ pageCmd
                         , fromSharedEffect { model | shared = sharedModel } sharedEffect
                         ]
                     )
@@ -447,10 +451,7 @@ viewPage model =
 -- INTERNALS
 
 
-fromPageEffect :
-    { model | key : Browser.Navigation.Key, url : Url, shared : Shared.Model }
-    -> Effect PageMsg
-    -> Cmd Msg
+fromPageEffect : { model | key : Browser.Navigation.Key, url : Url, shared : Shared.Model } -> Effect PageMsg -> Cmd Msg
 fromPageEffect model effect =
     Effect.toCmd
         { key = model.key
@@ -462,10 +463,7 @@ fromPageEffect model effect =
         effect
 
 
-fromLayoutEffect :
-    { model | key : Browser.Navigation.Key, url : Url, shared : Shared.Model }
-    -> Effect LayoutMsg
-    -> Cmd Msg
+fromLayoutEffect : { model | key : Browser.Navigation.Key, url : Url, shared : Shared.Model } -> Effect LayoutMsg -> Cmd Msg
 fromLayoutEffect model effect =
     Effect.toCmd
         { key = model.key
@@ -477,10 +475,7 @@ fromLayoutEffect model effect =
         effect
 
 
-fromSharedEffect :
-    { model | key : Browser.Navigation.Key, url : Url, shared : Shared.Model }
-    -> Effect Shared.Msg
-    -> Cmd Msg
+fromSharedEffect : { model | key : Browser.Navigation.Key, url : Url, shared : Shared.Model } -> Effect Shared.Msg -> Cmd Msg
 fromSharedEffect model effect =
     Effect.toCmd
         { key = model.key

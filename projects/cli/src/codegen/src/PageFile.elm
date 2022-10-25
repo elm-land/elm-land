@@ -138,17 +138,8 @@ isSandboxOrElementElmLandPage (PageFile { contents }) =
                     Elm.Syntax.Node.value (Elm.Syntax.Node.value func.declaration).expression
             in
             if functionName == "page" then
-                case expression of
-                    Elm.Syntax.Expression.Application (node :: _) ->
-                        case Elm.Syntax.Node.value node of
-                            Elm.Syntax.Expression.FunctionOrValue [ "Page" ] name ->
-                                name == "sandbox" || name == "element"
-
-                            _ ->
-                                False
-
-                    _ ->
-                        False
+                expressionCouldReturn [ "Page" ] "sandbox" expression
+                    || expressionCouldReturn [ "Page" ] "element" expression
 
             else
                 False
@@ -194,17 +185,7 @@ isAdvancedElmLandPage (PageFile { contents }) =
                     Elm.Syntax.Node.value (Elm.Syntax.Node.value func.declaration).expression
             in
             if functionName == "page" then
-                case expression of
-                    Elm.Syntax.Expression.Application (node :: _) ->
-                        case Elm.Syntax.Node.value node of
-                            Elm.Syntax.Expression.FunctionOrValue [ "Page" ] "new" ->
-                                True
-
-                            _ ->
-                                False
-
-                    _ ->
-                        False
+                expressionCouldReturn [ "Page" ] "new" expression
 
             else
                 False
@@ -215,6 +196,150 @@ isAdvancedElmLandPage (PageFile { contents }) =
         |> Result.toMaybe
         |> Maybe.map isElmLandPageFromFile
         |> Maybe.withDefault False
+
+
+{-| Elm Land detects if you are using "Page.new", "Page.sandbox", or regular "Html" to
+reduce the impact of the learning curve.
+
+Beginners should see this signature:
+
+    page : Html msg
+    page =
+        ...
+
+While folks learning about state or side effects should see this signature:
+
+    page : Page Model Msg
+    page =
+        ...
+
+Only when they understand the basic building blocks will they see all of this:
+
+    page : Shared.Model -> Route () -> Page Model Msg
+    page =
+        ...
+
+This function recursively searches the expression for their "page" function, because they might
+need to use a `let/in` expression, conditional, or use pipelines / function application to
+provide a `Page.withLayout` around the `Page.new`
+
+-}
+expressionCouldReturn : List String -> String -> Elm.Syntax.Expression.Expression -> Bool
+expressionCouldReturn modulePath functionName expression =
+    case expression of
+        Elm.Syntax.Expression.UnitExpr ->
+            False
+
+        Elm.Syntax.Expression.Application nodes ->
+            --(List (Node Expression)) ->
+            nodes
+                |> List.map Elm.Syntax.Node.value
+                |> List.any (expressionCouldReturn modulePath functionName)
+
+        Elm.Syntax.Expression.OperatorApplication _ _ left right ->
+            -- String InfixDirection (Node Expression) (Node Expression) ->
+            [ left, right ]
+                |> List.map Elm.Syntax.Node.value
+                |> List.any (expressionCouldReturn modulePath functionName)
+
+        Elm.Syntax.Expression.FunctionOrValue foundModulePath foundFunctionName ->
+            --ModuleName String ->
+            foundModulePath == modulePath && foundFunctionName == functionName
+
+        Elm.Syntax.Expression.IfBlock _ whenTrue whenFalse ->
+            [ whenTrue, whenFalse ]
+                |> List.map Elm.Syntax.Node.value
+                |> List.any (expressionCouldReturn modulePath functionName)
+
+        Elm.Syntax.Expression.PrefixOperator _ ->
+            False
+
+        Elm.Syntax.Expression.Operator _ ->
+            False
+
+        Elm.Syntax.Expression.Integer _ ->
+            False
+
+        Elm.Syntax.Expression.Hex _ ->
+            False
+
+        Elm.Syntax.Expression.Floatable _ ->
+            False
+
+        Elm.Syntax.Expression.Negation node ->
+            False
+
+        Elm.Syntax.Expression.Literal _ ->
+            False
+
+        Elm.Syntax.Expression.CharLiteral _ ->
+            False
+
+        Elm.Syntax.Expression.TupledExpression nodes ->
+            nodes
+                |> List.map Elm.Syntax.Node.value
+                |> List.any (expressionCouldReturn modulePath functionName)
+
+        Elm.Syntax.Expression.ParenthesizedExpression node ->
+            node
+                |> Elm.Syntax.Node.value
+                |> expressionCouldReturn modulePath functionName
+
+        Elm.Syntax.Expression.LetExpression letInBlock ->
+            letInBlock.expression
+                :: List.map fromLetDeclarationToExpression letInBlock.declarations
+                |> List.map Elm.Syntax.Node.value
+                |> List.any (expressionCouldReturn modulePath functionName)
+
+        Elm.Syntax.Expression.CaseExpression caseBlock ->
+            caseBlock.cases
+                |> List.map Tuple.second
+                |> List.map Elm.Syntax.Node.value
+                |> List.any (expressionCouldReturn modulePath functionName)
+
+        Elm.Syntax.Expression.LambdaExpression lambda ->
+            lambda.expression
+                |> Elm.Syntax.Node.value
+                |> expressionCouldReturn modulePath functionName
+
+        Elm.Syntax.Expression.RecordExpr _ ->
+            False
+
+        Elm.Syntax.Expression.ListExpr nodes ->
+            False
+
+        Elm.Syntax.Expression.RecordAccess node _ ->
+            False
+
+        Elm.Syntax.Expression.RecordAccessFunction _ ->
+            False
+
+        Elm.Syntax.Expression.RecordUpdateExpression _ _ ->
+            False
+
+        Elm.Syntax.Expression.GLSLExpression _ ->
+            False
+
+
+fromLetDeclarationToExpression :
+    Elm.Syntax.Node.Node Elm.Syntax.Expression.LetDeclaration
+    -> Elm.Syntax.Node.Node Elm.Syntax.Expression.Expression
+fromLetDeclarationToExpression letDeclarationNode =
+    case Elm.Syntax.Node.value letDeclarationNode of
+        Elm.Syntax.Expression.LetFunction function ->
+            fromFunctionToExpression function
+
+        Elm.Syntax.Expression.LetDestructuring _ node ->
+            node
+
+
+fromFunctionToExpression :
+    Elm.Syntax.Expression.Function
+    -> Elm.Syntax.Node.Node Elm.Syntax.Expression.Expression
+fromFunctionToExpression function =
+    function.declaration
+        |> Elm.Syntax.Node.value
+        |> .expression
 
 
 isAuthProtectedPage : PageFile -> Bool
