@@ -18,16 +18,19 @@ let run = async () => {
   }
 
   let port = process.env.PORT || 1234
+  let host = process.env.HOST || '0.0.0.0'
+
+  let formattedHost = host === '0.0.0.0' ? 'localhost' : host
 
   return {
     message: ({ port }) => [
       '',
-      Utils.intro.success(`is ready at http://localhost:${port}`)
+      Utils.intro.success(`is ready at http://${formattedHost}:${port}`)
     ].join('\n'),
     files: [],
     effects: [
       { kind: 'generateHtml', config },
-      { kind: 'runServer', options: { port: port } }
+      { kind: 'runServer', options: { host, port } }
     ]
   }
 }
