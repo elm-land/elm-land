@@ -112,6 +112,7 @@ let runServer = async (options) => {
       root: path.join(process.cwd(), '.elm-land', 'server'),
       publicDir: path.join(process.cwd(), 'static'),
       server: {
+        host: '0.0.0.0',
         port: options.port,
         fs: { allow: ['../..'] }
       },
