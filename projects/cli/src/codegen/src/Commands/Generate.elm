@@ -1421,14 +1421,10 @@ routeElmModule data =
                                     { name = "Route.Path.toString"
                                     , arguments = [ CodeGen.Expression.value "route.path" ]
                                     }
-                                , CodeGen.Expression.pipeline
-                                    [ CodeGen.Expression.value "route.query"
-                                    , CodeGen.Expression.value "Route.Query.toString"
-                                    , CodeGen.Expression.function
-                                        { name = "Maybe.withDefault"
-                                        , arguments = [ CodeGen.Expression.string "" ]
-                                        }
-                                    ]
+                                , CodeGen.Expression.function
+                                    { name = "Route.Query.toString"
+                                    , arguments = [ CodeGen.Expression.value "route.query" ]
+                                    }
                                 , CodeGen.Expression.pipeline
                                     [ CodeGen.Expression.value "route.hash"
                                     , CodeGen.Expression.function
@@ -1657,6 +1653,8 @@ routeQueryElmModule data =
                         |> CodeGen.Import.withExposing [ "Url" ]
                   , CodeGen.Import.new [ "Url.Parser" ]
                         |> CodeGen.Import.withExposing [ "query" ]
+                  , CodeGen.Import.new [ "Url.Builder" ]
+                        |> CodeGen.Import.withExposing [ "QueryParameter" ]
                   ]
                 , if data.options.useHashRouting then
                     [ CodeGen.Import.new [ "HashRouting" ] ]
@@ -1813,75 +1811,35 @@ routeQueryElmModule data =
                             [ CodeGen.Annotation.string
                             , CodeGen.Annotation.string
                             ]
-                        , CodeGen.Annotation.genericType "Maybe"
-                            [ CodeGen.Annotation.string ]
+                        , CodeGen.Annotation.string
                         ]
                 , arguments = [ CodeGen.Argument.new "queryParameterList" ]
                 , expression =
-                    CodeGen.Expression.ifElse
-                        { condition =
-                            CodeGen.Expression.function
-                                { name = "Dict.isEmpty"
-                                , arguments = [ CodeGen.Expression.value "queryParameterList" ]
-                                }
-                        , ifBranch = CodeGen.Expression.value "Nothing"
-                        , elseBranch =
-                            CodeGen.Expression.pipeline
-                                [ CodeGen.Expression.value "queryParameterList"
-                                , CodeGen.Expression.function { name = "Dict.toList", arguments = [] }
-                                , CodeGen.Expression.function
-                                    { name = "List.map"
-                                    , arguments = [ CodeGen.Expression.value "tupleToQueryPiece" ]
-                                    }
-                                , CodeGen.Expression.function
-                                    { name = "String.join"
-                                    , arguments = [ CodeGen.Expression.string "&" ]
-                                    }
-                                , CodeGen.Expression.function
-                                    { name = "String.append"
-                                    , arguments = [ CodeGen.Expression.string "?" ]
-                                    }
-                                , CodeGen.Expression.value "Just"
-                                ]
-                        }
+                    CodeGen.Expression.pipeline
+                        [ CodeGen.Expression.value "queryParameterList"
+                        , CodeGen.Expression.function { name = "Dict.toList", arguments = [] }
+                        , CodeGen.Expression.function
+                            { name = "List.map"
+                            , arguments = [ CodeGen.Expression.value "tupleToQueryPiece" ]
+                            }
+                        , CodeGen.Expression.function
+                            { name = "Url.Builder.toQuery"
+                            , arguments = []
+                            }
+                        ]
                 }
             , CodeGen.Declaration.function
                 { name = "tupleToQueryPiece"
                 , annotation =
                     CodeGen.Annotation.function
                         [ CodeGen.Annotation.type_ "(String, String)"
-                        , CodeGen.Annotation.type_ "String"
+                        , CodeGen.Annotation.type_ "QueryParameter"
                         ]
                 , arguments = [ CodeGen.Argument.new "( key, value )" ]
                 , expression =
-                    CodeGen.Expression.ifElse
-                        { condition =
-                            CodeGen.Expression.function
-                                { name = "String.isEmpty"
-                                , arguments = [ CodeGen.Expression.value "value" ]
-                                }
-                        , ifBranch =
-                            CodeGen.Expression.function
-                                { name = "Url.percentEncode"
-                                , arguments = [ CodeGen.Expression.value "key" ]
-                                }
-                        , elseBranch =
-                            CodeGen.Expression.function
-                                { name = "String.join"
-                                , arguments =
-                                    [ CodeGen.Expression.string "="
-                                    , CodeGen.Expression.list
-                                        [ CodeGen.Expression.function
-                                            { name = "Url.percentEncode"
-                                            , arguments = [ CodeGen.Expression.value "key" ]
-                                            }
-                                        , CodeGen.Expression.function
-                                            { name = "Url.percentEncode"
-                                            , arguments = [ CodeGen.Expression.value "value" ]
-                                            }
-                                        ]
-                                    ]
-                                }
+                    CodeGen.Expression.function
+                        { name = "Url.Builder.string"
+                        , arguments = [ CodeGen.Expression.value "key", CodeGen.Expression.value "value" ]
                         }
                 }
             ]
