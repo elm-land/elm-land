@@ -1,4 +1,4 @@
-module Main exposing (main)
+module Main_ exposing (main)
 
 import Auth
 import Auth.Action
@@ -245,8 +245,8 @@ update msg model =
 
                     ( layoutModel, layoutCmd ) =
                         case layout of
-                            Just ( layoutModel, layoutCmd ) ->
-                                ( Just layoutModel, layoutCmd )
+                            Just ( layoutModel_, layoutCmd_ ) ->
+                                ( Just layoutModel_, layoutCmd_ )
 
                             Nothing ->
                                 ( Nothing, Cmd.none )
@@ -409,7 +409,8 @@ view : Model -> View Msg
 view model =
     case model.layout of
         Just (LayoutModelSidebar layout) ->
-            Layout.view (Layouts.Sidebar.layout layout.settings model.shared (Route.fromUrl () model.url))
+            Layout.view
+                (Layouts.Sidebar.layout layout.settings model.shared (Route.fromUrl () model.url))
                 { model = layout.model
                 , toMainMsg = Msg_LayoutSidebar >> LayoutSent
                 , content = viewPage model

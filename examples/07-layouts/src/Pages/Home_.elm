@@ -17,11 +17,7 @@ page shared route =
         , subscriptions = subscriptions
         , view = view
         }
-        |> Page.withLayout
-            (Layouts.Sidebar
-                { title = "Dashboard"
-                }
-            )
+        |> Page.withLayout (Layouts.Sidebar ())
 
 
 

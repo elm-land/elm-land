@@ -17,16 +17,10 @@ run : Json.Decode.Value -> List CodeGen.Module
 run json =
     case Json.Decode.decodeValue decoder json of
         Ok data ->
-            List.concat
-                [ [ mainElmModule data
-                  , routePathElmModule data
-                  ]
-                , if List.isEmpty data.layouts then
-                    []
-
-                  else
-                    [ layoutsElmModule data ]
-                ]
+            [ mainElmModule data
+            , routePathElmModule data
+            , layoutsElmModule data
+            ]
 
         Err _ ->
             []
@@ -255,10 +249,17 @@ mainElmModule data =
                 { name = "PageMsg"
                 , variants = toPageMsgCustomType data.pages
                 }
-            , CodeGen.Declaration.customType
-                { name = "LayoutMsg"
-                , variants = toLayoutMsgCustomType data.layouts
-                }
+            , if List.isEmpty data.layouts then
+                CodeGen.Declaration.typeAlias
+                    { name = "LayoutMsg"
+                    , annotation = CodeGen.Annotation.type_ "Never"
+                    }
+
+              else
+                CodeGen.Declaration.customType
+                    { name = "LayoutMsg"
+                    , variants = toLayoutMsgCustomType data.layouts
+                    }
             , CodeGen.Declaration.function
                 { name = "update"
                 , annotation =
@@ -340,8 +341,8 @@ mainElmModule data =
                                                                 { value = CodeGen.Argument.new "layout"
                                                                 , branches =
                                                                     [ { name = "Just"
-                                                                      , arguments = [ CodeGen.Argument.new "( layoutModel, layoutCmd )" ]
-                                                                      , expression = CodeGen.Expression.value "( Just layoutModel, layoutCmd )"
+                                                                      , arguments = [ CodeGen.Argument.new "( layoutModel_, layoutCmd_ )" ]
+                                                                      , expression = CodeGen.Expression.value "( Just layoutModel_, layoutCmd_ )"
                                                                       }
                                                                     , { name = "Nothing"
                                                                       , arguments = []
@@ -576,7 +577,17 @@ mainElmModule data =
                         , CodeGen.Annotation.type_ "View Msg"
                         ]
                 , arguments = [ CodeGen.Argument.new "model" ]
-                , expression = toViewCaseExpression data.pages
+                , expression = toViewCaseExpression data.layouts
+                }
+            , CodeGen.Declaration.function
+                { name = "viewPage"
+                , annotation =
+                    CodeGen.Annotation.function
+                        [ CodeGen.Annotation.type_ "Model"
+                        , CodeGen.Annotation.type_ "View Msg"
+                        ]
+                , arguments = [ CodeGen.Argument.new "model" ]
+                , expression = toViewPageCaseExpression data.pages
                 }
             , CodeGen.Declaration.comment [ "INTERNALS" ]
             , fromEffectDeclaration
@@ -808,25 +819,62 @@ runWhenAuthenticatedDeclaration =
         }
 
 
-toViewCaseExpression : List PageFile -> CodeGen.Expression
-toViewCaseExpression pages =
+toViewCaseExpression : List Filepath -> CodeGen.Expression
+toViewCaseExpression layouts =
     let
-        conditionallyWrapInLayout : PageFile -> CodeGen.Expression -> CodeGen.Expression
-        conditionallyWrapInLayout page pageExpression =
-            case PageFile.toLayoutName page of
-                Just layoutName ->
-                    CodeGen.Expression.multilineFunction
-                        { name = "Layouts." ++ layoutName ++ ".layout"
-                        , arguments =
-                            [ CodeGen.Expression.multilineRecord
-                                [ ( "page", pageExpression )
-                                ]
+        toViewBranch : Filepath -> CodeGen.Expression.Branch
+        toViewBranch filepath =
+            { name = "Just"
+            , arguments =
+                [ CodeGen.Argument.new
+                    ("(LayoutModel{{name}} layout)"
+                        |> String.replace "{{name}}" (Filepath.toRouteVariantName filepath)
+                    )
+                ]
+            , expression =
+                CodeGen.Expression.multilineFunction
+                    { name = "Layout.view"
+                    , arguments =
+                        [ CodeGen.Expression.parens
+                            [ CodeGen.Expression.function
+                                { name = Filepath.toLayoutModuleName filepath ++ ".layout"
+                                , arguments =
+                                    [ CodeGen.Expression.value "layout.settings model.shared (Route.fromUrl () model.url)"
+                                    ]
+                                }
                             ]
-                        }
+                        , CodeGen.Expression.multilineRecord
+                            [ ( "model", CodeGen.Expression.value "layout.model" )
+                            , ( "toMainMsg"
+                              , "Msg_Layout{{name}} >> LayoutSent"
+                                    |> String.replace "{{name}}" (Filepath.toRouteVariantName filepath)
+                                    |> CodeGen.Expression.value
+                              )
+                            , ( "content", CodeGen.Expression.value "viewPage model" )
+                            ]
+                        ]
+                    }
+            }
+    in
+    if List.isEmpty layouts then
+        CodeGen.Expression.value "viewPage model"
 
-                Nothing ->
-                    pageExpression
+    else
+        CodeGen.Expression.caseExpression
+            { value = CodeGen.Argument.new "model.layout"
+            , branches =
+                List.map toViewBranch layouts
+                    ++ [ { name = "Nothing"
+                         , arguments = []
+                         , expression = CodeGen.Expression.value "viewPage model"
+                         }
+                       ]
+            }
 
+
+toViewPageCaseExpression : List PageFile -> CodeGen.Expression
+toViewPageCaseExpression pages =
+    let
         toViewBranch : PageFile -> CodeGen.Expression.Branch
         toViewBranch page =
             let
@@ -856,7 +904,6 @@ toViewCaseExpression pages =
                     , mapper = "View.map"
                     }
                     |> conditionallyWrapInAuthView page
-                    |> conditionallyWrapInLayout page
             }
 
         conditionallyWrapInAuthView : PageFile -> CodeGen.Expression -> CodeGen.Expression
@@ -885,7 +932,6 @@ toViewCaseExpression pages =
             , expression =
                 callSandboxOrElementPageFunction page filepath
                     |> conditionallyWrapInAuthView page
-                    |> conditionallyWrapInLayout page
             }
     in
     CodeGen.Expression.caseExpression
@@ -1807,12 +1853,19 @@ layoutsElmModule data =
         , exposing_ = [ "Layout(..)" ]
         , imports = List.map toLayoutImport data.layouts
         , declarations =
-            [ CodeGen.Declaration.customType
-                { name = "Layout"
-                , variants =
-                    data.layouts
-                        |> List.map Filepath.toLayoutRouteVariant
-                }
+            [ if List.isEmpty data.layouts then
+                CodeGen.Declaration.typeAlias
+                    { name = "Layout"
+                    , annotation = CodeGen.Annotation.type_ "Never"
+                    }
+
+              else
+                CodeGen.Declaration.customType
+                    { name = "Layout"
+                    , variants =
+                        data.layouts
+                            |> List.map Filepath.toLayoutRouteVariant
+                    }
             ]
         }
 

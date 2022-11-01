@@ -18,10 +18,7 @@ page shared route =
         , view = view
         }
         |> Page.withLayout
-            (Layouts.Sidebar
-                { title = "Blog posts"
-                }
-            )
+            (Layouts.Sidebar ())
 
 
 

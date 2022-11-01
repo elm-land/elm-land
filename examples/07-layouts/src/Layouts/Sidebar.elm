@@ -8,13 +8,13 @@ import Html.Events
 import Http
 import Layout exposing (Layout)
 import Route exposing (Route)
+import Route.Path
 import Shared
 import View exposing (View)
 
 
 type alias Settings =
-    { title : String
-    }
+    ()
 
 
 layout :
@@ -123,7 +123,9 @@ view settings { toMainMsg, model, content } =
 viewNavbar : Settings -> Model -> Html Msg
 viewNavbar settings model =
     header [ class "navbar" ]
-        [ a [ href "/" ] [ text settings.title ]
+        [ a [ Route.Path.href Route.Path.Home_ ] [ text "Dashboard" ]
+        , a [ Route.Path.href Route.Path.Authors ] [ text "Authors" ]
+        , a [ Route.Path.href Route.Path.BlogPosts ] [ text "Posts" ]
         , form [ Html.Events.onSubmit UserSubmittedSearchForm ]
             [ input
                 [ type_ "search"
@@ -133,6 +135,29 @@ viewNavbar settings model =
                 []
             , button [ type_ "submit" ] [ text "Search" ]
             ]
+        , case model.results of
+            NotAsked ->
+                Html.text ""
+
+            Loading ->
+                Html.text ""
+
+            Success [] ->
+                Html.ul [] [ Html.text "No results found." ]
+
+            Success items ->
+                Html.ul [] (List.map viewSearchResultItem items)
+
+            Failure httpError ->
+                Html.text "Something went wrong..."
+        ]
+
+
+viewSearchResultItem : Api.Search.Item -> Html msg
+viewSearchResultItem item =
+    Html.li []
+        [ Html.a [ Route.Path.href item.path ]
+            [ Html.text item.label ]
         ]
 
 
