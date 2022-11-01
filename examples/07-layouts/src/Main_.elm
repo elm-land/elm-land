@@ -1,4 +1,4 @@
-module Main_ exposing (main)
+module Main exposing (main)
 
 import Auth
 import Auth.Action
@@ -71,7 +71,7 @@ init json url key =
             Shared.init flagsResult (Route.fromUrl () url)
 
         { page, layout } =
-            initPageAndLayout { key = key, url = url, shared = sharedModel }
+            initPageAndLayout { key = key, url = url, shared = sharedModel, layout = Nothing }
     in
     ( { url = url
       , key = key
@@ -87,10 +87,15 @@ init json url key =
     )
 
 
-initLayout : { key : Browser.Navigation.Key, url : Url, shared : Shared.Model } -> Layouts.Layout -> ( LayoutModel, Cmd Msg )
+initLayout : { key : Browser.Navigation.Key, url : Url, shared : Shared.Model, layout : Maybe LayoutModel } -> Layouts.Layout -> ( LayoutModel, Cmd Msg )
 initLayout model layout =
-    case layout of
-        Layouts.Sidebar settings ->
+    case ( model.layout, layout ) of
+        ( Just (LayoutModelSidebar existing), Layouts.Sidebar settings ) ->
+            ( LayoutModelSidebar { settings = settings, model = existing.model }
+            , Cmd.none
+            )
+
+        ( _, Layouts.Sidebar settings ) ->
             let
                 ( layoutModel, layoutCmd ) =
                     Layout.init (Layouts.Sidebar.layout settings model.shared (Route.fromUrl () model.url)) ()
@@ -100,7 +105,7 @@ initLayout model layout =
             )
 
 
-initPageAndLayout : { key : Browser.Navigation.Key, url : Url, shared : Shared.Model } -> { page : ( PageModel, Cmd Msg ), layout : Maybe ( LayoutModel, Cmd Msg ) }
+initPageAndLayout : { key : Browser.Navigation.Key, url : Url, shared : Shared.Model, layout : Maybe LayoutModel } -> { page : ( PageModel, Cmd Msg ), layout : Maybe ( LayoutModel, Cmd Msg ) }
 initPageAndLayout model =
     case Route.Path.fromUrl model.url of
         Route.Path.Authors ->
@@ -238,7 +243,7 @@ update msg model =
             else
                 let
                     { page, layout } =
-                        initPageAndLayout { key = model.key, shared = model.shared, url = url }
+                        initPageAndLayout { key = model.key, shared = model.shared, url = url, layout = model.layout }
 
                     ( pageModel, pageCmd ) =
                         page
@@ -287,7 +292,7 @@ update msg model =
                 True ->
                     let
                         { page } =
-                            initPageAndLayout { key = model.key, shared = sharedModel, url = model.url }
+                            initPageAndLayout { key = model.key, shared = sharedModel, url = model.url, layout = model.layout }
 
                         ( pageModel, pageCmd ) =
                             page

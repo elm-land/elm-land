@@ -167,6 +167,7 @@ mainElmModule data =
                                                 [ ( "key", CodeGen.Expression.value "key" )
                                                 , ( "url", CodeGen.Expression.value "url" )
                                                 , ( "shared", CodeGen.Expression.value "sharedModel" )
+                                                , ( "layout", CodeGen.Expression.value "Nothing" )
                                                 ]
                                             ]
                                         }
@@ -212,6 +213,7 @@ mainElmModule data =
                                 [ ( "key", CodeGen.Annotation.type_ "Browser.Navigation.Key" )
                                 , ( "url", CodeGen.Annotation.type_ "Url" )
                                 , ( "shared", CodeGen.Annotation.type_ "Shared.Model" )
+                                , ( "layout", CodeGen.Annotation.type_ "Maybe LayoutModel" )
                                 ]
                             , CodeGen.Annotation.type_ "Layouts.Layout"
                             , CodeGen.Annotation.type_ "( LayoutModel, Cmd Msg )"
@@ -227,6 +229,7 @@ mainElmModule data =
                             [ ( "key", CodeGen.Annotation.type_ "Browser.Navigation.Key" )
                             , ( "url", CodeGen.Annotation.type_ "Url" )
                             , ( "shared", CodeGen.Annotation.type_ "Shared.Model" )
+                            , ( "layout", CodeGen.Annotation.type_ "Maybe LayoutModel" )
                             ]
                         , CodeGen.Annotation.type_ "{ page : ( PageModel, Cmd Msg ), layout : Maybe ( LayoutModel, Cmd Msg ) }"
                         ]
@@ -325,6 +328,7 @@ mainElmModule data =
                                                                     [ CodeGen.Expression.record
                                                                         [ ( "key", CodeGen.Expression.value "model.key" )
                                                                         , ( "shared", CodeGen.Expression.value "model.shared" )
+                                                                        , ( "layout", CodeGen.Expression.value "model.layout" )
                                                                         , ( "url", CodeGen.Expression.value "url" )
                                                                         ]
                                                                     ]
@@ -456,7 +460,7 @@ mainElmModule data =
                                                                     [ { argument = CodeGen.Argument.new "{ page }"
                                                                       , annotation = Nothing
                                                                       , expression =
-                                                                            CodeGen.Expression.value "initPageAndLayout { key = model.key, shared = sharedModel, url = model.url }"
+                                                                            CodeGen.Expression.value "initPageAndLayout { key = model.key, shared = sharedModel, url = model.url, layout = model.layout }"
                                                                       }
                                                                     , { argument = CodeGen.Argument.new "( pageModel, pageCmd )"
                                                                       , annotation = Nothing
@@ -1317,7 +1321,7 @@ toSubscriptionLayoutCaseExpression layouts =
 toInitLayoutCaseExpression : List Filepath -> CodeGen.Expression.Expression
 toInitLayoutCaseExpression layouts =
     let
-        toBranch : Filepath -> CodeGen.Expression.Branch
+        toBranch : Filepath -> List CodeGen.Expression.Branch
         toBranch filepath =
             let
                 moduleName : String
@@ -1331,45 +1335,65 @@ toInitLayoutCaseExpression layouts =
                 msgVariantName : String
                 msgVariantName =
                     "Msg_Layout" ++ Filepath.toRouteVariantName filepath
-            in
-            { name = moduleName
-            , arguments = [ CodeGen.Argument.new "settings" ]
-            , expression =
-                CodeGen.Expression.letIn
-                    { let_ =
-                        [ { argument = CodeGen.Argument.new "( layoutModel, layoutCmd )"
-                          , annotation = Nothing
-                          , expression =
-                                CodeGen.Expression.function
-                                    { name = "Layout.init"
-                                    , arguments =
-                                        [ CodeGen.Expression.parens
-                                            [ CodeGen.Expression.function
-                                                { name = moduleName ++ ".layout"
-                                                , arguments =
-                                                    [ CodeGen.Expression.value "settings model.shared (Route.fromUrl () model.url)"
-                                                    ]
-                                                }
+
+                initLayoutBranchExpression : CodeGen.Expression
+                initLayoutBranchExpression =
+                    CodeGen.Expression.letIn
+                        { let_ =
+                            [ { argument = CodeGen.Argument.new "( layoutModel, layoutCmd )"
+                              , annotation = Nothing
+                              , expression =
+                                    CodeGen.Expression.function
+                                        { name = "Layout.init"
+                                        , arguments =
+                                            [ CodeGen.Expression.parens
+                                                [ CodeGen.Expression.function
+                                                    { name = moduleName ++ ".layout"
+                                                    , arguments =
+                                                        [ CodeGen.Expression.value "settings model.shared (Route.fromUrl () model.url)"
+                                                        ]
+                                                    }
+                                                ]
+                                            , CodeGen.Expression.tuple []
                                             ]
-                                        , CodeGen.Expression.tuple []
-                                        ]
-                                    }
-                          }
-                        ]
-                    , in_ =
-                        CodeGen.Expression.multilineTuple
-                            [ CodeGen.Expression.function
-                                { name = modelVariantName
-                                , arguments = [ CodeGen.Expression.value "{ settings = settings, model = layoutModel }" ]
-                                }
-                            , CodeGen.Expression.value ("fromLayoutEffect model (Effect.map " ++ msgVariantName ++ " layoutCmd)")
+                                        }
+                              }
                             ]
-                    }
-            }
+                        , in_ =
+                            CodeGen.Expression.multilineTuple
+                                [ CodeGen.Expression.function
+                                    { name = modelVariantName
+                                    , arguments = [ CodeGen.Expression.value "{ settings = settings, model = layoutModel }" ]
+                                    }
+                                , CodeGen.Expression.value ("fromLayoutEffect model (Effect.map " ++ msgVariantName ++ " layoutCmd)")
+                                ]
+                        }
+
+                reuseExistingBranchExpression : CodeGen.Expression
+                reuseExistingBranchExpression =
+                    CodeGen.Expression.multilineTuple
+                        [ "{{modelVariantName}} { settings = settings, model = existing.model }"
+                            |> String.replace "{{modelVariantName}}" modelVariantName
+                            |> CodeGen.Expression.value
+                        , CodeGen.Expression.value "Cmd.none"
+                        ]
+            in
+            [ { name =
+                    "( Just ({{modelVariantName}} existing), {{moduleName}} settings )"
+                        |> String.replace "{{moduleName}}" moduleName
+                        |> String.replace "{{modelVariantName}}" modelVariantName
+              , arguments = []
+              , expression = reuseExistingBranchExpression
+              }
+            , { name = "( _, {{moduleName}} settings )" |> String.replace "{{moduleName}}" moduleName
+              , arguments = []
+              , expression = initLayoutBranchExpression
+              }
+            ]
     in
     CodeGen.Expression.caseExpression
-        { value = CodeGen.Argument.new "layout"
-        , branches = List.map toBranch layouts
+        { value = CodeGen.Argument.new "( model.layout, layout )"
+        , branches = List.concatMap toBranch layouts
         }
 
 
