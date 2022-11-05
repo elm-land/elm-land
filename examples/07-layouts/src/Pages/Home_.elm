@@ -17,7 +17,12 @@ page shared route =
         , subscriptions = subscriptions
         , view = view
         }
-        |> Page.withLayout (Layouts.Sidebar ())
+        |> Page.withLayout
+            (Layouts.Sidebar__WithHeader
+                { sidebar = ()
+                , withHeader = ()
+                }
+            )
 
 
 

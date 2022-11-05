@@ -41,17 +41,67 @@ decoder =
 
 {-|
 
-    module Layouts.Sidebar exposing (layout)
+    module Layouts.Header exposing (Model, Msg, Settings, layout)
 
-    import Html exposing (Html)
-    import Html.Attributes as Attr
+    import Effect exposing (Effect)
+    import Html exposing (..)
+    import Html.Attributes exposing (class)
+    import Layout exposing (Layout)
+    import Route exposing (Route)
+    import Shared
     import View exposing (View)
 
-    layout : { page : View msg } -> View msg
-    layout { page } =
-        { title = page.title
+    type alias Settings =
+        ()
+
+    layout : Settings -> Shared.Model -> Route () -> Layout Model Msg mainMsg
+    layout settings shared route =
+        Layout.new
+            { init = init
+            , update = update
+            , view = view
+            , subscriptions = subscriptions
+            }
+
+    -- INIT
+    type alias Model =
+        {}
+
+    init : () -> ( Model, Effect Msg )
+    init _ =
+        ( {}
+        , Effect.none
+        )
+
+    -- UPDATE
+    type Msg
+        = ReplaceMe
+
+    update : Msg -> Model -> ( Model, Effect Msg )
+    update msg model =
+        case msg of
+            ReplaceMe ->
+                ( model
+                , Effect.none
+                )
+
+    -- SUBSCRIPTIONS
+    subscriptions : Model -> Sub Msg
+    subscriptions model =
+        Sub.none
+
+    -- VIEW
+    view :
+        { toMainMsg : Msg -> mainMsg
+        , content : View mainMsg
+        , model : Model
+        }
+        -> View mainMsg
+    view { toMainMsg, model, content } =
+        { title = content.title
         , body =
-            [ Html.div [ Attr.class "page" ] page.body
+            [ Html.text "Header"
+            , Html.div [ class "page" ] content.body
             ]
         }
 

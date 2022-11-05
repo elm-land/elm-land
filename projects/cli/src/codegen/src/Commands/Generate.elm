@@ -8,8 +8,8 @@ import CodeGen.Expression
 import CodeGen.Import
 import CodeGen.Module
 import Extras.String
-import Filepath exposing (Filepath)
 import Json.Decode
+import LayoutFile exposing (LayoutFile)
 import PageFile exposing (PageFile)
 
 
@@ -51,14 +51,13 @@ mainElmModule data =
                     , CodeGen.Import.new [ "Layouts" ]
                     ]
                 , data.layouts
-                    |> List.map Filepath.toList
+                    |> List.map LayoutFile.toList
                     |> List.map (\pieces -> "Layouts" :: pieces)
                     |> List.map CodeGen.Import.new
                 , [ CodeGen.Import.new [ "Page" ]
                   ]
                 , data.pages
-                    |> List.map PageFile.toFilepath
-                    |> List.map Filepath.toList
+                    |> List.map PageFile.toList
                     |> List.map (\pieces -> "Pages" :: pieces)
                     |> List.map CodeGen.Import.new
                 , [ CodeGen.Import.new [ "Pages", "NotFound_" ]
@@ -103,21 +102,8 @@ mainElmModule data =
                         , ( "shared", CodeGen.Annotation.type_ "Shared.Model" )
                         ]
                 }
-            , CodeGen.Declaration.customType
-                { name = "PageModel"
-                , variants = toPageModelCustomType data.pages
-                }
-            , if List.isEmpty data.layouts then
-                CodeGen.Declaration.typeAlias
-                    { name = "LayoutModel"
-                    , annotation = CodeGen.Annotation.type_ "Never"
-                    }
-
-              else
-                CodeGen.Declaration.customType
-                    { name = "LayoutModel"
-                    , variants = toLayoutModelCustomType data.layouts
-                    }
+            , PageFile.toPageModelTypeDeclaration data.pages
+            , LayoutFile.toLayoutsModelTypeDeclaration data.layouts
             , CodeGen.Declaration.function
                 { name = "init"
                 , annotation =
@@ -252,17 +238,7 @@ mainElmModule data =
                 { name = "PageMsg"
                 , variants = toPageMsgCustomType data.pages
                 }
-            , if List.isEmpty data.layouts then
-                CodeGen.Declaration.typeAlias
-                    { name = "LayoutMsg"
-                    , annotation = CodeGen.Annotation.type_ "Never"
-                    }
-
-              else
-                CodeGen.Declaration.customType
-                    { name = "LayoutMsg"
-                    , variants = toLayoutMsgCustomType data.layouts
-                    }
+            , LayoutFile.toLayoutsMsgTypeDeclaration data.layouts
             , CodeGen.Declaration.function
                 { name = "update"
                 , annotation =
@@ -649,31 +625,14 @@ fromEffectDeclaration options =
         }
 
 
-toLayoutMsgCustomType : List Filepath -> List ( String, List CodeGen.Annotation )
-toLayoutMsgCustomType pages =
-    let
-        toCustomType : Filepath -> ( String, List CodeGen.Annotation.Annotation )
-        toCustomType filepath =
-            ( "Msg_Layout" ++ Filepath.toRouteVariantName filepath
-            , [ CodeGen.Annotation.type_ (Filepath.toLayoutModuleName filepath ++ ".Msg") ]
-            )
-    in
-    List.map toCustomType pages
-
-
 toPageMsgCustomType : List PageFile -> List ( String, List CodeGen.Annotation )
 toPageMsgCustomType pages =
     let
         toCustomType : PageFile -> ( String, List CodeGen.Annotation.Annotation )
         toCustomType page =
-            let
-                filepath : Filepath
-                filepath =
-                    PageFile.toFilepath page
-            in
-            ( "Msg_" ++ Filepath.toRouteVariantName filepath
+            ( "Msg_" ++ PageFile.toVariantName page
             , if PageFile.isSandboxOrElementElmLandPage page || PageFile.isAdvancedElmLandPage page then
-                [ CodeGen.Annotation.type_ (Filepath.toPageModuleName filepath ++ ".Msg")
+                [ CodeGen.Annotation.type_ (PageFile.toModuleName page ++ ".Msg")
                 ]
 
               else
@@ -684,62 +643,6 @@ toPageMsgCustomType pages =
         [ List.map toCustomType pages
         , [ ( "Msg_NotFound_", [] ) ]
         ]
-
-
-toPageModelCustomType : List PageFile -> List ( String, List CodeGen.Annotation )
-toPageModelCustomType pages =
-    let
-        toCustomType : PageFile -> ( String, List CodeGen.Annotation.Annotation )
-        toCustomType page =
-            let
-                filepath : Filepath
-                filepath =
-                    PageFile.toFilepath page
-            in
-            ( "PageModel" ++ Filepath.toRouteVariantName filepath
-            , List.concat
-                [ if Filepath.hasDynamicParameters filepath then
-                    [ Filepath.toParamsRecordAnnotation filepath ]
-
-                  else
-                    []
-                , if PageFile.isSandboxOrElementElmLandPage page || PageFile.isAdvancedElmLandPage page then
-                    [ CodeGen.Annotation.type_ (Filepath.toPageModuleName filepath ++ ".Model")
-                    ]
-
-                  else
-                    []
-                ]
-            )
-    in
-    List.concat
-        [ List.map toCustomType pages
-        , [ ( "PageModelNotFound_", [] )
-          , ( "Redirecting", [] )
-          , ( "Loading", [ CodeGen.Annotation.type_ "(View Never)" ] )
-          ]
-        ]
-
-
-toLayoutModelCustomType : List Filepath -> List ( String, List CodeGen.Annotation )
-toLayoutModelCustomType pages =
-    let
-        toCustomType : Filepath -> ( String, List CodeGen.Annotation.Annotation )
-        toCustomType filepath =
-            let
-                moduleName : String
-                moduleName =
-                    Filepath.toLayoutModuleName filepath
-            in
-            ( "LayoutModel" ++ Filepath.toRouteVariantName filepath
-            , [ CodeGen.Annotation.record
-                    [ ( "settings", CodeGen.Annotation.type_ (moduleName ++ ".Settings") )
-                    , ( "model", CodeGen.Annotation.type_ (moduleName ++ ".Model") )
-                    ]
-              ]
-            )
-    in
-    List.map toCustomType pages
 
 
 runWhenAuthenticatedDeclaration : CodeGen.Declaration
@@ -823,16 +726,16 @@ runWhenAuthenticatedDeclaration =
         }
 
 
-toViewCaseExpression : List Filepath -> CodeGen.Expression
+toViewCaseExpression : List LayoutFile -> CodeGen.Expression
 toViewCaseExpression layouts =
     let
-        toViewBranch : Filepath -> CodeGen.Expression.Branch
+        toViewBranch : LayoutFile -> CodeGen.Expression.Branch
         toViewBranch filepath =
             { name = "Just"
             , arguments =
                 [ CodeGen.Argument.new
                     ("(LayoutModel{{name}} layout)"
-                        |> String.replace "{{name}}" (Filepath.toRouteVariantName filepath)
+                        |> String.replace "{{name}}" (LayoutFile.toVariantName filepath)
                     )
                 ]
             , expression =
@@ -841,7 +744,7 @@ toViewCaseExpression layouts =
                     , arguments =
                         [ CodeGen.Expression.parens
                             [ CodeGen.Expression.function
-                                { name = Filepath.toLayoutModuleName filepath ++ ".layout"
+                                { name = LayoutFile.toModuleName filepath ++ ".layout"
                                 , arguments =
                                     [ CodeGen.Expression.value "layout.settings model.shared (Route.fromUrl () model.url)"
                                     ]
@@ -850,8 +753,8 @@ toViewCaseExpression layouts =
                         , CodeGen.Expression.multilineRecord
                             [ ( "model", CodeGen.Expression.value "layout.model" )
                             , ( "toMainMsg"
-                              , "Msg_Layout{{name}} >> LayoutSent"
-                                    |> String.replace "{{name}}" (Filepath.toRouteVariantName filepath)
+                              , "LayoutMsg_{{name}} >> LayoutSent"
+                                    |> String.replace "{{name}}" (LayoutFile.toVariantName filepath)
                                     |> CodeGen.Expression.value
                               )
                             , ( "content", CodeGen.Expression.value "viewPage model" )
@@ -881,27 +784,22 @@ toViewPageCaseExpression pages =
     let
         toViewBranch : PageFile -> CodeGen.Expression.Branch
         toViewBranch page =
-            let
-                filepath : Filepath
-                filepath =
-                    PageFile.toFilepath page
-            in
             if PageFile.isSandboxOrElementElmLandPage page then
-                toBranchForElmLandPage False page filepath
+                toBranchForElmLandPage False page
 
             else if PageFile.isAdvancedElmLandPage page then
-                toBranchForElmLandPage True page filepath
+                toBranchForElmLandPage True page
 
             else
-                toBranchForStaticPage page filepath
+                toBranchForStaticPage page
 
-        toBranchForElmLandPage : Bool -> PageFile -> Filepath -> CodeGen.Expression.Branch
-        toBranchForElmLandPage isAdvancedElmLandPage page filepath =
-            { name = "PageModel" ++ Filepath.toRouteVariantName filepath
-            , arguments = toPageModelArgs page filepath
+        toBranchForElmLandPage : Bool -> PageFile -> CodeGen.Expression.Branch
+        toBranchForElmLandPage isAdvancedElmLandPage page =
+            { name = "PageModel" ++ PageFile.toVariantName page
+            , arguments = toPageModelArgs page
             , expression =
                 toPageModelMapper
-                    { filepath = filepath
+                    { page = page
                     , isAdvancedElmLandPage = isAdvancedElmLandPage
                     , isAuthProtectedPage = PageFile.isAuthProtectedPage page
                     , function = "view"
@@ -929,12 +827,12 @@ toViewPageCaseExpression pages =
             else
                 expression
 
-        toBranchForStaticPage : PageFile -> Filepath -> CodeGen.Expression.Branch
-        toBranchForStaticPage page filepath =
-            { name = "PageModel" ++ Filepath.toRouteVariantName filepath
-            , arguments = toPageModelArgs page filepath
+        toBranchForStaticPage : PageFile -> CodeGen.Expression.Branch
+        toBranchForStaticPage page =
+            { name = "PageModel" ++ PageFile.toVariantName page
+            , arguments = toPageModelArgs page
             , expression =
-                callSandboxOrElementPageFunction page filepath
+                callSandboxOrElementPageFunction page
                     |> conditionallyWrapInAuthView page
             }
     in
@@ -960,10 +858,10 @@ toViewPageCaseExpression pages =
         }
 
 
-toPageModelArgs : PageFile -> Filepath -> List CodeGen.Argument.Argument
-toPageModelArgs page filepath =
+toPageModelArgs : PageFile -> List CodeGen.Argument.Argument
+toPageModelArgs page =
     List.concat
-        [ if Filepath.hasDynamicParameters filepath then
+        [ if PageFile.hasDynamicParameters page then
             [ CodeGen.Argument.new "params" ]
 
           else
@@ -990,13 +888,13 @@ toUpdatePageCaseExpression pages =
                     ]
             }
 
-        toBranchForStaticPage : PageFile -> Filepath -> CodeGen.Expression.Branch
-        toBranchForStaticPage page filepath =
+        toBranchForStaticPage : PageFile -> CodeGen.Expression.Branch
+        toBranchForStaticPage page =
             { name =
                 "( Msg_{{name}}, PageModel{{name}}{{args}} )"
-                    |> String.replace "{{name}}" (Filepath.toRouteVariantName filepath)
+                    |> String.replace "{{name}}" (PageFile.toVariantName page)
                     |> String.replace "{{args}}"
-                        (case toPageModelArgs page filepath of
+                        (case toPageModelArgs page of
                             [] ->
                                 ""
 
@@ -1014,13 +912,13 @@ toUpdatePageCaseExpression pages =
                     ]
             }
 
-        toBranchForSandboxOrElementElmLandPage : PageFile -> Filepath -> CodeGen.Expression.Branch
-        toBranchForSandboxOrElementElmLandPage page filepath =
+        toBranchForSandboxOrElementElmLandPage : PageFile -> CodeGen.Expression.Branch
+        toBranchForSandboxOrElementElmLandPage page =
             { name =
                 "( Msg_{{name}} pageMsg, PageModel{{name}} {{args}} )"
-                    |> String.replace "{{name}}" (Filepath.toRouteVariantName filepath)
+                    |> String.replace "{{name}}" (PageFile.toVariantName page)
                     |> String.replace "{{args}}"
-                        (toPageModelArgs page filepath
+                        (toPageModelArgs page
                             |> List.map CodeGen.Argument.toString
                             |> String.join " "
                         )
@@ -1029,12 +927,12 @@ toUpdatePageCaseExpression pages =
                 CodeGen.Expression.multilineFunction
                     { name = "Tuple.mapBoth"
                     , arguments =
-                        [ pageModelConstructor filepath
+                        [ pageModelConstructor page
                         , CodeGen.Expression.parens
                             [ CodeGen.Expression.function
                                 { name = "Effect.map"
                                 , arguments =
-                                    [ CodeGen.Expression.value ("Msg_" ++ Filepath.toRouteVariantName filepath)
+                                    [ CodeGen.Expression.value ("Msg_" ++ PageFile.toVariantName page)
                                     ]
                                 }
                             , CodeGen.Expression.operator ">>"
@@ -1044,7 +942,7 @@ toUpdatePageCaseExpression pages =
                             [ CodeGen.Expression.function
                                 { name = "Page.update"
                                 , arguments =
-                                    [ callSandboxOrElementPageFunction page filepath
+                                    [ callSandboxOrElementPageFunction page
                                     , CodeGen.Expression.value "pageMsg"
                                     , CodeGen.Expression.value "pageModel"
                                     ]
@@ -1055,13 +953,13 @@ toUpdatePageCaseExpression pages =
                     |> conditionallyWrapInRunWhenAuthenticated page
             }
 
-        toBranchForAdvancedElmLandPage : PageFile -> Filepath -> CodeGen.Expression.Branch
-        toBranchForAdvancedElmLandPage page filepath =
+        toBranchForAdvancedElmLandPage : PageFile -> CodeGen.Expression.Branch
+        toBranchForAdvancedElmLandPage page =
             { name =
                 "( Msg_{{name}} pageMsg, PageModel{{name}} {{args}} )"
-                    |> String.replace "{{name}}" (Filepath.toRouteVariantName filepath)
+                    |> String.replace "{{name}}" (PageFile.toVariantName page)
                     |> String.replace "{{args}}"
-                        (toPageModelArgs page filepath
+                        (toPageModelArgs page
                             |> List.map CodeGen.Argument.toString
                             |> String.join " "
                         )
@@ -1070,12 +968,12 @@ toUpdatePageCaseExpression pages =
                 CodeGen.Expression.multilineFunction
                     { name = "Tuple.mapBoth"
                     , arguments =
-                        [ pageModelConstructor filepath
+                        [ pageModelConstructor page
                         , CodeGen.Expression.parens
                             [ CodeGen.Expression.function
                                 { name = "Effect.map"
                                 , arguments =
-                                    [ CodeGen.Expression.value ("Msg_" ++ Filepath.toRouteVariantName filepath)
+                                    [ CodeGen.Expression.value ("Msg_" ++ PageFile.toVariantName page)
                                     ]
                                 }
                             , CodeGen.Expression.operator ">>"
@@ -1085,7 +983,7 @@ toUpdatePageCaseExpression pages =
                             [ CodeGen.Expression.function
                                 { name = "Page.update"
                                 , arguments =
-                                    [ CodeGen.Expression.parens [ callAdvancedPageFunction page "model.url" filepath ]
+                                    [ CodeGen.Expression.parens [ callAdvancedPageFunction page "model.url" ]
                                     , CodeGen.Expression.value "pageMsg"
                                     , CodeGen.Expression.value "pageModel"
                                     ]
@@ -1098,19 +996,14 @@ toUpdatePageCaseExpression pages =
 
         toBranch : PageFile -> CodeGen.Expression.Branch
         toBranch page =
-            let
-                filepath : Filepath
-                filepath =
-                    PageFile.toFilepath page
-            in
             if PageFile.isSandboxOrElementElmLandPage page then
-                toBranchForSandboxOrElementElmLandPage page filepath
+                toBranchForSandboxOrElementElmLandPage page
 
             else if PageFile.isAdvancedElmLandPage page then
-                toBranchForAdvancedElmLandPage page filepath
+                toBranchForAdvancedElmLandPage page
 
             else
-                toBranchForStaticPage page filepath
+                toBranchForStaticPage page
     in
     CodeGen.Expression.caseExpression
         { value = CodeGen.Argument.new "( msg, model.page )"
@@ -1131,7 +1024,7 @@ toUpdatePageCaseExpression pages =
         }
 
 
-toUpdateLayoutCaseExpression : List Filepath -> CodeGen.Expression
+toUpdateLayoutCaseExpression : List LayoutFile -> CodeGen.Expression
 toUpdateLayoutCaseExpression layouts =
     let
         defaultCaseBranch : CodeGen.Expression.Branch
@@ -1145,22 +1038,22 @@ toUpdateLayoutCaseExpression layouts =
                     ]
             }
 
-        toBranch : Filepath -> CodeGen.Expression.Branch
-        toBranch filepath =
+        toBranch : LayoutFile -> CodeGen.Expression.Branch
+        toBranch layout =
             { name =
-                "( Msg_Layout{{name}} layoutMsg, Just (LayoutModel{{name}} layout) )"
-                    |> String.replace "{{name}}" (Filepath.toRouteVariantName filepath)
+                "( LayoutMsg_{{name}} layoutMsg, Just (LayoutModel_{{name}} layout) )"
+                    |> String.replace "{{name}}" (LayoutFile.toVariantName layout)
             , arguments = []
             , expression =
                 CodeGen.Expression.multilineFunction
                     { name = "Tuple.mapBoth"
                     , arguments =
-                        [ layoutModelConstructor filepath
+                        [ layoutModelConstructor layout
                         , CodeGen.Expression.parens
                             [ CodeGen.Expression.function
                                 { name = "Effect.map"
                                 , arguments =
-                                    [ CodeGen.Expression.value ("Msg_Layout" ++ Filepath.toRouteVariantName filepath)
+                                    [ CodeGen.Expression.value ("LayoutMsg_" ++ LayoutFile.toVariantName layout)
                                     ]
                                 }
                             , CodeGen.Expression.operator ">>"
@@ -1170,7 +1063,7 @@ toUpdateLayoutCaseExpression layouts =
                             [ CodeGen.Expression.function
                                 { name = "Layout.update"
                                 , arguments =
-                                    [ CodeGen.Expression.parens [ callLayoutFunction filepath ]
+                                    [ CodeGen.Expression.parens [ callLayoutFunction layout ]
                                     , CodeGen.Expression.value "layoutMsg"
                                     , CodeGen.Expression.value "layout.model"
                                     ]
@@ -1190,32 +1083,32 @@ toUpdateLayoutCaseExpression layouts =
 
 {-| Example: (Layouts.Sidebar.layout layout.settings model.shared (Route.fromUrl () model.url))
 -}
-callLayoutFunction : Filepath -> CodeGen.Expression
-callLayoutFunction filepath =
+callLayoutFunction : LayoutFile -> CodeGen.Expression
+callLayoutFunction layout =
     "{{moduleName}}.layout layout.settings model.shared (Route.fromUrl () model.url)"
-        |> String.replace "{{moduleName}}" (Filepath.toLayoutModuleName filepath)
+        |> String.replace "{{moduleName}}" (LayoutFile.toModuleName layout)
         |> CodeGen.Expression.value
 
 
 toSubscriptionPageCaseExpression : List PageFile -> CodeGen.Expression.Expression
 toSubscriptionPageCaseExpression pages =
     let
-        toBranchForStaticPage : PageFile -> Filepath -> CodeGen.Expression.Branch
-        toBranchForStaticPage page filepath =
-            { name = "PageModel" ++ Filepath.toRouteVariantName filepath
-            , arguments = toPageModelArgs page filepath
+        toBranchForStaticPage : PageFile -> CodeGen.Expression.Branch
+        toBranchForStaticPage page =
+            { name = "PageModel" ++ PageFile.toVariantName page
+            , arguments = toPageModelArgs page
             , expression = CodeGen.Expression.value "Sub.none"
             }
 
-        toBranchForElmLandPage : Bool -> PageFile -> Filepath -> CodeGen.Expression.Branch
-        toBranchForElmLandPage isAdvancedElmLandPage page filepath =
-            { name = "PageModel" ++ Filepath.toRouteVariantName filepath
-            , arguments = toPageModelArgs page filepath
+        toBranchForElmLandPage : Bool -> PageFile -> CodeGen.Expression.Branch
+        toBranchForElmLandPage isAdvancedElmLandPage page =
+            { name = "PageModel" ++ PageFile.toVariantName page
+            , arguments = toPageModelArgs page
             , expression =
                 toPageModelMapper
                     { isAdvancedElmLandPage = isAdvancedElmLandPage
                     , isAuthProtectedPage = PageFile.isAuthProtectedPage page
-                    , filepath = filepath
+                    , page = page
                     , function = "subscriptions"
                     , mapper = "Sub.map"
                     }
@@ -1243,19 +1136,14 @@ toSubscriptionPageCaseExpression pages =
 
         toBranch : PageFile -> CodeGen.Expression.Branch
         toBranch page =
-            let
-                filepath : Filepath
-                filepath =
-                    PageFile.toFilepath page
-            in
             if PageFile.isSandboxOrElementElmLandPage page then
-                toBranchForElmLandPage False page filepath
+                toBranchForElmLandPage False page
 
             else if PageFile.isAdvancedElmLandPage page then
-                toBranchForElmLandPage True page filepath
+                toBranchForElmLandPage True page
 
             else
-                toBranchForStaticPage page filepath
+                toBranchForStaticPage page
     in
     CodeGen.Expression.caseExpression
         { value = CodeGen.Argument.new "model.page"
@@ -1279,15 +1167,15 @@ toSubscriptionPageCaseExpression pages =
         }
 
 
-toSubscriptionLayoutCaseExpression : List Filepath -> CodeGen.Expression.Expression
+toSubscriptionLayoutCaseExpression : List LayoutFile -> CodeGen.Expression.Expression
 toSubscriptionLayoutCaseExpression layouts =
     let
-        toBranch : Filepath -> CodeGen.Expression.Branch
-        toBranch filepath =
+        toBranch : LayoutFile -> CodeGen.Expression.Branch
+        toBranch layout =
             { name = "Just"
             , arguments =
                 [ "(LayoutModel{{name}} layout)"
-                    |> String.replace "{{name}}" (Filepath.toRouteVariantName filepath)
+                    |> String.replace "{{name}}" (LayoutFile.toVariantName layout)
                     |> CodeGen.Argument.new
                 ]
             , expression =
@@ -1295,11 +1183,11 @@ toSubscriptionLayoutCaseExpression layouts =
                     [ CodeGen.Expression.function
                         { name = "Layout.subscriptions"
                         , arguments =
-                            [ CodeGen.Expression.parens [ callLayoutFunction filepath ]
+                            [ CodeGen.Expression.parens [ callLayoutFunction layout ]
                             , CodeGen.Expression.value "layout.model"
                             ]
                         }
-                    , CodeGen.Expression.value ("Sub.map Msg_Layout" ++ Filepath.toRouteVariantName filepath)
+                    , CodeGen.Expression.value ("Sub.map LayoutMsg_" ++ LayoutFile.toVariantName layout)
                     , CodeGen.Expression.value "Sub.map LayoutSent"
                     ]
             }
@@ -1318,23 +1206,27 @@ toSubscriptionLayoutCaseExpression layouts =
         }
 
 
-toInitLayoutCaseExpression : List Filepath -> CodeGen.Expression.Expression
+toInitLayoutCaseExpression : List LayoutFile -> CodeGen.Expression.Expression
 toInitLayoutCaseExpression layouts =
     let
-        toBranch : Filepath -> List CodeGen.Expression.Branch
-        toBranch filepath =
+        toBranch : LayoutFile -> List CodeGen.Expression.Branch
+        toBranch layout =
             let
                 moduleName : String
                 moduleName =
-                    Filepath.toLayoutModuleName filepath
+                    LayoutFile.toModuleName layout
+
+                routeVariantName : String
+                routeVariantName =
+                    LayoutFile.toVariantName layout
 
                 modelVariantName : String
                 modelVariantName =
-                    "LayoutModel" ++ Filepath.toRouteVariantName filepath
+                    "LayoutModel_" ++ routeVariantName
 
                 msgVariantName : String
                 msgVariantName =
-                    "Msg_Layout" ++ Filepath.toRouteVariantName filepath
+                    "LayoutMsg_" ++ routeVariantName
 
                 initLayoutBranchExpression : CodeGen.Expression
                 initLayoutBranchExpression =
@@ -1363,7 +1255,7 @@ toInitLayoutCaseExpression layouts =
                             CodeGen.Expression.multilineTuple
                                 [ CodeGen.Expression.function
                                     { name = modelVariantName
-                                    , arguments = [ CodeGen.Expression.value "{ settings = settings, model = layoutModel }" ]
+                                    , arguments = [ CodeGen.Expression.value "layoutModel" ]
                                     }
                                 , CodeGen.Expression.value ("fromLayoutEffect model (Effect.map " ++ msgVariantName ++ " layoutCmd)")
                                 ]
@@ -1372,20 +1264,20 @@ toInitLayoutCaseExpression layouts =
                 reuseExistingBranchExpression : CodeGen.Expression
                 reuseExistingBranchExpression =
                     CodeGen.Expression.multilineTuple
-                        [ "{{modelVariantName}} { settings = settings, model = existing.model }"
+                        [ "{{modelVariantName}} existing"
                             |> String.replace "{{modelVariantName}}" modelVariantName
                             |> CodeGen.Expression.value
                         , CodeGen.Expression.value "Cmd.none"
                         ]
             in
             [ { name =
-                    "( Just ({{modelVariantName}} existing), {{moduleName}} settings )"
-                        |> String.replace "{{moduleName}}" moduleName
+                    "( Just ({{modelVariantName}} existing), Layouts.{{routeVariantName}} settings )"
+                        |> String.replace "{{routeVariantName}}" routeVariantName
                         |> String.replace "{{modelVariantName}}" modelVariantName
               , arguments = []
               , expression = reuseExistingBranchExpression
               }
-            , { name = "( _, {{moduleName}} settings )" |> String.replace "{{moduleName}}" moduleName
+            , { name = "( _, Layouts.{{routeVariantName}} settings )" |> String.replace "{{routeVariantName}}" routeVariantName
               , arguments = []
               , expression = initLayoutBranchExpression
               }
@@ -1400,31 +1292,31 @@ toInitLayoutCaseExpression layouts =
 toInitPageCaseExpression : List PageFile -> CodeGen.Expression.Expression
 toInitPageCaseExpression pages =
     let
-        toBranchExpressionForStaticPage : Filepath -> CodeGen.Expression
-        toBranchExpressionForStaticPage filepath =
+        toBranchExpressionForStaticPage : PageFile -> CodeGen.Expression
+        toBranchExpressionForStaticPage page =
             CodeGen.Expression.multilineRecord
                 [ ( "page"
                   , CodeGen.Expression.tuple
-                        [ pageModelConstructor filepath
+                        [ pageModelConstructor page
                         , CodeGen.Expression.value "Cmd.none"
                         ]
                   )
                 , ( "layout", CodeGen.Expression.value "Nothing" )
                 ]
 
-        toBranchForSandboxOrElementElmLandPage : PageFile -> Filepath -> CodeGen.Expression
-        toBranchForSandboxOrElementElmLandPage pageFile filepath =
+        toBranchForSandboxOrElementElmLandPage : PageFile -> CodeGen.Expression
+        toBranchForSandboxOrElementElmLandPage page =
             CodeGen.Expression.multilineRecord
                 [ ( "page"
                   , CodeGen.Expression.multilineFunction
                         { name = "Tuple.mapBoth"
                         , arguments =
-                            [ pageModelConstructor filepath
+                            [ pageModelConstructor page
                             , CodeGen.Expression.parens
                                 [ CodeGen.Expression.function
                                     { name = "Effect.map"
                                     , arguments =
-                                        [ CodeGen.Expression.value ("Msg_" ++ Filepath.toRouteVariantName filepath)
+                                        [ CodeGen.Expression.value ("Msg_" ++ PageFile.toVariantName page)
                                         ]
                                     }
                                 , CodeGen.Expression.operator ">>"
@@ -1434,7 +1326,7 @@ toInitPageCaseExpression pages =
                                 [ CodeGen.Expression.function
                                     { name = "Page.init"
                                     , arguments =
-                                        [ callSandboxOrElementPageFunction pageFile filepath
+                                        [ callSandboxOrElementPageFunction page
                                         , CodeGen.Expression.value "()"
                                         ]
                                     }
@@ -1445,19 +1337,19 @@ toInitPageCaseExpression pages =
                 , ( "layout", CodeGen.Expression.value "Nothing" )
                 ]
 
-        toBranchForAdvancedElmLandPage : PageFile -> Filepath -> CodeGen.Expression
-        toBranchForAdvancedElmLandPage page filepath =
+        toBranchForAdvancedElmLandPage : PageFile -> CodeGen.Expression
+        toBranchForAdvancedElmLandPage page =
             let
                 pageExpression =
                     CodeGen.Expression.multilineFunction
                         { name = "Tuple.mapBoth"
                         , arguments =
-                            [ pageModelConstructor filepath
+                            [ pageModelConstructor page
                             , CodeGen.Expression.parens
                                 [ CodeGen.Expression.function
                                     { name = "Effect.map"
                                     , arguments =
-                                        [ CodeGen.Expression.value ("Msg_" ++ Filepath.toRouteVariantName filepath)
+                                        [ CodeGen.Expression.value ("Msg_" ++ PageFile.toVariantName page)
                                         ]
                                     }
                                 , CodeGen.Expression.operator ">>"
@@ -1481,11 +1373,11 @@ toInitPageCaseExpression pages =
                       , annotation =
                             Just
                                 (CodeGen.Annotation.genericType "Page.Page"
-                                    [ CodeGen.Annotation.type_ (Filepath.toPageModuleName filepath ++ ".Model")
-                                    , CodeGen.Annotation.type_ (Filepath.toPageModuleName filepath ++ ".Msg")
+                                    [ CodeGen.Annotation.type_ (PageFile.toModuleName page ++ ".Model")
+                                    , CodeGen.Annotation.type_ (PageFile.toModuleName page ++ ".Msg")
                                     ]
                                 )
-                      , expression = callAdvancedPageFunction page "model.url" filepath
+                      , expression = callAdvancedPageFunction page "model.url"
                       }
                     ]
                 , in_ =
@@ -1498,31 +1390,27 @@ toInitPageCaseExpression pages =
         toBranch : PageFile -> CodeGen.Expression.Branch
         toBranch page =
             let
-                filepath : Filepath
-                filepath =
-                    PageFile.toFilepath page
-
                 branchExpression : CodeGen.Expression
                 branchExpression =
                     conditionallyWrapInRunWhenAuthenticated page
                         (if PageFile.isSandboxOrElementElmLandPage page then
-                            toBranchForSandboxOrElementElmLandPage page filepath
+                            toBranchForSandboxOrElementElmLandPage page
 
                          else if PageFile.isAdvancedElmLandPage page then
-                            toBranchForAdvancedElmLandPage page filepath
+                            toBranchForAdvancedElmLandPage page
 
                          else
-                            toBranchExpressionForStaticPage filepath
+                            toBranchExpressionForStaticPage page
                         )
             in
-            if Filepath.hasDynamicParameters filepath then
-                { name = "Route.Path." ++ Filepath.toRouteVariantName filepath
+            if PageFile.hasDynamicParameters page then
+                { name = "Route.Path." ++ PageFile.toVariantName page
                 , arguments = [ CodeGen.Argument.new "params" ]
                 , expression = branchExpression
                 }
 
             else
-                { name = "Route.Path." ++ Filepath.toRouteVariantName filepath
+                { name = "Route.Path." ++ PageFile.toVariantName page
                 , arguments = []
                 , expression = branchExpression
                 }
@@ -1532,9 +1420,18 @@ toInitPageCaseExpression pages =
         , branches =
             List.concat
                 [ List.map toBranch pages
-                , [ { name = "Route.Path." ++ Filepath.toRouteVariantName Filepath.notFoundPage
+                , [ { name = "Route.Path.NotFound_"
                     , arguments = []
-                    , expression = toBranchExpressionForStaticPage Filepath.notFoundPage
+                    , expression =
+                        CodeGen.Expression.multilineRecord
+                            [ ( "page"
+                              , CodeGen.Expression.tuple
+                                    [ CodeGen.Expression.value "PageModelNotFound_"
+                                    , CodeGen.Expression.value "Cmd.none"
+                                    ]
+                              )
+                            , ( "layout", CodeGen.Expression.value "Nothing" )
+                            ]
                     }
                   ]
                 ]
@@ -1559,18 +1456,18 @@ conditionallyWrapInRunWhenAuthenticated page expression =
         expression
 
 
-pageModelConstructor : Filepath -> CodeGen.Expression
-pageModelConstructor filepath =
-    if Filepath.hasDynamicParameters filepath then
+pageModelConstructor : PageFile -> CodeGen.Expression
+pageModelConstructor page =
+    if PageFile.hasDynamicParameters page then
         CodeGen.Expression.parens
             [ CodeGen.Expression.function
-                { name = "PageModel" ++ Filepath.toRouteVariantName filepath
+                { name = "PageModel" ++ PageFile.toVariantName page
                 , arguments = [ CodeGen.Expression.value "params" ]
                 }
             ]
 
     else
-        CodeGen.Expression.value ("PageModel" ++ Filepath.toRouteVariantName filepath)
+        CodeGen.Expression.value ("PageModel" ++ PageFile.toVariantName page)
 
 
 {-| Example:
@@ -1578,29 +1475,29 @@ pageModelConstructor filepath =
     \newModel -> Just (LayoutModelSidebar { layout | model = newModel })
 
 -}
-layoutModelConstructor : Filepath -> CodeGen.Expression
-layoutModelConstructor filepath =
+layoutModelConstructor : LayoutFile -> CodeGen.Expression
+layoutModelConstructor layout =
     CodeGen.Expression.lambda
         { arguments = [ CodeGen.Argument.new "newModel" ]
         , expression =
-            "Just (LayoutModel{{name}} { layout | model = newModel })"
-                |> String.replace "{{name}}" (Filepath.toRouteVariantName filepath)
+            "Just (LayoutModel_{{name}} { layout | model = newModel })"
+                |> String.replace "{{name}}" (LayoutFile.toVariantName layout)
                 |> CodeGen.Expression.value
         }
 
 
-callSandboxOrElementPageFunction : PageFile -> Filepath -> CodeGen.Expression
-callSandboxOrElementPageFunction pageFile filepath =
+callSandboxOrElementPageFunction : PageFile -> CodeGen.Expression
+callSandboxOrElementPageFunction page =
     let
         arguments : List CodeGen.Expression
         arguments =
             List.concat
-                [ if PageFile.isAuthProtectedPage pageFile then
+                [ if PageFile.isAuthProtectedPage page then
                     [ CodeGen.Expression.value "user" ]
 
                   else
                     []
-                , if Filepath.hasDynamicParameters filepath then
+                , if PageFile.hasDynamicParameters page then
                     [ CodeGen.Expression.value "params" ]
 
                   else
@@ -1609,23 +1506,23 @@ callSandboxOrElementPageFunction pageFile filepath =
     in
     CodeGen.Expression.parens
         [ CodeGen.Expression.function
-            { name = Filepath.toPageModuleName filepath ++ ".page"
+            { name = PageFile.toModuleName page ++ ".page"
             , arguments = arguments
             }
         ]
 
 
-callAdvancedPageFunction : PageFile -> String -> Filepath -> CodeGen.Expression
-callAdvancedPageFunction page urlVarName filepath =
+callAdvancedPageFunction : PageFile -> String -> CodeGen.Expression
+callAdvancedPageFunction page urlVarName =
     CodeGen.Expression.function
-        { name = Filepath.toPageModuleName filepath ++ ".page"
+        { name = PageFile.toModuleName page ++ ".page"
         , arguments =
             [ if PageFile.isAuthProtectedPage page then
                 CodeGen.Expression.value "user model.shared"
 
               else
                 CodeGen.Expression.value "model.shared"
-            , if Filepath.hasDynamicParameters filepath then
+            , if PageFile.hasDynamicParameters page then
                 CodeGen.Expression.value ("(Route.fromUrl params " ++ urlVarName ++ ")")
 
               else
@@ -1637,18 +1534,20 @@ callAdvancedPageFunction page urlVarName filepath =
 toPageModelMapper :
     { isAdvancedElmLandPage : Bool
     , isAuthProtectedPage : Bool
-    , filepath : Filepath
+    , page : PageFile
     , function : String
     , mapper : String
     }
     -> CodeGen.Expression
 toPageModelMapper options =
     let
+        pageModuleName : String
         pageModuleName =
-            Filepath.toPageModuleName options.filepath
+            PageFile.toModuleName options.page
 
+        routeVariantName : String
         routeVariantName =
-            Filepath.toRouteVariantName options.filepath
+            PageFile.toVariantName options.page
     in
     CodeGen.Expression.pipeline
         [ CodeGen.Expression.function
@@ -1662,14 +1561,14 @@ toPageModelMapper options =
 
                           else
                             CodeGen.Expression.value "model.shared"
-                        , if Filepath.hasDynamicParameters options.filepath then
+                        , if PageFile.hasDynamicParameters options.page then
                             CodeGen.Expression.value "(Route.fromUrl params model.url)"
 
                           else
                             CodeGen.Expression.value "(Route.fromUrl () model.url)"
                         ]
 
-                  else if Filepath.hasDynamicParameters options.filepath then
+                  else if PageFile.hasDynamicParameters options.page then
                     CodeGen.Expression.parens
                         [ CodeGen.Expression.value (pageModuleName ++ ".page")
                         , if options.isAuthProtectedPage then
@@ -1719,8 +1618,7 @@ routePathElmModule data =
                 , variants =
                     List.concat
                         [ data.pages
-                            |> List.map PageFile.toFilepath
-                            |> List.map Filepath.toRouteVariant
+                            |> List.map PageFile.toRouteVariant
                         , [ ( "NotFound_", [] ) ]
                         ]
                 }
@@ -1794,8 +1692,7 @@ routePathElmModule data =
                         { name = "Url.Parser.oneOf"
                         , arguments =
                             [ data.pages
-                                |> List.map PageFile.toFilepath
-                                |> List.map Filepath.toUrlParser
+                                |> List.map PageFile.toUrlParser
                                 |> CodeGen.Expression.multilineList
                             ]
                         }
@@ -1815,26 +1712,21 @@ toRoutePathToStringBranches files =
 
 
 toRoutePathToStringBranch : PageFile -> CodeGen.Expression.Branch
-toRoutePathToStringBranch file =
-    let
-        filepath : Filepath
-        filepath =
-            PageFile.toFilepath file
-    in
-    { name = Filepath.toRouteVariantName filepath
+toRoutePathToStringBranch page =
+    { name = PageFile.toVariantName page
     , arguments =
-        if Filepath.hasDynamicParameters filepath then
+        if PageFile.hasDynamicParameters page then
             [ CodeGen.Argument.new "params" ]
 
         else
             []
     , expression =
-        if Filepath.toRouteVariantName filepath == "Home_" then
+        if PageFile.toVariantName page == "Home_" then
             CodeGen.Expression.list []
 
         else
             CodeGen.Expression.list
-                (Filepath.toList filepath
+                (PageFile.toList page
                     |> List.map
                         (\piece ->
                             if String.endsWith "_" piece then
@@ -1865,10 +1757,10 @@ toRoutePathToStringBranch file =
 layoutsElmModule : Data -> CodeGen.Module
 layoutsElmModule data =
     let
-        toLayoutImport : Filepath -> CodeGen.Import
-        toLayoutImport filepath =
+        toLayoutImport : LayoutFile -> CodeGen.Import
+        toLayoutImport layout =
             CodeGen.Import.new
-                (Filepath.toLayoutModuleName filepath
+                (LayoutFile.toModuleName layout
                     |> String.split "."
                 )
     in
@@ -1877,26 +1769,16 @@ layoutsElmModule data =
         , exposing_ = [ "Layout(..)" ]
         , imports = List.map toLayoutImport data.layouts
         , declarations =
-            [ if List.isEmpty data.layouts then
-                CodeGen.Declaration.typeAlias
-                    { name = "Layout"
-                    , annotation = CodeGen.Annotation.type_ "Never"
-                    }
-
-              else
-                CodeGen.Declaration.customType
-                    { name = "Layout"
-                    , variants =
-                        data.layouts
-                            |> List.map Filepath.toLayoutRouteVariant
-                    }
+            [ LayoutFile.toLayoutTypeDeclaration data.layouts
             ]
         }
 
 
+{-| This represents the data we expect to receive from JavaScript
+-}
 type alias Data =
     { pages : List PageFile
-    , layouts : List Filepath
+    , layouts : List LayoutFile
     }
 
 
@@ -1908,7 +1790,9 @@ decoder =
                 |> Json.Decode.map ignoreNotFoundPage
             )
         )
-        (Json.Decode.field "layouts" (Json.Decode.list Filepath.decoder))
+        (Json.Decode.field "layouts" (Json.Decode.list LayoutFile.decoder)
+            |> Json.Decode.map (List.sortWith LayoutFile.sorter)
+        )
 
 
 ignoreNotFoundPage : List PageFile -> List PageFile

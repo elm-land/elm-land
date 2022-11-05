@@ -8,8 +8,8 @@ import CodeGen.Expression
 import CodeGen.Import
 import CodeGen.Module
 import Extras.String
-import Filepath exposing (Filepath)
 import Json.Decode
+import PageFile exposing (PageFile)
 
 
 run : Json.Decode.Value -> List CodeGen.Module
@@ -26,7 +26,7 @@ type alias Data =
     { hasViewBeenCustomized : Bool
     , kind : PageKind
     , url : String
-    , filepath : Filepath
+    , page : PageFile
     }
 
 
@@ -54,20 +54,20 @@ newPageModule data =
 
 
 newStaticPageModule : Data -> CodeGen.Module
-newStaticPageModule { hasViewBeenCustomized, filepath, url } =
+newStaticPageModule { hasViewBeenCustomized, page, url } =
     let
         moduleName : String
         moduleName =
-            Filepath.toPageModuleName filepath
+            PageFile.toModuleName page
 
         staticPageFn : CodeGen.Declaration
         staticPageFn =
-            if Filepath.hasDynamicParameters filepath then
+            if PageFile.hasDynamicParameters page then
                 CodeGen.Declaration.function
                     { name = "page"
                     , annotation =
                         CodeGen.Annotation.function
-                            [ Filepath.toParamsRecordAnnotation filepath
+                            [ PageFile.toParamsRecordAnnotation page
                             , CodeGen.Annotation.type_ "View msg"
                             ]
                     , arguments = [ CodeGen.Argument.new "params" ]
@@ -76,7 +76,7 @@ newStaticPageModule { hasViewBeenCustomized, filepath, url } =
                             { title = moduleName
                             , expression =
                                 CodeGen.Expression.parens
-                                    (Filepath.toList filepath
+                                    (PageFile.toList page
                                         |> List.map
                                             (\piece ->
                                                 if String.endsWith "_" piece then
@@ -105,7 +105,7 @@ newStaticPageModule { hasViewBeenCustomized, filepath, url } =
                     }
     in
     CodeGen.Module.new
-        { name = "Pages" :: Filepath.toList filepath
+        { name = "Pages" :: PageFile.toList page
         , exposing_ = [ "page" ]
         , imports =
             [ CodeGen.Import.new [ "Html" ]
@@ -120,23 +120,23 @@ newStaticPageModule { hasViewBeenCustomized, filepath, url } =
 
 
 newSandboxPageModule : Data -> CodeGen.Module
-newSandboxPageModule { hasViewBeenCustomized, filepath, url } =
+newSandboxPageModule { hasViewBeenCustomized, page, url } =
     let
         pageFunctionDeclaration : CodeGen.Declaration
         pageFunctionDeclaration =
             CodeGen.Declaration.function
                 { name = "page"
                 , annotation =
-                    if Filepath.hasDynamicParameters filepath then
+                    if PageFile.hasDynamicParameters page then
                         CodeGen.Annotation.function
-                            [ Filepath.toParamsRecordAnnotation filepath
+                            [ PageFile.toParamsRecordAnnotation page
                             , CodeGen.Annotation.type_ "Page Model Msg"
                             ]
 
                     else
                         CodeGen.Annotation.type_ "Page Model Msg"
                 , arguments =
-                    if Filepath.hasDynamicParameters filepath then
+                    if PageFile.hasDynamicParameters page then
                         [ CodeGen.Argument.new "params" ]
 
                     else
@@ -217,13 +217,13 @@ newSandboxPageModule { hasViewBeenCustomized, filepath, url } =
                 , arguments = [ CodeGen.Argument.new "model" ]
                 , expression =
                     viewExpressionWithContent hasViewBeenCustomized
-                        { title = Filepath.toPageModuleName filepath
+                        { title = PageFile.toModuleName page
                         , expression = CodeGen.Expression.string url
                         }
                 }
     in
     CodeGen.Module.new
-        { name = "Pages" :: Filepath.toList filepath
+        { name = "Pages" :: PageFile.toList page
         , exposing_ = [ "Model", "Msg", "page" ]
         , imports =
             [ CodeGen.Import.new [ "Html" ]
@@ -248,23 +248,23 @@ newSandboxPageModule { hasViewBeenCustomized, filepath, url } =
 
 
 newElementPageModule : Data -> CodeGen.Module
-newElementPageModule { hasViewBeenCustomized, filepath, url } =
+newElementPageModule { hasViewBeenCustomized, page, url } =
     let
         pageFunctionDeclaration : CodeGen.Declaration
         pageFunctionDeclaration =
             CodeGen.Declaration.function
                 { name = "page"
                 , annotation =
-                    if Filepath.hasDynamicParameters filepath then
+                    if PageFile.hasDynamicParameters page then
                         CodeGen.Annotation.function
-                            [ Filepath.toParamsRecordAnnotation filepath
+                            [ PageFile.toParamsRecordAnnotation page
                             , CodeGen.Annotation.type_ "Page Model Msg"
                             ]
 
                     else
                         CodeGen.Annotation.type_ "Page Model Msg"
                 , arguments =
-                    if Filepath.hasDynamicParameters filepath then
+                    if PageFile.hasDynamicParameters page then
                         [ CodeGen.Argument.new "params" ]
 
                     else
@@ -366,13 +366,13 @@ newElementPageModule { hasViewBeenCustomized, filepath, url } =
                 , arguments = [ CodeGen.Argument.new "model" ]
                 , expression =
                     viewExpressionWithContent hasViewBeenCustomized
-                        { title = Filepath.toPageModuleName filepath
+                        { title = PageFile.toModuleName page
                         , expression = CodeGen.Expression.string url
                         }
                 }
     in
     CodeGen.Module.new
-        { name = "Pages" :: Filepath.toList filepath
+        { name = "Pages" :: PageFile.toList page
         , exposing_ = [ "Model", "Msg", "page" ]
         , imports =
             [ CodeGen.Import.new [ "Html" ]
@@ -399,7 +399,7 @@ newElementPageModule { hasViewBeenCustomized, filepath, url } =
 
 
 newAdvancedPageModule : Data -> CodeGen.Module
-newAdvancedPageModule { hasViewBeenCustomized, filepath, url } =
+newAdvancedPageModule { hasViewBeenCustomized, page, url } =
     let
         pageFunctionDeclaration : CodeGen.Declaration
         pageFunctionDeclaration =
@@ -409,8 +409,8 @@ newAdvancedPageModule { hasViewBeenCustomized, filepath, url } =
                     CodeGen.Annotation.function
                         [ CodeGen.Annotation.type_ "Shared.Model"
                         , CodeGen.Annotation.genericType "Route"
-                            [ if Filepath.hasDynamicParameters filepath then
-                                Filepath.toParamsRecordAnnotation filepath
+                            [ if PageFile.hasDynamicParameters page then
+                                PageFile.toParamsRecordAnnotation page
 
                               else
                                 CodeGen.Annotation.type_ "()"
@@ -516,13 +516,13 @@ newAdvancedPageModule { hasViewBeenCustomized, filepath, url } =
                 , arguments = [ CodeGen.Argument.new "model" ]
                 , expression =
                     viewExpressionWithContent hasViewBeenCustomized
-                        { title = Filepath.toPageModuleName filepath
+                        { title = PageFile.toModuleName page
                         , expression = CodeGen.Expression.string url
                         }
                 }
     in
     CodeGen.Module.new
-        { name = "Pages" :: Filepath.toList filepath
+        { name = "Pages" :: PageFile.toList page
         , exposing_ = [ "Model", "Msg", "page" ]
         , imports =
             [ CodeGen.Import.new [ "Effect" ]
@@ -586,7 +586,7 @@ decoder =
         (Json.Decode.field "hasViewBeenCustomized" Json.Decode.bool)
         (Json.Decode.field "kind" pageKindDecoder)
         (Json.Decode.field "url" Json.Decode.string)
-        (Json.Decode.field "filepath" Filepath.decoder)
+        (Json.Decode.field "page" PageFile.decoder)
 
 
 pageKindDecoder : Json.Decode.Decoder PageKind

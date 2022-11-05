@@ -69,5 +69,5 @@ subscriptions model =
 view : Model -> View Msg
 view model =
     { title = "Blog posts"
-    , body = [ Html.text "Imagine a list of posts!" ]
+    , body = [ Html.text "This is from the BlogPosts page!" ]
     }

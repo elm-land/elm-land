@@ -1,14 +1,26 @@
 module PageFile exposing
     ( PageFile
     , decoder
+    , hasDynamicParameters
     , isAdvancedElmLandPage
     , isAuthProtectedPage
     , isNotFoundPage
     , isSandboxOrElementElmLandPage
-    , toFilepath
     , toLayoutName
+    , toList
+    , toModuleName
+    , toPageModelTypeDeclaration
+    , toParamsRecordAnnotation
+    , toRouteVariant
+    , toUrlParser
+    , toVariantName
     )
 
+import CodeGen
+import CodeGen.Annotation
+import CodeGen.Argument
+import CodeGen.Declaration
+import CodeGen.Expression
 import Elm.Parser
 import Elm.Processing
 import Elm.RawFile
@@ -21,7 +33,7 @@ import Elm.Syntax.ModuleName
 import Elm.Syntax.Node
 import Elm.Syntax.Signature
 import Elm.Syntax.TypeAnnotation
-import Filepath exposing (Filepath)
+import Extras.String
 import Json.Decode
 
 
@@ -30,7 +42,7 @@ type PageFile
 
 
 type alias Internals =
-    { filepath : Filepath
+    { filepath : List String
     , contents : String
     }
 
@@ -39,19 +51,13 @@ decoder : Json.Decode.Decoder PageFile
 decoder =
     Json.Decode.map PageFile
         (Json.Decode.map2 Internals
-            (Json.Decode.field "filepath" Filepath.decoder)
-            (Json.Decode.field "contents" Json.Decode.string)
+            (Json.Decode.field "filepath" (Json.Decode.list Json.Decode.string))
+            (Json.Decode.oneOf
+                [ Json.Decode.field "contents" Json.Decode.string
+                , Json.Decode.succeed ""
+                ]
+            )
         )
-
-
-isNotFoundPage : PageFile -> Bool
-isNotFoundPage (PageFile { filepath }) =
-    Filepath.isNotFoundPage filepath
-
-
-toFilepath : PageFile -> Filepath
-toFilepath (PageFile { filepath }) =
-    filepath
 
 
 toLayoutName : PageFile -> Maybe String
@@ -410,3 +416,177 @@ isAuthProtectedPage (PageFile { contents }) =
         |> Result.toMaybe
         |> Maybe.map isElmLandPageFromFile
         |> Maybe.withDefault False
+
+
+toPageModelTypeDeclaration : List PageFile -> CodeGen.Declaration
+toPageModelTypeDeclaration pages =
+    let
+        toPageModelCustomType : List ( String, List CodeGen.Annotation )
+        toPageModelCustomType =
+            let
+                toCustomType : PageFile -> ( String, List CodeGen.Annotation.Annotation )
+                toCustomType page =
+                    ( "PageModel" ++ toVariantName page
+                    , List.concat
+                        [ if hasDynamicParameters page then
+                            [ toParamsRecordAnnotation page ]
+
+                          else
+                            []
+                        , if isSandboxOrElementElmLandPage page || isAdvancedElmLandPage page then
+                            [ CodeGen.Annotation.type_ (toModuleName page ++ ".Model")
+                            ]
+
+                          else
+                            []
+                        ]
+                    )
+            in
+            List.concat
+                [ List.map toCustomType pages
+                , [ ( "PageModelNotFound_", [] )
+                  , ( "Redirecting", [] )
+                  , ( "Loading", [ CodeGen.Annotation.type_ "(View Never)" ] )
+                  ]
+                ]
+    in
+    CodeGen.Declaration.customType
+        { name = "PageModel"
+        , variants = toPageModelCustomType
+        }
+
+
+isNotFoundPage : PageFile -> Bool
+isNotFoundPage (PageFile { filepath }) =
+    filepath == [ "NotFound_" ]
+
+
+hasDynamicParameters : PageFile -> Bool
+hasDynamicParameters page =
+    not (List.isEmpty (toDynamicParameterList page))
+
+
+toDynamicParameterList : PageFile -> List String
+toDynamicParameterList (PageFile { filepath }) =
+    List.filter
+        (\piece ->
+            not (List.member piece [ "Home_", "NotFound_" ])
+                && String.endsWith "_" piece
+        )
+        filepath
+
+
+toList : PageFile -> List String
+toList (PageFile { filepath }) =
+    if List.isEmpty filepath then
+        [ "Home_" ]
+
+    else
+        filepath
+
+
+toParamsRecordAnnotation : PageFile -> CodeGen.Annotation
+toParamsRecordAnnotation (PageFile { filepath }) =
+    filepath
+        |> List.filter (String.endsWith "_")
+        |> List.map (String.dropRight 1)
+        |> List.map Extras.String.fromPascalCaseToCamelCase
+        |> List.map (\fieldName -> ( fieldName, CodeGen.Annotation.string ))
+        |> CodeGen.Annotation.record
+
+
+toVariantName : PageFile -> String
+toVariantName (PageFile { filepath }) =
+    String.join "__" filepath
+
+
+toRouteVariant : PageFile -> ( String, List CodeGen.Annotation )
+toRouteVariant page =
+    ( toVariantName page
+    , if hasDynamicParameters page then
+        [ toParamsRecordAnnotation page ]
+
+      else
+        []
+    )
+
+
+toUrlParser : PageFile -> CodeGen.Expression
+toUrlParser ((PageFile { filepath }) as page) =
+    case filepath of
+        [ "Home_" ] ->
+            CodeGen.Expression.function
+                { name = "Url.Parser.map"
+                , arguments =
+                    [ CodeGen.Expression.value "Home_"
+                    , CodeGen.Expression.value "Url.Parser.top"
+                    ]
+                }
+
+        _ ->
+            let
+                paramNameForIndex : Int -> String
+                paramNameForIndex i =
+                    "param" ++ String.fromInt (i + 1)
+
+                constructorExpression : CodeGen.Expression
+                constructorExpression =
+                    if hasDynamicParameters page then
+                        CodeGen.Expression.lambda
+                            { arguments =
+                                toDynamicParameterList page
+                                    |> List.indexedMap (\i _ -> CodeGen.Argument.new (paramNameForIndex i))
+                            , expression =
+                                CodeGen.Expression.function
+                                    { name = toVariantName page
+                                    , arguments =
+                                        [ CodeGen.Expression.record
+                                            (toDynamicParameterList page
+                                                |> List.indexedMap
+                                                    (\i name ->
+                                                        ( name
+                                                            |> String.dropRight 1
+                                                            |> Extras.String.fromPascalCaseToCamelCase
+                                                        , CodeGen.Expression.value (paramNameForIndex i)
+                                                        )
+                                                    )
+                                            )
+                                        ]
+                                    }
+                            }
+
+                    else
+                        CodeGen.Expression.value (toVariantName page)
+
+                toUrlParserList : List CodeGen.Expression
+                toUrlParserList =
+                    filepath
+                        |> List.map
+                            (\piece ->
+                                if String.endsWith "_" piece then
+                                    [ CodeGen.Expression.value "Url.Parser.string" ]
+
+                                else
+                                    [ CodeGen.Expression.value "Url.Parser.s"
+                                    , CodeGen.Expression.string (Extras.String.fromPascalCaseToKebabCase piece)
+                                    ]
+                            )
+                        |> List.intersperse [ CodeGen.Expression.operator "</>" ]
+                        |> List.concat
+            in
+            CodeGen.Expression.function
+                { name = "Url.Parser.map"
+                , arguments =
+                    [ constructorExpression
+                    , CodeGen.Expression.parens toUrlParserList
+                    ]
+                }
+
+
+toModuleName : PageFile -> String
+toModuleName (PageFile { filepath }) =
+    if List.isEmpty filepath then
+        "Pages.Home_"
+
+    else
+        "Pages." ++ String.join "." filepath

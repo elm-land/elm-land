@@ -1,4 +1,4 @@
-module Main exposing (main)
+module Main_ exposing (main)
 
 import Auth
 import Auth.Action
@@ -9,7 +9,9 @@ import Html exposing (Html)
 import Json.Decode
 import Layout
 import Layouts
+import Layouts.Header
 import Layouts.Sidebar
+import Layouts.Sidebar.WithHeader
 import Page
 import Pages.Authors
 import Pages.BlogPosts
@@ -57,7 +59,12 @@ type PageModel
 
 
 type LayoutModel
-    = LayoutModelSidebar { settings : Layouts.Sidebar.Settings, model : Layouts.Sidebar.Model }
+    = LayoutModelHeader Layouts.Header.Model
+    | LayoutModelSidebar__WithHeader
+        { sidebar : Layouts.Sidebar.Model
+        , withHeader : Layouts.Sidebar.WithHeader.Model
+        }
+    | LayoutModelSidebar Layouts.Sidebar.Model
 
 
 init : Json.Decode.Value -> Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
@@ -90,8 +97,51 @@ init json url key =
 initLayout : { key : Browser.Navigation.Key, url : Url, shared : Shared.Model, layout : Maybe LayoutModel } -> Layouts.Layout -> ( LayoutModel, Cmd Msg )
 initLayout model layout =
     case ( model.layout, layout ) of
+        ( Just (LayoutModelHeader existing), Layouts.Header settings ) ->
+            ( LayoutModelHeader existing
+            , Cmd.none
+            )
+
+        ( _, Layouts.Header settings ) ->
+            let
+                ( layoutModel, layoutCmd ) =
+                    Layout.init (Layouts.Header.layout settings model.shared (Route.fromUrl () model.url)) ()
+            in
+            ( LayoutModelHeader layoutModel
+            , fromLayoutEffect model (Effect.map Msg_LayoutHeader layoutCmd)
+            )
+
+        ( Just (LayoutModelSidebar__WithHeader existing), Layouts.Sidebar__WithHeader settings ) ->
+            ( LayoutModelSidebar__WithHeader existing
+            , Cmd.none
+            )
+
+        ( Just (LayoutModelSidebar sidebarLayoutModel), Layouts.Sidebar__WithHeader settings ) ->
+            let
+                ( layoutModel, layoutCmd ) =
+                    Layout.init (Layouts.Sidebar.WithHeader.layout settings.withHeader model.shared (Route.fromUrl () model.url)) ()
+            in
+            ( LayoutModelSidebar__WithHeader { sidebar = sidebarLayoutModel, withHeader = layoutModel }
+            , fromLayoutEffect model (Effect.map Msg_LayoutSidebar__WithHeader layoutCmd)
+            )
+
+        ( _, Layouts.Sidebar__WithHeader settings ) ->
+            let
+                ( sidebarLayoutModel, sidebarLayoutCmd ) =
+                    Layout.init (Layouts.Sidebar.layout settings.sidebar model.shared (Route.fromUrl () model.url)) ()
+
+                ( withHeaderLayoutModel, withHeaderLayoutCmd ) =
+                    Layout.init (Layouts.Sidebar.WithHeader.layout settings.withHeader model.shared (Route.fromUrl () model.url)) ()
+            in
+            ( LayoutModelSidebar__WithHeader { sidebar = sidebarLayoutModel, withHeader = withHeaderLayoutModel }
+            , Cmd.batch
+                [ fromLayoutEffect model (Effect.map Msg_LayoutSidebar sidebarLayoutCmd)
+                , fromLayoutEffect model (Effect.map Msg_LayoutSidebar__WithHeader withHeaderLayoutCmd)
+                ]
+            )
+
         ( Just (LayoutModelSidebar existing), Layouts.Sidebar settings ) ->
-            ( LayoutModelSidebar { settings = settings, model = existing.model }
+            ( LayoutModelSidebar existing
             , Cmd.none
             )
 
@@ -100,7 +150,7 @@ initLayout model layout =
                 ( layoutModel, layoutCmd ) =
                     Layout.init (Layouts.Sidebar.layout settings model.shared (Route.fromUrl () model.url)) ()
             in
-            ( LayoutModelSidebar { settings = settings, model = layoutModel }
+            ( LayoutModelSidebar layoutModel
             , fromLayoutEffect model (Effect.map Msg_LayoutSidebar layoutCmd)
             )
 
@@ -218,7 +268,9 @@ type PageMsg
 
 
 type LayoutMsg
-    = Msg_LayoutSidebar Layouts.Sidebar.Msg
+    = Msg_LayoutHeader Layouts.Header.Msg
+    | Msg_LayoutSidebar__WithHeader Layouts.Sidebar.WithHeader.Msg
+    | Msg_LayoutSidebar Layouts.Sidebar.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -243,7 +295,7 @@ update msg model =
             else
                 let
                     { page, layout } =
-                        initPageAndLayout { key = model.key, shared = model.shared, url = url, layout = model.layout }
+                        initPageAndLayout { key = model.key, shared = model.shared, layout = model.layout, url = url }
 
                     ( pageModel, pageCmd ) =
                         page
@@ -344,12 +396,35 @@ updateFromPage msg model =
 
 updateFromLayout : LayoutMsg -> Model -> ( Maybe LayoutModel, Cmd Msg )
 updateFromLayout msg model =
-    case ( msg, model.layout ) of
-        ( Msg_LayoutSidebar layoutMsg, Just (LayoutModelSidebar layout) ) ->
+    let
+        maybeLayout : Maybe Layouts.Layout
+        maybeLayout =
+            toLayoutFromPage model
+    in
+    case ( maybeLayout, msg, model.layout ) of
+        ( Just (Layouts.Header settings), Msg_LayoutHeader layoutMsg, Just (LayoutModelHeader layoutModel) ) ->
             Tuple.mapBoth
-                (\newModel -> Just (LayoutModelSidebar { layout | model = newModel }))
+                (\newModel -> Just (LayoutModelHeader newModel))
+                (Effect.map Msg_LayoutHeader >> fromLayoutEffect model)
+                (Layout.update (Layouts.Header.layout settings model.shared (Route.fromUrl () model.url)) layoutMsg layoutModel)
+
+        ( Just (Layouts.Sidebar__WithHeader settings), Msg_LayoutSidebar layoutMsg, Just (LayoutModelSidebar__WithHeader layoutModels) ) ->
+            Tuple.mapBoth
+                (\withSidebarLayoutModel -> Just (LayoutModelSidebar__WithHeader { layoutModels | sidebar = withSidebarLayoutModel }))
                 (Effect.map Msg_LayoutSidebar >> fromLayoutEffect model)
-                (Layout.update (Layouts.Sidebar.layout layout.settings model.shared (Route.fromUrl () model.url)) layoutMsg layout.model)
+                (Layout.update (Layouts.Sidebar.layout settings.withHeader model.shared (Route.fromUrl () model.url)) layoutMsg layoutModels.sidebar)
+
+        ( Just (Layouts.Sidebar__WithHeader settings), Msg_LayoutSidebar__WithHeader layoutMsg, Just (LayoutModelSidebar__WithHeader layoutModels) ) ->
+            Tuple.mapBoth
+                (\withHeaderLayoutModel -> Just (LayoutModelSidebar__WithHeader { layoutModels | withHeader = withHeaderLayoutModel }))
+                (Effect.map Msg_LayoutSidebar__WithHeader >> fromLayoutEffect model)
+                (Layout.update (Layouts.Sidebar.WithHeader.layout settings.withHeader model.shared (Route.fromUrl () model.url)) layoutMsg layoutModels.withHeader)
+
+        ( Just (Layouts.Sidebar settings), Msg_LayoutSidebar layoutMsg, Just (LayoutModelSidebar layoutModel) ) ->
+            Tuple.mapBoth
+                (\newModel -> Just (LayoutModelSidebar layoutModel))
+                (Effect.map Msg_LayoutSidebar >> fromLayoutEffect model)
+                (Layout.update (Layouts.Sidebar.layout settings model.shared (Route.fromUrl () model.url)) layoutMsg layoutModel)
 
         _ ->
             ( model.layout
@@ -357,51 +432,126 @@ updateFromLayout msg model =
             )
 
 
+toLayoutFromPage : Model -> Maybe Layouts.Layout
+toLayoutFromPage model =
+    case model.page of
+        PageModelAuthors pageModel ->
+            let
+                page =
+                    Pages.Authors.page model.shared (Route.fromUrl () model.url)
+            in
+            Page.layout page
+
+        PageModelBlogPosts pageModel ->
+            let
+                page =
+                    Pages.BlogPosts.page model.shared (Route.fromUrl () model.url)
+            in
+            Page.layout page
+
+        PageModelHome_ pageModel ->
+            let
+                page =
+                    Pages.Home_.page model.shared (Route.fromUrl () model.url)
+            in
+            Page.layout page
+
+        PageModelNotFound_ ->
+            Nothing
+
+        Redirecting ->
+            Nothing
+
+        Loading _ ->
+            Nothing
+
+
 subscriptions : Model -> Sub Msg
 subscriptions model =
     let
-        subscriptionsFromPage : Sub Msg
-        subscriptionsFromPage =
+        fromPage : { subscriptions : Sub Msg, maybeLayout : Maybe Layouts.Layout }
+        fromPage =
             case model.page of
                 PageModelAuthors pageModel ->
-                    Page.subscriptions (Pages.Authors.page model.shared (Route.fromUrl () model.url)) pageModel
-                        |> Sub.map Msg_Authors
-                        |> Sub.map PageSent
+                    let
+                        page =
+                            Pages.Authors.page model.shared (Route.fromUrl () model.url)
+                    in
+                    { subscriptions =
+                        Page.subscriptions page pageModel
+                            |> Sub.map Msg_Authors
+                            |> Sub.map PageSent
+                    , maybeLayout = Page.layout page
+                    }
 
                 PageModelBlogPosts pageModel ->
-                    Page.subscriptions (Pages.BlogPosts.page model.shared (Route.fromUrl () model.url)) pageModel
-                        |> Sub.map Msg_BlogPosts
-                        |> Sub.map PageSent
+                    let
+                        page =
+                            Pages.BlogPosts.page model.shared (Route.fromUrl () model.url)
+                    in
+                    { subscriptions =
+                        Page.subscriptions page pageModel
+                            |> Sub.map Msg_BlogPosts
+                            |> Sub.map PageSent
+                    , maybeLayout = Page.layout page
+                    }
 
                 PageModelHome_ pageModel ->
-                    Page.subscriptions (Pages.Home_.page model.shared (Route.fromUrl () model.url)) pageModel
-                        |> Sub.map Msg_Home_
-                        |> Sub.map PageSent
+                    let
+                        page =
+                            Pages.Home_.page model.shared (Route.fromUrl () model.url)
+                    in
+                    { subscriptions =
+                        Page.subscriptions page pageModel
+                            |> Sub.map Msg_Home_
+                            |> Sub.map PageSent
+                    , maybeLayout = Page.layout page
+                    }
 
                 PageModelNotFound_ ->
-                    Sub.none
+                    { subscriptions = Sub.none, maybeLayout = Nothing }
 
                 Redirecting ->
-                    Sub.none
+                    { subscriptions = Sub.none, maybeLayout = Nothing }
 
                 Loading _ ->
-                    Sub.none
+                    { subscriptions = Sub.none, maybeLayout = Nothing }
 
+        maybeLayout : Maybe Layouts.Layout
+        maybeLayout =
+            Nothing
+
+        -- TODO
         subscriptionsFromLayout : Sub Msg
         subscriptionsFromLayout =
-            case model.layout of
-                Just (LayoutModelSidebar layout) ->
-                    Layout.subscriptions (Layouts.Sidebar.layout layout.settings model.shared (Route.fromUrl () model.url)) layout.model
+            case ( maybeLayout, model.layout ) of
+                ( Just (Layouts.Header settings), Just (LayoutModelHeader layoutModel) ) ->
+                    Layout.subscriptions (Layouts.Header.layout settings model.shared (Route.fromUrl () model.url)) layoutModel
+                        |> Sub.map Msg_LayoutHeader
+                        |> Sub.map LayoutSent
+
+                ( Just (Layouts.Sidebar__WithHeader settings), Just (LayoutModelSidebar__WithHeader layoutModels) ) ->
+                    Sub.batch
+                        [ Layout.subscriptions (Layouts.Sidebar.WithHeader.layout settings.withHeader model.shared (Route.fromUrl () model.url)) layoutModels.withHeader
+                            |> Sub.map Msg_LayoutSidebar__WithHeader
+                            |> Sub.map LayoutSent
+                        , Layout.subscriptions (Layouts.Sidebar.layout settings.sidebar model.shared (Route.fromUrl () model.url)) layoutModels.sidebar
+                            |> Sub.map Msg_LayoutSidebar
+                            |> Sub.map LayoutSent
+                        ]
+
+                ( Just (Layouts.Sidebar settings), Just (LayoutModelSidebar layoutModel) ) ->
+                    Layout.subscriptions (Layouts.Sidebar.layout settings model.shared (Route.fromUrl () model.url)) layoutModel
                         |> Sub.map Msg_LayoutSidebar
                         |> Sub.map LayoutSent
 
-                Nothing ->
+                _ ->
                     Sub.none
     in
     Sub.batch
         [ Shared.subscriptions (Route.fromUrl () model.url) model.shared
             |> Sub.map SharedSent
-        , subscriptionsFromPage
+        , fromPage.subscriptions
         , subscriptionsFromLayout
         ]
 
@@ -412,45 +562,97 @@ subscriptions model =
 
 view : Model -> View Msg
 view model =
-    case model.layout of
-        Just (LayoutModelSidebar layout) ->
+    let
+        route : Route.Route ()
+        route =
+            Route.fromUrl () model.url
+
+        page : { view : View Msg, maybeLayout : Maybe Layouts.Layout }
+        page =
+            viewPage model
+    in
+    case ( page.maybeLayout, model.layout ) of
+        ( Just (Layouts.Header settings), Just (LayoutModelHeader layoutModel) ) ->
             Layout.view
-                (Layouts.Sidebar.layout layout.settings model.shared (Route.fromUrl () model.url))
-                { model = layout.model
-                , toMainMsg = Msg_LayoutSidebar >> LayoutSent
-                , content = viewPage model
+                (Layouts.Header.layout settings model.shared route)
+                { model = layoutModel
+                , toMainMsg = Msg_LayoutHeader >> LayoutSent
+                , content = page.view
                 }
 
-        Nothing ->
-            viewPage model
+        ( Just (Layouts.Sidebar__WithHeader settings), Just (LayoutModelSidebar__WithHeader layoutModels) ) ->
+            Layout.view
+                (Layouts.Sidebar.layout settings.sidebar model.shared route)
+                { model = layoutModels.sidebar
+                , toMainMsg = Msg_LayoutSidebar >> LayoutSent
+                , content =
+                    Layout.view
+                        (Layouts.Sidebar.WithHeader.layout settings.withHeader model.shared route)
+                        { model = layoutModels.withHeader
+                        , toMainMsg = Msg_LayoutSidebar__WithHeader >> LayoutSent
+                        , content = page.view
+                        }
+                }
+
+        ( Just (Layouts.Sidebar settings), Just (LayoutModelSidebar layoutModel) ) ->
+            Layout.view
+                (Layouts.Sidebar.layout settings model.shared route)
+                { model = layoutModel
+                , toMainMsg = Msg_LayoutSidebar >> LayoutSent
+                , content = page.view
+                }
+
+        _ ->
+            page.view
 
 
-viewPage : Model -> View Msg
+viewPage : Model -> { view : View Msg, maybeLayout : Maybe Layouts.Layout }
 viewPage model =
     case model.page of
         PageModelAuthors pageModel ->
-            Page.view (Pages.Authors.page model.shared (Route.fromUrl () model.url)) pageModel
-                |> View.map Msg_Authors
-                |> View.map PageSent
+            let
+                page =
+                    Pages.Authors.page model.shared (Route.fromUrl () model.url)
+            in
+            { view =
+                Page.view page pageModel
+                    |> View.map Msg_Authors
+                    |> View.map PageSent
+            , maybeLayout = Page.layout page
+            }
 
         PageModelBlogPosts pageModel ->
-            Page.view (Pages.BlogPosts.page model.shared (Route.fromUrl () model.url)) pageModel
-                |> View.map Msg_BlogPosts
-                |> View.map PageSent
+            let
+                page =
+                    Pages.BlogPosts.page model.shared (Route.fromUrl () model.url)
+            in
+            { view =
+                Page.view page pageModel
+                    |> View.map Msg_BlogPosts
+                    |> View.map PageSent
+            , maybeLayout = Page.layout page
+            }
 
         PageModelHome_ pageModel ->
-            Page.view (Pages.Home_.page model.shared (Route.fromUrl () model.url)) pageModel
-                |> View.map Msg_Home_
-                |> View.map PageSent
+            let
+                page =
+                    Pages.Home_.page model.shared (Route.fromUrl () model.url)
+            in
+            { view =
+                Page.view page pageModel
+                    |> View.map Msg_Home_
+                    |> View.map PageSent
+            , maybeLayout = Page.layout page
+            }
 
         PageModelNotFound_ ->
-            Pages.NotFound_.page
+            { view = Pages.NotFound_.page, maybeLayout = Nothing }
 
         Redirecting ->
-            View.none
+            { view = View.none, maybeLayout = Nothing }
 
         Loading loadingView ->
-            View.map never loadingView
+            { view = View.map never loadingView, maybeLayout = Nothing }
 
 
 

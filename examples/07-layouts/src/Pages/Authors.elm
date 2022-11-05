@@ -18,7 +18,7 @@ page shared route =
         , view = view
         }
         |> Page.withLayout
-            (Layouts.Sidebar ())
+            (Layouts.Header ())
 
 
 
@@ -69,5 +69,5 @@ subscriptions model =
 view : Model -> View Msg
 view model =
     { title = "Pages.Authors"
-    , body = [ Html.text "This is a list of authors!" ]
+    , body = [ Html.text "This HTML is from the authors page" ]
     }
