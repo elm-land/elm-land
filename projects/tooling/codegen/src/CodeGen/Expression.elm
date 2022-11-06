@@ -2,7 +2,7 @@ module CodeGen.Expression exposing
     ( Expression
     , function, multilineFunction
     , value
-    , letIn, ifElse
+    , LetDeclaration, letIn, ifElse
     , record, multilineRecord
     , recordUpdate
     , lambda
@@ -20,7 +20,7 @@ module CodeGen.Expression exposing
 @docs Expression
 @docs function, multilineFunction
 @docs value
-@docs letIn, ifElse
+@docs LetDeclaration, letIn, ifElse
 @docs record, multilineRecord
 @docs recordUpdate
 @docs lambda

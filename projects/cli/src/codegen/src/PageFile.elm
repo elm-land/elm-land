@@ -426,7 +426,7 @@ toPageModelTypeDeclaration pages =
             let
                 toCustomType : PageFile -> ( String, List CodeGen.Annotation.Annotation )
                 toCustomType page =
-                    ( "PageModel" ++ toVariantName page
+                    ( toVariantName page
                     , List.concat
                         [ if hasDynamicParameters page then
                             [ toParamsRecordAnnotation page ]
@@ -444,14 +444,14 @@ toPageModelTypeDeclaration pages =
             in
             List.concat
                 [ List.map toCustomType pages
-                , [ ( "PageModelNotFound_", [] )
-                  , ( "Redirecting", [] )
-                  , ( "Loading", [ CodeGen.Annotation.type_ "(View Never)" ] )
+                , [ ( "NotFound_", [] )
+                  , ( "Redirecting_", [] )
+                  , ( "Loading_", [ CodeGen.Annotation.type_ "(View Never)" ] )
                   ]
                 ]
     in
     CodeGen.Declaration.customType
-        { name = "PageModel"
+        { name = "Model"
         , variants = toPageModelCustomType
         }
 
@@ -497,7 +497,7 @@ toParamsRecordAnnotation (PageFile { filepath }) =
 
 toVariantName : PageFile -> String
 toVariantName (PageFile { filepath }) =
-    String.join "__" filepath
+    String.join "_" filepath
 
 
 toRouteVariant : PageFile -> ( String, List CodeGen.Annotation )

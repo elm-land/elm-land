@@ -18,9 +18,9 @@ page shared route =
         , view = view
         }
         |> Page.withLayout
-            (Layouts.Sidebar__WithHeader
+            (Layouts.Sidebar_Header
                 { sidebar = ()
-                , withHeader = ()
+                , header = ()
                 }
             )
 

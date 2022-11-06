@@ -96,13 +96,13 @@ init json url key =
 
 initLayout : { key : Browser.Navigation.Key, url : Url, shared : Shared.Model, layout : Maybe LayoutModel } -> Layouts.Layout -> ( LayoutModel, Cmd Msg )
 initLayout model layout =
-    case ( model.layout, layout ) of
-        ( Just (LayoutModelHeader existing), Layouts.Header settings ) ->
+    case ( layout, model.layout ) of
+        ( Layouts.Header settings, Just (LayoutModelHeader existing) ) ->
             ( LayoutModelHeader existing
             , Cmd.none
             )
 
-        ( _, Layouts.Header settings ) ->
+        ( Layouts.Header settings, _ ) ->
             let
                 ( layoutModel, layoutCmd ) =
                     Layout.init (Layouts.Header.layout settings model.shared (Route.fromUrl () model.url)) ()
@@ -111,12 +111,26 @@ initLayout model layout =
             , fromLayoutEffect model (Effect.map Msg_LayoutHeader layoutCmd)
             )
 
-        ( Just (LayoutModelSidebar__WithHeader existing), Layouts.Sidebar__WithHeader settings ) ->
+        ( Layouts.Sidebar settings, Just (LayoutModelSidebar existing) ) ->
+            ( LayoutModelSidebar existing
+            , Cmd.none
+            )
+
+        ( Layouts.Sidebar settings, _ ) ->
+            let
+                ( layoutModel, layoutCmd ) =
+                    Layout.init (Layouts.Sidebar.layout settings model.shared (Route.fromUrl () model.url)) ()
+            in
+            ( LayoutModelSidebar layoutModel
+            , fromLayoutEffect model (Effect.map Msg_LayoutSidebar layoutCmd)
+            )
+
+        ( Layouts.Sidebar__WithHeader settings, Just (LayoutModelSidebar__WithHeader existing) ) ->
             ( LayoutModelSidebar__WithHeader existing
             , Cmd.none
             )
 
-        ( Just (LayoutModelSidebar sidebarLayoutModel), Layouts.Sidebar__WithHeader settings ) ->
+        ( Layouts.Sidebar__WithHeader settings, Just (LayoutModelSidebar sidebarLayoutModel) ) ->
             let
                 ( layoutModel, layoutCmd ) =
                     Layout.init (Layouts.Sidebar.WithHeader.layout settings.withHeader model.shared (Route.fromUrl () model.url)) ()
@@ -125,7 +139,7 @@ initLayout model layout =
             , fromLayoutEffect model (Effect.map Msg_LayoutSidebar__WithHeader layoutCmd)
             )
 
-        ( _, Layouts.Sidebar__WithHeader settings ) ->
+        ( Layouts.Sidebar__WithHeader settings, _ ) ->
             let
                 ( sidebarLayoutModel, sidebarLayoutCmd ) =
                     Layout.init (Layouts.Sidebar.layout settings.sidebar model.shared (Route.fromUrl () model.url)) ()
@@ -138,20 +152,6 @@ initLayout model layout =
                 [ fromLayoutEffect model (Effect.map Msg_LayoutSidebar sidebarLayoutCmd)
                 , fromLayoutEffect model (Effect.map Msg_LayoutSidebar__WithHeader withHeaderLayoutCmd)
                 ]
-            )
-
-        ( Just (LayoutModelSidebar existing), Layouts.Sidebar settings ) ->
-            ( LayoutModelSidebar existing
-            , Cmd.none
-            )
-
-        ( _, Layouts.Sidebar settings ) ->
-            let
-                ( layoutModel, layoutCmd ) =
-                    Layout.init (Layouts.Sidebar.layout settings model.shared (Route.fromUrl () model.url)) ()
-            in
-            ( LayoutModelSidebar layoutModel
-            , fromLayoutEffect model (Effect.map Msg_LayoutSidebar layoutCmd)
             )
 
 

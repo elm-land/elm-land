@@ -18,12 +18,86 @@ run json =
     case Json.Decode.decodeValue decoder json of
         Ok data ->
             [ mainElmModule data
+            , mainPagesModelModule data
+            , mainPagesMsgModule data
+            , mainLayoutsModelModule data
+            , mainLayoutsMsgModule data
             , routePathElmModule data
             , layoutsElmModule data
             ]
 
         Err _ ->
             []
+
+
+mainPagesModelModule : Data -> CodeGen.Module
+mainPagesModelModule data =
+    CodeGen.Module.new
+        { name = [ "Main", "Pages", "Model" ]
+        , exposing_ = [ "Model(..)" ]
+        , imports =
+            List.concat
+                [ data.pages
+                    |> List.map PageFile.toList
+                    |> List.map (\pieces -> "Pages" :: pieces)
+                    |> List.map CodeGen.Import.new
+                , [ CodeGen.Import.new [ "View" ] |> CodeGen.Import.withExposing [ "View" ] ]
+                ]
+        , declarations =
+            [ PageFile.toPageModelTypeDeclaration data.pages
+            ]
+        }
+
+
+mainPagesMsgModule : Data -> CodeGen.Module
+mainPagesMsgModule data =
+    CodeGen.Module.new
+        { name = [ "Main", "Pages", "Msg" ]
+        , exposing_ = [ "Msg(..)" ]
+        , imports =
+            data.pages
+                |> List.map PageFile.toList
+                |> List.map (\pieces -> "Pages" :: pieces)
+                |> List.map CodeGen.Import.new
+        , declarations =
+            [ CodeGen.Declaration.customType
+                { name = "Msg"
+                , variants = toPageMsgCustomType data.pages
+                }
+            ]
+        }
+
+
+mainLayoutsModelModule : Data -> CodeGen.Module
+mainLayoutsModelModule data =
+    CodeGen.Module.new
+        { name = [ "Main", "Layouts", "Model" ]
+        , exposing_ = [ "Model(..)" ]
+        , imports =
+            data.layouts
+                |> List.map LayoutFile.toList
+                |> List.map (\pieces -> "Layouts" :: pieces)
+                |> List.map CodeGen.Import.new
+        , declarations =
+            [ LayoutFile.toLayoutsModelTypeDeclaration data.layouts
+            ]
+        }
+
+
+mainLayoutsMsgModule : Data -> CodeGen.Module
+mainLayoutsMsgModule data =
+    CodeGen.Module.new
+        { name = [ "Main", "Layouts", "Msg" ]
+        , exposing_ = [ ".." ]
+        , imports =
+            data.layouts
+                |> List.map LayoutFile.toList
+                |> List.map (\pieces -> "Layouts" :: pieces)
+                |> List.map CodeGen.Import.new
+        , declarations =
+            [ LayoutFile.toLayoutsMsgTypeDeclaration data.layouts
+            ]
+        }
 
 
 mainElmModule : Data -> CodeGen.Module
@@ -54,14 +128,18 @@ mainElmModule data =
                     |> List.map LayoutFile.toList
                     |> List.map (\pieces -> "Layouts" :: pieces)
                     |> List.map CodeGen.Import.new
-                , [ CodeGen.Import.new [ "Page" ]
+                , [ CodeGen.Import.new [ "Main", "Layouts", "Model" ]
+                  , CodeGen.Import.new [ "Main", "Layouts", "Msg" ]
+                  , CodeGen.Import.new [ "Main", "Pages", "Model" ]
+                  , CodeGen.Import.new [ "Main", "Pages", "Msg" ]
+                  , CodeGen.Import.new [ "Page" ]
                   ]
                 , data.pages
                     |> List.map PageFile.toList
                     |> List.map (\pieces -> "Pages" :: pieces)
                     |> List.map CodeGen.Import.new
                 , [ CodeGen.Import.new [ "Pages", "NotFound_" ]
-                  , CodeGen.Import.new [ "Route" ]
+                  , CodeGen.Import.new [ "Route" ] |> CodeGen.Import.withExposing [ "Route" ]
                   , CodeGen.Import.new [ "Route", "Path" ]
                   , CodeGen.Import.new [ "Shared" ]
                   , CodeGen.Import.new [ "Url" ]
@@ -97,13 +175,11 @@ mainElmModule data =
                     CodeGen.Annotation.multilineRecord
                         [ ( "key", CodeGen.Annotation.type_ "Browser.Navigation.Key" )
                         , ( "url", CodeGen.Annotation.type_ "Url" )
-                        , ( "page", CodeGen.Annotation.type_ "PageModel" )
-                        , ( "layout", CodeGen.Annotation.type_ "Maybe LayoutModel" )
+                        , ( "page", CodeGen.Annotation.type_ "Main.Pages.Model.Model" )
+                        , ( "layout", CodeGen.Annotation.type_ "Maybe Main.Layouts.Model.Model" )
                         , ( "shared", CodeGen.Annotation.type_ "Shared.Model" )
                         ]
                 }
-            , PageFile.toPageModelTypeDeclaration data.pages
-            , LayoutFile.toLayoutsModelTypeDeclaration data.layouts
             , CodeGen.Declaration.function
                 { name = "init"
                 , annotation =
@@ -199,10 +275,10 @@ mainElmModule data =
                                 [ ( "key", CodeGen.Annotation.type_ "Browser.Navigation.Key" )
                                 , ( "url", CodeGen.Annotation.type_ "Url" )
                                 , ( "shared", CodeGen.Annotation.type_ "Shared.Model" )
-                                , ( "layout", CodeGen.Annotation.type_ "Maybe LayoutModel" )
+                                , ( "layout", CodeGen.Annotation.type_ "Maybe Main.Layouts.Model.Model" )
                                 ]
                             , CodeGen.Annotation.type_ "Layouts.Layout"
-                            , CodeGen.Annotation.type_ "( LayoutModel, Cmd Msg )"
+                            , CodeGen.Annotation.type_ "( Main.Layouts.Model.Model, Cmd Msg )"
                             ]
                     , arguments = [ CodeGen.Argument.new "model", CodeGen.Argument.new "layout" ]
                     , expression = toInitLayoutCaseExpression data.layouts
@@ -215,9 +291,9 @@ mainElmModule data =
                             [ ( "key", CodeGen.Annotation.type_ "Browser.Navigation.Key" )
                             , ( "url", CodeGen.Annotation.type_ "Url" )
                             , ( "shared", CodeGen.Annotation.type_ "Shared.Model" )
-                            , ( "layout", CodeGen.Annotation.type_ "Maybe LayoutModel" )
+                            , ( "layout", CodeGen.Annotation.type_ "Maybe Main.Layouts.Model.Model" )
                             ]
-                        , CodeGen.Annotation.type_ "{ page : ( PageModel, Cmd Msg ), layout : Maybe ( LayoutModel, Cmd Msg ) }"
+                        , CodeGen.Annotation.type_ "{ page : ( Main.Pages.Model.Model, Cmd Msg ), layout : Maybe ( Main.Layouts.Model.Model, Cmd Msg ) }"
                         ]
                 , arguments = [ CodeGen.Argument.new "model" ]
                 , expression = toInitPageCaseExpression data.pages
@@ -229,16 +305,11 @@ mainElmModule data =
                 , variants =
                     [ ( "UrlRequested", [ CodeGen.Annotation.type_ "Browser.UrlRequest" ] )
                     , ( "UrlChanged", [ CodeGen.Annotation.type_ "Url" ] )
-                    , ( "PageSent", [ CodeGen.Annotation.type_ "PageMsg" ] )
-                    , ( "LayoutSent", [ CodeGen.Annotation.type_ "LayoutMsg" ] )
+                    , ( "PageSent", [ CodeGen.Annotation.type_ "Main.Pages.Msg.Msg" ] )
+                    , ( "LayoutSent", [ CodeGen.Annotation.type_ "Main.Layouts.Msg.Msg" ] )
                     , ( "SharedSent", [ CodeGen.Annotation.type_ "Shared.Msg" ] )
                     ]
                 }
-            , CodeGen.Declaration.customType
-                { name = "PageMsg"
-                , variants = toPageMsgCustomType data.pages
-                }
-            , LayoutFile.toLayoutsMsgTypeDeclaration data.layouts
             , CodeGen.Declaration.function
                 { name = "update"
                 , annotation =
@@ -482,9 +553,9 @@ mainElmModule data =
                 { name = "updateFromPage"
                 , annotation =
                     CodeGen.Annotation.function
-                        [ CodeGen.Annotation.type_ "PageMsg"
+                        [ CodeGen.Annotation.type_ "Main.Pages.Msg.Msg"
                         , CodeGen.Annotation.type_ "Model"
-                        , CodeGen.Annotation.type_ "( PageModel, Cmd Msg )"
+                        , CodeGen.Annotation.type_ "( Main.Pages.Model.Model, Cmd Msg )"
                         ]
                 , arguments =
                     [ CodeGen.Argument.new "msg"
@@ -496,9 +567,9 @@ mainElmModule data =
                 { name = "updateFromLayout"
                 , annotation =
                     CodeGen.Annotation.function
-                        [ CodeGen.Annotation.type_ "LayoutMsg"
+                        [ CodeGen.Annotation.type_ "Main.Layouts.Msg.Msg"
                         , CodeGen.Annotation.type_ "Model"
-                        , CodeGen.Annotation.type_ "( Maybe LayoutModel, Cmd Msg )"
+                        , CodeGen.Annotation.type_ "( Maybe Main.Layouts.Model.Model, Cmd Msg )"
                         ]
                 , arguments =
                     [ CodeGen.Argument.new "msg"
@@ -572,12 +643,12 @@ mainElmModule data =
             , CodeGen.Declaration.comment [ "INTERNALS" ]
             , fromEffectDeclaration
                 { name = "fromPageEffect"
-                , msgType = "PageMsg"
+                , msgType = "Main.Pages.Msg.Msg"
                 , toMainMsg = "PageSent"
                 }
             , fromEffectDeclaration
                 { name = "fromLayoutEffect"
-                , msgType = "LayoutMsg"
+                , msgType = "Main.Layouts.Msg.Msg"
                 , toMainMsg = "LayoutSent"
                 }
             , fromEffectDeclaration
@@ -630,7 +701,7 @@ toPageMsgCustomType pages =
     let
         toCustomType : PageFile -> ( String, List CodeGen.Annotation.Annotation )
         toCustomType page =
-            ( "Msg_" ++ PageFile.toVariantName page
+            ( PageFile.toVariantName page
             , if PageFile.isSandboxOrElementElmLandPage page || PageFile.isAdvancedElmLandPage page then
                 [ CodeGen.Annotation.type_ (PageFile.toModuleName page ++ ".Msg")
                 ]
@@ -641,7 +712,7 @@ toPageMsgCustomType pages =
     in
     List.concat
         [ List.map toCustomType pages
-        , [ ( "Msg_NotFound_", [] ) ]
+        , [ ( "NotFound_", [] ) ]
         ]
 
 
@@ -652,8 +723,8 @@ runWhenAuthenticatedDeclaration =
         , annotation =
             CodeGen.Annotation.function
                 [ CodeGen.Annotation.type_ "{ model | shared : Shared.Model, url : Url, key : Browser.Navigation.Key }"
-                , CodeGen.Annotation.type_ "(Auth.User -> ( PageModel, Cmd Msg ))"
-                , CodeGen.Annotation.type_ "( PageModel, Cmd Msg )"
+                , CodeGen.Annotation.type_ "(Auth.User -> ( Main.Pages.Model.Model, Cmd Msg ))"
+                , CodeGen.Annotation.type_ "( Main.Pages.Model.Model, Cmd Msg )"
                 ]
         , arguments = [ CodeGen.Argument.new "model", CodeGen.Argument.new "toTuple" ]
         , expression =
@@ -692,7 +763,7 @@ runWhenAuthenticatedDeclaration =
                               , arguments = [ CodeGen.Argument.new "loadingView" ]
                               , expression =
                                     CodeGen.Expression.multilineTuple
-                                        [ CodeGen.Expression.value "Loading loadingView"
+                                        [ CodeGen.Expression.value "Main.Pages.Model.Loading_ loadingView"
                                         , CodeGen.Expression.value "Cmd.none"
                                         ]
                               }
@@ -700,7 +771,7 @@ runWhenAuthenticatedDeclaration =
                               , arguments = [ CodeGen.Argument.new "options" ]
                               , expression =
                                     CodeGen.Expression.multilineTuple
-                                        [ CodeGen.Expression.value "Redirecting"
+                                        [ CodeGen.Expression.value "Main.Pages.Model.Redirecting_"
                                         , CodeGen.Expression.value "toCmd (Effect.replaceRoute options)"
                                         ]
                               }
@@ -708,7 +779,7 @@ runWhenAuthenticatedDeclaration =
                               , arguments = [ CodeGen.Argument.new "options" ]
                               , expression =
                                     CodeGen.Expression.multilineTuple
-                                        [ CodeGen.Expression.value "Redirecting"
+                                        [ CodeGen.Expression.value "Main.Pages.Model.Redirecting_"
                                         , CodeGen.Expression.value "toCmd (Effect.pushRoute options)"
                                         ]
                               }
@@ -716,7 +787,7 @@ runWhenAuthenticatedDeclaration =
                               , arguments = [ CodeGen.Argument.new "externalUrl" ]
                               , expression =
                                     CodeGen.Expression.multilineTuple
-                                        [ CodeGen.Expression.value "Redirecting"
+                                        [ CodeGen.Expression.value "Main.Pages.Model.Redirecting_"
                                         , CodeGen.Expression.value "Browser.Navigation.load externalUrl"
                                         ]
                               }
@@ -734,7 +805,7 @@ toViewCaseExpression layouts =
             { name = "Just"
             , arguments =
                 [ CodeGen.Argument.new
-                    ("(LayoutModel{{name}} layout)"
+                    ("(Main.Layouts.Model.{{name}} layout)"
                         |> String.replace "{{name}}" (LayoutFile.toVariantName filepath)
                     )
                 ]
@@ -753,7 +824,7 @@ toViewCaseExpression layouts =
                         , CodeGen.Expression.multilineRecord
                             [ ( "model", CodeGen.Expression.value "layout.model" )
                             , ( "toMainMsg"
-                              , "LayoutMsg_{{name}} >> LayoutSent"
+                              , "Main.Layouts.Msg.{{name}} >> LayoutSent"
                                     |> String.replace "{{name}}" (LayoutFile.toVariantName filepath)
                                     |> CodeGen.Expression.value
                               )
@@ -795,7 +866,7 @@ toViewPageCaseExpression pages =
 
         toBranchForElmLandPage : Bool -> PageFile -> CodeGen.Expression.Branch
         toBranchForElmLandPage isAdvancedElmLandPage page =
-            { name = "PageModel" ++ PageFile.toVariantName page
+            { name = "Main.Pages.Model." ++ PageFile.toVariantName page
             , arguments = toPageModelArgs page
             , expression =
                 toPageModelMapper
@@ -829,7 +900,7 @@ toViewPageCaseExpression pages =
 
         toBranchForStaticPage : PageFile -> CodeGen.Expression.Branch
         toBranchForStaticPage page =
-            { name = "PageModel" ++ PageFile.toVariantName page
+            { name = "Main.Pages.Model." ++ PageFile.toVariantName page
             , arguments = toPageModelArgs page
             , expression =
                 callSandboxOrElementPageFunction page
@@ -841,15 +912,15 @@ toViewPageCaseExpression pages =
         , branches =
             List.concat
                 [ List.map toViewBranch pages
-                , [ { name = "PageModelNotFound_"
+                , [ { name = "Main.Pages.Model.NotFound_"
                     , arguments = []
                     , expression = CodeGen.Expression.value "Pages.NotFound_.page"
                     }
-                  , { name = "Redirecting"
+                  , { name = "Main.Pages.Model.Redirecting_"
                     , arguments = []
                     , expression = CodeGen.Expression.value "View.none"
                     }
-                  , { name = "Loading loadingView"
+                  , { name = "Main.Pages.Model.Loading_ loadingView"
                     , arguments = []
                     , expression = CodeGen.Expression.value "View.map never loadingView"
                     }
@@ -932,7 +1003,7 @@ toUpdatePageCaseExpression pages =
                             [ CodeGen.Expression.function
                                 { name = "Effect.map"
                                 , arguments =
-                                    [ CodeGen.Expression.value ("Msg_" ++ PageFile.toVariantName page)
+                                    [ CodeGen.Expression.value ("Main.Pages.Msg." ++ PageFile.toVariantName page)
                                     ]
                                 }
                             , CodeGen.Expression.operator ">>"
@@ -956,7 +1027,7 @@ toUpdatePageCaseExpression pages =
         toBranchForAdvancedElmLandPage : PageFile -> CodeGen.Expression.Branch
         toBranchForAdvancedElmLandPage page =
             { name =
-                "( Msg_{{name}} pageMsg, PageModel{{name}} {{args}} )"
+                "( Main.Pages.Msg.{{name}} pageMsg, Main.Pages.Model.{{name}} {{args}} )"
                     |> String.replace "{{name}}" (PageFile.toVariantName page)
                     |> String.replace "{{args}}"
                         (toPageModelArgs page
@@ -973,7 +1044,7 @@ toUpdatePageCaseExpression pages =
                             [ CodeGen.Expression.function
                                 { name = "Effect.map"
                                 , arguments =
-                                    [ CodeGen.Expression.value ("Msg_" ++ PageFile.toVariantName page)
+                                    [ CodeGen.Expression.value ("Main.Pages.Msg." ++ PageFile.toVariantName page)
                                     ]
                                 }
                             , CodeGen.Expression.operator ">>"
@@ -1010,7 +1081,7 @@ toUpdatePageCaseExpression pages =
         , branches =
             List.concat
                 [ List.map toBranch pages
-                , [ { name = "( Msg_NotFound_, PageModelNotFound_ )"
+                , [ { name = "( Main.Pages.Msg.NotFound_, Main.Pages.Model.NotFound_ )"
                     , arguments = []
                     , expression =
                         CodeGen.Expression.multilineTuple
@@ -1041,7 +1112,7 @@ toUpdateLayoutCaseExpression layouts =
         toBranch : LayoutFile -> CodeGen.Expression.Branch
         toBranch layout =
             { name =
-                "( LayoutMsg_{{name}} layoutMsg, Just (LayoutModel_{{name}} layout) )"
+                "( Main.Layouts.Msg.{{name}} layoutMsg, Just (Main.Layouts.Model.{{name}} layout) )"
                     |> String.replace "{{name}}" (LayoutFile.toVariantName layout)
             , arguments = []
             , expression =
@@ -1053,7 +1124,7 @@ toUpdateLayoutCaseExpression layouts =
                             [ CodeGen.Expression.function
                                 { name = "Effect.map"
                                 , arguments =
-                                    [ CodeGen.Expression.value ("LayoutMsg_" ++ LayoutFile.toVariantName layout)
+                                    [ CodeGen.Expression.value ("Main.Layouts.Msg." ++ LayoutFile.toVariantName layout)
                                     ]
                                 }
                             , CodeGen.Expression.operator ">>"
@@ -1095,14 +1166,14 @@ toSubscriptionPageCaseExpression pages =
     let
         toBranchForStaticPage : PageFile -> CodeGen.Expression.Branch
         toBranchForStaticPage page =
-            { name = "PageModel" ++ PageFile.toVariantName page
+            { name = "Main.Pages.Model." ++ PageFile.toVariantName page
             , arguments = toPageModelArgs page
             , expression = CodeGen.Expression.value "Sub.none"
             }
 
         toBranchForElmLandPage : Bool -> PageFile -> CodeGen.Expression.Branch
         toBranchForElmLandPage isAdvancedElmLandPage page =
-            { name = "PageModel" ++ PageFile.toVariantName page
+            { name = "Main.Pages.Model." ++ PageFile.toVariantName page
             , arguments = toPageModelArgs page
             , expression =
                 toPageModelMapper
@@ -1150,15 +1221,15 @@ toSubscriptionPageCaseExpression pages =
         , branches =
             List.concat
                 [ List.map toBranch pages
-                , [ { name = "PageModelNotFound_"
+                , [ { name = "Main.Pages.Model.NotFound_"
                     , arguments = []
                     , expression = CodeGen.Expression.value "Sub.none"
                     }
-                  , { name = "Redirecting"
+                  , { name = "Main.Pages.Model.Redirecting_"
                     , arguments = []
                     , expression = CodeGen.Expression.value "Sub.none"
                     }
-                  , { name = "Loading _"
+                  , { name = "Main.Pages.Model.Loading_ _"
                     , arguments = []
                     , expression = CodeGen.Expression.value "Sub.none"
                     }
@@ -1174,7 +1245,7 @@ toSubscriptionLayoutCaseExpression layouts =
         toBranch layout =
             { name = "Just"
             , arguments =
-                [ "(LayoutModel{{name}} layout)"
+                [ "(Main.Layouts.Model.{{name}} layout)"
                     |> String.replace "{{name}}" (LayoutFile.toVariantName layout)
                     |> CodeGen.Argument.new
                 ]
@@ -1187,7 +1258,7 @@ toSubscriptionLayoutCaseExpression layouts =
                             , CodeGen.Expression.value "layout.model"
                             ]
                         }
-                    , CodeGen.Expression.value ("Sub.map LayoutMsg_" ++ LayoutFile.toVariantName layout)
+                    , CodeGen.Expression.value ("Sub.map Main.Layouts.Msg." ++ LayoutFile.toVariantName layout)
                     , CodeGen.Expression.value "Sub.map LayoutSent"
                     ]
             }
@@ -1209,83 +1280,109 @@ toSubscriptionLayoutCaseExpression layouts =
 toInitLayoutCaseExpression : List LayoutFile -> CodeGen.Expression.Expression
 toInitLayoutCaseExpression layouts =
     let
-        toBranch : LayoutFile -> List CodeGen.Expression.Branch
-        toBranch layout =
-            let
-                moduleName : String
-                moduleName =
-                    LayoutFile.toModuleName layout
+        -- toBranch : LayoutFile -> List CodeGen.Expression.Branch
+        -- toBranch layout =
+        --     let
+        -- moduleName : String
+        -- moduleName =
+        --     LayoutFile.toModuleName layout
+        -- routeVariantName : String
+        -- routeVariantName =
+        --     LayoutFile.toVariantName layout
+        -- modelVariantName : String
+        -- modelVariantName =
+        --     "Main.Layouts.Model." ++ routeVariantName
+        -- msgVariantName : String
+        -- msgVariantName =
+        --     "Main.Layouts.Msg." ++ routeVariantName
+        -- initLayoutBranchExpression : CodeGen.Expression
+        -- initLayoutBranchExpression =
+        --     CodeGen.Expression.letIn
+        --         { let_ =
+        --             [ { argument = CodeGen.Argument.new "( layoutModel, layoutCmd )"
+        --               , annotation = Nothing
+        --               , expression =
+        --                     CodeGen.Expression.function
+        --                         { name = "Layout.init"
+        --                         , arguments =
+        --                             [ CodeGen.Expression.parens
+        --                                 [ CodeGen.Expression.function
+        --                                     { name = moduleName ++ ".layout"
+        --                                     , arguments =
+        --                                         [ CodeGen.Expression.value "settings model.shared (Route.fromUrl () model.url)"
+        --                                         ]
+        --                                     }
+        --                                 ]
+        --                             , CodeGen.Expression.tuple []
+        --                             ]
+        --                         }
+        --               }
+        --             ]
+        --         , in_ =
+        --             CodeGen.Expression.multilineTuple
+        --                 [ CodeGen.Expression.function
+        --                     { name = modelVariantName
+        --                     , arguments = [ CodeGen.Expression.value "layoutModel" ]
+        --                     }
+        --                 , CodeGen.Expression.value ("fromLayoutEffect model (Effect.map " ++ msgVariantName ++ " layoutCmd)")
+        --                 ]
+        --         }
+        -- reuseExistingBranchExpression : CodeGen.Expression
+        -- reuseExistingBranchExpression =
+        --     CodeGen.Expression.multilineTuple
+        --         [ "{{modelVariantName}} existing"
+        --             |> String.replace "{{modelVariantName}}" modelVariantName
+        --             |> CodeGen.Expression.value
+        --         , CodeGen.Expression.value "Cmd.none"
+        --         ]
+        -- toBranchForNestedLayout : LayoutFile -> CodeGen.Expression.Branch
+        -- toBranchForNestedLayout parentLayout =
+        --     let
+        --         parentModelVariantName : String
+        --         parentModelVariantName =
+        --             "Main.Layouts.Model." ++ LayoutFile.toVariantName parentLayout
+        --     in
+        --     { name =
+        --         "( Layouts.{{routeVariantName}} settings, Just ({{parentModelVariantName}} existing) )"
+        --             |> String.replace "{{routeVariantName}}" routeVariantName
+        --             |> String.replace "{{parentModelVariantName}}" parentModelVariantName
+        --     , arguments = []
+        --     , expression =
+        --         CodeGen.Expression.multilineTuple
+        --             [ CodeGen.Expression.value "Debug.todo \"\""
+        --             , CodeGen.Expression.value "Cmd.none"
+        --             ]
+        --     }
+        -- in
+        -- List.concatMap toBranchForLayout layouts
+        toBranchForLayout : LayoutFile -> List CodeGen.Expression.Branch
+        toBranchForLayout layoutFile =
+            LayoutFile.toInitBranches
+                { target = layoutFile
+                , layouts = layouts
+                }
 
-                routeVariantName : String
-                routeVariantName =
-                    LayoutFile.toVariantName layout
-
-                modelVariantName : String
-                modelVariantName =
-                    "LayoutModel_" ++ routeVariantName
-
-                msgVariantName : String
-                msgVariantName =
-                    "LayoutMsg_" ++ routeVariantName
-
-                initLayoutBranchExpression : CodeGen.Expression
-                initLayoutBranchExpression =
-                    CodeGen.Expression.letIn
-                        { let_ =
-                            [ { argument = CodeGen.Argument.new "( layoutModel, layoutCmd )"
-                              , annotation = Nothing
-                              , expression =
-                                    CodeGen.Expression.function
-                                        { name = "Layout.init"
-                                        , arguments =
-                                            [ CodeGen.Expression.parens
-                                                [ CodeGen.Expression.function
-                                                    { name = moduleName ++ ".layout"
-                                                    , arguments =
-                                                        [ CodeGen.Expression.value "settings model.shared (Route.fromUrl () model.url)"
-                                                        ]
-                                                    }
-                                                ]
-                                            , CodeGen.Expression.tuple []
-                                            ]
-                                        }
-                              }
-                            ]
-                        , in_ =
-                            CodeGen.Expression.multilineTuple
-                                [ CodeGen.Expression.function
-                                    { name = modelVariantName
-                                    , arguments = [ CodeGen.Expression.value "layoutModel" ]
-                                    }
-                                , CodeGen.Expression.value ("fromLayoutEffect model (Effect.map " ++ msgVariantName ++ " layoutCmd)")
-                                ]
-                        }
-
-                reuseExistingBranchExpression : CodeGen.Expression
-                reuseExistingBranchExpression =
-                    CodeGen.Expression.multilineTuple
-                        [ "{{modelVariantName}} existing"
-                            |> String.replace "{{modelVariantName}}" modelVariantName
-                            |> CodeGen.Expression.value
-                        , CodeGen.Expression.value "Cmd.none"
-                        ]
-            in
-            [ { name =
-                    "( Just ({{modelVariantName}} existing), Layouts.{{routeVariantName}} settings )"
-                        |> String.replace "{{routeVariantName}}" routeVariantName
-                        |> String.replace "{{modelVariantName}}" modelVariantName
-              , arguments = []
-              , expression = reuseExistingBranchExpression
-              }
-            , { name = "( _, Layouts.{{routeVariantName}} settings )" |> String.replace "{{routeVariantName}}" routeVariantName
-              , arguments = []
-              , expression = initLayoutBranchExpression
-              }
-            ]
+        -- [
+        --     [ { name =
+        --         "( Layouts.{{routeVariantName}} settings, Just ({{modelVariantName}} existing) )"
+        --             |> String.replace "{{routeVariantName}}" routeVariantName
+        --             |> String.replace "{{modelVariantName}}" modelVariantName
+        --     , arguments = []
+        --     , expression = reuseExistingBranchExpression
+        --     }
+        --   ]
+        -- , LayoutFile.toParentLayoutFiles layout
+        --     |> List.map toBranchForNestedLayout
+        -- , [ { name = "( Layouts.{{routeVariantName}} settings, _ )" |> String.replace "{{routeVariantName}}" routeVariantName
+        --     , arguments = []
+        --     , expression = initLayoutBranchExpression
+        --     }
+        --   ]
+        -- ]
     in
     CodeGen.Expression.caseExpression
-        { value = CodeGen.Argument.new "( model.layout, layout )"
-        , branches = List.concatMap toBranch layouts
+        { value = CodeGen.Argument.new "( layout, model.layout )"
+        , branches = List.concatMap toBranchForLayout layouts
         }
 
 
@@ -1316,7 +1413,7 @@ toInitPageCaseExpression pages =
                                 [ CodeGen.Expression.function
                                     { name = "Effect.map"
                                     , arguments =
-                                        [ CodeGen.Expression.value ("Msg_" ++ PageFile.toVariantName page)
+                                        [ CodeGen.Expression.value ("Main.Pages.Msg." ++ PageFile.toVariantName page)
                                         ]
                                     }
                                 , CodeGen.Expression.operator ">>"
@@ -1349,7 +1446,7 @@ toInitPageCaseExpression pages =
                                 [ CodeGen.Expression.function
                                     { name = "Effect.map"
                                     , arguments =
-                                        [ CodeGen.Expression.value ("Msg_" ++ PageFile.toVariantName page)
+                                        [ CodeGen.Expression.value ("Main.Pages.Msg." ++ PageFile.toVariantName page)
                                         ]
                                     }
                                 , CodeGen.Expression.operator ">>"
@@ -1426,7 +1523,7 @@ toInitPageCaseExpression pages =
                         CodeGen.Expression.multilineRecord
                             [ ( "page"
                               , CodeGen.Expression.tuple
-                                    [ CodeGen.Expression.value "PageModelNotFound_"
+                                    [ CodeGen.Expression.value "Main.Pages.Model.NotFound_"
                                     , CodeGen.Expression.value "Cmd.none"
                                     ]
                               )
@@ -1461,13 +1558,13 @@ pageModelConstructor page =
     if PageFile.hasDynamicParameters page then
         CodeGen.Expression.parens
             [ CodeGen.Expression.function
-                { name = "PageModel" ++ PageFile.toVariantName page
+                { name = "Main.Pages.Model." ++ PageFile.toVariantName page
                 , arguments = [ CodeGen.Expression.value "params" ]
                 }
             ]
 
     else
-        CodeGen.Expression.value ("PageModel" ++ PageFile.toVariantName page)
+        CodeGen.Expression.value ("Main.Pages.Model." ++ PageFile.toVariantName page)
 
 
 {-| Example:
@@ -1480,7 +1577,7 @@ layoutModelConstructor layout =
     CodeGen.Expression.lambda
         { arguments = [ CodeGen.Argument.new "newModel" ]
         , expression =
-            "Just (LayoutModel_{{name}} { layout | model = newModel })"
+            "Just (Main.Layouts.Model.{{name}} { layout | model = newModel })"
                 |> String.replace "{{name}}" (LayoutFile.toVariantName layout)
                 |> CodeGen.Expression.value
         }
@@ -1590,7 +1687,7 @@ toPageModelMapper options =
             }
         , CodeGen.Expression.function
             { name = options.mapper
-            , arguments = [ CodeGen.Expression.value ("Msg_" ++ routeVariantName) ]
+            , arguments = [ CodeGen.Expression.value ("Main.Pages.Msg." ++ routeVariantName) ]
             }
         , CodeGen.Expression.function
             { name = options.mapper

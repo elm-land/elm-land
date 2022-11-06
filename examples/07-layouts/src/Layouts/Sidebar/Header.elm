@@ -1,4 +1,4 @@
-module Layouts.Sidebar.WithHeader exposing (Model, Msg, Settings, layout)
+module Layouts.Sidebar.Header exposing (Model, Msg, Settings, layout)
 
 import Effect exposing (Effect)
 import Html exposing (..)

@@ -17,8 +17,7 @@ page shared route =
         , subscriptions = subscriptions
         , view = view
         }
-        |> Page.withLayout
-            (Layouts.Header ())
+        |> Page.withLayout (Layouts.Sidebar { sidebar = () })
 
 
 
