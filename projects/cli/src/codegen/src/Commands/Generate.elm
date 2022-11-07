@@ -1386,7 +1386,6 @@ toSubscriptionLayoutCaseExpression layouts =
 
         toBranchExpression : LayoutFile -> CodeGen.Expression
         toBranchExpression layout =
-            -- TODO: Sub.none, Sub.batch, etc
             case LayoutFile.toListOfSelfAndParents layout of
                 [] ->
                     CodeGen.Expression.value "Sub.none"
@@ -1431,105 +1430,12 @@ toSubscriptionLayoutCaseExpression layouts =
 toInitLayoutCaseExpression : List LayoutFile -> CodeGen.Expression.Expression
 toInitLayoutCaseExpression layouts =
     let
-        -- toBranch : LayoutFile -> List CodeGen.Expression.Branch
-        -- toBranch layout =
-        --     let
-        -- moduleName : String
-        -- moduleName =
-        --     LayoutFile.toModuleName layout
-        -- routeVariantName : String
-        -- routeVariantName =
-        --     LayoutFile.toVariantName layout
-        -- modelVariantName : String
-        -- modelVariantName =
-        --     "Main.Layouts.Model." ++ routeVariantName
-        -- msgVariantName : String
-        -- msgVariantName =
-        --     "Main.Layouts.Msg." ++ routeVariantName
-        -- initLayoutBranchExpression : CodeGen.Expression
-        -- initLayoutBranchExpression =
-        --     CodeGen.Expression.letIn
-        --         { let_ =
-        --             [ { argument = CodeGen.Argument.new "( layoutModel, layoutCmd )"
-        --               , annotation = Nothing
-        --               , expression =
-        --                     CodeGen.Expression.function
-        --                         { name = "Layout.init"
-        --                         , arguments =
-        --                             [ CodeGen.Expression.parens
-        --                                 [ CodeGen.Expression.function
-        --                                     { name = moduleName ++ ".layout"
-        --                                     , arguments =
-        --                                         [ CodeGen.Expression.value "settings model.shared (Route.fromUrl () model.url)"
-        --                                         ]
-        --                                     }
-        --                                 ]
-        --                             , CodeGen.Expression.tuple []
-        --                             ]
-        --                         }
-        --               }
-        --             ]
-        --         , in_ =
-        --             CodeGen.Expression.multilineTuple
-        --                 [ CodeGen.Expression.function
-        --                     { name = modelVariantName
-        --                     , arguments = [ CodeGen.Expression.value "layoutModel" ]
-        --                     }
-        --                 , CodeGen.Expression.value ("fromLayoutEffect model (Effect.map " ++ msgVariantName ++ " layoutCmd)")
-        --                 ]
-        --         }
-        -- reuseExistingBranchExpression : CodeGen.Expression
-        -- reuseExistingBranchExpression =
-        --     CodeGen.Expression.multilineTuple
-        --         [ "{{modelVariantName}} existing"
-        --             |> String.replace "{{modelVariantName}}" modelVariantName
-        --             |> CodeGen.Expression.value
-        --         , CodeGen.Expression.value "Cmd.none"
-        --         ]
-        -- toBranchForNestedLayout : LayoutFile -> CodeGen.Expression.Branch
-        -- toBranchForNestedLayout parentLayout =
-        --     let
-        --         parentModelVariantName : String
-        --         parentModelVariantName =
-        --             "Main.Layouts.Model." ++ LayoutFile.toVariantName parentLayout
-        --     in
-        --     { name =
-        --         "( Layouts.{{routeVariantName}} settings, Just ({{parentModelVariantName}} existing) )"
-        --             |> String.replace "{{routeVariantName}}" routeVariantName
-        --             |> String.replace "{{parentModelVariantName}}" parentModelVariantName
-        --     , arguments = []
-        --     , expression =
-        --         CodeGen.Expression.multilineTuple
-        --             [ CodeGen.Expression.value "Debug.todo \"\""
-        --             , CodeGen.Expression.value "Cmd.none"
-        --             ]
-        --     }
-        -- in
-        -- List.concatMap toBranchForLayout layouts
         toBranchForLayout : LayoutFile -> List CodeGen.Expression.Branch
         toBranchForLayout layoutFile =
             LayoutFile.toInitBranches
                 { target = layoutFile
                 , layouts = layouts
                 }
-
-        -- [
-        --     [ { name =
-        --         "( Layouts.{{routeVariantName}} settings, Just ({{modelVariantName}} existing) )"
-        --             |> String.replace "{{routeVariantName}}" routeVariantName
-        --             |> String.replace "{{modelVariantName}}" modelVariantName
-        --     , arguments = []
-        --     , expression = reuseExistingBranchExpression
-        --     }
-        --   ]
-        -- , LayoutFile.toParentLayoutFiles layout
-        --     |> List.map toBranchForNestedLayout
-        -- , [ { name = "( Layouts.{{routeVariantName}} settings, _ )" |> String.replace "{{routeVariantName}}" routeVariantName
-        --     , arguments = []
-        --     , expression = initLayoutBranchExpression
-        --     }
-        --   ]
-        -- ]
     in
     CodeGen.Expression.caseExpression
         { value = CodeGen.Argument.new "( layout, model.layout )"

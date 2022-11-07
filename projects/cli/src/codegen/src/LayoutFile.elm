@@ -215,9 +215,6 @@ toLayoutRouteVariant options layoutFile =
         toLayoutRouteVariantAnnotation =
             toNestedLayoutRecordAnnotation
 
-        -- if isNestedLayout layoutFile then
-        -- else
-        --     CodeGen.Annotation.type_ (toModuleName layoutFile ++ "." ++ options.typeName)
         toNestedLayoutRecordAnnotation : CodeGen.Annotation
         toNestedLayoutRecordAnnotation =
             let
