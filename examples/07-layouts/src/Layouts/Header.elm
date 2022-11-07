@@ -5,6 +5,7 @@ import Html exposing (..)
 import Html.Attributes exposing (class)
 import Layout exposing (Layout)
 import Route exposing (Route)
+import Route.Path
 import Shared
 import View exposing (View)
 
@@ -81,5 +82,10 @@ view settings { toMainMsg, model, content } =
     , body =
         [ Html.text "Header"
         , Html.div [ class "page" ] content.body
+        , Html.p []
+            [ a [ Route.Path.href Route.Path.Home_ ] [ text "Dashboard" ]
+            , a [ Route.Path.href Route.Path.Authors ] [ text "Authors" ]
+            , a [ Route.Path.href Route.Path.BlogPosts ] [ text "Posts" ]
+            ]
         ]
     }

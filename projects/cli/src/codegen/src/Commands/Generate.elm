@@ -750,7 +750,11 @@ toLayoutFromPageDeclaration pages =
             , arguments = toPageModelArgs page
             , expression =
                 CodeGen.Expression.pipeline
-                    [ CodeGen.Expression.value "Route.fromUrl () model.url"
+                    [ if PageFile.hasDynamicParameters page then
+                        CodeGen.Expression.value "Route.fromUrl params model.url"
+
+                      else
+                        CodeGen.Expression.value "Route.fromUrl () model.url"
                     , CodeGen.Expression.value ("{{moduleName}}.page model.shared" |> String.replace "{{moduleName}}" (PageFile.toModuleName page))
                     , CodeGen.Expression.value "Page.layout"
                     ]

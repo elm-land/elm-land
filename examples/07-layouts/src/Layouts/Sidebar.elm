@@ -38,6 +38,7 @@ layout settings shared route =
 type alias Model =
     { search : String
     , results : Response (List Api.Search.Item)
+    , counter : Int
     }
 
 
@@ -50,7 +51,7 @@ type Response value
 
 init : () -> ( Model, Effect Msg )
 init _ =
-    ( { search = "", results = NotAsked }
+    ( { search = "", results = NotAsked, counter = 0 }
     , Effect.none
     )
 
@@ -63,6 +64,7 @@ type Msg
     = UserChangedSearchInput String
     | UserSubmittedSearchForm
     | SearchApiResponded (Result Http.Error (List Api.Search.Item))
+    | Increment
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
@@ -94,6 +96,11 @@ update msg model =
 
         SearchApiResponded (Err reason) ->
             ( { model | results = Failure reason }
+            , Effect.none
+            )
+
+        Increment ->
+            ( { model | counter = model.counter + 1 }
             , Effect.none
             )
 
@@ -150,6 +157,7 @@ viewNavbar settings model =
 
             Failure httpError ->
                 Html.text "Something went wrong..."
+        , button [ Html.Events.onClick Increment ] [ Html.text (String.fromInt model.counter) ]
         ]
 
 
