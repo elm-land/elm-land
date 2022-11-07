@@ -23,12 +23,6 @@ let addNewPage = async ({ kind, url, filepath }) => {
   let hasViewBeenCustomized = await Files.exists(path.join(process.cwd(), 'src', 'View.elm'))
 
   let newFiles = await new Promise((resolve, reject) => {
-    console.log({
-      hasViewBeenCustomized,
-      kind,
-      filepath,
-      url
-    })
     let app = Elm.Worker.init({
       flags: {
         tag: 'add-page',
