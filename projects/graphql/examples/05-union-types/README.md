@@ -48,8 +48,8 @@ query FetchCurrentUser {
 
 ### Output
 
-- [src/GraphQL/Queries/FetchUsers.elm](src/GraphQL/Queries/FetchUsers.elm)
-- [src/GraphQL/Queries/FetchUsers/UserResult.elm](src/GraphQL/Queries/FetchUsers/UserResult.elm)
+- [src/GraphQL/Queries/FetchCurrentUser.elm](src/GraphQL/Queries/FetchCurrentUser.elm)
+- [src/GraphQL/Queries/FetchCurrentUser/UserResult.elm](src/GraphQL/Queries/FetchCurrentUser/UserResult.elm)
 - [src/GraphQL/Scalar.elm](src/GraphQL/Scalar.elm)
 - [src/GraphQL/Scalar/ID.elm](src/GraphQL/Scalar/ID.elm)
 

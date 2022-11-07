@@ -10,6 +10,24 @@ load helpers
   expectOutputContains "elm-land add layout:static"
 }
 
+@test "'elm-land add layout:static 1234' fails with a bad name" {
+  mkdir -p tests/tmp
+  cd tests/tmp
+  
+  run elm-land init hello-world
+  cd hello-world
+
+  run elm-land add layout:static 1234
+  expectToFail
+
+  expectOutputContains "Layout names need to start with"
+  expectOutputContains "Here are some examples:"
+  expectOutputContains "elm-land add layout:static"
+
+  cd ../..
+  rm -r tmp
+}
+
 @test "'elm-land add layout:static Sidebar' creates a Sidebar layout" {
   mkdir -p tests/tmp
   cd tests/tmp
@@ -26,6 +44,25 @@ load helpers
   expectFileExists "src/Layouts/Sidebar.elm"
   expectFileContains "src/Layouts/Sidebar.elm" "module Layouts.Sidebar exposing (layout)"
   expectFileContains "src/Layouts/Sidebar.elm" "layout : { page : View msg } -> View msg"
+
+  cd ../..
+  rm -r tmp
+}
+
+@test "lowercase layout names are automatically capitalized" {
+  mkdir -p tests/tmp
+  cd tests/tmp
+  
+  run elm-land init hello-world
+  cd hello-world
+
+  run elm-land add layout:static lowercase
+  expectToPass
+
+  expectOutputContains "added a new layout"
+  expectOutputContains "./src/Layouts/Lowercase.elm"
+
+  expectFileExists "src/Layouts/Lowercase.elm"
 
   cd ../..
   rm -r tmp
