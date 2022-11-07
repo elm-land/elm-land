@@ -177,16 +177,16 @@ let run = async ({ arguments }) => {
       subcommandList: [
         '    Here are the commands:',
         '',
-        `    elm-land add ${Terminal.cyan('page')} ${Terminal.pink('<url>')} ....................... add a new page`,
-        `    elm-land add ${Terminal.cyan('layout')} ${Terminal.pink('<module-name>')} ........... add a new layout`,
+        `    elm-land add ${Terminal.pink('page <url>')} ....................... add a new page`,
+        `    elm-land add ${Terminal.pink('layout <module-name>')} ........... add a new layout`,
         ``,
         ``,
         `    🌱 If you are following the guide at ${Terminal.cyan('https://elm.land/guide')}`,
         `    here are some other commands for folks learning the framework:`,
         ``,
-        `    elm-land add ${Terminal.cyan('page:static')} ${Terminal.pink('<url>')} ...... add a new read-only page`,
-        `    elm-land add ${Terminal.cyan('page:sandbox')} ${Terminal.pink('<url>')} ...... add a new stateful page`,
-        `    elm-land add ${Terminal.cyan('page:element')} ${Terminal.pink('<url>')} ... add a new side-effect page`,
+        `    elm-land add ${Terminal.pink('page:static <url>')} ...... add a new read-only page`,
+        `    elm-land add ${Terminal.pink('page:sandbox <url>')} ...... add a new stateful page`,
+        `    elm-land add ${Terminal.pink('page:element <url>')} ... add a new side-effect page`,
       ]
     }))
   }
