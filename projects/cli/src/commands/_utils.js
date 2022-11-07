@@ -33,7 +33,7 @@ const intro = {
 let didNotRecognizeCommand = ({ baseCommand, subCommand, subcommandList }) => [
   '',
   subCommand === undefined
-    ? intro.error(`expected more arguments for ${Terminal.cyan(baseCommand)}`)
+    ? intro.error(`needs more details for ${Terminal.cyan(baseCommand)}`)
     : intro.error(`couldn't find an ${Terminal.cyan(`${baseCommand} ${subCommand}`)} command`),
   ...subcommandList,
   '',

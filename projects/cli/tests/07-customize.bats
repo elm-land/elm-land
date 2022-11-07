@@ -13,7 +13,7 @@ load helpers
   # Run elm-land customize without an argument
   run elm-land customize
   expectToFail
-  expectOutputContains "expected more arguments"
+  expectOutputContains "needs more details"
   expectOutputContains "Here are the commands"
 
   # Clean up tmp folder
