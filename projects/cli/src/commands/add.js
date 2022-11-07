@@ -38,11 +38,30 @@ let addNewLayout = () => async ([name]) => {
       '',
       `    elm-land add layout ${Terminal.pink(`Sidebar`)}`,
       `    elm-land add layout ${Terminal.pink(`Sidebar.WithHeader`)}`,
+      ''
+    ].join('\n'))
+  }
+
+  const moduleSegments = name.split('.')
+  const hasDuplicateNames = new Set(moduleSegments).size < moduleSegments.length
+
+  if (hasDuplicateNames) {
+    return Promise.reject([
+      '',
+      Utils.intro.error('can\'t create layouts with repeated names'),
+      '    This lead to issues later on when passing in Settings, because',
+      '    the repeated names will be ambiguous.',
+      '',
+      '    Here are some examples:',
+      '',
+      `    elm-land add layout ${Terminal.pink(`Sidebar.WithTabs`)}`,
+      `    elm-land add layout ${Terminal.pink(`Sidebar.WithHeader`)}`,
+      ''
     ].join('\n'))
   }
 
   let [generatedFile] = await Codegen.addNewLayout({
-    name
+    moduleSegments
   })
 
   let relativeFilepath = `src/${generatedFile.filepath}`

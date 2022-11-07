@@ -25,14 +25,14 @@ run json =
 
 
 type alias Data =
-    { name : String
+    { moduleSegments : List String
     }
 
 
 decoder : Json.Decode.Decoder Data
 decoder =
     Json.Decode.map Data
-        (Json.Decode.field "name" Json.Decode.string)
+        (Json.Decode.field "moduleSegments" (Json.Decode.list Json.Decode.string))
 
 
 
@@ -215,7 +215,7 @@ newLayoutModule data =
                                 [ CodeGen.Expression.function
                                     { name = "Html.text "
                                     , arguments =
-                                        [ CodeGen.Expression.string data.name
+                                        [ CodeGen.Expression.string (String.join "." data.moduleSegments)
                                         ]
                                     }
                                 , CodeGen.Expression.value "Html.div [ class \"page\" ] content.body"
@@ -225,7 +225,7 @@ newLayoutModule data =
                 }
     in
     CodeGen.Module.new
-        { name = [ "Layouts", data.name ]
+        { name = "Layouts" :: data.moduleSegments
         , exposing_ = [ "Model", "Msg", "Settings", "layout" ]
         , imports =
             [ CodeGen.Import.new [ "Effect" ]
