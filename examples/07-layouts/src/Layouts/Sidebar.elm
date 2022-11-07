@@ -14,7 +14,7 @@ import View exposing (View)
 
 
 type alias Settings =
-    ()
+    { title : String }
 
 
 layout :

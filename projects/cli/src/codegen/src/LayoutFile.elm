@@ -6,6 +6,8 @@ module LayoutFile exposing
     , toLayoutTypeDeclaration
     , toLayoutsModelTypeDeclaration, toLayoutsMsgTypeDeclaration
     , toInitBranches
+    , toLastPartFieldName
+    , toListOfSelfAndParents
     )
 
 {-|
@@ -23,6 +25,7 @@ module LayoutFile exposing
 @docs toLayoutsModelTypeDeclaration, toLayoutsMsgTypeDeclaration
 
 @docs toInitBranches
+@docs toLastPartFieldName
 
 -}
 
@@ -301,7 +304,7 @@ toInitBranches input =
 
         targetAndParents : List LayoutFile
         targetAndParents =
-            toListOfLayoutAndParents input.target
+            toListOfSelfAndParents input.target
 
         isSubset : LayoutFile -> LayoutFile -> Bool
         isSubset targetFile layoutFile =
@@ -369,7 +372,7 @@ toInitBranches input =
 
                 layoutsNeedingInitialization : List LayoutFile
                 layoutsNeedingInitialization =
-                    toListOfLayoutAndParents target
+                    toListOfSelfAndParents target
                         |> List.filter notAvailableForReuse
             in
             if target == existing then
@@ -522,14 +525,14 @@ toInitBranches input =
 
 {-| Enumerate all subsets of the target layout:
 
-    toListOfLayoutAndParents (LayoutFile [ "Sidebar", "Header" ])
+    toListOfSelfAndParents (LayoutFile [ "Sidebar", "Header" ])
         == [ LayoutFile [ "Sidebar", "Header" ]
            , LayoutFile [ "Sidebar" ]
            ]
 
 -}
-toListOfLayoutAndParents : LayoutFile -> List LayoutFile
-toListOfLayoutAndParents (LayoutFile list) =
+toListOfSelfAndParents : LayoutFile -> List LayoutFile
+toListOfSelfAndParents (LayoutFile list) =
     List.range 0 (List.length list - 1)
         |> List.foldr (\offset layoutFiles -> LayoutFile (dropRight offset list) :: layoutFiles) []
 

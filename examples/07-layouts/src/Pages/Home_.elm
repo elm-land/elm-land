@@ -19,7 +19,7 @@ page shared route =
         }
         |> Page.withLayout
             (Layouts.Sidebar_Header
-                { sidebar = ()
+                { sidebar = { title = "Title from Home" }
                 , header = ()
                 }
             )

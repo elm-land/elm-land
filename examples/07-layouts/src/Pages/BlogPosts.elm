@@ -17,7 +17,7 @@ page shared route =
         , subscriptions = subscriptions
         , view = view
         }
-        |> Page.withLayout (Layouts.Sidebar { sidebar = () })
+        |> Page.withLayout (Layouts.Sidebar { sidebar = { title = "Title from Blog posts" } })
 
 
 
