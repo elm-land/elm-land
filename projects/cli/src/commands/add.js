@@ -3,15 +3,15 @@ const { Utils, Terminal } = require("./_utils")
 const path = require('path')
 const { Codegen } = require("../codegen")
 
-let addNewLayout = (kind) => async ([name]) => {
+let addNewLayout = () => async ([name]) => {
   if (!name) {
     return Promise.reject([
       '',
       Utils.intro.error(`expected a ${Terminal.cyan(`<module-name>`)} argument`),
       '    Here are some examples:',
       '',
-      `    elm-land add ${kind === 'new' ? 'layout' : `layout:${kind}`} ${Terminal.pink(`Default`)}`,
-      `    elm-land add ${kind === 'new' ? 'layout' : `layout:${kind}`} ${Terminal.pink(`Sidebar`)}`,
+      `    elm-land add layout ${Terminal.pink(`Default`)}`,
+      `    elm-land add layout ${Terminal.pink(`Sidebar.WithHeader`)}`,
       ''
     ].join('\n'))
   }
@@ -22,12 +22,12 @@ let addNewLayout = (kind) => async ([name]) => {
   if (!inFolderWithElmLandJson) {
     return Promise.reject(Utils.notInElmLandProject)
   }
-  
+
   // Capitalize the name if needed
   if (name.match(/^[a-z]/)) {
-    name = name[0].toUpperCase() + name.slice(1);
+    name = name[0].toUpperCase() + name.slice(1)
   }
-  
+
   if (!name.match(/[A-Z][a-zA-Z0-9]*/)) {
     return Promise.reject([
       '',
@@ -36,13 +36,12 @@ let addNewLayout = (kind) => async ([name]) => {
       '',
       '    Here are some examples:',
       '',
-      `    elm-land add ${kind === 'new' ? 'layout' : `layout:${kind}`} ${Terminal.pink(`Sidebar`)}`,
-      `    elm-land add ${kind === 'new' ? 'layout' : `layout:${kind}`} ${Terminal.pink(`HeaderWithTabs`)}`,
+      `    elm-land add layout ${Terminal.pink(`Sidebar`)}`,
+      `    elm-land add layout ${Terminal.pink(`Sidebar.WithHeader`)}`,
     ].join('\n'))
   }
 
   let [generatedFile] = await Codegen.addNewLayout({
-    kind,
     name
   })
 
@@ -145,7 +144,7 @@ let run = async ({ arguments }) => {
     'page:static': addNewPage('static'),
     'page:sandbox': addNewPage('sandbox'),
     'page:element': addNewPage('element'),
-    'layout:static': addNewLayout('static')
+    'layout': addNewLayout()
   }
 
   let handler = subCommandHandlers[subCommand]
