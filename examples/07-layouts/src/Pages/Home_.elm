@@ -1,28 +1,24 @@
 module Pages.Home_ exposing (Model, Msg, page)
 
+-- import Layouts exposing (Layout)
+
+import Auth
 import Effect exposing (Effect)
 import Html
-import Layouts exposing (Layout)
 import Page exposing (Page)
 import Route exposing (Route)
 import Shared
 import View exposing (View)
 
 
-page : Shared.Model -> Route () -> Page Model Msg
-page shared route =
+page : Auth.User -> Shared.Model -> Route () -> Page Model Msg
+page user shared route =
     Page.new
         { init = init
         , update = update
         , subscriptions = subscriptions
         , view = view
         }
-        |> Page.withLayout
-            (Layouts.Sidebar_Header
-                { sidebar = { title = "Title from Home" }
-                , header = ()
-                }
-            )
 
 
 
@@ -72,6 +68,6 @@ subscriptions model =
 
 view : Model -> View Msg
 view model =
-    { title = "Dashboard"
-    , body = [ Html.text "Hello from the Dashboard!" ]
+    { title = "Twooter"
+    , body = [ Html.text "The footure of the compooter" ]
     }

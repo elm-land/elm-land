@@ -5,7 +5,7 @@ module CodeGen.Expression exposing
     , LetDeclaration, letIn, ifElse
     , record, multilineRecord
     , recordUpdate
-    , lambda
+    , lambda, multilineLambda
     , Branch, caseExpression
     , list, multilineList
     , tuple, multilineTuple
@@ -23,7 +23,7 @@ module CodeGen.Expression exposing
 @docs LetDeclaration, letIn, ifElse
 @docs record, multilineRecord
 @docs recordUpdate
-@docs lambda
+@docs lambda, multilineLambda
 @docs Branch, caseExpression
 @docs list, multilineList
 @docs tuple, multilineTuple
@@ -84,6 +84,10 @@ type Expression
                 }
         }
     | LambdaExpression
+        { arguments : List CodeGen.Argument.Argument
+        , expression : Expression
+        }
+    | MultilineLambdaExpression
         { arguments : List CodeGen.Argument.Argument
         , expression : Expression
         }
@@ -424,6 +428,35 @@ lambda options =
     LambdaExpression options
 
 
+{-| Create a multiline lambda function, always wrapped in parens.
+
+    {-
+
+        (\params ->
+            { username = params }
+        )
+
+    -}
+    CodeGen.Expression.multilineLambda
+        { arguments =
+            [ CodeGen.Argument.new "params"
+            ]
+        , expression =
+            CodeGen.Expression.record
+                [ ( "username", CodeGen.Expression.value "params" )
+                ]
+        }
+
+-}
+multilineLambda :
+    { arguments : List CodeGen.Argument.Argument
+    , expression : Expression
+    }
+    -> Expression
+multilineLambda options =
+    MultilineLambdaExpression options
+
+
 {-| Used by `CodeGen.Expression.caseExpression`, helpful for type annotations
 
     expression : CodeGen.Expression
@@ -639,7 +672,13 @@ toString expression =
             Util.String.toMultilineRecord
                 { joinWith = "="
                 , toKey = Tuple.first
-                , toValue = \( _, expr ) -> toString expr
+                , toValue =
+                    \( _, expr ) ->
+                        if isMultiline expr then
+                            "\n" ++ (toString expr |> Util.String.indent 4)
+
+                        else
+                            toString expr
                 , items = fields
                 }
 
@@ -697,6 +736,11 @@ toString expression =
                 |> String.replace "{{args}}" (String.join " " (List.map CodeGen.Argument.toString options.arguments))
                 |> String.replace "{{expression}}" (toString options.expression)
 
+        MultilineLambdaExpression options ->
+            "(\\{{args}} ->\n{{expression}}\n)"
+                |> String.replace "{{args}}" (String.join " " (List.map CodeGen.Argument.toString options.arguments))
+                |> String.replace "{{expression}}" (toString options.expression |> Util.String.indent 4)
+
         CaseExpression options ->
             "case {{value}} of\n{{branches}}"
                 |> String.replace "{{value}}" (CodeGen.Argument.toString options.value)
@@ -705,6 +749,64 @@ toString expression =
                         |> List.map (fromBranchToString >> Util.String.indent 4)
                         |> String.join "\n\n"
                     )
+
+
+isMultiline : Expression -> Bool
+isMultiline expression =
+    case expression of
+        FunctionExpression _ ->
+            False
+
+        MultilineFunctionExpression _ ->
+            True
+
+        LetInExpression _ ->
+            True
+
+        IfElseExpression _ ->
+            True
+
+        RecordExpression _ ->
+            False
+
+        MultilineRecordExpression _ ->
+            True
+
+        RecordUpdateExpression _ ->
+            False
+
+        ListExpression _ ->
+            False
+
+        MultiLineListExpression _ ->
+            True
+
+        TupleExpression _ ->
+            False
+
+        MultiLineTupleExpression _ ->
+            True
+
+        StringExpression _ ->
+            False
+
+        OperatorExpression _ ->
+            False
+
+        WrappedInParens _ ->
+            False
+
+        Pipeline _ ->
+            True
+
+        CaseExpression _ ->
+            True
+
+        LambdaExpression _ ->
+            False
+
+        MultilineLambdaExpression _ ->
+            True
 
 
 fromBranchToString : { name : String, arguments : List CodeGen.Argument.Argument, expression : Expression } -> String
