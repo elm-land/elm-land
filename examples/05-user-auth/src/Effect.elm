@@ -148,7 +148,9 @@ map fn effect =
 toCmd :
     { key : Browser.Navigation.Key
     , fromSharedMsg : Shared.Msg.Msg -> mainMsg
-    , fromPageMsg : msg -> mainMsg
+    , toMainMsg : msg -> mainMsg
+    , shared : sharedModel
+    , url : Url
     }
     -> Effect msg
     -> Cmd mainMsg
@@ -161,7 +163,7 @@ toCmd options effect =
             Cmd.batch (List.map (toCmd options) list)
 
         Cmd cmd ->
-            Cmd.map options.fromPageMsg cmd
+            Cmd.map options.toMainMsg cmd
 
         Shared msg ->
             Task.succeed msg

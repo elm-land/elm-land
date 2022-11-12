@@ -1,22 +1,17 @@
 module Pages.Home_ exposing (Model, Msg, page)
 
 import Auth
+import Components.Navbar
 import Effect exposing (Effect)
 import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events
-import Layout exposing (Layout)
 import Page exposing (Page)
 import Route exposing (Route)
 import Route.Path
 import Shared
 import Shared.Msg
 import View exposing (View)
-
-
-layout : Layout
-layout =
-    Layout.Navbar
 
 
 page : Auth.User -> Shared.Model -> Route () -> Page Model Msg
@@ -77,7 +72,11 @@ subscriptions model =
 view : Auth.User -> Model -> View Msg
 view user model =
     { title = "Dashboard"
-    , body = [ viewPage user ]
+    , body =
+        [ Components.Navbar.view
+            { page = viewPage user
+            }
+        ]
     }
 
 

@@ -19,7 +19,7 @@ onPageLoad : Shared.Model -> Route () -> Auth.Action.Action User
 onPageLoad shared route =
     case shared.signInStatus of
         Shared.NotSignedIn ->
-            Auth.Action.pushRoute
+            Auth.Action.replaceRoute
                 { path = Route.Path.SignIn
                 , query = Dict.fromList [ ( "from", route.url.path ) ]
                 , hash = Nothing
@@ -43,7 +43,7 @@ onPageLoad shared route =
             Auth.Action.loadPageWithUser user
 
         Shared.FailedToSignIn user ->
-            Auth.Action.pushRoute
+            Auth.Action.replaceRoute
                 { path = Route.Path.SignIn
                 , query = Dict.fromList [ ( "from", route.url.path ) ]
                 , hash = Nothing

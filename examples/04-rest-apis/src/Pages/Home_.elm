@@ -124,7 +124,7 @@ viewPokemon index pokemon =
 
         pokemonDetailRoute : Route.Path.Path
         pokemonDetailRoute =
-            Route.Path.Pokemon__Name_
+            Route.Path.Pokemon_Name_
                 { name = pokemon.name
                 }
     in

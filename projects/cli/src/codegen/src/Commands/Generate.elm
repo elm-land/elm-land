@@ -746,27 +746,31 @@ toLayoutFromPageDeclaration pages =
             { name = "Main.Pages.Model." ++ PageFile.toVariantName page
             , arguments = toPageModelArgs page
             , expression =
-                if PageFile.isAuthProtectedPage page then
-                    CodeGen.Expression.pipeline
-                        [ if PageFile.hasDynamicParameters page then
-                            CodeGen.Expression.value "Route.fromUrl params model.url"
+                if PageFile.isAdvancedElmLandPage page then
+                    if PageFile.isAuthProtectedPage page then
+                        CodeGen.Expression.pipeline
+                            [ if PageFile.hasDynamicParameters page then
+                                CodeGen.Expression.value "Route.fromUrl params model.url"
 
-                          else
-                            CodeGen.Expression.value "Route.fromUrl () model.url"
-                        , CodeGen.Expression.value ("toAuthProtectedPage model {{moduleName}}.page" |> String.replace "{{moduleName}}" (PageFile.toModuleName page))
-                        , CodeGen.Expression.value "Maybe.andThen Page.layout"
-                        ]
+                              else
+                                CodeGen.Expression.value "Route.fromUrl () model.url"
+                            , CodeGen.Expression.value ("toAuthProtectedPage model {{moduleName}}.page" |> String.replace "{{moduleName}}" (PageFile.toModuleName page))
+                            , CodeGen.Expression.value "Maybe.andThen Page.layout"
+                            ]
+
+                    else
+                        CodeGen.Expression.pipeline
+                            [ if PageFile.hasDynamicParameters page then
+                                CodeGen.Expression.value "Route.fromUrl params model.url"
+
+                              else
+                                CodeGen.Expression.value "Route.fromUrl () model.url"
+                            , CodeGen.Expression.value ("{{moduleName}}.page model.shared" |> String.replace "{{moduleName}}" (PageFile.toModuleName page))
+                            , CodeGen.Expression.value "Page.layout"
+                            ]
 
                 else
-                    CodeGen.Expression.pipeline
-                        [ if PageFile.hasDynamicParameters page then
-                            CodeGen.Expression.value "Route.fromUrl params model.url"
-
-                          else
-                            CodeGen.Expression.value "Route.fromUrl () model.url"
-                        , CodeGen.Expression.value ("{{moduleName}}.page model.shared" |> String.replace "{{moduleName}}" (PageFile.toModuleName page))
-                        , CodeGen.Expression.value "Page.layout"
-                        ]
+                    CodeGen.Expression.value "Nothing"
             }
 
         toNothingBranch : String -> CodeGen.Expression.Branch
@@ -1141,7 +1145,7 @@ toUpdatePageCaseExpression pages =
         toBranchForStaticPage : PageFile -> CodeGen.Expression.Branch
         toBranchForStaticPage page =
             { name =
-                "( Msg_{{name}}, PageModel{{name}}{{args}} )"
+                "( Main.Pages.Msg.{{name}}, Main.Pages.Model.{{name}}{{args}} )"
                     |> String.replace "{{name}}" (PageFile.toVariantName page)
                     |> String.replace "{{args}}"
                         (case toPageModelArgs page of
@@ -1165,7 +1169,7 @@ toUpdatePageCaseExpression pages =
         toBranchForSandboxOrElementElmLandPage : PageFile -> CodeGen.Expression.Branch
         toBranchForSandboxOrElementElmLandPage page =
             { name =
-                "( Msg_{{name}} pageMsg, PageModel{{name}} {{args}} )"
+                "( Main.Pages.Msg.{{name}} pageMsg, Main.Pages.Model.{{name}} {{args}} )"
                     |> String.replace "{{name}}" (PageFile.toVariantName page)
                     |> String.replace "{{args}}"
                         (toPageModelArgs page

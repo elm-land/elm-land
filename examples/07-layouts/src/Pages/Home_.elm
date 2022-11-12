@@ -1,10 +1,10 @@
 module Pages.Home_ exposing (Model, Msg, page)
 
--- import Layouts exposing (Layout)
-
 import Auth
 import Effect exposing (Effect)
 import Html
+import Html.Attributes as Attr
+import Layouts
 import Page exposing (Page)
 import Route exposing (Route)
 import Shared
@@ -18,6 +18,14 @@ page user shared route =
         , update = update
         , subscriptions = subscriptions
         , view = view
+        }
+        |> Page.withLayout (layout user)
+
+
+layout : Auth.User -> Layouts.Layout
+layout user =
+    Layouts.Sidebar
+        { sidebar = { user = user }
         }
 
 
@@ -69,5 +77,8 @@ subscriptions model =
 view : Model -> View Msg
 view model =
     { title = "Twooter"
-    , body = [ Html.text "The footure of the compooter" ]
+    , body =
+        [ Html.h1 [ Attr.class "title is-2" ] [ Html.text "Top posts" ]
+        , Html.h2 [ Attr.class "subtitle is-5" ] [ Html.text "(Curated by a robot)" ]
+        ]
     }

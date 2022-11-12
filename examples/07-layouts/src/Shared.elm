@@ -13,6 +13,7 @@ module Shared exposing
 -}
 
 import Dict
+import Domain.User
 import Effect exposing (Effect)
 import Json.Decode
 import Route exposing (Route)
@@ -26,12 +27,14 @@ import Shared.Msg
 
 
 type alias Flags =
-    {}
+    { username : Maybe String
+    }
 
 
 decoder : Json.Decode.Decoder Flags
 decoder =
-    Json.Decode.succeed {}
+    Json.Decode.map Flags
+        (Json.Decode.maybe (Json.Decode.field "username" Json.Decode.string))
 
 
 
@@ -44,7 +47,19 @@ type alias Model =
 
 init : Result Json.Decode.Error Flags -> Route () -> ( Model, Effect Msg )
 init flagsResult route =
-    ( { user = Nothing }
+    ( case flagsResult of
+        Ok flags ->
+            { user =
+                case flags.username of
+                    Just username ->
+                        Just { username = username }
+
+                    Nothing ->
+                        Nothing
+            }
+
+        Err problem ->
+            { user = Nothing }
     , Effect.none
     )
 

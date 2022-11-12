@@ -131,6 +131,23 @@ clearErrorsFor field errors =
         |> List.filter (\error -> error.field /= Just field)
 
 
+toFormError : List FormError -> Maybe String
+toFormError formErrors =
+    let
+        maybeFirstError : Maybe FormError
+        maybeFirstError =
+            formErrors
+                |> List.filter (\error -> error.field == Nothing)
+                |> List.head
+    in
+    case maybeFirstError of
+        Nothing ->
+            Nothing
+
+        Just firstError ->
+            Just firstError.message
+
+
 callSignInApi : { email : String, password : String } -> Cmd Msg
 callSignInApi form =
     let
@@ -250,7 +267,7 @@ viewPage route model =
             [ Html.h1 [ Attr.class "title" ] [ Html.text "Sign in" ]
             , case Dict.get "from" route.query of
                 Just originalUrl ->
-                    Html.h2 [ Attr.class "subtitle is-size-6" ]
+                    Html.h2 [ Attr.class "subtitle is-danger is-size-6" ]
                         [ Html.text ("Redirected from " ++ originalUrl) ]
 
                 _ ->
@@ -309,7 +326,7 @@ viewForm model =
             { field = Password
             , value = model.password
             }
-        , viewFormControls model.isSubmittingForm
+        , viewFormControls model
         ]
 
 
@@ -333,16 +350,24 @@ fromFieldToInputType field =
             "password"
 
 
-viewFormControls : Bool -> Html Msg
-viewFormControls isSubmitting =
-    Html.div [ Attr.class "field is-grouped is-grouped-right" ]
-        [ Html.div
-            [ Attr.class "control" ]
-            [ Html.button
-                [ Attr.class "button is-link"
-                , Attr.disabled isSubmitting
-                , Attr.classList [ ( "is-loading", isSubmitting ) ]
+viewFormControls : Model -> Html Msg
+viewFormControls model =
+    Html.div []
+        [ Html.div [ Attr.class "field is-grouped" ]
+            [ Html.div
+                [ Attr.class "control" ]
+                [ Html.button
+                    [ Attr.class "button is-link"
+                    , Attr.disabled model.isSubmittingForm
+                    , Attr.classList [ ( "is-loading", model.isSubmittingForm ) ]
+                    ]
+                    [ Html.text "Sign in" ]
                 ]
-                [ Html.text "Sign in" ]
             ]
+        , case toFormError model.errors of
+            Just reason ->
+                Html.p [ Attr.class "help content is-danger" ] [ Html.text reason ]
+
+            Nothing ->
+                Html.text ""
         ]

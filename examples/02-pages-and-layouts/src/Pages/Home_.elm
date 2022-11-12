@@ -1,17 +1,16 @@
 module Pages.Home_ exposing (page)
 
+import Components.Sidebar
 import Html
-import Layout exposing (Layout)
 import View exposing (View)
-
-
-layout : Layout
-layout =
-    Layout.Sidebar
 
 
 page : View msg
 page =
     { title = "Homepage"
-    , body = [ Html.text "Hello, world!" ]
+    , body =
+        [ Components.Sidebar.view
+            { page = Html.text "Hello, world!"
+            }
+        ]
     }

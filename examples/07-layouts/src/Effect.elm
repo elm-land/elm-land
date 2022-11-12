@@ -1,4 +1,4 @@
-module Effect exposing
+port module Effect exposing
     ( Effect, none, batch
     , fromCmd
     , signInAs
@@ -115,6 +115,13 @@ map fn effect =
             SignInAs options
 
 
+
+-- PORTS
+
+
+port onSaveUser : { username : String } -> Cmd msg
+
+
 {-| Elm Land needs this function to actually perform your Effects
 -}
 toCmd :
@@ -147,7 +154,10 @@ toCmd options effect =
             Browser.Navigation.load url
 
         SignInAs data ->
-            Process.sleep 500
-                -- Simulate a delay of 500ms
-                |> Task.map (\_ -> Shared.Msg.SignInPageSignedIn data)
-                |> Task.perform options.fromSharedMsg
+            Cmd.batch
+                [ Process.sleep 500
+                    -- Simulate a delay of 500ms
+                    |> Task.map (\_ -> Shared.Msg.SignInPageSignedIn data)
+                    |> Task.perform options.fromSharedMsg
+                , onSaveUser data
+                ]
