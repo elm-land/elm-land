@@ -109,6 +109,8 @@ toCmd :
     , shared : sharedModel
     , fromSharedMsg : sharedMsg -> mainMsg
     , toMainMsg : msg -> mainMsg
+    , fromCmd : Cmd mainMsg -> mainMsg
+    , toCmd : mainMsg -> Cmd mainMsg
     }
     -> Effect msg
     -> Cmd mainMsg

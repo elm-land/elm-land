@@ -65,3 +65,25 @@ load helpers
   rm -r .elm-land elm-stuff dist
   cd ../../projects/cli
 }
+
+@test "'elm-land build' works with the '07-layouts' example" {
+  cd ../../examples/07-layouts
+  run elm-land build
+  expectToPass
+
+  expectOutputContains "successfully built"
+
+  rm -r .elm-land elm-stuff dist
+  cd ../../projects/cli
+}
+
+@test "'elm-land build' works with the '09-error-reporting' example" {
+  cd ../../examples/09-error-reporting
+  run elm-land build
+  expectToPass
+
+  expectOutputContains "successfully built"
+
+  rm -r .elm-land elm-stuff dist
+  cd ../../projects/cli
+}

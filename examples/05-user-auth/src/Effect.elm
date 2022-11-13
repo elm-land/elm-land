@@ -147,10 +147,12 @@ map fn effect =
 
 toCmd :
     { key : Browser.Navigation.Key
-    , fromSharedMsg : Shared.Msg.Msg -> mainMsg
-    , toMainMsg : msg -> mainMsg
-    , shared : sharedModel
     , url : Url
+    , shared : sharedModel
+    , fromSharedMsg : Shared.Msg.Msg -> mainMsg
+    , fromCmd : Cmd mainMsg -> mainMsg
+    , toCmd : mainMsg -> Cmd mainMsg
+    , toMainMsg : msg -> mainMsg
     }
     -> Effect msg
     -> Cmd mainMsg

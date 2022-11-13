@@ -90,3 +90,7 @@ load helpers
   rm -r 01-local-hello
   cd ../projects/cli
 }
+
+@test "reinstall elm-land" {
+  npm link
+}

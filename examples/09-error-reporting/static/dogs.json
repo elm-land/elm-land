@@ -1,0 +1,16 @@
+{
+  "dogs": [
+    {
+      "id": 1,
+      "name": "Rosie"
+    },
+    {
+      "id": "2",
+      "name": "Lina"
+    },
+    {
+      "id": 3,
+      "name": "Jangle"
+    }
+  ]
+}

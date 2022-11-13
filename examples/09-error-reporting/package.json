@@ -1,0 +1,19 @@
+{
+  "name": "09-error-reporting",
+  "version": "1.0.0",
+  "description": "An example of error reporting with Sentry",
+  "main": "index.js",
+  "keywords": [],
+  "author": "Ryan Haskell-Glatz",
+  "license": "ISC",
+  "scripts": {
+    "start": "npm install && elm-land server"
+  },
+  "dependencies": {
+    "@sentry/browser": "7.19.0",
+    "@sentry/tracing": "7.19.0"
+  },
+  "devDependencies": {
+    "elm-land": "0.18.0"
+  }
+}

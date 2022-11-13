@@ -129,6 +129,8 @@ toCmd :
     , url : Url
     , shared : Shared.Model.Model
     , fromSharedMsg : Shared.Msg.Msg -> mainMsg
+    , fromCmd : Cmd mainMsg -> mainMsg
+    , toCmd : mainMsg -> Cmd mainMsg
     , toMainMsg : msg -> mainMsg
     }
     -> Effect msg

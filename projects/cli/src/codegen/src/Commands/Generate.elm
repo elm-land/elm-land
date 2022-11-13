@@ -137,6 +137,7 @@ mainElmModule data =
                   , CodeGen.Import.new [ "Route" ] |> CodeGen.Import.withExposing [ "Route" ]
                   , CodeGen.Import.new [ "Route", "Path" ]
                   , CodeGen.Import.new [ "Shared" ]
+                  , CodeGen.Import.new [ "Task" ]
                   , CodeGen.Import.new [ "Url" ]
                         |> CodeGen.Import.withExposing [ "Url" ]
                   , CodeGen.Import.new [ "View" ]
@@ -304,6 +305,7 @@ mainElmModule data =
                     , ( "PageSent", [ CodeGen.Annotation.type_ "Main.Pages.Msg.Msg" ] )
                     , ( "LayoutSent", [ CodeGen.Annotation.type_ "Main.Layouts.Msg.Msg" ] )
                     , ( "SharedSent", [ CodeGen.Annotation.type_ "Shared.Msg" ] )
+                    , ( "EffectSentCmd", [ CodeGen.Annotation.type_ "(Cmd Msg)" ] )
                     ]
                 }
             , CodeGen.Declaration.function
@@ -542,6 +544,14 @@ mainElmModule data =
                                                 }
                                         }
                               }
+                            , { name = "EffectSentCmd cmd"
+                              , arguments = []
+                              , expression =
+                                    CodeGen.Expression.multilineTuple
+                                        [ CodeGen.Expression.value "model"
+                                        , CodeGen.Expression.value "cmd"
+                                        ]
+                              }
                             ]
                         }
                 }
@@ -695,6 +705,8 @@ fromEffectDeclaration options =
                         , ( "shared", CodeGen.Expression.value "model.shared" )
                         , ( "toMainMsg", CodeGen.Expression.value options.toMainMsg )
                         , ( "fromSharedMsg", CodeGen.Expression.value "SharedSent" )
+                        , ( "fromCmd", CodeGen.Expression.value "EffectSentCmd" )
+                        , ( "toCmd", CodeGen.Expression.value "Task.succeed >> Task.perform identity" )
                         ]
                     , CodeGen.Expression.value "effect"
                     ]
@@ -899,6 +911,8 @@ runWhenAuthenticatedWithLayoutDeclaration =
                                         , ( "shared", CodeGen.Expression.value "model.shared" )
                                         , ( "fromSharedMsg", CodeGen.Expression.value "SharedSent" )
                                         , ( "toMainMsg", CodeGen.Expression.value "identity" )
+                                        , ( "fromCmd", CodeGen.Expression.value "EffectSentCmd" )
+                                        , ( "toCmd", CodeGen.Expression.value "Task.succeed >> Task.perform identity" )
                                         ]
                                     ]
                                 }
