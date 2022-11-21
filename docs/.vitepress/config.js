@@ -10,7 +10,7 @@ export default {
 
   markdown: {
     lineNumbers: true,
-    theme: 'monokai'
+    theme: { light: 'light-plus', dark: 'one-dark-pro' }
   },
 
   themeConfig: {
@@ -38,11 +38,20 @@ export default {
           text: 'Guide',
           items: [
             { text: 'Getting started', link: '/guide/' },
-            { text: 'Pages and layouts', link: '/guide/pages-and-layouts' },
+            { text: 'Pages and routes', link: '/guide/pages' },
             { text: 'User input', link: '/guide/user-input' },
-            { text: 'Working with REST APIs', link: '/guide/rest-apis' },
+            { text: 'REST APIs', link: '/guide/rest-apis' },
             // { text: 'User authentication', link: '/guide/user-auth' },
+            // { text: 'Query parameters', link: '/guide/query-parameters' },
+            // { text: 'Components and UI', link: '/guide/components' },
+            // { text: 'Layouts', link: '/guide/layouts' },
+            // { text: 'Not found pages', link: '/guide/customize/not-found-pages' },
+            // { text: 'Using Elm UI or Elm CSS', link: '/guide/customize/view' },
+            // { text: 'Environment variables', link: '/guide/environment-variables' },
+            // { text: 'CSS, assets, and static files', link: '/guide/static-files' },
+            // { text: 'JavaScript & NPM', link: '/guide/working-with-js' },
             { text: 'Deploying to production', link: '/guide/deploying' },
+            // { text: 'Error reporting', link: '/guide/error-reporting' },
           ]
         }
       ]

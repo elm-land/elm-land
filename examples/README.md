@@ -15,9 +15,9 @@ A minimal introduction to the _Elm Land_ framework.
 
 Learn how to add pages, layouts, and CSS to your project.
 
-[Example code](./02-pages-and-layouts/) • [The guide](https://elm.land/guide/pages-and-layouts)
+[Example code](./02-pages-and-routes/) • [The guide](https://elm.land/guide/pages-and-layouts)
 
-[![An animated GIF of the pages and layouts example](./02-pages-and-layouts/screenshot.gif)](./02-pages-and-layouts/)
+[![An animated GIF of the pages and layouts example](./02-pages-and-routes/screenshot.gif)](./02-pages-and-routes/)
 
 
 ## 3. User input

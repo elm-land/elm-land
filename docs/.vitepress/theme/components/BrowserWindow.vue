@@ -6,7 +6,7 @@
         <span class="browser__button browser__button--yellow"></span>
         <span class="browser__button browser__button--green"></span>
       </div>
-      <div class="browser__urlbar" v-text="url || 'http://localhost:1234'"></div>
+      <div class="browser__urlbar"></div>
     </div>
     <img class="browser__image" :src="src" :alt="alt" />
   </div>
@@ -16,7 +16,6 @@
 <script>
 export default {
   props: {
-    url: String,
     src: String,
     alt: String
   }

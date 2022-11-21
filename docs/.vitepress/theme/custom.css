@@ -15,9 +15,11 @@ html:not(.dark) {
   --vp-custom-block-warning-text: hsl(45deg 85% 30%);
   --vp-c-yellow-dimm-3: rgb(250, 253, 214, 0.75);
 
+  
+
   --vp-c-brand: hsl(153, 47%, 33%);
-  /* --vp-code-block-bg: var(--vp-c-white);
-  --vp-code-line-number-color: #24292F88; */
+  --vp-code-block-bg: var(--vp-c-bg-soft);
+  --vp-code-line-number-color: #24292F88;
 }
 
 html:not(.dark) .VPNav.no-sidebar, 
@@ -32,6 +34,11 @@ html:not(.dark) .VPNavBar.has-sidebar .content {
 .vp-doc a[href] {
   text-decoration: underline;
   color: inherit;
+}
+
+.language-txt > .lang,
+.language-sh > .lang {
+  display: none;
 }
 
 summary::marker {
@@ -119,10 +126,9 @@ details[open] summary {
 
 .vp-doc .language-sh pre::before {
   content: '$';
-  color: var(--vp-c-white-mute);
   position: absolute;
   left: 1.2rem;
-  opacity: 0.65;
+  opacity: 0.35;
   user-select: none;
 }
 
@@ -174,7 +180,7 @@ details[open] summary {
 
 .browser__header {
   display: flex;
-  gap: 1.5rem;
+  gap: 1rem;
   align-items: center;
   padding: 8px 1rem;
   background-color: var(--vp-c-bg-mute);
@@ -203,8 +209,8 @@ details[open] summary {
 .browser__urlbar {
   background-color: var(--vp-c-bg-soft);
   flex: 1;
-  border-radius: 0.75rem;
-  padding: 0.25rem 1rem;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
   box-shadow: var(--vp-shadow-1);
   border: solid 1px var(--vp-c-divider-light);
   font-size: 1rem;

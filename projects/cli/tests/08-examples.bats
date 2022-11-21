@@ -11,8 +11,8 @@ load helpers
   cd ../../projects/cli
 }
 
-@test "'elm-land build' works with the '02-pages-and-layouts' example" {
-  cd ../../examples/02-pages-and-layouts
+@test "'elm-land build' works with the '02-pages-and-routes' example" {
+  cd ../../examples/02-pages-and-routes
   run elm-land build
   expectToPass
 
@@ -68,6 +68,17 @@ load helpers
 
 @test "'elm-land build' works with the '07-layouts' example" {
   cd ../../examples/07-layouts
+  run elm-land build
+  expectToPass
+
+  expectOutputContains "successfully built"
+
+  rm -r .elm-land elm-stuff dist
+  cd ../../projects/cli
+}
+
+@test "'elm-land build' works with the '08-components' example" {
+  cd ../../examples/08-components
   run elm-land build
   expectToPass
 

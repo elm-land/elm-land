@@ -1,9 +1,9 @@
-# Pages and layouts
+# Pages and routes
 
 ### What we'll learn
 
 - How to add __pages__ to our app
-- How to use __layouts__ to reuse UI across pages
+- How to __to navigate__ from one page to another
 - How to style a page with __CSS__
 
 <BrowserWindow src="/images/guide/pages-and-layouts.gif" alt="Demo of pages and layouts" />
@@ -234,37 +234,25 @@ src/
         |- Username_.elm
 ```
 
-## Layouts
+## Adding a sidebar
 
 So far, to navigate from one page to another, we've been manually changing the URL in the browser. In a real app, our users need a way to navigate the app within the UI. 
 
-For that reason, let's make a sidebar layout with convenient links to the "Homepage", "Account Settings", and "Profile" pages.
+For that reason, let's make a sidebar component with convenient links to the "Homepage", "Account Settings", and "Profile" pages. We'll design our component so it's
+easy to add it to any page we like!
 
-We can start by using the `elm-land add` command again, but this time to create a new __layout__:
-
-```sh
-elm-land add layout:static Sidebar
-```
-
-```txt
-🌈  Elm Land added a new layout!
-    ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
-    You can edit your layout here:
-    ./src/Layouts/Sidebar.elm
-```
-
-The `elm-land add layout` command creates a simple layout that we will be able to reuse across multiple pages. Here's the new file that was created in our `src/Layouts` folder:
+Let's create a new file at `src/Components/Sidebar.elm`:
 
 ```elm
-module Layouts.Sidebar exposing (layout)
+module Components.Sidebar exposing (view)
 
 import Html exposing (Html)
 import Html.Attributes as Attr
 import View exposing (View)
 
 
-layout : { page : View msg } -> View msg
-layout { page } =
+view : { page : View msg } -> View msg
+view { page } =
     { title = page.title
     , body = 
         [ Html.div [ Attr.class "page" ] page.body
@@ -272,24 +260,25 @@ layout { page } =
     }
 ```
 
-Our new layout file allows us to embed a `page` anywhere we'd like. If you're familiar with Vue.js, this is similar to the idea of "slots"– which allow you to embed one component inside another.
+To make it easier to use, we'll accept the entire page as the input to this UI component. If you're familiar with Vue.js, this ideas is similar to their notion of "slots".
+Just like we might pass in a `String`, `Int`, or another value, we can pass in an entire `View msg` to allow page's to be nested within a component. 
 
 In the default example, we are wrapping the page's content in a `div` with the class `"page"`
 
-### Adding a sidebar
+### Adding some more HTML
 
-The default layout doesn't have a sidebar, but we can make one with some HTML. Add the highlighted lines below to your new `src/Layouts/Sidebar.elm` file
+The default layout doesn't have a sidebar, but we can make one with some HTML. Add the highlighted lines below to your new `src/Components/Sidebar.elm` file
 
 ```elm {12-16,20-26}
-module Layouts.Sidebar exposing (layout)
+module Components.Sidebar exposing (view)
 
 import Html exposing (Html)
 import Html.Attributes as Attr
 import View exposing (View)
 
 
-layout : { page : View msg } -> View msg
-layout { page } =
+view : { page : View msg } -> View msg
+view { page } =
     { title = page.title
     , body =
         [ Html.div [ Attr.class "layout" ]
@@ -309,94 +298,88 @@ viewSidebar =
         ]
 ```
 
+Next, we'll actually use this new sidebar component in our pages.
 
-## Using a layout on a page
+## Adding a component to a page
 
-This new layout file isn't automatically wired up to all our pages. In _Elm Land_, you can easily opt-in to which pages should use which layout by using the generated `Layout` module.
+This new sidebar isn't automatically wired up to all our pages. In _Elm Land_, you can easily opt-in to which pages should use the sidebar by importing the module.
 
-In this example, we don't want a sidebar on the "Sign in" page. 
+For our example, we don't want a sidebar on the "Sign in" page. For that reason, we will only connect it to 
+our "Homepage", "Account Settings", and "Profile" page by adding in these lines of code:
 
-For that reason, we will only connect it to our "Homepage", "Account Settings", and "Profile" page by adding these lines of code:
-
-```elm {4,8-10}
+```elm {3,10-11,15}
 module Pages.Home_ exposing (page)
 
+import Components.Sidebar
 import Html
-import Layout exposing (Layout)
 import View exposing (View)
-
-
-layout : Layout
-layout =
-    Layout.Sidebar
 
 
 page : View msg
 page =
-    { title = "Homepage"
-    , body = [ Html.text "Hello, world!" ]
-    }
+    Components.Sidebar.view
+        { page =
+            { title = "Homepage"
+            , body = [ Html.text "Hello, world!" ]
+            }
+        }
 ```
 
-When a page defines a `layout` function, Elm Land will automatically wire it up to the matching layout from the `src/Layouts` folder.
+Here's what we did in the code snippet above:
+1. Imported the `Components.Sidebar` module on line 3
+2. Passed in the previous `{ title, body }` record as an input to our component
 
-Here are code snippets for how we updated the other two pages (provided for reference):
+Try following the same steps to get this working for: `Pages.Settings.Account` and `Pages.Profile.Username_`. I've included the actual code snippets when you're ready to see what's changed:
 
-::: details `src/Pages/Settings/Account.elm`
+::: details Adding the sidebar to `Pages.Settings.Account`
 
-```elm {4,8-10}
+```elm {3,10-11,15}
 module Pages.Settings.Account exposing (page)
 
-import Html exposing (Html)
-import Layout exposing (Layout)
+import Components.Sidebar
+import Html
 import View exposing (View)
-
-
-layout : Layout
-layout =
-    Layout.Sidebar
 
 
 page : View msg
 page =
-    { title = "Pages.Settings.Account"
-    , body = [ Html.text "/settings/account" ]
-    }
+    Components.Sidebar.view
+        { page =
+            { title = "Pages.Settings.Account"
+            , body = [ Html.text "/settings/account" ]
+            }
+        }
 ```
 
 :::
 
-::: details `src/Pages/Profile/Username_.elm`
+::: details Adding the sidebar to `Pages.Profile.Username_`
 
-```elm {4,8-10}
+```elm {3,10-11,15}
 module Pages.Profile.Username_ exposing (page)
 
-import Html exposing (Html)
-import Layout exposing (Layout)
+import Components.Sidebar
+import Html
 import View exposing (View)
-
-
-layout : Layout
-layout =
-    Layout.Sidebar
 
 
 page : { username : String } -> View msg
 page params =
-    { title = "Pages.Profile.Username_"
-    , body = [ Html.text ("/profile/" ++ params.username) ]
-    }
+    Components.Sidebar.view
+        { page =
+            { title = "Pages.Profile.Username_"
+            , body = [ Html.text ("/profile/" ++ params.username) ]
+            }
+        }
 ```
 
 :::
 
-## Styling with CSS
+## Styling things with CSS
 
-All of our pages and layouts are ready, but there's still one missing piece: the page doesn't look pretty.
+All of our pages and layouts are ready, but there's still one missing piece: the page doesn't look pretty. We can add __CSS__ to our Elm Land projects by modifying the `elm-land.json` file at the root of our project.
 
-We can add CSS to our Elm Land projects by modifying the `elm-land.json` file at the root of our project.
-
-We can add `<link>` tags to our HTML by updating the `app.html.link` property like this:
+Let's add a `<link>` tag to our HTML by updating the `app.html.link` property:
 
 ```json {16-18}
 {
@@ -447,7 +430,7 @@ Now that we've added in some CSS, we should see our full example working. We can
 
 <BrowserWindow src="/images/guide/pages-and-layouts.gif" alt="Demo of pages and layouts" />
 
-See the full example in the [examples/02-pages-and-layouts](https://github.com/elm-land/elm-land/tree/main/examples/02-pages-and-layouts) folder on GitHub.
+See the full example in the [examples/02-pages-and-routes](https://github.com/elm-land/elm-land/tree/main/examples/02-pages-and-routes) folder on GitHub.
 
 ### Congratulations! :tada:
 
