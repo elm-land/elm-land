@@ -11,11 +11,11 @@ A minimal introduction to the _Elm Land_ framework.
 [![A screenshot of hello world in the browser](./01-hello-world/screenshot.jpg)](./01-hello-world/)
 
 
-## 2. Pages and layouts
+## 2. Pages and routes
 
-Learn how to add pages, layouts, and CSS to your project.
+Learn how to add pages, a sidebar component, and CSS to your project.
 
-[Example code](./02-pages-and-routes/) • [The guide](https://elm.land/guide/pages-and-layouts)
+[Example code](./02-pages-and-routes/) • [The guide](https://elm.land/guide/pages-and-routes)
 
 [![An animated GIF of the pages and layouts example](./02-pages-and-routes/screenshot.gif)](./02-pages-and-routes/)
 

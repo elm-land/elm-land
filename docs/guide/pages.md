@@ -6,7 +6,7 @@
 - How to __to navigate__ from one page to another
 - How to style a page with __CSS__
 
-<BrowserWindow src="/images/guide/pages-and-layouts.gif" alt="Demo of pages and layouts" />
+<BrowserWindow src="/images/guide/pages-and-routes.gif" alt="Demo of pages and layouts" />
 
 ## How routing works
 
@@ -37,10 +37,10 @@ In this guide, we'll learn how to use the Elm Land CLI to add new pages by speci
 Let's create a new project with the CLI, then run a local development server:
 
 ```sh
-elm-land init pages-and-layouts
+elm-land init pages-and-routes
 ```
 ```sh
-cd pages-and-layouts
+cd pages-and-routes
 ```
 ```sh
 elm-land server
@@ -428,7 +428,7 @@ body {
 
 Now that we've added in some CSS, we should see our full example working. We can use our sidebar to navigate from one page to another.
 
-<BrowserWindow src="/images/guide/pages-and-layouts.gif" alt="Demo of pages and layouts" />
+<BrowserWindow src="/images/guide/pages-and-routes.gif" alt="Demo of pages and layouts" />
 
 See the full example in the [examples/02-pages-and-routes](https://github.com/elm-land/elm-land/tree/main/examples/02-pages-and-routes) folder on GitHub.
 
