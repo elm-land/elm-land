@@ -77,10 +77,10 @@ if (import.meta.hot) {
 }
 
 let startApp = ({ Interop }) => {
-  // Grab environment variables, but remove the "VITE_" prefix
+  // Grab environment variables, but remove the "ELM_LAND_" prefix
   let env = Object.keys(import.meta.env).reduce((env, key) => {
-    if (key.startsWith('VITE_')) {
-      env[key.slice('VITE_'.length)] = import.meta.env[key]
+    if (key.startsWith('ELM_LAND_')) {
+      env[key.slice('ELM_LAND_'.length)] = import.meta.env[key]
     }
     return env
   }, {})
@@ -108,12 +108,17 @@ let startApp = ({ Interop }) => {
 
 }
 
-// If user has defined an interop.js file, use it
-
-let Interop = {}
 try {
-  let interopFiles = import.meta.glob('../../src/interop.js', { eager: true })
-  Interop = interopFiles['../../src/interop.js'] || {}
-} catch (_) { }
-
-startApp({ Interop })
+  // Attempt to find "interop.ts" file
+  let interopFiles = import.meta.glob('../../src/interop.ts', { eager: true })
+  startApp({ Interop: interopFiles['../../src/interop.ts'] })
+} catch (_) {
+  try {
+    // Attempt to find "interop.js" file
+    let interopFiles = import.meta.glob('../../src/interop.js', { eager: true })
+    startApp({ Interop: interopFiles['../../src/interop.js'] })
+  } catch (_) {
+    // Run application without an interop file
+    startApp({ Interop: {} })
+  }
+}

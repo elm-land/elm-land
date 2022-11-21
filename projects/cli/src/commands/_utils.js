@@ -27,6 +27,12 @@ const intro = {
   error: (message) => [
     `🌈  ${name} ${message}`,
     Terminal.red('    ' + '⎺'.repeat(stripAnsi(message).length + stripAnsi(name).length + 1))
+  ].join('\n'),
+
+  // Show header with red underline
+  info: (message) => [
+    `🌈  ${name} ${message}`,
+    Terminal.cyan('    ' + '⎺'.repeat(stripAnsi(message).length + stripAnsi(name).length + 1))
   ].join('\n')
 }
 
@@ -47,6 +53,14 @@ let notInElmLandProject = [
   `    If you'd like to start a new project, run this command: `,
   '',
   `    elm-land ${Terminal.pink('init <folder>')} .... create a new project`,
+  '',
+].join('\n')
+
+let foundTypeScriptErrors = [
+  '',
+  intro.error(`found a ${Terminal.cyan('TypeScript')} error...`),
+  `    When compiling your "${Terminal.pink('src/interop.ts')}" file, the TypeScript compiler`,
+  '    reported some issues. Those errors are provided above.',
   '',
 ].join('\n')
 
@@ -79,6 +93,7 @@ module.exports = {
     intro,
     didNotRecognizeCommand,
     notInElmLandProject,
+    foundTypeScriptErrors,
     customizableFiles
   }
 }

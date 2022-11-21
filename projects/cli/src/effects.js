@@ -2,13 +2,21 @@ const chokidar = require('chokidar')
 const path = require('path')
 const Vite = require('vite')
 const ElmVitePlugin = require('./vite-plugin/index.js')
+const TypeScriptChecker = require('vite-plugin-checker')
 const { Codegen } = require('./codegen')
 const { Files } = require('./files')
-const { Utils } = require('./commands/_utils')
+const { Utils, Terminal } = require('./commands/_utils')
+const fs = require('fs')
+const ChildProcess = require('child_process')
 
 
 let srcPagesFolderFilepath = path.join(process.cwd(), 'src', 'Pages')
 let srcLayoutsFolderFilepath = path.join(process.cwd(), 'src', 'Layouts')
+
+const mode = () =>
+  (process.env.NODE_ENV === 'production')
+    ? 'production'
+    : 'development'
 
 let runServer = async (options) => {
   let server
@@ -21,10 +29,23 @@ let runServer = async (options) => {
     await handleElmLandFiles()
 
     // Expose ENV variables explicitly allowed by the user
-    attemptToLoadEnvVariablesFromUserConfig()
+    handleEnvironmentVariables({ config })
 
-    // Listen for changes to static assets too, so the browser
-    // automatically shows the latest CSS changes or other static assets
+    // Listen for changes to the "src" folder, so the browser
+    // automatically refreshes when an Elm file is changed
+    let srcFolder = `${path.join(process.cwd(), 'src')}/**/*.elm`
+    let srcFolderWatcher = chokidar.watch(srcFolder, {
+      ignorePermissionErrors: true,
+      ignoreInitial: true
+    })
+    let mainElmPath = path.join(process.cwd(), '.elm-land', 'src', 'Main.elm')
+
+    srcFolderWatcher.on('all', () => {
+      Files.touch(mainElmPath)
+    })
+
+    // Listen for changes to static assets, so the browser
+    // automatically shows the latest asset changes
     let staticFolder = `${path.join(process.cwd(), 'static')}/**`
     let staticFolderWatcher = chokidar.watch(staticFolder, {
       ignorePermissionErrors: true,
@@ -37,28 +58,37 @@ let runServer = async (options) => {
     })
 
     // Listen for config file changes, regenerating the index.html
-    // and updating any changes to the environment variables
+    // and restart server in case there were any changes to the environment variables
     let configFilepath = path.join(process.cwd(), 'elm-land.json')
     let configFileWatcher = chokidar.watch(configFilepath, {
       ignorePermissionErrors: true,
       ignoreInitial: true
     })
-
     configFileWatcher.on('change', async () => {
       try {
         let rawConfig = await Files.readFromUserFolder('elm-land.json')
         config = JSON.parse(rawConfig)
         let result = await generateHtml(config)
 
-        let hadAnyEnvVarChanges = attemptToLoadEnvVariablesFromUserConfig(config)
-        if (hadAnyEnvVarChanges) {
-          server.restart(true)
-        }
+        handleEnvironmentVariables({ config })
+
+        server.restart(true)
 
         if (result.problem) {
           console.info(result.problem)
         }
       } catch (_) { }
+    })
+
+    // Listen for `.env` file changes, and restart the dev server
+    let envFilepath = path.join(process.cwd(), '.env')
+    let envFileWatcher = chokidar.watch(envFilepath, {
+      ignorePermissionErrors: true,
+      ignoreInitial: true
+    })
+    envFileWatcher.on('change', async () => {
+      handleEnvironmentVariables({ config })
+      server.restart(true)
     })
 
     // Listen for changes to interop file, so the page is automatically
@@ -97,20 +127,18 @@ let runServer = async (options) => {
 
     // Check config for Elm debugger options
     let debug = false
+    try { debug = config.app.elm[mode()].debugger }
+    catch (_) { }
 
-    try {
-      if (process.env.NODE_ENV === 'production') {
-        debug = config.app.elm.production.debugger
-      } else {
-        debug = config.app.elm.development.debugger
-      }
-    } catch (_) { }
+    const hasTsConfigJson = await Files.exists(path.join(process.cwd(), 'tsconfig.json'))
 
-    // Run the vite server on options.port 
+    // Run the vite server on options.port
     server = await Vite.createServer({
       configFile: false,
       root: path.join(process.cwd(), '.elm-land', 'server'),
       publicDir: path.join(process.cwd(), 'static'),
+      envDir: process.cwd(),
+      envPrefix: 'ELM_LAND_',
       server: {
         host: options.host,
         port: options.port,
@@ -120,7 +148,8 @@ let runServer = async (options) => {
         ElmVitePlugin.plugin({
           debug,
           optimize: false
-        })
+        }),
+        TypeScriptChecker.checker({ typescript: hasTsConfigJson, terminal: false })
       ],
       logLevel: 'silent'
     })
@@ -166,34 +195,73 @@ let generateElmFiles = async () => {
   }
 }
 
-let lastEnvKeysSeen = []
+// NOTE: This feels like a good `elm-land plugin typescript`, so folks
+// who don't want to use TypeScript don't need to have a `typescript` dependency!
+const verifyTypescriptCompiles = async () => {
+  let hasInteropTs = await Files.exists(path.join(process.cwd(), 'src', 'interop.ts'))
 
-let attemptToLoadEnvVariablesFromUserConfig = (config) => {
-  let hadAnyEnvVarChanges = false
-  try {
-    config = config || require(path.join(process.cwd(), 'elm-land.json'))
-    if (config) {
-      if (config.app && config.app.env && Array.isArray(config.app.env)) {
-        // Remove the old environment variables
-        for (var key of lastEnvKeysSeen) {
-          delete process.env[`VITE_${key}`]
-          hadAnyEnvVarChanges = true
-        }
+  if (hasInteropTs) {
+    return new Promise((resolve, reject) => {
+      console.info('\n' + Utils.intro.info(`is compiling ${Terminal.cyan('src/interop.ts')}...`) + '\n')
 
-        // Add new environment variables
-        for (var key of config.app.env) {
-          if (typeof key === 'string') {
-            process.env[`VITE_${key}`] = process.env[key] || ''
-          }
-        }
-
-        // Set "lastEnvKeysSeen" for next time
-        lastEnvKeysSeen = config.app.env
+      // Here's where we'll expect to find the Typescript binary installed
+      const tscPaths = {
+        // When locally installed with `npm install -D elm-land`
+        // ✅ Tested with npm install -D, yarn, pnpm i
+        local: path.join(__dirname, '..', '..', 'typescript', 'bin', 'tsc'),
+        // When globally installed with `npm install -g elm-land`
+        // ✅ Tested with npm install -g, yarn, pnpm
+        global: path.join(__dirname, '..', 'node_modules', '.bin', 'tsc'),
       }
+
+      const pathToTsc =
+        fs.existsSync(tscPaths.global)
+          ? tscPaths.global
+          : tscPaths.local
+
+      let tsc = ChildProcess.spawn(pathToTsc, ['src/interop.ts', '--noEmit'], { stdio: 'inherit' })
+      tsc.on('close', (code) => {
+        if (code !== 0) {
+          reject(Utils.foundTypeScriptErrors)
+        } else {
+          resolve(true)
+        }
+      })
+    })
+  } else {
+    return true
+  }
+}
+
+let handleEnvironmentVariables = ({ config }) => {
+  try {
+    if (config && config.app && config.app.env && Array.isArray(config.app.env)) {
+      const env = Vite.loadEnv(mode(), process.cwd(), '')
+      let allowed = config.app.env.reduce((obj, key) => {
+        obj[key] = env[key]
+        return obj
+      }, {})
+
+      // Remove all variables with `ELM_LAND_` prefix
+      for (var key in process.env) {
+        if (key.startsWith('ELM_LAND_')) {
+          delete process.env[key]
+        }
+      }
+
+      // Provide env variables with prefixes, so they are
+      // available in frontend code.
+      Object.keys(allowed).forEach(key => {
+        if (allowed[key]) {
+          process.env['ELM_LAND_' + key] = allowed[key]
+        }
+      })
+
+      return allowed
     }
   } catch (_) { }
 
-  return hadAnyEnvVarChanges
+  return {}
 }
 
 const attempt = (fn) => {
@@ -262,16 +330,18 @@ const handleElmLandFiles = async () => {
 }
 
 const build = async (config) => {
-
   // Create default files in `.elm-land/src` if they aren't already 
   // defined by the user in the `src` folder
   await handleElmLandFiles()
 
-  // Load ENV variables
-  attemptToLoadEnvVariablesFromUserConfig()
+  // Ensure environment variables work as expected
+  handleEnvironmentVariables({ config })
 
   // Generate Elm files
   await generateElmFiles()
+
+  // Typecheck any TypeScript interop
+  await verifyTypescriptCompiles()
 
   // Build app in dist folder 
   await Vite.build({
@@ -281,6 +351,8 @@ const build = async (config) => {
     build: {
       outDir: '../../dist'
     },
+    envDir: process.cwd(),
+    envPrefix: 'ELM_LAND_',
     plugins: [
       ElmVitePlugin.plugin({
         debug: false,
