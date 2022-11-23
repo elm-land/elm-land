@@ -1,6 +1,8 @@
 module Pages.SignIn exposing (Model, Msg, page)
 
-import Api.User
+import Api.Me
+import Api.SignIn
+import Auth
 import Dict
 import Effect exposing (Effect)
 import Html exposing (Html)
@@ -13,7 +15,6 @@ import Page exposing (Page)
 import Route exposing (Route)
 import Route.Path
 import Shared
-import Shared.Msg
 import View exposing (View)
 
 
@@ -34,7 +35,7 @@ page shared route =
 type alias Model =
     { email : String
     , password : String
-    , errors : List FormError
+    , errors : List Api.SignIn.FormError
     , isSubmittingForm : Bool
     }
 
@@ -55,32 +56,27 @@ init () =
 
 
 type Msg
-    = UserUpdatedInput Field String
+    = UserUpdatedInput Api.SignIn.Field String
     | UserSubmittedForm
-    | SignInApiResponded (Result (List FormError) String)
-    | UserApiResponded (Result Http.Error Api.User.User)
-
-
-type Field
-    = Email
-    | Password
+    | SignInApiResponded (Result (List Api.SignIn.FormError) String)
+    | ApiMeResponded (Result Http.Error Auth.User)
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        UserUpdatedInput Email value ->
+        UserUpdatedInput Api.SignIn.Email value ->
             ( { model
                 | email = value
-                , errors = clearErrorsFor Email model.errors
+                , errors = clearErrorsFor Api.SignIn.Email model.errors
               }
             , Effect.none
             )
 
-        UserUpdatedInput Password value ->
+        UserUpdatedInput Api.SignIn.Password value ->
             ( { model
                 | password = value
-                , errors = clearErrorsFor Password model.errors
+                , errors = clearErrorsFor Api.SignIn.Password model.errors
               }
             , Effect.none
             )
@@ -90,12 +86,11 @@ update msg model =
                 | isSubmittingForm = True
                 , errors = []
               }
-            , Effect.fromCmd
-                (callSignInApi
-                    { email = model.email
-                    , password = model.password
-                    }
-                )
+            , Api.SignIn.post
+                { email = model.email
+                , password = model.password
+                , onResponse = SignInApiResponded
+                }
             )
 
         SignInApiResponded (Err formErrors) ->
@@ -106,136 +101,24 @@ update msg model =
         SignInApiResponded (Ok token) ->
             ( model
             , Effect.batch
-                [ Effect.save
-                    { key = "token"
-                    , value = Json.Encode.string token
+                [ Effect.setUserToken token
+                , Api.Me.get
+                    { token = token
+                    , onResponse = ApiMeResponded
                     }
-                , Effect.fromCmd
-                    (Api.User.getCurrentUser
-                        { token = token
-                        , onResponse = UserApiResponded
-                        }
-                    )
                 ]
             )
 
-        UserApiResponded result ->
+        ApiMeResponded result ->
             ( model
-            , Effect.fromSharedMsg (Shared.Msg.SignInPageSignedInUser result)
+            , Effect.signInPageSignedInUser result
             )
 
 
-clearErrorsFor : Field -> List FormError -> List FormError
+clearErrorsFor : Api.SignIn.Field -> List Api.SignIn.FormError -> List Api.SignIn.FormError
 clearErrorsFor field errors =
     errors
         |> List.filter (\error -> error.field /= Just field)
-
-
-toFormError : List FormError -> Maybe String
-toFormError formErrors =
-    let
-        maybeFirstError : Maybe FormError
-        maybeFirstError =
-            formErrors
-                |> List.filter (\error -> error.field == Nothing)
-                |> List.head
-    in
-    case maybeFirstError of
-        Nothing ->
-            Nothing
-
-        Just firstError ->
-            Just firstError.message
-
-
-callSignInApi : { email : String, password : String } -> Cmd Msg
-callSignInApi form =
-    let
-        json : Json.Encode.Value
-        json =
-            Json.Encode.object
-                [ ( "email", Json.Encode.string form.email )
-                , ( "password", Json.Encode.string form.password )
-                ]
-
-        tokenDecoder : Json.Decode.Decoder String
-        tokenDecoder =
-            Json.Decode.field "token" Json.Decode.string
-    in
-    Http.post
-        { url = "http://localhost:5000/api/sign-in"
-        , body = Http.jsonBody json
-        , expect = expectApiResponse SignInApiResponded tokenDecoder
-        }
-
-
-expectApiResponse :
-    (Result (List FormError) value -> msg)
-    -> Json.Decode.Decoder value
-    -> Http.Expect msg
-expectApiResponse toMsg decoder =
-    Http.expectStringResponse toMsg (toFormApiResult decoder)
-
-
-type alias FormError =
-    { field : Maybe Field
-    , message : String
-    }
-
-
-formErrorsDecoder : Json.Decode.Decoder (List FormError)
-formErrorsDecoder =
-    let
-        formErrorDecoder : Json.Decode.Decoder FormError
-        formErrorDecoder =
-            Json.Decode.map2 FormError
-                (Json.Decode.field "field" Json.Decode.string
-                    |> Json.Decode.map fromStringToMaybeField
-                )
-                (Json.Decode.field "message" Json.Decode.string)
-
-        fromStringToMaybeField : String -> Maybe Field
-        fromStringToMaybeField field =
-            case field of
-                "email" ->
-                    Just Email
-
-                "password" ->
-                    Just Password
-
-                _ ->
-                    Nothing
-    in
-    Json.Decode.field "errors" (Json.Decode.list formErrorDecoder)
-
-
-toFormApiResult : Json.Decode.Decoder value -> Http.Response String -> Result (List FormError) value
-toFormApiResult decoder response =
-    case response of
-        Http.BadUrl_ _ ->
-            Err [ { field = Nothing, message = "Unexpected URL format" } ]
-
-        Http.Timeout_ ->
-            Err [ { field = Nothing, message = "Server did not respond" } ]
-
-        Http.NetworkError_ ->
-            Err [ { field = Nothing, message = "Could not connect to server" } ]
-
-        Http.BadStatus_ { statusCode } rawJson ->
-            case Json.Decode.decodeString formErrorsDecoder rawJson of
-                Ok errors ->
-                    Err errors
-
-                Err _ ->
-                    Err [ { field = Nothing, message = "Received status code " ++ String.fromInt statusCode } ]
-
-        Http.GoodStatus_ _ rawJson ->
-            case Json.Decode.decodeString decoder rawJson of
-                Ok value ->
-                    Ok value
-
-                Err _ ->
-                    Err [ { field = Nothing, message = "Received unexpected API response" } ]
 
 
 
@@ -280,7 +163,7 @@ viewPage route model =
 viewForm : Model -> Html Msg
 viewForm model =
     let
-        firstErrorForField : Field -> Maybe String
+        firstErrorForField : Api.SignIn.Field -> Maybe String
         firstErrorForField field =
             case List.filter (\err -> err.field == Just field) model.errors of
                 [] ->
@@ -289,7 +172,7 @@ viewForm model =
                 error :: _ ->
                     Just error.message
 
-        viewFormInput : { field : Field, value : String } -> Html Msg
+        viewFormInput : { field : Api.SignIn.Field, value : String } -> Html Msg
         viewFormInput options =
             let
                 error : Maybe String
@@ -319,34 +202,34 @@ viewForm model =
     in
     Html.form [ Attr.class "box", Html.Events.onSubmit UserSubmittedForm ]
         [ viewFormInput
-            { field = Email
+            { field = Api.SignIn.Email
             , value = model.email
             }
         , viewFormInput
-            { field = Password
+            { field = Api.SignIn.Password
             , value = model.password
             }
         , viewFormControls model
         ]
 
 
-fromFieldToLabel : Field -> String
+fromFieldToLabel : Api.SignIn.Field -> String
 fromFieldToLabel field =
     case field of
-        Email ->
+        Api.SignIn.Email ->
             "Email address"
 
-        Password ->
+        Api.SignIn.Password ->
             "Password"
 
 
-fromFieldToInputType : Field -> String
+fromFieldToInputType : Api.SignIn.Field -> String
 fromFieldToInputType field =
     case field of
-        Email ->
+        Api.SignIn.Email ->
             "email"
 
-        Password ->
+        Api.SignIn.Password ->
             "password"
 
 
@@ -371,3 +254,20 @@ viewFormControls model =
             Nothing ->
                 Html.text ""
         ]
+
+
+toFormError : List Api.SignIn.FormError -> Maybe String
+toFormError formErrors =
+    let
+        maybeFirstError : Maybe Api.SignIn.FormError
+        maybeFirstError =
+            formErrors
+                |> List.filter (\error -> error.field == Nothing)
+                |> List.head
+    in
+    case maybeFirstError of
+        Nothing ->
+            Nothing
+
+        Just firstError ->
+            Just firstError.message

@@ -2,7 +2,6 @@ module Shared exposing
     ( Flags, decoder
     , Model, Msg
     , init, update, subscriptions
-    , SignInStatus(..)
     )
 
 {-|
@@ -10,22 +9,21 @@ module Shared exposing
 @docs Flags, decoder
 @docs Model, Msg
 @docs init, update, subscriptions
-@docs handleSharedMsg
-
-@docs SignInStatus
 
 -}
 
-import Api.User exposing (User)
+import Api.Me
 import Browser.Navigation
 import Dict
+import Domain.SignInStatus
+import Domain.User exposing (User)
 import Effect exposing (Effect)
 import Http
 import Json.Decode
-import Json.Encode
 import Route exposing (Route)
 import Route.Path
-import Shared.Msg exposing (Msg(..))
+import Shared.Model
+import Shared.Msg
 
 
 
@@ -44,15 +42,7 @@ decoder =
 
 
 type alias Model =
-    { signInStatus : SignInStatus
-    }
-
-
-type SignInStatus
-    = NotSignedIn
-    | SignedInWithToken String
-    | SignedInWithUser User
-    | FailedToSignIn Http.Error
+    Shared.Model.Model
 
 
 init : Result Json.Decode.Error Flags -> Route () -> ( Model, Effect Msg )
@@ -63,25 +53,23 @@ init flagsResult route =
             flagsResult
                 |> Result.withDefault { token = Nothing }
 
-        signInStatus : SignInStatus
+        signInStatus : Domain.SignInStatus.SignInStatus
         signInStatus =
             case flags.token of
                 Nothing ->
-                    NotSignedIn
+                    Domain.SignInStatus.NotSignedIn
 
                 Just token ->
-                    SignedInWithToken token
+                    Domain.SignInStatus.SignedInWithToken token
     in
     ( { signInStatus = signInStatus
       }
     , case flags.token of
         Just token ->
-            Effect.fromCmd
-                (Api.User.getCurrentUser
-                    { token = token
-                    , onResponse = UserApiResponded
-                    }
-                )
+            Api.Me.get
+                { token = token
+                , onResponse = Shared.Msg.ApiMeResponded
+                }
 
         Nothing ->
             Effect.none
@@ -99,38 +87,41 @@ type alias Msg =
 update : Route () -> Msg -> Model -> ( Model, Effect Msg )
 update route msg model =
     case msg of
-        UserApiResponded (Ok user) ->
-            ( { model | signInStatus = SignedInWithUser user }
+        Shared.Msg.ApiMeResponded (Ok user) ->
+            ( { model | signInStatus = Domain.SignInStatus.SignedInWithUser user }
             , Effect.none
             )
 
-        UserApiResponded (Err httpError) ->
-            ( { model | signInStatus = FailedToSignIn httpError }
+        Shared.Msg.ApiMeResponded (Err httpError) ->
+            ( { model | signInStatus = Domain.SignInStatus.FailedToSignIn httpError }
             , Effect.none
             )
 
-        SignInPageSignedInUser (Ok user) ->
-            ( { model | signInStatus = SignedInWithUser user }
-            , case Dict.get "from" route.query of
-                Just redirectUrlPath ->
-                    Effect.pushUrlPath redirectUrlPath
-
-                Nothing ->
-                    Effect.pushRoute
-                        { path = Route.Path.Home_
-                        , query = Dict.empty
-                        , hash = Nothing
-                        }
+        Shared.Msg.SignInPageSignedInUser (Ok user) ->
+            let
+                redirectRoute : Maybe Route.Path.Path
+                redirectRoute =
+                    Dict.get "from" route.query
+                        |> Maybe.andThen Route.Path.fromString
+            in
+            ( { model | signInStatus = Domain.SignInStatus.SignedInWithUser user }
+            , Effect.pushRoute
+                { path =
+                    redirectRoute
+                        |> Maybe.withDefault Route.Path.Home_
+                , query = Dict.empty
+                , hash = Nothing
+                }
             )
 
-        SignInPageSignedInUser (Err httpError) ->
-            ( { model | signInStatus = FailedToSignIn httpError }
+        Shared.Msg.SignInPageSignedInUser (Err httpError) ->
+            ( { model | signInStatus = Domain.SignInStatus.FailedToSignIn httpError }
             , Effect.none
             )
 
-        PageSignedOutUser ->
-            ( { model | signInStatus = NotSignedIn }
-            , Effect.save { key = "token", value = Json.Encode.null }
+        Shared.Msg.PageSignedOutUser ->
+            ( { model | signInStatus = Domain.SignInStatus.NotSignedIn }
+            , Effect.resetUserToken
             )
 
 

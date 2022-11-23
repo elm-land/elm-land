@@ -1,31 +1,32 @@
 module Auth exposing (User, onPageLoad)
 
-import Api.User
 import Auth.Action
 import Dict
+import Domain.SignInStatus
+import Domain.User
 import Html
 import Html.Attributes as Attr
 import Route exposing (Route)
 import Route.Path
-import Shared
+import Shared.Model exposing (Model)
 import View exposing (View)
 
 
 type alias User =
-    Api.User.User
+    Domain.User.User
 
 
-onPageLoad : Shared.Model -> Route () -> Auth.Action.Action User
+onPageLoad : Shared.Model.Model -> Route () -> Auth.Action.Action User
 onPageLoad shared route =
     case shared.signInStatus of
-        Shared.NotSignedIn ->
+        Domain.SignInStatus.NotSignedIn ->
             Auth.Action.replaceRoute
                 { path = Route.Path.SignIn
                 , query = Dict.fromList [ ( "from", route.url.path ) ]
                 , hash = Nothing
                 }
 
-        Shared.SignedInWithToken token ->
+        Domain.SignInStatus.SignedInWithToken token ->
             Auth.Action.showLoadingPage
                 { title = "Signing in..."
                 , body =
@@ -39,10 +40,10 @@ onPageLoad shared route =
                     ]
                 }
 
-        Shared.SignedInWithUser user ->
+        Domain.SignInStatus.SignedInWithUser user ->
             Auth.Action.loadPageWithUser user
 
-        Shared.FailedToSignIn user ->
+        Domain.SignInStatus.FailedToSignIn user ->
             Auth.Action.replaceRoute
                 { path = Route.Path.SignIn
                 , query = Dict.fromList [ ( "from", route.url.path ) ]

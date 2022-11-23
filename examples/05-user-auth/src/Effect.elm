@@ -1,46 +1,57 @@
 port module Effect exposing
     ( Effect, none, map, batch
-    , fromCmd, fromSharedMsg
+    , fromCmd, fromMsg
     , pushRoute, replaceRoute, loadExternalUrl
-    , pushUrlPath
-    , save
     , toCmd
+    , signInPageSignedInUser, pageSignedOutUser
+    , setUserToken, resetUserToken
     )
 
 {-|
 
 @docs Effect, none, map, batch
-@docs fromCmd, fromSharedMsg
+@docs fromCmd, fromMsg
 @docs Msg, fromAction
 @docs pushRoute, replaceRoute, loadExternalUrl
-@docs pushUrlPath
-@docs save
 @docs toCmd
+
+@docs signInPageSignedInUser, pageSignedOutUser
+
+@docs setUserToken, resetUserToken
 
 -}
 
-import Api.User
 import Browser.Navigation
 import Dict exposing (Dict)
+import Domain.User
 import Http
 import Json.Encode
 import Route exposing (Route)
 import Route.Path
 import Route.Query
+import Shared.Model
 import Shared.Msg
 import Task
 import Url exposing (Url)
 
 
 type Effect msg
-    = None
+    = -- Basics
+      None
     | Batch (List (Effect msg))
     | Cmd (Cmd msg)
-    | Shared Shared.Msg.Msg
+      -- Routing
     | PushUrl String
     | ReplaceUrl String
     | LoadExternalUrl String
+      -- Shared
+    | Shared Shared.Msg.Msg
+      -- Custom
     | SaveToLocalStorage { key : String, value : Json.Encode.Value }
+
+
+
+-- BASICS
 
 
 none : Effect msg
@@ -58,18 +69,15 @@ fromCmd =
     Cmd
 
 
-fromSharedMsg : Shared.Msg.Msg -> Effect msg
-fromSharedMsg =
-    Shared
+fromMsg : msg -> Effect msg
+fromMsg msg =
+    Task.succeed msg
+        |> Task.perform identity
+        |> Cmd
 
 
 
 -- ROUTING
-
-
-pushUrlPath : String -> Effect msg
-pushUrlPath str =
-    PushUrl str
 
 
 pushRoute :
@@ -98,19 +106,44 @@ loadExternalUrl =
 
 
 
--- LOCAL STORAGE
+-- SHARED
+
+
+signInPageSignedInUser : Result Http.Error Domain.User.User -> Effect msg
+signInPageSignedInUser result =
+    Shared (Shared.Msg.SignInPageSignedInUser result)
+
+
+pageSignedOutUser : Effect msg
+pageSignedOutUser =
+    Shared Shared.Msg.PageSignedOutUser
+
+
+
+-- CUSTOM
 
 
 port saveToLocalStorage : { key : String, value : Json.Encode.Value } -> Cmd msg
 
 
-save : { key : String, value : Json.Encode.Value } -> Effect msg
-save keyValueRecord =
-    SaveToLocalStorage keyValueRecord
+setUserToken : String -> Effect msg
+setUserToken token =
+    SaveToLocalStorage
+        { key = "token"
+        , value = Json.Encode.string token
+        }
+
+
+resetUserToken : Effect msg
+resetUserToken =
+    SaveToLocalStorage
+        { key = "token"
+        , value = Json.Encode.null
+        }
 
 
 
--- MAP
+-- INTERNALS
 
 
 map : (msg1 -> msg2) -> Effect msg1 -> Effect msg2
@@ -141,14 +174,10 @@ map fn effect =
             SaveToLocalStorage options
 
 
-
--- Used by Main.elm
-
-
 toCmd :
     { key : Browser.Navigation.Key
     , url : Url
-    , shared : sharedModel
+    , shared : Shared.Model.Model
     , fromSharedMsg : Shared.Msg.Msg -> mainMsg
     , fromCmd : Cmd mainMsg -> mainMsg
     , toCmd : mainMsg -> Cmd mainMsg

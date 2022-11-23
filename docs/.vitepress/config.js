@@ -41,7 +41,7 @@ export default {
             { text: 'Pages and routes', link: '/guide/pages' },
             { text: 'User input', link: '/guide/user-input' },
             { text: 'REST APIs', link: '/guide/rest-apis' },
-            // { text: 'User authentication', link: '/guide/user-auth' },
+            { text: 'User authentication', link: '/guide/user-auth' },
             // { text: 'Query parameters', link: '/guide/query-parameters' },
             // { text: 'Components and UI', link: '/guide/components' },
             // { text: 'Layouts', link: '/guide/layouts' },
