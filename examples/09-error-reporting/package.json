@@ -12,8 +12,5 @@
   "dependencies": {
     "@sentry/browser": "7.19.0",
     "@sentry/tracing": "7.19.0"
-  },
-  "devDependencies": {
-    "elm-land": "0.18.0"
   }
 }

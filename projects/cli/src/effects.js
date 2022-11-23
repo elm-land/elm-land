@@ -344,25 +344,77 @@ const build = async (config) => {
   await verifyTypescriptCompiles()
 
   // Build app in dist folder 
-  await Vite.build({
-    configFile: false,
-    root: path.join(process.cwd(), '.elm-land', 'server'),
-    publicDir: path.join(process.cwd(), 'static'),
-    build: {
-      outDir: '../../dist'
-    },
-    envDir: process.cwd(),
-    envPrefix: 'ELM_LAND_',
-    plugins: [
-      ElmVitePlugin.plugin({
-        debug: false,
-        optimize: true
-      })
-    ],
-    logLevel: 'silent'
-  })
+  try {
+    await Vite.build({
+      configFile: false,
+      root: path.join(process.cwd(), '.elm-land', 'server'),
+      publicDir: path.join(process.cwd(), 'static'),
+      build: {
+        outDir: '../../dist'
+      },
+      envDir: process.cwd(),
+      envPrefix: 'ELM_LAND_',
+      plugins: [
+        ElmVitePlugin.plugin({
+          debug: false,
+          optimize: true
+        })
+      ],
+      logLevel: 'silent'
+    })
+  } catch (err) {
+    return handleViteBuildErrors(err)
+  }
 
   return { problem: null }
+}
+
+const handleViteBuildErrors = (err) => {
+  let message = (err ? err.message : '') || ''
+
+  try {
+    // Provide helpful error for missing local JS dependencies
+    if (message.includes('Could not resolve')) {
+      let [dependencyName, fileImportingPackage] = message.split('Could not resolve \'')[1].split(`' from `)
+      fileImportingPackage = fileImportingPackage.split('\n')[0]
+
+      message = [
+        `    The file ${Terminal.cyan(fileImportingPackage)} tried to import`,
+        `    another file at ${Terminal.pink(`"${dependencyName}"`)}, but it wasn't found.`,
+        '',
+        '    Maybe the file was deleted?'
+      ].join('\n')
+    }
+
+    // Provide helpful error for missing NPM dependencies
+    else if (message.includes('failed to resolve import')) {
+      let [dependencyName, fileImportingPackage] = message.split('failed to resolve import ')[1].split(' from "')
+      fileImportingPackage = fileImportingPackage.split('".')[0]
+
+      message = [
+        `    The file ${Terminal.cyan(fileImportingPackage)} tried to import`,
+        `    an NPM package named ${Terminal.pink(dependencyName)}, but it wasn't found.`,
+        '',
+        `    Make sure to run ${Terminal.cyan('npm install')} before running this command.`
+      ].join('\n')
+    }
+
+    return Promise.reject([
+      '',
+      Utils.intro.error('failed to build this project.'),
+      message,
+      ''
+    ].join('\n'))
+  } catch (_) { }
+
+  return Promise.reject([
+    '',
+    Utils.intro.error('failed to build this project.'),
+    `    Here's the problem that was reported:`,
+    '',
+    message.split('\n').map(line => '    ' + line).join('\n'),
+    ''
+  ].join('\n'))
 }
 
 // Generating index.html from elm-land.json file

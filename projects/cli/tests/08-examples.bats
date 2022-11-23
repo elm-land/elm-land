@@ -90,6 +90,7 @@ load helpers
 
 @test "'elm-land build' works with the '09-error-reporting' example" {
   cd ../../examples/09-error-reporting
+  run npm install
   run elm-land build
   expectToPass
 
