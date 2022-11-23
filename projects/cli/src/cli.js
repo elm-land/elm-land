@@ -3,6 +3,7 @@ const { Add } = require('./commands/add')
 const { Server } = require('./commands/server')
 const { Build } = require('./commands/build')
 const { Customize } = require('./commands/customize')
+const { Routes } = require('./commands/routes')
 const { Utils, Terminal } = require('./commands/_utils')
 
 let { version } = require('../package.json')
@@ -15,7 +16,8 @@ let subcommandList = [
   `    📦 elm-land ${Terminal.pink('build')} .......... build your app for production`,
   `    📄 elm-land ${Terminal.pink('add page <url>')} ................ add a new page`,
   `    🍱 elm-land ${Terminal.pink('add layout <name>')} ........... add a new layout`,
-  `    🔧 elm-land ${Terminal.pink('customize <name>')} .. customize a default module`
+  `    🔧 elm-land ${Terminal.pink('customize <name>')} .. customize a default module`,
+  `    🔍 elm-land ${Terminal.pink('routes')} ........... list all routes in your app`
 ]
 
 let run = async (commandFromCli) => {
@@ -47,6 +49,9 @@ let run = async (commandFromCli) => {
     },
     'customize': ([moduleName] = []) => {
       return Customize.run({ moduleName })
+    },
+    'routes': ([url] = []) => {
+      return Routes.run({ url })
     }
   }
 
