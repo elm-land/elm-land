@@ -80,7 +80,7 @@ Renders the following:
 -}
 toString : Module -> String
 toString (Module options) =
-    "module {{name}} exposing ({{exposing}}){{imports}}{{declarations}}"
+    "module {{name}} exposing ({{exposing}}){{imports}}{{declarations}}\n"
         |> String.replace "{{name}}" (String.join "." options.name)
         |> String.replace "{{exposing}}" (String.join ", " options.exposing_)
         |> String.replace "{{imports}}"

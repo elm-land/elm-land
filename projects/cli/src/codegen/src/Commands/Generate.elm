@@ -1865,7 +1865,7 @@ routePathElmModule : Data -> CodeGen.Module
 routePathElmModule data =
     CodeGen.Module.new
         { name = [ "Route", "Path" ]
-        , exposing_ = [ "Path(..)", "fromUrl", "toString", "href" ]
+        , exposing_ = [ "Path(..)", "fromString", "fromUrl", "href", "toString" ]
         , imports =
             [ CodeGen.Import.new [ "Html" ]
             , CodeGen.Import.new [ "Html.Attributes" ]
@@ -1895,11 +1895,8 @@ routePathElmModule data =
                 , expression =
                     CodeGen.Expression.pipeline
                         [ CodeGen.Expression.function
-                            { name = "Url.Parser.parse"
-                            , arguments =
-                                [ CodeGen.Expression.value "parser"
-                                , CodeGen.Expression.value "url"
-                                ]
+                            { name = "fromString"
+                            , arguments = [ CodeGen.Expression.value "url.path" ]
                             }
                         , CodeGen.Expression.function
                             { name = "Maybe.withDefault"
@@ -1908,6 +1905,16 @@ routePathElmModule data =
                                 ]
                             }
                         ]
+                }
+            , CodeGen.Declaration.function
+                { name = "fromString"
+                , annotation =
+                    CodeGen.Annotation.function
+                        [ CodeGen.Annotation.type_ "String"
+                        , CodeGen.Annotation.type_ "Maybe Path"
+                        ]
+                , arguments = [ CodeGen.Argument.new "urlPath" ]
+                , expression = routePathFromStringExpression data
                 }
             , CodeGen.Declaration.function
                 { name = "href"
@@ -1923,7 +1930,7 @@ routePathElmModule data =
                     CodeGen.Expression.letIn
                         { let_ =
                             [ { argument = CodeGen.Argument.new "pieces"
-                              , annotation = Nothing
+                              , annotation = Just (CodeGen.Annotation.type_ "List String")
                               , expression =
                                     CodeGen.Expression.caseExpression
                                         { value = CodeGen.Argument.new "path"
@@ -1945,21 +1952,41 @@ routePathElmModule data =
                                 ]
                         }
                 }
-            , CodeGen.Declaration.function
-                { name = "parser"
-                , annotation = CodeGen.Annotation.type_ "Url.Parser.Parser (Path -> a) a"
-                , arguments = []
-                , expression =
-                    CodeGen.Expression.multilineFunction
-                        { name = "Url.Parser.oneOf"
-                        , arguments =
-                            [ data.pages
-                                |> List.map PageFile.toUrlParser
-                                |> CodeGen.Expression.multilineList
-                            ]
-                        }
-                }
             ]
+        }
+
+
+routePathFromStringExpression : { data | pages : List PageFile } -> CodeGen.Expression
+routePathFromStringExpression { pages } =
+    let
+        toBranch : PageFile -> CodeGen.Expression.Branch
+        toBranch page =
+            PageFile.toRouteFromStringBranch page
+
+        nothingBranch : CodeGen.Expression.Branch
+        nothingBranch =
+            { name = "_"
+            , arguments = []
+            , expression = CodeGen.Expression.value "Nothing"
+            }
+    in
+    CodeGen.Expression.letIn
+        { let_ =
+            [ { argument = CodeGen.Argument.new "urlPathSegments"
+              , annotation = Just (CodeGen.Annotation.type_ "List String")
+              , expression =
+                    CodeGen.Expression.pipeline
+                        [ CodeGen.Expression.value "urlPath"
+                        , CodeGen.Expression.function { name = "String.split", arguments = [ CodeGen.Expression.string "/" ] }
+                        , CodeGen.Expression.value "List.filter (String.trim >> String.isEmpty >> Basics.not)"
+                        ]
+              }
+            ]
+        , in_ =
+            CodeGen.Expression.caseExpression
+                { value = CodeGen.Argument.new "urlPathSegments"
+                , branches = List.map toBranch pages ++ [ nothingBranch ]
+                }
         }
 
 
@@ -1991,7 +2018,10 @@ toRoutePathToStringBranch page =
                 (PageFile.toList page
                     |> List.map
                         (\piece ->
-                            if String.endsWith "_" piece then
+                            if piece == "ALL_" then
+                                CodeGen.Expression.value "String.join \"/\" (params.first_ :: params.rest_)"
+
+                            else if String.endsWith "_" piece then
                                 CodeGen.Expression.value
                                     ("params."
                                         ++ (piece |> String.dropRight 1 |> Extras.String.fromPascalCaseToCamelCase)
@@ -2050,6 +2080,7 @@ decoder =
         (Json.Decode.field "pages"
             (Json.Decode.list PageFile.decoder
                 |> Json.Decode.map ignoreNotFoundPage
+                |> Json.Decode.map PageFile.sortBySpecificity
             )
         )
         (Json.Decode.field "layouts" (Json.Decode.list LayoutFile.decoder)

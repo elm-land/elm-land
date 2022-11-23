@@ -6,12 +6,13 @@ module PageFile exposing
     , isAuthProtectedPage
     , isNotFoundPage
     , isSandboxOrElementElmLandPage
+    , sortBySpecificity
     , toList
     , toModuleName
     , toPageModelTypeDeclaration
     , toParamsRecordAnnotation
+    , toRouteFromStringBranch
     , toRouteVariant
-    , toUrlParser
     , toVariantName
     )
 
@@ -34,6 +35,7 @@ import Elm.Syntax.Signature
 import Elm.Syntax.TypeAnnotation
 import Extras.String
 import Json.Decode
+import Util.String
 
 
 type PageFile
@@ -435,11 +437,28 @@ toList (PageFile { filepath }) =
 
 toParamsRecordAnnotation : PageFile -> CodeGen.Annotation
 toParamsRecordAnnotation (PageFile { filepath }) =
+    let
+        isCatchAllRoute : Bool
+        isCatchAllRoute =
+            filepath |> String.join "/" |> String.endsWith "ALL_"
+
+        addConditionalCatchAllParameters : List ( String, CodeGen.Annotation ) -> List ( String, CodeGen.Annotation )
+        addConditionalCatchAllParameters fields =
+            if isCatchAllRoute then
+                fields
+                    ++ [ ( "first_", CodeGen.Annotation.string )
+                       , ( "rest_", CodeGen.Annotation.type_ "List String" )
+                       ]
+
+            else
+                fields
+    in
     filepath
-        |> List.filter (String.endsWith "_")
+        |> List.filter (\str -> str /= "ALL_" && String.endsWith "_" str)
         |> List.map (String.dropRight 1)
         |> List.map Extras.String.fromPascalCaseToCamelCase
         |> List.map (\fieldName -> ( fieldName, CodeGen.Annotation.string ))
+        |> addConditionalCatchAllParameters
         |> CodeGen.Annotation.record
 
 
@@ -459,76 +478,79 @@ toRouteVariant page =
     )
 
 
-toUrlParser : PageFile -> CodeGen.Expression
-toUrlParser ((PageFile { filepath }) as page) =
-    case filepath of
-        [ "Home_" ] ->
-            CodeGen.Expression.function
-                { name = "Url.Parser.map"
-                , arguments =
-                    [ CodeGen.Expression.value "Home_"
-                    , CodeGen.Expression.value "Url.Parser.top"
-                    ]
-                }
+toRouteFromStringBranch : PageFile -> CodeGen.Expression.Branch
+toRouteFromStringBranch page =
+    let
+        (PageFile { filepath }) =
+            page
 
-        _ ->
-            let
-                paramNameForIndex : Int -> String
-                paramNameForIndex i =
-                    "param" ++ String.fromInt (i + 1)
+        branchPattern : List String -> List String
+        branchPattern segments =
+            case segments of
+                [] ->
+                    [ "[]" ]
 
-                constructorExpression : CodeGen.Expression
-                constructorExpression =
-                    if hasDynamicParameters page then
-                        CodeGen.Expression.lambda
-                            { arguments =
-                                toDynamicParameterList page
-                                    |> List.indexedMap (\i _ -> CodeGen.Argument.new (paramNameForIndex i))
-                            , expression =
-                                CodeGen.Expression.function
-                                    { name = toVariantName page
-                                    , arguments =
-                                        [ CodeGen.Expression.record
-                                            (toDynamicParameterList page
-                                                |> List.indexedMap
-                                                    (\i name ->
-                                                        ( name
-                                                            |> String.dropRight 1
-                                                            |> Extras.String.fromPascalCaseToCamelCase
-                                                        , CodeGen.Expression.value (paramNameForIndex i)
-                                                        )
-                                                    )
-                                            )
-                                        ]
-                                    }
-                            }
+                "Home_" :: [] ->
+                    [ "[]" ]
 
-                    else
-                        CodeGen.Expression.value (toVariantName page)
+                "ALL_" :: [] ->
+                    [ "first_", "rest_" ]
 
-                toUrlParserList : List CodeGen.Expression
-                toUrlParserList =
-                    filepath
-                        |> List.map
-                            (\piece ->
-                                if String.endsWith "_" piece then
-                                    [ CodeGen.Expression.value "Url.Parser.string" ]
+                "ALL_" :: rest ->
+                    branchPattern ("all_" :: rest)
 
-                                else
-                                    [ CodeGen.Expression.value "Url.Parser.s"
-                                    , CodeGen.Expression.string (Extras.String.fromPascalCaseToKebabCase piece)
-                                    ]
+                piece :: remaining ->
+                    let
+                        segmentPiece : String
+                        segmentPiece =
+                            if String.endsWith "_" piece then
+                                piece
+                                    |> Extras.String.fromPascalCaseToCamelCase
+
+                            else
+                                piece
+                                    |> Extras.String.fromPascalCaseToKebabCase
+                                    |> Util.String.quote
+                    in
+                    segmentPiece :: branchPattern remaining
+    in
+    { name = branchPattern filepath |> String.join " :: "
+    , arguments = []
+    , expression =
+        if hasDynamicParameters page then
+            CodeGen.Expression.pipeline
+                [ CodeGen.Expression.multilineFunction
+                    { name = toVariantName page
+                    , arguments =
+                        [ CodeGen.Expression.multilineRecord
+                            (toDynamicParameterList page
+                                |> List.concatMap
+                                    (\str ->
+                                        if str == "ALL_" then
+                                            [ ( "first_", CodeGen.Expression.value "first_" )
+                                            , ( "rest_", CodeGen.Expression.value "rest_" )
+                                            ]
+
+                                        else
+                                            [ ( str |> String.dropRight 1 |> Extras.String.fromPascalCaseToCamelCase
+                                              , CodeGen.Expression.value (str |> Extras.String.fromPascalCaseToCamelCase)
+                                              )
+                                            ]
+                                    )
                             )
-                        |> List.intersperse [ CodeGen.Expression.operator "</>" ]
-                        |> List.concat
-            in
+                        ]
+                    }
+                , CodeGen.Expression.value "Just"
+                ]
+
+        else
             CodeGen.Expression.function
-                { name = "Url.Parser.map"
+                { name = "Just"
                 , arguments =
-                    [ constructorExpression
-                    , CodeGen.Expression.parens toUrlParserList
+                    [ CodeGen.Expression.value (toVariantName page)
                     ]
                 }
+    }
 
 
 toModuleName : PageFile -> String
@@ -538,3 +560,109 @@ toModuleName (PageFile { filepath }) =
 
     else
         "Pages." ++ String.join "." filepath
+
+
+sortBySpecificity : List PageFile -> List PageFile
+sortBySpecificity pages =
+    pages
+        |> List.sortWith sorter
+
+
+type Specificity
+    = Static
+    | Dynamic
+    | CatchAll
+
+
+toSpecificity : String -> Specificity
+toSpecificity segment =
+    if segment == "ALL_" then
+        CatchAll
+
+    else if String.endsWith "_" segment then
+        Dynamic
+
+    else
+        Static
+
+
+sorter : PageFile -> PageFile -> Basics.Order
+sorter (PageFile page1) (PageFile page2) =
+    let
+        segments1 : List String
+        segments1 =
+            page1.filepath
+
+        segments2 : List String
+        segments2 =
+            page2.filepath
+
+        compareBySpecificity : List String -> List String -> Basics.Order
+        compareBySpecificity list1 list2 =
+            case ( list1, list2 ) of
+                ( [], [] ) ->
+                    Basics.EQ
+
+                ( [], _ ) ->
+                    Basics.LT
+
+                ( _, [] ) ->
+                    Basics.GT
+
+                ( first1 :: rest1, first2 :: rest2 ) ->
+                    case compareSpecificityOfSegment first1 first2 of
+                        Basics.LT ->
+                            Basics.LT
+
+                        Basics.GT ->
+                            Basics.GT
+
+                        Basics.EQ ->
+                            compareBySpecificity rest1 rest2
+
+        compareSpecificityOfSegment : String -> String -> Basics.Order
+        compareSpecificityOfSegment str1 str2 =
+            case ( toSpecificity str1, toSpecificity str2 ) of
+                ( Static, Static ) ->
+                    Basics.compare str1 str2
+
+                ( Dynamic, Dynamic ) ->
+                    Basics.compare str1 str2
+
+                ( CatchAll, CatchAll ) ->
+                    Basics.compare str1 str2
+
+                ( Static, _ ) ->
+                    Basics.LT
+
+                ( _, Static ) ->
+                    Basics.GT
+
+                ( Dynamic, _ ) ->
+                    Basics.LT
+
+                ( _, Dynamic ) ->
+                    Basics.GT
+
+        isHomepage_ : List String -> Bool
+        isHomepage_ segments =
+            segments == [ "Home_" ]
+
+        isNotFoundPage_ : List String -> Bool
+        isNotFoundPage_ segments =
+            segments == [ "NotFound_" ]
+    in
+    if isHomepage_ segments1 then
+        Basics.LT
+
+    else if isHomepage_ segments2 then
+        Basics.GT
+
+    else if isNotFoundPage_ segments1 then
+        Basics.GT
+
+    else if isNotFoundPage_ segments2 then
+        Basics.LT
+
+    else
+        compareBySpecificity segments1 segments2

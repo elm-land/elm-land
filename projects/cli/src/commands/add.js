@@ -85,52 +85,80 @@ let addNewLayout = () => async ([name]) => {
   }
 }
 
-let addNewPage = (kind) => async ([url]) => {
-  if (!url) {
+let addNewPage = (kind) => async ([originalUrl]) => {
+  let pageAddExamples = [
+    '    Here are some examples:',
+    '',
+    `    elm-land add ${kind === 'new' ? 'page' : `page:${kind}`} ${Terminal.pink(`/sign-in`)}`,
+    `    elm-land add ${kind === 'new' ? 'page' : `page:${kind}`} ${Terminal.pink(`/users/:id`)}`,
+    `    elm-land add ${kind === 'new' ? 'page' : `page:${kind}`} ${Terminal.pink(`'/users/*'`)}`,
+    ''
+  ]
+
+  if (!originalUrl) {
     return Promise.reject([
       '',
       Utils.intro.error(`expected a ${Terminal.cyan('<url>')} argument`),
-      '    Here are some examples:',
-      '',
-      `    elm-land add ${kind === 'new' ? 'page' : `page:${kind}`} ${Terminal.pink(`/sign-in`)}`,
-      `    elm-land add ${kind === 'new' ? 'page' : `page:${kind}`} ${Terminal.pink(`/users/:id`)}`,
-      ''
+      ...pageAddExamples
     ].join('\n'))
-  }
+  } else {
 
-  let inFolderWithElmLandJson = await Files.exists(path.join(process.cwd(), 'elm-land.json'))
+    const urlValidationError = [
+      originalUrl.startsWith('/')
+        ? undefined
+        : 'expected the URL to start with a "/"',
+      originalUrl === '/' || originalUrl.slice(1).split('/').every(startsWithLowercaseLetterColonOrAsterisk)
+        ? undefined
+        : 'found a non lowercase letter',
+      doesntHaveAsteriskBeforeTheEnd(originalUrl)
+        ? undefined
+        : 'found an asterisk before the last segment'
+    ].find(x => x !== undefined)
 
-  if (!inFolderWithElmLandJson) {
-    return Promise.reject(Utils.notInElmLandProject)
-  }
+    if (urlValidationError) {
+      return Promise.reject([
+        '',
+        Utils.intro.error(urlValidationError),
+        ...pageAddExamples
+      ].join('\n'))
+    }
+    let inFolderWithElmLandJson = await Files.exists(path.join(process.cwd(), 'elm-land.json'))
 
-  let filepath = toNewPageModuleNamePieces({ url })
+    if (!inFolderWithElmLandJson) {
+      return Promise.reject(Utils.notInElmLandProject)
+    }
 
+    // Don't want to generate filenames like "Blog/*.elm", so we 
+    // replace the asterisk here:
+    const newUrl = originalUrl.split('*').join('ALL_')
 
-  let [generatedFile] = await Codegen.addNewPage({
-    kind,
-    url,
-    filepath
-  })
+    let filepath = toNewPageModuleNamePieces({ url: newUrl })
 
-  let relativeFilepath = `src/${generatedFile.filepath}`
+    let [generatedFile] = await Codegen.addNewPage({
+      kind,
+      url: newUrl,
+      filepath
+    })
 
-  let newFile = {
-    kind: 'file',
-    name: relativeFilepath,
-    content: generatedFile.contents
-  }
+    let relativeFilepath = `src/${generatedFile.filepath}`
 
-  return {
-    message: [
-      '',
-      Utils.intro.success(`added a new page at ${Terminal.cyan(url)}`),
-      '    You can edit your new page here:',
-      Terminal.pink(`    ./${relativeFilepath}`),
-      ''
-    ].join('\n'),
-    files: [newFile],
-    effects: []
+    let newFile = {
+      kind: 'file',
+      name: relativeFilepath,
+      content: generatedFile.contents
+    }
+
+    return {
+      message: [
+        '',
+        Utils.intro.success(`added a new page at ${Terminal.cyan(originalUrl)}`),
+        '    You can edit your new page here:',
+        Terminal.pink(`    ./${relativeFilepath}`),
+        ''
+      ].join('\n'),
+      files: [newFile],
+      effects: []
+    }
   }
 }
 
@@ -196,4 +224,31 @@ module.exports = {
   Add: {
     run
   }
+}
+
+// Return true if the string starts with a lowercase letter between a-z,
+// starts with a ":", or is the special "*" character
+// 
+// If the string is empty, return false
+const a = 'a'.charCodeAt(0)
+const z = 'z'.charCodeAt(0)
+
+const startsWithLowercaseLetterColonOrAsterisk = (str) => {
+  if (!str) return false
+  if (str === '*') return true
+  if (str[0] === ':') return true
+
+  const firstLetter = str.charCodeAt(0)
+  return (firstLetter >= a && firstLetter <= z)
+}
+
+const doesntHaveAsteriskBeforeTheEnd = (originalUrl) => {
+  let segments = originalUrl.split('/')
+
+  for (let index = 0; index < segments.length - 1; index++) {
+    if (segments[index].includes('*')) {
+      return false
+    }
+  }
+  return true
 }
