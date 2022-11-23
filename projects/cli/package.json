@@ -36,13 +36,12 @@
     "bats": "1.7.0"
   },
   "dependencies": {
+    "@lydell/elm": "0.19.1-9",
     "chokidar": "3.5.3",
-    "elm": "0.19.1-5",
-    "elm-esm": "1.1.4",
     "node-elm-compiler": "5.0.6",
-    "terser": "5.14.0",
+    "terser": "5.15.1",
     "typescript": "4.9.3",
-    "vite-plugin-checker": "0.5.1",
-    "vite": "3.0.9"
+    "vite": "3.0.9",
+    "vite-plugin-checker": "0.5.1"
   }
 }

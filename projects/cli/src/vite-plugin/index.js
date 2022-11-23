@@ -1,4 +1,3 @@
-const { toESModule } = require('elm-esm')
 const compiler = require('node-elm-compiler')
 const { relative } = require('path')
 const { acquireLock } = require('./mutex')
@@ -130,6 +129,23 @@ const plugin = (opts) => {
           report: 'json'
         })
 
+        // Taken from https://www.npmjs.com/package/elm-esm/v/1.1.4
+        // 
+        // It is just a single function, so having an NPM dependency feels silly, but
+        // I want to still give source credit to https://github.com/ChristophP/elm-esm
+        const toESModule = (js) => {
+          const elmExports = js.match(
+            /^\s*_Platform_export\(([^]*)\);\n?}\(this\)\);/m
+          )[1]
+          return js
+            .replace(/\(function\s*\(scope\)\s*\{$/m, "// -- $&")
+            .replace(/['"]use strict['"];$/m, "// -- $&")
+            .replace(/function _Platform_export([^]*?)\}\n/g, "/*\n$&\n*/")
+            .replace(/function _Platform_mergeExports([^]*?)\}\n\s*}/g, "/*\n$&\n*/")
+            .replace(/^\s*_Platform_export\(([^]*)\);\n?}\(this\)\);/m, "/*\n$&\n*/")
+            .concat(`\nexport const Elm = ${elmExports};\n`)
+        }
+
         const esm = toESModule(compiled)
 
         // Apparently `addWatchFile` may not exist: https://github.com/hmsk/vite-plugin-elm/pull/36
@@ -166,13 +182,14 @@ const plugin = (opts) => {
         if (e instanceof Error && e.message.includes('-- NO MAIN')) {
           const message = `${viteProjectPath(
             pathname,
-          )}: NO MAIN .elm file is requested to transform by vite. Probably, this file is just a depending module`
+          )
+            }: NO MAIN.elm file is requested to transform by vite.Probably, this file is just a depending module`
           throw message
         } else {
           if (isBuild) {
             try {
               let output = ElmErrorJson.parse(e.message)
-              console.error(`❗️ Elm Land build failed:`)
+              console.error(`❗️ Elm Land build failed: `)
               console.error('')
               console.error(ElmErrorJson.toColoredTerminalOutput(output))
               console.error('')
@@ -188,7 +205,7 @@ const plugin = (opts) => {
             })
 
             return {
-              code: `export const Elm = new Proxy({}, () => ({ init: () => {} }))`,
+              code: `export const Elm = new Proxy({}, () => ({ init: () => { } }))`,
               map: null
             }
           }
