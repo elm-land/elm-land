@@ -22,7 +22,7 @@ type Layout model msg mainMsg
         { init : () -> ( model, Effect msg )
         , update : msg -> model -> ( model, Effect msg )
         , subscriptions : model -> Sub msg
-        , view : { model : model, toMainMsg : msg -> mainMsg, content : View mainMsg } -> View mainMsg
+        , view : { model : model, fromMsg : msg -> mainMsg, content : View mainMsg } -> View mainMsg
         }
 
 
@@ -30,7 +30,7 @@ new :
     { init : () -> ( model, Effect msg )
     , update : msg -> model -> ( model, Effect msg )
     , subscriptions : model -> Sub msg
-    , view : { model : model, toMainMsg : msg -> mainMsg, content : View mainMsg } -> View mainMsg
+    , view : { model : model, fromMsg : msg -> mainMsg, content : View mainMsg } -> View mainMsg
     }
     -> Layout model msg mainMsg
 new options =
@@ -45,7 +45,7 @@ new options =
 sandbox :
     { init : model
     , update : msg -> model -> model
-    , view : { model : model, toMainMsg : msg -> mainMsg, content : View mainMsg } -> View mainMsg
+    , view : { model : model, fromMsg : msg -> mainMsg, content : View mainMsg } -> View mainMsg
     }
     -> Layout model msg mainMsg
 sandbox options =
@@ -61,7 +61,7 @@ element :
     { init : ( model, Cmd msg )
     , update : msg -> model -> ( model, Cmd msg )
     , subscriptions : model -> Sub msg
-    , view : { model : model, toMainMsg : msg -> mainMsg, content : View mainMsg } -> View mainMsg
+    , view : { model : model, fromMsg : msg -> mainMsg, content : View mainMsg } -> View mainMsg
     }
     -> Layout model msg mainMsg
 element options =
@@ -69,11 +69,11 @@ element options =
         { init =
             \_ ->
                 options.init
-                    |> Tuple.mapSecond Effect.fromCmd
+                    |> Tuple.mapSecond Effect.sendCmd
         , update =
             \msg model ->
                 options.update msg model
-                    |> Tuple.mapSecond Effect.fromCmd
+                    |> Tuple.mapSecond Effect.sendCmd
         , subscriptions = options.subscriptions
         , view = options.view
         }
@@ -91,7 +91,7 @@ update (Layout page) =
 
 view :
     Layout model msg mainMsg
-    -> { model : model, toMainMsg : msg -> mainMsg, content : View mainMsg }
+    -> { model : model, fromMsg : msg -> mainMsg, content : View mainMsg }
     -> View mainMsg
 view (Layout page) =
     page.view

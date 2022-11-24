@@ -79,11 +79,11 @@ element options =
         { init =
             \_ ->
                 options.init
-                    |> Tuple.mapSecond Effect.fromCmd
+                    |> Tuple.mapSecond Effect.sendCmd
         , update =
             \msg model ->
                 options.update msg model
-                    |> Tuple.mapSecond Effect.fromCmd
+                    |> Tuple.mapSecond Effect.sendCmd
         , subscriptions = options.subscriptions
         , view = options.view
         , layout = Nothing

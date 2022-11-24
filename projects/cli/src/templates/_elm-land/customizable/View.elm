@@ -17,7 +17,7 @@ import Html exposing (Html)
 
 
 type alias View msg =
-    { title : String 
+    { title : String
     , body : List (Html msg)
     }
 

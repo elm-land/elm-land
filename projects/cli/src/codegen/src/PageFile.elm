@@ -6,6 +6,7 @@ module PageFile exposing
     , isAuthProtectedPage
     , isNotFoundPage
     , isSandboxOrElementElmLandPage
+    , isTopLevelCatchAllPage
     , sortBySpecificity
     , toList
     , toModuleName
@@ -460,6 +461,11 @@ toParamsRecordAnnotation (PageFile { filepath }) =
         |> List.map (\fieldName -> ( fieldName, CodeGen.Annotation.string ))
         |> addConditionalCatchAllParameters
         |> CodeGen.Annotation.record
+
+
+isTopLevelCatchAllPage : PageFile -> Bool
+isTopLevelCatchAllPage (PageFile { filepath }) =
+    filepath == [ "ALL_" ]
 
 
 toVariantName : PageFile -> String

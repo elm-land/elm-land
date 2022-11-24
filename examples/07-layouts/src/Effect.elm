@@ -1,6 +1,6 @@
 port module Effect exposing
     ( Effect, none, batch
-    , fromCmd
+    , sendCmd, sendMsg
     , signInAs
     , pushRoute, replaceRoute, loadExternalUrl
     , map, toCmd
@@ -9,7 +9,7 @@ port module Effect exposing
 {-|
 
 @docs Effect, none, batch
-@docs fromCmd
+@docs sendCmd, sendMsg
 @docs signInAs
 @docs pushRoute, replaceRoute, loadExternalUrl
 
@@ -30,12 +30,15 @@ import Url exposing (Url)
 
 
 type Effect msg
-    = None
+    = -- BASICS
+      None
     | Batch (List (Effect msg))
-    | Cmd (Cmd msg)
+    | SendCmd (Cmd msg)
+      -- ROUTING
     | PushUrl String
     | ReplaceUrl String
     | LoadExternalUrl String
+      -- SHARED
     | SignInAs { username : String }
 
 
@@ -49,9 +52,16 @@ batch =
     Batch
 
 
-fromCmd : Cmd msg -> Effect msg
-fromCmd =
-    Cmd
+sendCmd : Cmd msg -> Effect msg
+sendCmd =
+    SendCmd
+
+
+sendMsg : msg -> Effect msg
+sendMsg msg =
+    Task.succeed msg
+        |> Task.perform identity
+        |> SendCmd
 
 
 signInAs : { username : String } -> Effect msg
@@ -99,8 +109,8 @@ map fn effect =
         Batch list ->
             Batch (List.map (map fn) list)
 
-        Cmd cmd ->
-            Cmd (Cmd.map fn cmd)
+        SendCmd cmd ->
+            SendCmd (Cmd.map fn cmd)
 
         PushUrl url ->
             PushUrl url
@@ -131,7 +141,7 @@ toCmd :
     , fromSharedMsg : Shared.Msg.Msg -> mainMsg
     , fromCmd : Cmd mainMsg -> mainMsg
     , toCmd : mainMsg -> Cmd mainMsg
-    , toMainMsg : msg -> mainMsg
+    , fromMsg : msg -> mainMsg
     }
     -> Effect msg
     -> Cmd mainMsg
@@ -140,8 +150,8 @@ toCmd options effect =
         None ->
             Cmd.none
 
-        Cmd cmd ->
-            Cmd.map options.toMainMsg cmd
+        SendCmd cmd ->
+            Cmd.map options.fromMsg cmd
 
         Batch list ->
             Cmd.batch (List.map (toCmd options) list)

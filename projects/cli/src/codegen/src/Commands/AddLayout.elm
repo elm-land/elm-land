@@ -188,12 +188,12 @@ newLayoutModule data =
         {- Example:
 
            view :
-               { toMainMsg : Msg -> mainMsg
+               { fromMsg : Msg -> mainMsg
                , content : View mainMsg
                , model : Model
                }
                -> View mainMsg
-           view { toMainMsg, model, content } =
+           view { fromMsg, model, content } =
                { title = content.title
                , body =
                    [ Html.text "Header"
@@ -205,8 +205,8 @@ newLayoutModule data =
         viewFunction =
             CodeGen.Declaration.function
                 { name = "view"
-                , annotation = CodeGen.Annotation.type_ "{ toMainMsg : Msg -> mainMsg, content : View mainMsg, model : Model } -> View mainMsg"
-                , arguments = [ CodeGen.Argument.new "{ toMainMsg, model, content }" ]
+                , annotation = CodeGen.Annotation.type_ "{ fromMsg : Msg -> mainMsg, content : View mainMsg, model : Model } -> View mainMsg"
+                , arguments = [ CodeGen.Argument.new "{ fromMsg, model, content }" ]
                 , expression =
                     CodeGen.Expression.multilineRecord
                         [ ( "title", CodeGen.Expression.value "content.title" )

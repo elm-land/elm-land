@@ -81,6 +81,16 @@ let run = async (options = {}) => {
         },
         {
           kind: 'file',
+          name: `${name}/.elm-land/src/Shared/Model.elm`,
+          content: await Files.readFromCliFolder('src/templates/_elm-land/customizable/Shared/Model.elm')
+        },
+        {
+          kind: 'file',
+          name: `${name}/.elm-land/src/Shared/Msg.elm`,
+          content: await Files.readFromCliFolder('src/templates/_elm-land/customizable/Shared/Msg.elm')
+        },
+        {
+          kind: 'file',
           name: `${name}/.elm-land/src/Auth.elm`,
           content: await Files.readFromCliFolder('src/templates/_elm-land/customizable/Auth.elm')
         },

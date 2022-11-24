@@ -1,10 +1,10 @@
-# Components and UI
+# Components
 
 ### What we'll learn
 
 - How to __create components__ in Elm
-- How to __track state__ within a component
-- How to __send effects__ back to a parent container
+- How to __keep track of data__ inside a component
+- How to __send side effects__ outside a component
 
 <BrowserWindow src="/images/guide/user-auth.gif" alt="Demo of sign-in flow" />
 
@@ -22,7 +22,7 @@ To learn how to do this, we're going to design a `Components.Table` module. This
 Let's create a new Elm Land project to get started:
 
 ```sh
-elm-land init 08-components-and-ui
+elm-land init 06-components
 ```
 
 

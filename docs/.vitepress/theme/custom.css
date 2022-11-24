@@ -33,6 +33,7 @@ html:not(.dark) .VPNavBar.has-sidebar .content {
 
 .vp-doc a[href] {
   text-decoration: underline;
+  font-weight: inherit;
   color: inherit;
 }
 
@@ -146,11 +147,15 @@ details[open] summary {
 }
 
 .vp-doc img {
-  max-height: 40vh;
+  image-rendering: optimizeQuality;
   margin: 2rem auto;
   border-radius: 1rem;
   box-shadow: 0 4px 8px var(--vp-c-bg-mute);
   border: solid 1px var(--vp-c-bg-mute);
+}
+
+.vp-doc > div > p > img {
+  max-height: 40vh;
 }
 
 .vp-doc blockquote > p {
@@ -224,7 +229,7 @@ img.browser__image {
   border-radius: 0;
 }
 
-.vp-doc img[src$=png] {
+.vp-doc > div > p > img[src$=png] {
   max-height: 50vh;
   border-radius: 0;
   border: 0;
@@ -271,8 +276,9 @@ img.browser__image {
 }
 
 .vp-doc h1 { font-size: 2.5em; margin-left: -0.125em }
-.vp-doc h2 { font-size: 1.75em; padding-top: 1em; margin-left: -0.125em }
-.vp-doc h3 { font-size: 1.5em; padding-top: 1em; margin-left: -0.125em }
+.vp-doc h2 { font-size: 1.75em; padding-top: 1.5em; margin-left: -0.125em }
+.vp-doc h3 { font-size: 1.5em; padding-top: 1.5em; margin-left: -0.125em }
+.vp-doc h4 { font-family: var(--vp-font-family-header); font-size: 1.25em; padding-top: 2em; margin-left: -0.125em }
 
 .inline-emoji {
   display: inline;

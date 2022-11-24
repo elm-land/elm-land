@@ -118,7 +118,7 @@ let runServer = async (options) => {
     // if the customized versions are deleted
     let customizableFileFilepaths =
       Object.values(Utils.customizableFiles)
-        .map(({ filepath }) => path.join(process.cwd(), 'src', ...filepath.split('/')))
+        .flatMap(({ filepaths }) => filepaths.map(filepath => path.join(process.cwd(), 'src', ...filepath.split('/'))))
     let customizedFilepaths = chokidar.watch(customizableFileFilepaths, {
       ignorePermissionErrors: true,
       ignoreInitial: true
@@ -272,25 +272,29 @@ const attempt = (fn) => {
   }
 }
 
-const customize = async (filepath) => {
-  let source = path.join(__dirname, 'templates', '_elm-land', 'customizable', ...filepath.split('/'))
-  let destination = path.join(process.cwd(), 'src', ...filepath.split('/'))
+const customize = async (filepaths) => {
+  await Promise.all(
+    filepaths.map(async filepath => {
+      let source = path.join(__dirname, 'templates', '_elm-land', 'customizable', ...filepath.split('/'))
+      let destination = path.join(process.cwd(), 'src', ...filepath.split('/'))
 
-  let alreadyExists = await Files.exists(destination)
+      let alreadyExists = await Files.exists(destination)
 
-  if (!alreadyExists) {
-    // Copy the default into the user's `src` folder
-    await Files.copyPasteFile({
-      source,
-      destination,
+      if (!alreadyExists) {
+        // Copy the default into the user's `src` folder
+        await Files.copyPasteFile({
+          source,
+          destination,
+        })
+      }
+
+      try {
+        await Files.remove(path.join(process.cwd(), '.elm-land', 'src', ...filepath.split('/')))
+      } catch (_) {
+        // If the file isn't there, no worries
+      }
     })
-  }
-
-  try {
-    await Files.remove(path.join(process.cwd(), '.elm-land', 'src', ...filepath.split('/')))
-  } catch (_) {
-    // If the file isn't there, no worries
-  }
+  )
 
   return { problem: null }
 }
@@ -298,7 +302,7 @@ const customize = async (filepath) => {
 
 
 const syncCustomizableFiles = async () => {
-  let defaultFilepaths = Object.values(Utils.customizableFiles).map(obj => obj.filepath)
+  let defaultFilepaths = Object.values(Utils.customizableFiles).flatMap(obj => obj.filepaths)
 
   await Promise.all(defaultFilepaths.map(async filepath => {
     let fileInUsersSrcFolder = path.join(process.cwd(), 'src', ...filepath.split('/'))
@@ -526,7 +530,7 @@ let run = async (effects) => {
         results.push(await build(effect.config))
         break
       case 'customize':
-        results.push(await customize(effect.filepath))
+        results.push(await customize(effect.filepaths))
         break
       default:
         results.push({ problem: `❗️ Unrecognized effect: ${effect.kind}` })

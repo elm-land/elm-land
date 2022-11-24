@@ -21,11 +21,6 @@ let run = async () => {
     message: [
       '',
       Utils.intro.success(`successfully built your project at ${Terminal.cyan('./dist')}`),
-      '    For more details on how to deploy to production, check out',
-      `    the official guide here:`,
-      '',
-      `    ${Terminal.cyan('https://elm.land/guide/deploying')}`,
-      ''
     ].join('\n'),
     files: [],
     effects: [

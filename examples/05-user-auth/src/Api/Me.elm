@@ -12,7 +12,7 @@ get :
     }
     -> Effect msg
 get { token, onResponse } =
-    Effect.fromCmd
+    Effect.sendCmd
         (Http.get
             { url = "http://localhost:5000/api/me?token=" ++ token
             , expect = Http.expectJson onResponse userDecoder

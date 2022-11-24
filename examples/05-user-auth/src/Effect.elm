@@ -1,21 +1,21 @@
 port module Effect exposing
     ( Effect, none, map, batch
-    , fromCmd, fromMsg
+    , sendCmd, sendMsg
     , pushRoute, replaceRoute, loadExternalUrl
     , toCmd
-    , signInPageSignedInUser, pageSignedOutUser
+    , signInUser, signOutUser
     , setUserToken, resetUserToken
     )
 
 {-|
 
 @docs Effect, none, map, batch
-@docs fromCmd, fromMsg
+@docs sendCmd, sendMsg
 @docs Msg, fromAction
 @docs pushRoute, replaceRoute, loadExternalUrl
 @docs toCmd
 
-@docs signInPageSignedInUser, pageSignedOutUser
+@docs signInUser, signOutUser
 
 @docs setUserToken, resetUserToken
 
@@ -39,13 +39,13 @@ type Effect msg
     = -- Basics
       None
     | Batch (List (Effect msg))
-    | Cmd (Cmd msg)
+    | SendCmd (Cmd msg)
       -- Routing
     | PushUrl String
     | ReplaceUrl String
     | LoadExternalUrl String
       -- Shared
-    | Shared Shared.Msg.Msg
+    | SendSharedMsg Shared.Msg.Msg
       -- Custom
     | SaveToLocalStorage { key : String, value : Json.Encode.Value }
 
@@ -64,16 +64,16 @@ batch =
     Batch
 
 
-fromCmd : Cmd msg -> Effect msg
-fromCmd =
-    Cmd
+sendCmd : Cmd msg -> Effect msg
+sendCmd =
+    SendCmd
 
 
-fromMsg : msg -> Effect msg
-fromMsg msg =
+sendMsg : msg -> Effect msg
+sendMsg msg =
     Task.succeed msg
         |> Task.perform identity
-        |> Cmd
+        |> SendCmd
 
 
 
@@ -109,14 +109,14 @@ loadExternalUrl =
 -- SHARED
 
 
-signInPageSignedInUser : Result Http.Error Domain.User.User -> Effect msg
-signInPageSignedInUser result =
-    Shared (Shared.Msg.SignInPageSignedInUser result)
+signInUser : Result Http.Error Domain.User.User -> Effect msg
+signInUser result =
+    SendSharedMsg (Shared.Msg.SignInPageSignedInUser result)
 
 
-pageSignedOutUser : Effect msg
-pageSignedOutUser =
-    Shared Shared.Msg.PageSignedOutUser
+signOutUser : Effect msg
+signOutUser =
+    SendSharedMsg Shared.Msg.PageSignedOutUser
 
 
 
@@ -155,11 +155,11 @@ map fn effect =
         Batch list ->
             Batch (List.map (map fn) list)
 
-        Cmd cmd ->
-            Cmd (Cmd.map fn cmd)
+        SendCmd cmd ->
+            SendCmd (Cmd.map fn cmd)
 
-        Shared msg ->
-            Shared msg
+        SendSharedMsg msg ->
+            SendSharedMsg msg
 
         PushUrl url ->
             PushUrl url
@@ -181,7 +181,7 @@ toCmd :
     , fromSharedMsg : Shared.Msg.Msg -> mainMsg
     , fromCmd : Cmd mainMsg -> mainMsg
     , toCmd : mainMsg -> Cmd mainMsg
-    , toMainMsg : msg -> mainMsg
+    , fromMsg : msg -> mainMsg
     }
     -> Effect msg
     -> Cmd mainMsg
@@ -193,10 +193,10 @@ toCmd options effect =
         Batch list ->
             Cmd.batch (List.map (toCmd options) list)
 
-        Cmd cmd ->
-            Cmd.map options.toMainMsg cmd
+        SendCmd cmd ->
+            Cmd.map options.fromMsg cmd
 
-        Shared msg ->
+        SendSharedMsg msg ->
             Task.succeed msg
                 |> Task.perform options.fromSharedMsg
 

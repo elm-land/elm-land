@@ -49,7 +49,7 @@ post options =
                         }
                 }
     in
-    Effect.fromCmd httpCmd
+    Effect.sendCmd httpCmd
 
 
 formErrorsDecoder : Json.Decode.Decoder (List FormError)

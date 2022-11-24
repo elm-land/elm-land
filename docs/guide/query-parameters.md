@@ -2,14 +2,13 @@
 
 ### What we'll learn
 
-- How to __get values from the current URL__
-- How to __use query parameters__ to filter data
-- How to make filters __still work after page refresh__
+- How to __get URL information__ from the current route
+- How to __add query parameters__ that filter data
+- How to make filters __run after refreshing the page__
 
 <BrowserWindow src="/images/guide/query-parameters.gif" alt="Demo of table with filters and sorting" />
 
 
-### Getting started
 
 ## Routes and URLs
 

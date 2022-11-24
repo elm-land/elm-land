@@ -1,5 +1,5 @@
 {
-  "name": "09-error-reporting",
+  "name": "11-error-reporting",
   "version": "1.0.0",
   "description": "An example of error reporting with Sentry",
   "main": "index.js",

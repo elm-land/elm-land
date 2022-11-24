@@ -111,7 +111,7 @@ update msg model =
 
         ApiMeResponded result ->
             ( model
-            , Effect.signInPageSignedInUser result
+            , Effect.signInUser result
             )
 
 

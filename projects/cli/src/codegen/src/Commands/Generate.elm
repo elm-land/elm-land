@@ -660,17 +660,17 @@ mainElmModule data =
             , fromEffectDeclaration
                 { name = "fromPageEffect"
                 , msgType = "Main.Pages.Msg.Msg"
-                , toMainMsg = "PageSent"
+                , fromMsg = "PageSent"
                 }
             , fromEffectDeclaration
                 { name = "fromLayoutEffect"
                 , msgType = "Main.Layouts.Msg.Msg"
-                , toMainMsg = "LayoutSent"
+                , fromMsg = "LayoutSent"
                 }
             , fromEffectDeclaration
                 { name = "fromSharedEffect"
                 , msgType = "Shared.Msg"
-                , toMainMsg = "SharedSent"
+                , fromMsg = "SharedSent"
                 }
             ]
         }
@@ -679,7 +679,7 @@ mainElmModule data =
 fromEffectDeclaration :
     { name : String
     , msgType : String
-    , toMainMsg : String
+    , fromMsg : String
     }
     -> CodeGen.Declaration
 fromEffectDeclaration options =
@@ -703,7 +703,7 @@ fromEffectDeclaration options =
                         [ ( "key", CodeGen.Expression.value "model.key" )
                         , ( "url", CodeGen.Expression.value "model.url" )
                         , ( "shared", CodeGen.Expression.value "model.shared" )
-                        , ( "toMainMsg", CodeGen.Expression.value options.toMainMsg )
+                        , ( "fromMsg", CodeGen.Expression.value options.fromMsg )
                         , ( "fromSharedMsg", CodeGen.Expression.value "SharedSent" )
                         , ( "fromCmd", CodeGen.Expression.value "EffectSentCmd" )
                         , ( "toCmd", CodeGen.Expression.value "Task.succeed >> Task.perform identity" )
@@ -910,7 +910,7 @@ runWhenAuthenticatedWithLayoutDeclaration =
                                         , ( "url", CodeGen.Expression.value "model.url" )
                                         , ( "shared", CodeGen.Expression.value "model.shared" )
                                         , ( "fromSharedMsg", CodeGen.Expression.value "SharedSent" )
-                                        , ( "toMainMsg", CodeGen.Expression.value "identity" )
+                                        , ( "fromMsg", CodeGen.Expression.value "identity" )
                                         , ( "fromCmd", CodeGen.Expression.value "EffectSentCmd" )
                                         , ( "toCmd", CodeGen.Expression.value "Task.succeed >> Task.perform identity" )
                                         ]
@@ -1014,7 +1014,7 @@ toViewCaseExpression layouts =
                                             |> String.replace "{{lastPartFieldName}}" (LayoutFile.toLastPartFieldName layout)
                                         )
                                   )
-                                , ( "toMainMsg"
+                                , ( "fromMsg"
                                   , "Main.Layouts.Msg.{{name}} >> LayoutSent"
                                         |> String.replace "{{name}}" (LayoutFile.toVariantName layout)
                                         |> CodeGen.Expression.value
@@ -1985,7 +1985,12 @@ routePathFromStringExpression { pages } =
         , in_ =
             CodeGen.Expression.caseExpression
                 { value = CodeGen.Argument.new "urlPathSegments"
-                , branches = List.map toBranch pages ++ [ nothingBranch ]
+                , branches =
+                    if List.any PageFile.isTopLevelCatchAllPage pages then
+                        List.map toBranch pages
+
+                    else
+                        List.map toBranch pages ++ [ nothingBranch ]
                 }
         }
 

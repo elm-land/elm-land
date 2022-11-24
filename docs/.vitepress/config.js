@@ -42,19 +42,26 @@ export default {
             { text: 'User input', link: '/guide/user-input' },
             { text: 'REST APIs', link: '/guide/rest-apis' },
             { text: 'User authentication', link: '/guide/user-auth' },
-            // { text: 'Query parameters', link: '/guide/query-parameters' },
-            // { text: 'Components and UI', link: '/guide/components' },
-            // { text: 'Layouts', link: '/guide/layouts' },
-            // { text: 'Not found pages', link: '/guide/customize/not-found-pages' },
-            // { text: 'Using Elm UI or Elm CSS', link: '/guide/customize/view' },
-            // { text: 'Environment variables', link: '/guide/environment-variables' },
-            // { text: 'CSS, assets, and static files', link: '/guide/static-files' },
-            // { text: 'JavaScript & NPM', link: '/guide/working-with-js' },
+            { text: 'Components', link: '/guide/components' },
+            { text: 'Layouts', link: '/guide/layouts' },
+            { text: 'Query parameters', link: '/guide/query-parameters' },
+            { text: 'Working with JavaScript', link: '/guide/working-with-js' },
+            { text: 'TypeScript', link: '/guide/typescript' },
+            { text: 'CSS, assets, and static files', link: '/guide/assets-and-static-files' },
+            { text: 'Elm UI and Elm CSS', link: '/guide/elm-ui-and-views' },
+            { text: 'Custom 404 pages', link: '/guide/custom-404-pages' },
+            { text: 'Error reporting', link: '/guide/error-reporting' },
             { text: 'Deploying to production', link: '/guide/deploying' },
-            // { text: 'Error reporting', link: '/guide/error-reporting' },
+          ]
+        },
+        {
+          text: 'Configuration',
+          items: [
+            { text: 'elm-land.json', link: '/guide/config/elm-land-json' },
+            { text: 'CLI commands', link: '/guide/config/cli-commands' },
           ]
         }
-      ]
+      ],
     },
     footer: {
       message: 'Made for you with ❤️',

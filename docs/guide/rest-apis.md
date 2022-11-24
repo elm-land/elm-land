@@ -1,4 +1,4 @@
-# Working with REST APIs
+# REST APIs
 
 ### What we'll learn
 

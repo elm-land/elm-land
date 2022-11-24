@@ -67,8 +67,8 @@ subscriptions model =
 -- VIEW
 
 
-view : Settings -> { toMainMsg : Msg -> mainMsg, content : View mainMsg, model : Model } -> View mainMsg
-view settings { toMainMsg, model, content } =
+view : Settings -> { fromMsg : Msg -> mainMsg, content : View mainMsg, model : Model } -> View mainMsg
+view settings { fromMsg, model, content } =
     { title = content.title
     , body =
         [ Html.div

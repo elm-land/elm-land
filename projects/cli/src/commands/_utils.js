@@ -66,23 +66,23 @@ let foundTypeScriptErrors = [
 
 let customizableFiles = {
   'shared': {
-    filepath: 'Shared.elm',
+    filepaths: ['Shared.elm', 'Shared/Model.elm', 'Shared/Msg.elm'],
     description: '.................... share data across pages'
   },
   'not-found': {
-    filepath: 'Pages/NotFound_.elm',
+    filepaths: ['Pages/NotFound_.elm'],
     description: '... the 404 page shown for unknown routes'
   },
   'view': {
-    filepath: 'View.elm',
+    filepaths: ['View.elm'],
     description: '................ use Elm UI, Elm CSS, and more'
   },
   'effect': {
-    filepath: 'Effect.elm',
+    filepaths: ['Effect.elm'],
     description: '............. send custom effects from pages'
   },
   'auth': {
-    filepath: 'Auth.elm',
+    filepaths: ['Auth.elm'],
     description: '................... handle user authentication'
   },
 }

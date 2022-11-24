@@ -1,4 +1,4 @@
-# 09-error-reporting
+# 11-error-reporting
 
 An example of how to report all HTTP errors to an error reporting service, like Sentry!
 

@@ -1,6 +1,6 @@
 port module Effect exposing
     ( Effect, none, batch
-    , fromCmd
+    , sendCmd, sendMsg
     , pushRoute, replaceRoute, loadExternalUrl
     , sendHttpGet
     , map, toCmd
@@ -9,7 +9,7 @@ port module Effect exposing
 {-|
 
 @docs Effect, none, batch
-@docs fromCmd
+@docs sendCmd, sendMsg
 @docs pushRoute, replaceRoute, loadExternalUrl
 
 @docs sendHttpGet
@@ -26,6 +26,8 @@ import Json.Encode
 import Route exposing (Route)
 import Route.Path
 import Route.Query
+import Shared.Model
+import Shared.Msg
 import Task
 import Url exposing (Url)
 
@@ -55,17 +57,24 @@ port sendJsonDecodeErrorToSentry :
 
 
 type Effect msg
-    = None
+    = -- BASICS
+      None
     | Batch (List (Effect msg))
-    | Cmd (Cmd msg)
+    | SendCmd (Cmd msg)
+      -- ROUTING
     | PushUrl String
     | ReplaceUrl String
     | LoadExternalUrl String
+      -- HTTP
     | HttpGet
         { url : String
         , decoder : Json.Decode.Decoder msg
         , onHttpError : Http.Error -> msg
         }
+
+
+
+-- BASICS
 
 
 none : Effect msg
@@ -78,9 +87,20 @@ batch =
     Batch
 
 
-fromCmd : Cmd msg -> Effect msg
-fromCmd =
-    Cmd
+sendCmd : Cmd msg -> Effect msg
+sendCmd =
+    SendCmd
+
+
+sendMsg : msg -> Effect msg
+sendMsg msg =
+    Task.succeed msg
+        |> Task.perform identity
+        |> SendCmd
+
+
+
+-- ROUTING
 
 
 pushRoute :
@@ -106,6 +126,10 @@ replaceRoute route =
 loadExternalUrl : String -> Effect msg
 loadExternalUrl =
     LoadExternalUrl
+
+
+
+-- HTTP
 
 
 {-| Send an HTTP get request, with error reporting built-in!
@@ -134,7 +158,7 @@ sendHttpGet options =
 
 
 
--- TRANSFORMING EFFECTS
+-- INTERALS
 
 
 {-| Elm Land needs this function to connect your pages and layouts together into one app
@@ -148,8 +172,8 @@ map fn effect =
         Batch list ->
             Batch (List.map (map fn) list)
 
-        Cmd cmd ->
-            Cmd (Cmd.map fn cmd)
+        SendCmd cmd ->
+            SendCmd (Cmd.map fn cmd)
 
         PushUrl url ->
             PushUrl url
@@ -173,11 +197,11 @@ map fn effect =
 toCmd :
     { key : Browser.Navigation.Key
     , url : Url
-    , shared : sharedModel
-    , fromSharedMsg : sharedMsg -> mainMsg
+    , shared : Shared.Model.Model
+    , fromSharedMsg : Shared.Msg.Msg -> mainMsg
     , fromCmd : Cmd mainMsg -> mainMsg
     , toCmd : mainMsg -> Cmd mainMsg
-    , toMainMsg : msg -> mainMsg
+    , fromMsg : msg -> mainMsg
     }
     -> Effect msg
     -> Cmd mainMsg
@@ -186,8 +210,8 @@ toCmd options effect =
         None ->
             Cmd.none
 
-        Cmd cmd ->
-            Cmd.map options.toMainMsg cmd
+        SendCmd cmd ->
+            Cmd.map options.fromMsg cmd
 
         Batch list ->
             Cmd.batch (List.map (toCmd options) list)
@@ -213,7 +237,7 @@ sendHttpGetRequestWithErrorReporting :
     { options
         | toCmd : mainMsg -> Cmd mainMsg
         , fromCmd : Cmd mainMsg -> mainMsg
-        , toMainMsg : msg -> mainMsg
+        , fromMsg : msg -> mainMsg
     }
     ->
         { url : String
@@ -225,7 +249,7 @@ sendHttpGetRequestWithErrorReporting options request =
     let
         onHttpError : Http.Error -> mainMsg
         onHttpError error =
-            options.toMainMsg (request.onHttpError error)
+            options.fromMsg (request.onHttpError error)
 
         toMsg : Result CustomError mainMsg -> mainMsg
         toMsg =
@@ -239,7 +263,7 @@ sendHttpGetRequestWithErrorReporting options request =
         fromHttpResponse : Http.Response String -> Result CustomError mainMsg
         fromHttpResponse =
             fromHttpResponseToCustomResult
-                { decoder = Json.Decode.map options.toMainMsg request.decoder
+                { decoder = Json.Decode.map options.fromMsg request.decoder
                 }
     in
     Http.get
