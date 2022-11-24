@@ -1,7 +1,7 @@
 module CodeGen.Annotation exposing
     ( Annotation
     , string
-    , record, multilineRecord
+    , record, multilineRecord, extensibleRecord
     , function, type_, genericType
     , toString
     )
@@ -10,7 +10,7 @@ module CodeGen.Annotation exposing
 
 @docs Annotation
 @docs string
-@docs record, multilineRecord
+@docs record, multilineRecord, extensibleRecord
 @docs function, type_, genericType
 
 @docs toString
@@ -28,6 +28,7 @@ type Annotation
     | FunctionAnnotation (List Annotation)
     | RecordAnnotation (List ( String, Annotation ))
     | MultilineRecordAnnotation (List ( String, Annotation ))
+    | ExtensibleRecordAnnotation String (List ( String, Annotation ))
 
 
 {-| A type alias, custom type, or a type from another module.
@@ -139,6 +140,24 @@ multilineRecord options =
     MultilineRecordAnnotation options
 
 
+{-| An extensible record annotation in your Elm code
+
+    {-
+
+       { a | path : String, hash : Maybe String }
+
+    -}
+    CodeGen.Annotation.extensibleRecord "a"
+        [ ( "path", CodeGen.Annotation.string )
+        , ( "hash", CodeGen.Annotation.type_ "Maybe String" )
+        ]
+
+-}
+extensibleRecord : String -> List ( String, Annotation ) -> Annotation
+extensibleRecord baseType fields =
+    ExtensibleRecordAnnotation baseType fields
+
+
 {-| The type annotation for Elm's `String` type
 
     -- String
@@ -182,3 +201,16 @@ toString annotation =
                 , toValue = \( _, annotation_ ) -> toString annotation_
                 , items = items
                 }
+
+        ExtensibleRecordAnnotation baseType items ->
+            "{ {{baseType}} | {{fields}} }"
+                |> String.replace "{{baseType}}" baseType
+                |> String.replace "{{fields}}"
+                    (List.map fieldToString items
+                        |> String.join ", "
+                    )
+
+
+fieldToString : ( String, Annotation ) -> String
+fieldToString ( name, annotation ) =
+    name ++ " : " ++ toString annotation

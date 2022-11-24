@@ -1,15 +1,15 @@
 module CodeGen.Declaration exposing
     ( Declaration
-    , function, customType, typeAlias
-    , comment
+    , function, customType, record, typeAlias
+    , comment, empty
     , toString
     )
 
 {-|
 
 @docs Declaration
-@docs function, customType, typeAlias
-@docs comment
+@docs function, customType, record, typeAlias
+@docs comment, empty
 
 @docs toString
 
@@ -39,6 +39,11 @@ type Declaration
         , annotation : CodeGen.Annotation.Annotation
         }
     | CommentDeclaration (List String)
+    | Record
+        { name : CodeGen.Annotation.Annotation
+        , fields : List ( String, CodeGen.Annotation.Annotation )
+        }
+    | Empty
 
 
 {-| Define a new function in your Elm module.
@@ -157,6 +162,42 @@ comment options =
     CommentDeclaration options
 
 
+{-| Create a record in your Elm module
+
+    {-
+        type alias Person =
+            { name : String
+            , age : Int
+            }
+    -}
+    CodeGen.Declaration.record
+        { name = CodeGen.Annotation.type_ "Person"
+        , fields =
+            [ ( "name", CodeGen.Annotation.type_ "String" )
+            , ( "age", CodeGen.Annotation.type_ "Int" )
+            ]
+        }
+
+-}
+record :
+    { name : CodeGen.Annotation.Annotation
+    , fields : List ( String, CodeGen.Annotation.Annotation )
+    }
+    -> Declaration
+record options =
+    Record options
+
+
+{-| Outputs no declaration.
+
+This is useful when you need to conditionally create or leave out a declaration.
+
+-}
+empty : Declaration
+empty =
+    Empty
+
+
 {-| Render a `Declaration` value as a `String`.
 
 ( This is used internally by `CodeGen.Module.toString` )
@@ -176,6 +217,12 @@ toString declaration =
 
         CommentDeclaration lines ->
             "\n" ++ (lines |> List.map (\line -> "-- " ++ line) |> String.join "\n")
+
+        Record options ->
+            fromRecordDeclarationToString options
+
+        Empty ->
+            ""
 
 
 
@@ -244,7 +291,33 @@ fromTypeAliasDeclarationToString options =
             )
 
 
+fromRecordDeclarationToString :
+    { name : CodeGen.Annotation.Annotation
+    , fields : List ( String, CodeGen.Annotation.Annotation )
+    }
+    -> String
+fromRecordDeclarationToString options =
+    "type alias {{name}} = \n{{fields}}"
+        |> String.replace "{{name}}" (CodeGen.Annotation.toString options.name)
+        |> String.replace "{{fields}}"
+            ("{ "
+                ++ (options.fields
+                        |> List.map fromRecordFieldToString
+                        |> String.join "\n, "
+                   )
+                ++ "\n}"
+                |> Util.String.indent 4
+            )
+
+
 fromCustomTypeVariantToString : ( String, List CodeGen.Annotation.Annotation ) -> String
 fromCustomTypeVariantToString ( variantName, args ) =
     (variantName :: List.map CodeGen.Annotation.toString args)
         |> String.join " "
+
+
+fromRecordFieldToString : ( String, CodeGen.Annotation.Annotation ) -> String
+fromRecordFieldToString ( name, annotation ) =
+    "{{name}} : {{annotation}}"
+        |> String.replace "{{name}}" name
+        |> String.replace "{{annotation}}" (CodeGen.Annotation.toString annotation)

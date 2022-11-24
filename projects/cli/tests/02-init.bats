@@ -28,8 +28,6 @@ load helpers
   expectFileExists "hello-world/.elm-land/src/View.elm"
   expectFileExists "hello-world/.elm-land/src/Effect.elm"
   expectFileExists "hello-world/.elm-land/src/Shared.elm"
-  expectFileExists "hello-world/.elm-land/src/Route.elm"
-  expectFileExists "hello-world/.elm-land/src/Route/Query.elm"
   expectFileExists "hello-world/.elm-land/src/Page.elm"
 
   cd ..
