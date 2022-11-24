@@ -66,9 +66,15 @@ let runServer = async (options) => {
     })
     configFileWatcher.on('change', async () => {
       try {
+        let oldConfig = config
         let rawConfig = await Files.readFromUserFolder('elm-land.json')
         config = JSON.parse(rawConfig)
         let result = await generateHtml(config)
+
+        // We'll need a better way to check options that affect codegen eventually
+        if (config.app.options.useHashRouting != oldConfig.app.options.useHashRouting) {
+          await generateElmFiles(config)
+        }
 
         handleEnvironmentVariables({ config })
 
@@ -111,8 +117,8 @@ let runServer = async (options) => {
       ignoreInitial: true
     })
 
-    srcPagesAndLayoutsFolderWatcher.on('all', generateElmFiles)
-    await generateElmFiles()
+    srcPagesAndLayoutsFolderWatcher.on('all', () => { generateElmFiles(config) })
+    await generateElmFiles(config)
 
     // Listen for any changes to customizable files, so defaults are recreated
     // if the customized versions are deleted
@@ -165,8 +171,9 @@ let runServer = async (options) => {
 
 }
 
-let generateElmFiles = async () => {
+let generateElmFiles = async (config) => {
   try {
+    let options = config.app.options
     let pageFilepaths = Files.listElmFilepathsInFolder(srcPagesFolderFilepath)
     let layouts = Files.listElmFilepathsInFolder(srcLayoutsFolderFilepath).map(filepath => filepath.split('/'))
 
@@ -180,7 +187,7 @@ let generateElmFiles = async () => {
         }
       }))
 
-    let newFiles = await Codegen.generateElmLandFiles({ pages, layouts })
+    let newFiles = await Codegen.generateElmLandFiles({ pages, layouts, options })
 
     await Files.create(
       newFiles.map(generatedFile => ({
@@ -342,7 +349,7 @@ const build = async (config) => {
   handleEnvironmentVariables({ config })
 
   // Generate Elm files
-  await generateElmFiles()
+  await generateElmFiles(config)
 
   // Typecheck any TypeScript interop
   await verifyTypescriptCompiles()
@@ -468,6 +475,14 @@ const generateHtml = async (config) => {
     return `<${tagName}${toAttributeString(attrs)}>${child}</${tagName}>`
   }
 
+  let toHtmlTags = (tagName, tags) => {
+    return tags.map(attrs =>
+      Object.keys(attrs).length > 0
+        ? `<${tagName}${toAttributeString(attrs)}></${tagName}>`
+        : ''
+    )
+  }
+
   let toSelfClosingHtmlTags = (tagName, tags = []) => {
     return tags.map(attrs =>
       Object.keys(attrs).length > 0
@@ -481,8 +496,9 @@ const generateHtml = async (config) => {
     : []
   let metaTags = toSelfClosingHtmlTags('meta', attempt(_ => config.app.html.meta))
   let linkTags = toSelfClosingHtmlTags('link', attempt(_ => config.app.html.link))
+  let scriptTags = toHtmlTags('script', attempt(_ => config.app.html.script))
 
-  let combinedTags = [...titleTags, ...metaTags, ...linkTags]
+  let combinedTags = [...titleTags, ...metaTags, ...linkTags, ...scriptTags]
   let headTags = combinedTags.length > 0
     ? '\n    ' + combinedTags.join('\n    ') + '\n  '
     : ''

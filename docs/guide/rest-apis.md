@@ -564,7 +564,8 @@ Now that we have all 150 Pokemon, we can render them in a grid layout. Let's use
       // ...
       "link": [
         { "rel": "stylesheet", "href": "https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" }
-      ]
+      ],
+      // ...
     }
   }
 }

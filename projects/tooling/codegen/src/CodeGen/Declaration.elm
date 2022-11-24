@@ -2,7 +2,6 @@ module CodeGen.Declaration exposing
     ( Declaration, none
     , function, customType, typeAlias
     , comment
-    , toString
     )
 
 {-|
@@ -265,7 +264,33 @@ fromTypeAliasDeclarationToString options =
             )
 
 
+fromRecordDeclarationToString :
+    { name : CodeGen.Annotation.Annotation
+    , fields : List ( String, CodeGen.Annotation.Annotation )
+    }
+    -> String
+fromRecordDeclarationToString options =
+    "type alias {{name}} = \n{{fields}}"
+        |> String.replace "{{name}}" (CodeGen.Annotation.toString options.name)
+        |> String.replace "{{fields}}"
+            ("{ "
+                ++ (options.fields
+                        |> List.map fromRecordFieldToString
+                        |> String.join "\n, "
+                   )
+                ++ "\n}"
+                |> Util.String.indent 4
+            )
+
+
 fromCustomTypeVariantToString : ( String, List CodeGen.Annotation.Annotation ) -> String
 fromCustomTypeVariantToString ( variantName, args ) =
     (variantName :: List.map CodeGen.Annotation.toString args)
         |> String.join " "
+
+
+fromRecordFieldToString : ( String, CodeGen.Annotation.Annotation ) -> String
+fromRecordFieldToString ( name, annotation ) =
+    "{{name}} : {{annotation}}"
+        |> String.replace "{{name}}" name
+        |> String.replace "{{annotation}}" (CodeGen.Annotation.toString annotation)

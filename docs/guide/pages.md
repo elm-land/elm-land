@@ -399,7 +399,8 @@ Let's add a `<link>` tag to our HTML by updating the `app.html.link` property:
       ],
       "link": [
         { "rel": "stylesheet", "href": "/styles.css" }
-      ]
+      ],
+      "script": []
     }
   }
 }

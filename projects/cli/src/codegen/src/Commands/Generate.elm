@@ -17,16 +17,26 @@ run : Json.Decode.Value -> List CodeGen.Module
 run json =
     case Json.Decode.decodeValue decoder json of
         Ok data ->
-            [ mainElmModule data
-            , mainPagesModelModule data
-            , mainPagesMsgModule data
-            , mainLayoutsModelModule data
-            , mainLayoutsMsgModule data
-            , routePathElmModule data
-            , layoutsElmModule data
-            ]
+            List.concat
+                [ [ mainElmModule data
+                  , mainPagesModelModule data
+                  , mainPagesMsgModule data
+                  , mainLayoutsModelModule data
+                  , mainLayoutsMsgModule data
+                  , routePathElmModule data
+                  , routeQueryElmModule data
+                  , routeElmModule data
+                  , layoutsElmModule data
+                  ]
+                , if data.options.useHashRouting then
+                    [ hashRoutingElmModule ]
+
+                  else
+                    []
+                ]
 
         Err _ ->
+            -- TODO: Better handling here now that input can come from users
             []
 
 
@@ -355,7 +365,7 @@ mainElmModule data =
                               , arguments = [ CodeGen.Argument.new "url" ]
                               , expression =
                                     CodeGen.Expression.ifElse
-                                        { condition = CodeGen.Expression.value "url.path == model.url.path"
+                                        { condition = CodeGen.Expression.value "Route.Path.fromUrl url == Route.Path.fromUrl model.url"
                                         , ifBranch =
                                             CodeGen.Expression.multilineTuple
                                                 [ CodeGen.Expression.value "{ model | url = url }"
@@ -1861,19 +1871,199 @@ toPageModelMapper options =
         ]
 
 
+routeElmModule : Data -> CodeGen.Module
+routeElmModule data =
+    let
+        routeAnnotation =
+            CodeGen.Annotation.genericType "Route"
+                [ CodeGen.Annotation.type_ "params" ]
+
+        queryAnnotation =
+            CodeGen.Annotation.genericType "Dict"
+                [ CodeGen.Annotation.string
+                , CodeGen.Annotation.string
+                ]
+
+        hashAnnotation =
+            CodeGen.Annotation.genericType "Maybe"
+                [ CodeGen.Annotation.string ]
+    in
+    CodeGen.Module.new
+        { name = [ "Route" ]
+        , exposing_ = [ "Route", "fromUrl", "href", "toString" ]
+        , imports =
+            List.concat
+                [ [ CodeGen.Import.new [ "Dict" ]
+                        |> CodeGen.Import.withExposing [ "Dict" ]
+                  , CodeGen.Import.new [ "Html" ]
+                  , CodeGen.Import.new [ "Html.Attributes" ]
+                  , CodeGen.Import.new [ "Route.Path" ]
+                  , CodeGen.Import.new [ "Route.Query" ]
+                  , CodeGen.Import.new [ "Url" ]
+                        |> CodeGen.Import.withExposing [ "Url" ]
+                  ]
+                , if data.options.useHashRouting then
+                    [ CodeGen.Import.new [ "HashRouting" ] ]
+
+                  else
+                    []
+                ]
+        , declarations =
+            [ CodeGen.Declaration.typeAlias
+                { name = "Route params"
+                , annotation =
+                    CodeGen.Annotation.multilineRecord
+                        [ ( "path", CodeGen.Annotation.type_ "Route.Path.Path" )
+                        , ( "params", CodeGen.Annotation.type_ "params" )
+                        , ( "query", queryAnnotation )
+                        , ( "hash", hashAnnotation )
+                        , ( "url", CodeGen.Annotation.type_ "Url" )
+                        ]
+                }
+            , CodeGen.Declaration.function
+                { name = "fromUrl"
+                , annotation =
+                    CodeGen.Annotation.function
+                        [ CodeGen.Annotation.type_ "params"
+                        , CodeGen.Annotation.type_ "Url"
+                        , routeAnnotation
+                        ]
+                , arguments =
+                    [ CodeGen.Argument.new "params"
+                    , CodeGen.Argument.new "url"
+                    ]
+                , expression =
+                    CodeGen.Expression.multilineRecord
+                        [ ( "path"
+                          , CodeGen.Expression.function
+                                { name = "Route.Path.fromUrl"
+                                , arguments = [ CodeGen.Expression.value "url" ]
+                                }
+                          )
+                        , ( "params", CodeGen.Expression.value "params" )
+                        , ( "query"
+                          , CodeGen.Expression.function
+                                { name = "Route.Query.fromUrl"
+                                , arguments = [ CodeGen.Expression.value "url" ]
+                                }
+                          )
+                        , ( "hash"
+                          , if data.options.useHashRouting then
+                                CodeGen.Expression.pipeline
+                                    [ CodeGen.Expression.function
+                                        { name = "HashRouting.transformToHashUrl"
+                                        , arguments = [ CodeGen.Expression.value "url" ]
+                                        }
+                                    , CodeGen.Expression.function
+                                        { name = "Maybe.andThen"
+                                        , arguments = [ CodeGen.Expression.value ".fragment" ]
+                                        }
+                                    ]
+
+                            else
+                                CodeGen.Expression.value "url.fragment"
+                          )
+                        , ( "url", CodeGen.Expression.value "url" )
+                        ]
+                }
+            , CodeGen.Declaration.function
+                { name = "href"
+                , annotation =
+                    CodeGen.Annotation.function
+                        [ CodeGen.Annotation.record
+                            [ ( "path", CodeGen.Annotation.type_ "Route.Path.Path" )
+                            , ( "query", queryAnnotation )
+                            , ( "hash", hashAnnotation )
+                            ]
+                        , CodeGen.Annotation.genericType "Html.Attribute"
+                            [ CodeGen.Annotation.type_ "msg" ]
+                        ]
+                , arguments = [ CodeGen.Argument.new "route" ]
+                , expression =
+                    CodeGen.Expression.function
+                        { name = "Html.Attributes.href"
+                        , arguments =
+                            [ CodeGen.Expression.parens
+                                [ CodeGen.Expression.function
+                                    { name = "toString"
+                                    , arguments = [ CodeGen.Expression.value "route" ]
+                                    }
+                                ]
+                            ]
+                        }
+                }
+            , CodeGen.Declaration.function
+                { name = "toString"
+                , annotation =
+                    CodeGen.Annotation.function
+                        [ CodeGen.Annotation.extensibleRecord "route"
+                            [ ( "path", CodeGen.Annotation.type_ "Route.Path.Path" )
+                            , ( "query", queryAnnotation )
+                            , ( "hash", hashAnnotation )
+                            ]
+                        , CodeGen.Annotation.string
+                        ]
+                , arguments = [ CodeGen.Argument.new "route" ]
+                , expression =
+                    CodeGen.Expression.multilineFunction
+                        { name = "String.join"
+                        , arguments =
+                            [ CodeGen.Expression.string ""
+                            , CodeGen.Expression.multilineList
+                                [ CodeGen.Expression.function
+                                    { name = "Route.Path.toString"
+                                    , arguments = [ CodeGen.Expression.value "route.path" ]
+                                    }
+                                , CodeGen.Expression.function
+                                    { name = "Route.Query.toString"
+                                    , arguments = [ CodeGen.Expression.value "route.query" ]
+                                    }
+                                , CodeGen.Expression.pipeline
+                                    [ CodeGen.Expression.value "route.hash"
+                                    , CodeGen.Expression.function
+                                        { name = "Maybe.map"
+                                        , arguments =
+                                            [ CodeGen.Expression.parens
+                                                [ CodeGen.Expression.function
+                                                    { name = "String.append"
+                                                    , arguments = [ CodeGen.Expression.string "#" ]
+                                                    }
+                                                ]
+                                            ]
+                                        }
+                                    , CodeGen.Expression.function
+                                        { name = "Maybe.withDefault"
+                                        , arguments = [ CodeGen.Expression.string "" ]
+                                        }
+                                    ]
+                                ]
+                            ]
+                        }
+                }
+            ]
+        }
+
+
 routePathElmModule : Data -> CodeGen.Module
 routePathElmModule data =
     CodeGen.Module.new
         { name = [ "Route", "Path" ]
         , exposing_ = [ "Path(..)", "fromString", "fromUrl", "href", "toString" ]
         , imports =
-            [ CodeGen.Import.new [ "Html" ]
-            , CodeGen.Import.new [ "Html.Attributes" ]
-            , CodeGen.Import.new [ "Url" ]
-                |> CodeGen.Import.withExposing [ "Url" ]
-            , CodeGen.Import.new [ "Url.Parser" ]
-                |> CodeGen.Import.withExposing [ "(</>)" ]
-            ]
+            List.concat
+                [ [ CodeGen.Import.new [ "Html" ]
+                  , CodeGen.Import.new [ "Html.Attributes" ]
+                  , CodeGen.Import.new [ "Url" ]
+                        |> CodeGen.Import.withExposing [ "Url" ]
+                  , CodeGen.Import.new [ "Url.Parser" ]
+                        |> CodeGen.Import.withExposing [ "(</>)" ]
+                  ]
+                , if data.options.useHashRouting then
+                    [ CodeGen.Import.new [ "HashRouting" ] ]
+
+                  else
+                    []
+                ]
         , declarations =
             [ CodeGen.Declaration.customType
                 { name = "Path"
@@ -1893,18 +2083,44 @@ routePathElmModule data =
                         ]
                 , arguments = [ CodeGen.Argument.new "url" ]
                 , expression =
-                    CodeGen.Expression.pipeline
-                        [ CodeGen.Expression.function
-                            { name = "fromString"
-                            , arguments = [ CodeGen.Expression.value "url.path" ]
-                            }
-                        , CodeGen.Expression.function
-                            { name = "Maybe.withDefault"
-                            , arguments =
-                                [ CodeGen.Expression.value "NotFound_"
-                                ]
-                            }
-                        ]
+                    if data.options.useHashRouting then
+                        CodeGen.Expression.pipeline
+                            [ CodeGen.Expression.function
+                                { name = "HashRouting.transformToHashUrl"
+                                , arguments = [ CodeGen.Expression.value "url" ]
+                                }
+                            , CodeGen.Expression.function
+                                { name = "Maybe.andThen"
+                                , arguments =
+                                    [ CodeGen.Expression.parens
+                                        [ CodeGen.Expression.function
+                                            { name = "fromString"
+                                            , arguments = [ CodeGen.Expression.value "url.path" ]
+                                            }
+                                        ]
+                                    ]
+                                }
+                            , CodeGen.Expression.function
+                                { name = "Maybe.withDefault"
+                                , arguments =
+                                    [ CodeGen.Expression.value "NotFound_"
+                                    ]
+                                }
+                            ]
+
+                    else
+                        CodeGen.Expression.pipeline
+                            [ CodeGen.Expression.function
+                                { name = "fromString"
+                                , arguments = [ CodeGen.Expression.value "url.path" ]
+                                }
+                            , CodeGen.Expression.function
+                                { name = "Maybe.withDefault"
+                                , arguments =
+                                    [ CodeGen.Expression.value "NotFound_"
+                                    ]
+                                }
+                            ]
                 }
             , CodeGen.Declaration.function
                 { name = "fromString"
@@ -1924,7 +2140,7 @@ routePathElmModule data =
                 }
             , CodeGen.Declaration.function
                 { name = "toString"
-                , annotation = CodeGen.Annotation.function [ CodeGen.Annotation.type_ "Path", CodeGen.Annotation.type_ "String" ]
+                , annotation = CodeGen.Annotation.function [ CodeGen.Annotation.type_ "Path", CodeGen.Annotation.string ]
                 , arguments = [ CodeGen.Argument.new "path" ]
                 , expression =
                     CodeGen.Expression.letIn
@@ -1947,7 +2163,13 @@ routePathElmModule data =
                                     }
                                 , CodeGen.Expression.function
                                     { name = "String.append"
-                                    , arguments = [ CodeGen.Expression.string "/" ]
+                                    , arguments =
+                                        [ if data.options.useHashRouting then
+                                            CodeGen.Expression.string "#/"
+
+                                          else
+                                            CodeGen.Expression.string "/"
+                                        ]
                                     }
                                 ]
                         }
@@ -2039,6 +2261,313 @@ toRoutePathToStringBranch page =
     }
 
 
+routeQueryElmModule : Data -> CodeGen.Module
+routeQueryElmModule data =
+    CodeGen.Module.new
+        { name = [ "Route", "Query" ]
+        , exposing_ = [ "fromUrl", "toString" ]
+        , imports =
+            List.concat
+                [ [ CodeGen.Import.new [ "Dict" ]
+                        |> CodeGen.Import.withExposing [ "Dict" ]
+                  , CodeGen.Import.new [ "Url" ]
+                        |> CodeGen.Import.withExposing [ "Url" ]
+                  , CodeGen.Import.new [ "Url.Parser" ]
+                        |> CodeGen.Import.withExposing [ "query" ]
+                  , CodeGen.Import.new [ "Url.Builder" ]
+                        |> CodeGen.Import.withExposing [ "QueryParameter" ]
+                  ]
+                , if data.options.useHashRouting then
+                    [ CodeGen.Import.new [ "HashRouting" ] ]
+
+                  else
+                    []
+                ]
+        , declarations =
+            [ CodeGen.Declaration.function
+                { name = "fromUrl"
+                , annotation =
+                    CodeGen.Annotation.function
+                        [ CodeGen.Annotation.type_ "Url"
+                        , CodeGen.Annotation.genericType "Dict"
+                            [ CodeGen.Annotation.string
+                            , CodeGen.Annotation.string
+                            ]
+                        ]
+                , arguments =
+                    [ CodeGen.Argument.new "url"
+                    ]
+                , expression =
+                    CodeGen.Expression.caseExpression
+                        { value =
+                            if data.options.useHashRouting then
+                                CodeGen.Argument.new "Maybe.andThen .query (HashRouting.transformToHashUrl url)"
+
+                            else
+                                CodeGen.Argument.new "url.query"
+                        , branches =
+                            [ { name = "Nothing"
+                              , arguments = []
+                              , expression =
+                                    CodeGen.Expression.value "Dict.empty"
+                              }
+                            , { name = "Just"
+                              , arguments = [ CodeGen.Argument.new "query" ]
+                              , expression =
+                                    CodeGen.Expression.ifElse
+                                        { condition =
+                                            CodeGen.Expression.function
+                                                { name = "String.isEmpty"
+                                                , arguments = [ CodeGen.Expression.value "query" ]
+                                                }
+                                        , ifBranch =
+                                            CodeGen.Expression.value "Dict.empty"
+                                        , elseBranch =
+                                            CodeGen.Expression.pipeline
+                                                [ CodeGen.Expression.value "query"
+                                                , CodeGen.Expression.function
+                                                    { name = "String.split"
+                                                    , arguments = [ CodeGen.Expression.string "&" ]
+                                                    }
+                                                , CodeGen.Expression.function
+                                                    { name = "List.filterMap"
+                                                    , arguments =
+                                                        [ CodeGen.Expression.parens
+                                                            [ CodeGen.Expression.function
+                                                                { name = "String.split"
+                                                                , arguments = [ CodeGen.Expression.string "=" ]
+                                                                }
+                                                            , CodeGen.Expression.operator ">>"
+                                                            , CodeGen.Expression.value "queryPiecesToTuple"
+                                                            ]
+                                                        ]
+                                                    }
+                                                , CodeGen.Expression.value "Dict.fromList"
+                                                ]
+                                        }
+                              }
+                            ]
+                        }
+                }
+            , CodeGen.Declaration.function
+                { name = "queryPiecesToTuple"
+                , annotation =
+                    CodeGen.Annotation.function
+                        [ CodeGen.Annotation.genericType "List"
+                            [ CodeGen.Annotation.string ]
+                        , CodeGen.Annotation.genericType "Maybe"
+                            [ CodeGen.Annotation.type_ "(String, String)" ]
+                        ]
+                , arguments = [ CodeGen.Argument.new "pieces" ]
+                , expression =
+                    CodeGen.Expression.caseExpression
+                        { value = CodeGen.Argument.new "pieces"
+                        , branches =
+                            [ { name = "[]"
+                              , arguments = []
+                              , expression =
+                                    CodeGen.Expression.value "Nothing"
+                              }
+                            , { name = "key :: []"
+                              , arguments = []
+                              , expression =
+                                    CodeGen.Expression.function
+                                        { name = "Just"
+                                        , arguments =
+                                            [ CodeGen.Expression.tuple
+                                                [ CodeGen.Expression.function
+                                                    { name = "decodeQueryToken"
+                                                    , arguments = [ CodeGen.Expression.value "key" ]
+                                                    }
+                                                , CodeGen.Expression.string ""
+                                                ]
+                                            ]
+                                        }
+                              }
+                            , { name = "key :: value :: _"
+                              , arguments = []
+                              , expression =
+                                    CodeGen.Expression.function
+                                        { name = "Just"
+                                        , arguments =
+                                            [ CodeGen.Expression.tuple
+                                                [ CodeGen.Expression.function
+                                                    { name = "decodeQueryToken"
+                                                    , arguments = [ CodeGen.Expression.value "key" ]
+                                                    }
+                                                , CodeGen.Expression.function
+                                                    { name = "decodeQueryToken"
+                                                    , arguments = [ CodeGen.Expression.value "value" ]
+                                                    }
+                                                ]
+                                            ]
+                                        }
+                              }
+                            ]
+                        }
+                }
+            , CodeGen.Declaration.function
+                { name = "decodeQueryToken"
+                , annotation =
+                    CodeGen.Annotation.function
+                        [ CodeGen.Annotation.string, CodeGen.Annotation.string ]
+                , arguments = [ CodeGen.Argument.new "val" ]
+                , expression =
+                    CodeGen.Expression.pipeline
+                        [ CodeGen.Expression.function
+                            { name = "Url.percentDecode"
+                            , arguments = [ CodeGen.Expression.value "val" ]
+                            }
+                        , CodeGen.Expression.function
+                            { name = "Maybe.withDefault"
+                            , arguments = [ CodeGen.Expression.value "val" ]
+                            }
+                        ]
+                }
+            , CodeGen.Declaration.function
+                { name = "toString"
+                , annotation =
+                    CodeGen.Annotation.function
+                        [ CodeGen.Annotation.genericType "Dict"
+                            [ CodeGen.Annotation.string
+                            , CodeGen.Annotation.string
+                            ]
+                        , CodeGen.Annotation.string
+                        ]
+                , arguments = [ CodeGen.Argument.new "queryParameterList" ]
+                , expression =
+                    CodeGen.Expression.pipeline
+                        [ CodeGen.Expression.value "queryParameterList"
+                        , CodeGen.Expression.function { name = "Dict.toList", arguments = [] }
+                        , CodeGen.Expression.function
+                            { name = "List.map"
+                            , arguments = [ CodeGen.Expression.value "tupleToQueryPiece" ]
+                            }
+                        , CodeGen.Expression.function
+                            { name = "Url.Builder.toQuery"
+                            , arguments = []
+                            }
+                        ]
+                }
+            , CodeGen.Declaration.function
+                { name = "tupleToQueryPiece"
+                , annotation =
+                    CodeGen.Annotation.function
+                        [ CodeGen.Annotation.type_ "(String, String)"
+                        , CodeGen.Annotation.type_ "QueryParameter"
+                        ]
+                , arguments = [ CodeGen.Argument.new "( key, value )" ]
+                , expression =
+                    CodeGen.Expression.function
+                        { name = "Url.Builder.string"
+                        , arguments = [ CodeGen.Expression.value "key", CodeGen.Expression.value "value" ]
+                        }
+                }
+            ]
+        }
+
+
+hashRoutingElmModule : CodeGen.Module
+hashRoutingElmModule =
+    CodeGen.Module.new
+        { name = [ "HashRouting" ]
+        , exposing_ = [ "transformToHashUrl" ]
+        , imports =
+            [ CodeGen.Import.new [ "Url" ]
+                |> CodeGen.Import.withExposing [ "Url" ]
+            ]
+        , declarations =
+            [ CodeGen.Declaration.function
+                { name = "transformToHashUrl"
+                , annotation =
+                    CodeGen.Annotation.function
+                        [ CodeGen.Annotation.type_ "Url"
+                        , CodeGen.Annotation.genericType "Maybe"
+                            [ CodeGen.Annotation.type_ "Url" ]
+                        ]
+                , arguments = [ CodeGen.Argument.new "url" ]
+                , expression =
+                    CodeGen.Expression.letIn
+                        { let_ =
+                            [ { argument = CodeGen.Argument.new "protocol"
+                              , annotation = Just CodeGen.Annotation.string
+                              , expression =
+                                    CodeGen.Expression.caseExpression
+                                        { value = CodeGen.Argument.new "url.protocol"
+                                        , branches =
+                                            [ { name = "Url.Http"
+                                              , arguments = []
+                                              , expression =
+                                                    CodeGen.Expression.string "http://"
+                                              }
+                                            , { name = "Url.Https"
+                                              , arguments = []
+                                              , expression =
+                                                    CodeGen.Expression.string "https://"
+                                              }
+                                            ]
+                                        }
+                              }
+                            , { argument = CodeGen.Argument.new "host"
+                              , annotation = Just CodeGen.Annotation.string
+                              , expression = CodeGen.Expression.value "url.host"
+                              }
+                            , { argument = CodeGen.Argument.new "port_"
+                              , annotation = Just CodeGen.Annotation.string
+                              , expression =
+                                    CodeGen.Expression.caseExpression
+                                        { value = CodeGen.Argument.new "url.port_"
+                                        , branches =
+                                            [ { name = "Just"
+                                              , arguments = [ CodeGen.Argument.new "int" ]
+                                              , expression =
+                                                    CodeGen.Expression.parens
+                                                        [ CodeGen.Expression.string ":"
+                                                        , CodeGen.Expression.operator "++"
+                                                        , CodeGen.Expression.function
+                                                            { name = "String.fromInt"
+                                                            , arguments = [ CodeGen.Expression.value "int" ]
+                                                            }
+                                                        ]
+                                              }
+                                            , { name = "Nothing"
+                                              , arguments = []
+                                              , expression = CodeGen.Expression.string ""
+                                              }
+                                            ]
+                                        }
+                              }
+                            , { argument = CodeGen.Argument.new "fragment"
+                              , annotation = Just CodeGen.Annotation.string
+                              , expression =
+                                    CodeGen.Expression.function
+                                        { name = "Maybe.withDefault"
+                                        , arguments =
+                                            [ CodeGen.Expression.string ""
+                                            , CodeGen.Expression.value "url.fragment"
+                                            ]
+                                        }
+                              }
+                            ]
+                        , in_ =
+                            CodeGen.Expression.pipeline
+                                [ CodeGen.Expression.list
+                                    [ CodeGen.Expression.value "protocol"
+                                    , CodeGen.Expression.value "host"
+                                    , CodeGen.Expression.value "port_"
+                                    , CodeGen.Expression.value "fragment"
+                                    ]
+                                , CodeGen.Expression.function
+                                    { name = "String.concat", arguments = [] }
+                                , CodeGen.Expression.function
+                                    { name = "Url.fromString", arguments = [] }
+                                ]
+                        }
+                }
+            ]
+        }
+
+
 {-|
 
     module Layouts exposing (Layout(..))
@@ -2076,12 +2605,22 @@ layoutsElmModule data =
 type alias Data =
     { pages : List PageFile
     , layouts : List LayoutFile
+    , options : Options
     }
+
+
+type alias Options =
+    { useHashRouting : Bool }
+
+
+defaultOptions : Options
+defaultOptions =
+    { useHashRouting = False }
 
 
 decoder : Json.Decode.Decoder Data
 decoder =
-    Json.Decode.map2 Data
+    Json.Decode.map3 Data
         (Json.Decode.field "pages"
             (Json.Decode.list PageFile.decoder
                 |> Json.Decode.map ignoreNotFoundPage
@@ -2090,6 +2629,15 @@ decoder =
         )
         (Json.Decode.field "layouts" (Json.Decode.list LayoutFile.decoder)
             |> Json.Decode.map (List.sortWith LayoutFile.sorter)
+        )
+        (Json.Decode.field "options" optionsDecoder)
+
+
+optionsDecoder : Json.Decode.Decoder Options
+optionsDecoder =
+    Json.Decode.map Options
+        (Json.Decode.maybe (Json.Decode.field "useHashRouting" Json.Decode.bool)
+            |> Json.Decode.map (Maybe.withDefault defaultOptions.useHashRouting)
         )
 
 
