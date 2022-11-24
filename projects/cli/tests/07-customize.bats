@@ -52,7 +52,7 @@ load helpers
   # Run elm-land customize without an argument
   run elm-land customize shared
   expectToPass
-  expectOutputContains "3 files"
+  expectOutputContains "3 new files"
   expectOutputContains "./src/Shared.elm"
   expectOutputContains "./src/Shared/Model.elm"
   expectOutputContains "./src/Shared/Msg.elm"
