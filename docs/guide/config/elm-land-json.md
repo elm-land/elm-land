@@ -32,6 +32,9 @@ For reference, here is the default `elm-land.json` file that is created with eve
       ],
       "link": [],
       "script": []
+    },
+    "router": {
+      "useHashRouting": false
     }
   }
 }
@@ -517,6 +520,50 @@ __Output:__ `index.html`
 
 :::
 
+## app.router
 
+::: info TYPE
+```elm
+{ useHashRouting : Bool }
+```
+:::
 
+These are settings specific to how Elm Land deals with URLs and routes. For now, that's just enabling support for Hash-based URLs for folks with hosting constraints.
 
+### app.router.useHashRouting
+
+::: info TYPE
+```elm
+Bool
+```
+:::
+
+Some hosting environments don't easily support standard URL path routing. For that reason, we've 
+added an option for users to have Routes use URLs with `/#/` prefix.
+
+Hash-based routing still supports query parameters, fragments, and everything else the standard Elm Land
+routing uses.
+
+Using `Route.Path.toString` will automatically render the correct URL, depending on the setting.
+
+__When `useHashRouting` is `false`__
+
+Standard web application behavior:
+
+```
+Route.Path.Home_ ....................... /
+Route.Path.SignIn ...................... /sign-in
+Route.Path.Users ....................... /users
+Route.Path.Users_Id_ { id = "123" } .... /users/123
+```
+
+__When `useHashRouting` is `true`__
+
+Legacy hash-based URL prefixes will be applied.
+
+```
+Route.Path.Home_ ....................... /#/
+Route.Path.SignIn ...................... /#/sign-in
+Route.Path.Users ....................... /#/users
+Route.Path.Users_Id_ { id = "123" } .... /#/users/123
+```

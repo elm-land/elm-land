@@ -11,19 +11,19 @@
         "head": {},
         "body": {}
       },
-      "title": "Pokemon",
+      "title": "My Elm Land App",
       "meta": [
         { "charset": "UTF-8" },
         { "http-equiv": "X-UA-Compatible", "content": "IE=edge" },
         { "name": "viewport", "content": "width=device-width, initial-scale=1.0" }
       ],
       "link": [
-        { "rel": "stylesheet", "href": "https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" }
+        { "rel": "stylesheet", "href": "/styles.css" }
       ],
       "script": []
     },
     "router": {
-      "useHashRouting": false
+      "useHashRouting": true
     }
   }
 }

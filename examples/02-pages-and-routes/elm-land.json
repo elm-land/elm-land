@@ -1,5 +1,9 @@
 {
   "app": {
+    "elm": {
+      "development": { "debugger": true },
+      "production": { "debugger": false }
+    },
     "env": [],
     "html": {
       "attributes": {
@@ -17,6 +21,9 @@
         { "rel": "stylesheet", "href": "/styles.css" }
       ],
       "script": []
+    },
+    "router": {
+      "useHashRouting": false
     }
   }
 }

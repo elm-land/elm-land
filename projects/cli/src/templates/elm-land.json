@@ -19,6 +19,9 @@
       ],
       "link": [],
       "script": []
+    },
+    "router": {
+      "useHashRouting": false
     }
   }
 }

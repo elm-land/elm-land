@@ -72,7 +72,7 @@ let runServer = async (options) => {
         let result = await generateHtml(config)
 
         // We'll need a better way to check options that affect codegen eventually
-        if (config.app.options.useHashRouting != oldConfig.app.options.useHashRouting) {
+        if (config.app.router.useHashRouting != oldConfig.app.router.useHashRouting) {
           await generateElmFiles(config)
         }
 
@@ -173,7 +173,7 @@ let runServer = async (options) => {
 
 let generateElmFiles = async (config) => {
   try {
-    let options = config.app.options
+    let router = config.app.router
     let pageFilepaths = Files.listElmFilepathsInFolder(srcPagesFolderFilepath)
     let layouts = Files.listElmFilepathsInFolder(srcLayoutsFolderFilepath).map(filepath => filepath.split('/'))
 
@@ -187,7 +187,7 @@ let generateElmFiles = async (config) => {
         }
       }))
 
-    let newFiles = await Codegen.generateElmLandFiles({ pages, layouts, options })
+    let newFiles = await Codegen.generateElmLandFiles({ pages, layouts, router })
 
     await Files.create(
       newFiles.map(generatedFile => ({

@@ -2089,17 +2089,8 @@ routePathElmModule data =
                                 { name = "HashRouting.transformToHashUrl"
                                 , arguments = [ CodeGen.Expression.value "url" ]
                                 }
-                            , CodeGen.Expression.function
-                                { name = "Maybe.andThen"
-                                , arguments =
-                                    [ CodeGen.Expression.parens
-                                        [ CodeGen.Expression.function
-                                            { name = "fromString"
-                                            , arguments = [ CodeGen.Expression.value "url.path" ]
-                                            }
-                                        ]
-                                    ]
-                                }
+                            , CodeGen.Expression.value "Maybe.map .path"
+                            , CodeGen.Expression.value "Maybe.andThen fromString"
                             , CodeGen.Expression.function
                                 { name = "Maybe.withDefault"
                                 , arguments =
@@ -2605,17 +2596,13 @@ layoutsElmModule data =
 type alias Data =
     { pages : List PageFile
     , layouts : List LayoutFile
-    , options : Options
+    , options : RoutingOptions
     }
 
 
-type alias Options =
-    { useHashRouting : Bool }
-
-
-defaultOptions : Options
-defaultOptions =
-    { useHashRouting = False }
+type alias RoutingOptions =
+    { useHashRouting : Bool
+    }
 
 
 decoder : Json.Decode.Decoder Data
@@ -2630,15 +2617,18 @@ decoder =
         (Json.Decode.field "layouts" (Json.Decode.list LayoutFile.decoder)
             |> Json.Decode.map (List.sortWith LayoutFile.sorter)
         )
-        (Json.Decode.field "options" optionsDecoder)
+        (Json.Decode.field "router" routingOptionsDecoder)
 
 
-optionsDecoder : Json.Decode.Decoder Options
-optionsDecoder =
-    Json.Decode.map Options
-        (Json.Decode.maybe (Json.Decode.field "useHashRouting" Json.Decode.bool)
-            |> Json.Decode.map (Maybe.withDefault defaultOptions.useHashRouting)
-        )
+routingOptionsDecoder : Json.Decode.Decoder RoutingOptions
+routingOptionsDecoder =
+    Json.Decode.oneOf
+        [ Json.Decode.map RoutingOptions
+            (Json.Decode.field "useHashRouting" Json.Decode.bool)
+        , Json.Decode.succeed
+            { useHashRouting = False
+            }
+        ]
 
 
 ignoreNotFoundPage : List PageFile -> List PageFile

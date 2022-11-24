@@ -381,9 +381,13 @@ All of our pages and layouts are ready, but there's still one missing piece: the
 
 Let's add a `<link>` tag to our HTML by updating the `app.html.link` property:
 
-```json {16-18}
+```json {20-22}
 {
   "app": {
+    "elm": {
+      "development": { "debugger": true },
+      "production": { "debugger": false }
+    },
     "env": [],
     "html": {
       "attributes": {
@@ -401,6 +405,9 @@ Let's add a `<link>` tag to our HTML by updating the `app.html.link` property:
         { "rel": "stylesheet", "href": "/styles.css" }
       ],
       "script": []
+    },
+    "router": {
+      "useHashRouting": false
     }
   }
 }

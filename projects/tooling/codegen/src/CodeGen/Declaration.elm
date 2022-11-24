@@ -2,6 +2,7 @@ module CodeGen.Declaration exposing
     ( Declaration, none
     , function, customType, typeAlias
     , comment
+    , toString
     )
 
 {-|
