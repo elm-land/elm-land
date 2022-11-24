@@ -59,6 +59,7 @@ We can add the Bulma CSS by editing the `./elm-land.json` file at the root of th
       "link": [
         { "rel": "stylesheet", "href": "https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" }
       ]
+      ...
     }
   }
 }

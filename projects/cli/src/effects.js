@@ -340,6 +340,14 @@ const generateHtml = async (config) => {
     return `<${tagName}${toAttributeString(attrs)}>${child}</${tagName}>`
   }
 
+  let toHtmlTags = (tagName, tags) => {
+    return tags.map(attrs =>
+      Object.keys(attrs).length > 0
+        ? `<${tagName}${toAttributeString(attrs)}></${tagName}>`
+        : ''
+    )
+  }
+
   let toSelfClosingHtmlTags = (tagName, tags = []) => {
     return tags.map(attrs =>
       Object.keys(attrs).length > 0
@@ -353,8 +361,9 @@ const generateHtml = async (config) => {
     : []
   let metaTags = toSelfClosingHtmlTags('meta', attempt(_ => config.app.html.meta))
   let linkTags = toSelfClosingHtmlTags('link', attempt(_ => config.app.html.link))
+  let scriptTags = toHtmlTags('script', attempt(_ => config.app.html.script))
 
-  let combinedTags = [...titleTags, ...metaTags, ...linkTags]
+  let combinedTags = [...titleTags, ...metaTags, ...linkTags, ...scriptTags]
   let headTags = combinedTags.length > 0
     ? '\n    ' + combinedTags.join('\n    ') + '\n  '
     : ''

@@ -416,7 +416,8 @@ We can add `<link>` tags to our HTML by updating the `app.html.link` property li
       ],
       "link": [
         { "rel": "stylesheet", "href": "/styles.css" }
-      ]
+      ],
+      "script": []
     }
   }
 }
