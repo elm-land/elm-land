@@ -1,17 +1,20 @@
 port module Effect exposing
-    ( Effect, none, batch
+    ( Effect
+    , none, batch
     , sendCmd, sendMsg
-    , signInAs
     , pushRoute, replaceRoute, loadExternalUrl
+    , signInAs
     , map, toCmd
     )
 
 {-|
 
-@docs Effect, none, batch
+@docs Effect
+@docs none, batch
 @docs sendCmd, sendMsg
-@docs signInAs
 @docs pushRoute, replaceRoute, loadExternalUrl
+
+@docs signInAs
 
 @docs map, toCmd
 
@@ -138,20 +141,19 @@ toCmd :
     { key : Browser.Navigation.Key
     , url : Url
     , shared : Shared.Model.Model
-    , fromSharedMsg : Shared.Msg.Msg -> mainMsg
-    , fromCmd : Cmd mainMsg -> mainMsg
-    , toCmd : mainMsg -> Cmd mainMsg
-    , fromMsg : msg -> mainMsg
+    , fromSharedMsg : Shared.Msg.Msg -> msg
+    , fromCmd : Cmd msg -> msg
+    , toCmd : msg -> Cmd msg
     }
     -> Effect msg
-    -> Cmd mainMsg
+    -> Cmd msg
 toCmd options effect =
     case effect of
         None ->
             Cmd.none
 
         SendCmd cmd ->
-            Cmd.map options.fromMsg cmd
+            cmd
 
         Batch list ->
             Cmd.batch (List.map (toCmd options) list)

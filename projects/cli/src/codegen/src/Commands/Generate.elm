@@ -713,12 +713,19 @@ fromEffectDeclaration options =
                         [ ( "key", CodeGen.Expression.value "model.key" )
                         , ( "url", CodeGen.Expression.value "model.url" )
                         , ( "shared", CodeGen.Expression.value "model.shared" )
-                        , ( "fromMsg", CodeGen.Expression.value options.fromMsg )
                         , ( "fromSharedMsg", CodeGen.Expression.value "SharedSent" )
                         , ( "fromCmd", CodeGen.Expression.value "EffectSentCmd" )
                         , ( "toCmd", CodeGen.Expression.value "Task.succeed >> Task.perform identity" )
                         ]
-                    , CodeGen.Expression.value "effect"
+                    , CodeGen.Expression.parens
+                        [ CodeGen.Expression.function
+                            { name = "Effect.map"
+                            , arguments =
+                                [ CodeGen.Expression.value options.fromMsg
+                                , CodeGen.Expression.value "effect"
+                                ]
+                            }
+                        ]
                     ]
                 }
         }
@@ -920,7 +927,6 @@ runWhenAuthenticatedWithLayoutDeclaration =
                                         , ( "url", CodeGen.Expression.value "model.url" )
                                         , ( "shared", CodeGen.Expression.value "model.shared" )
                                         , ( "fromSharedMsg", CodeGen.Expression.value "SharedSent" )
-                                        , ( "fromMsg", CodeGen.Expression.value "identity" )
                                         , ( "fromCmd", CodeGen.Expression.value "EffectSentCmd" )
                                         , ( "toCmd", CodeGen.Expression.value "Task.succeed >> Task.perform identity" )
                                         ]

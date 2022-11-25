@@ -1,5 +1,6 @@
 module Effect exposing
-    ( Effect, none, batch
+    ( Effect
+    , none, batch
     , sendCmd, sendMsg
     , pushRoute, replaceRoute, loadExternalUrl
     , map, toCmd
@@ -7,7 +8,8 @@ module Effect exposing
 
 {-|
 
-@docs Effect, none, batch
+@docs Effect
+@docs none, batch
 @docs sendCmd, sendMsg
 @docs pushRoute, replaceRoute, loadExternalUrl
 
@@ -57,7 +59,7 @@ batch =
     Batch
 
 
-{-| Send a normal `Cmd msg` as an effect, something like `Http.get` or \`Random.generate.
+{-| Send a normal `Cmd msg` as an effect, something like `Http.get` or `Random.generate`.
 -}
 sendCmd : Cmd msg -> Effect msg
 sendCmd =
@@ -89,7 +91,7 @@ pushRoute route =
     PushUrl (Route.toString route)
 
 
-{-| Set the new route, but replace the current one, so clicking the back
+{-| Set the new route, but replace the previous one, so clicking the back
 button **won't** go back to the previous route.
 -}
 replaceRoute :
@@ -102,7 +104,7 @@ replaceRoute route =
     ReplaceUrl (Route.toString route)
 
 
-{-| Redirect users to a new URL, somewhere not in your web application.
+{-| Redirect users to a new URL, somewhere external your web application.
 -}
 loadExternalUrl : String -> Effect msg
 loadExternalUrl =
@@ -110,79 +112,11 @@ loadExternalUrl =
 
 
 
--- SHARED MESSAGES
-
-
-{-| This is intended to be a helper function for sending `Shared.Msg` values as
-an `Effect msg`, but it's NOT recommended to expose this function to the rest of
-your application.
-
-Instead, we suggest exposing **specific** functions that use this one under-the-hood.
-This design choice will make it easier to send effects from all your pages, layouts
-and components.
-
-Here's an example of the method described above:
-
-    module Effect exposing
-        ( ...
-        , signInUser, signOutUser
-        )
-
-    signInUser : User -> Effect msg
-    signInUser user =
-        sendSharedMsg (Shared.Msg.SignInUser user)
-
-    signOutUser : Effect msg
-    signOutUser =
-        sendSharedMsg Shared.Msg.SignOutUser
-
-This makes it easy to use in a page:
-
-    module Pages.SignIn exposing (Model, Msg, page)
-
-
-    update : Msg -> Model -> ( Model, Effect Msg )
-    update msg model =
-        case msg of
-            ...
-
-            ApiResponded (Ok user) ->
-                ( model
-                , Effect.signInUser user
-                )
-
-            ...
-
-Compare that with the generic alternative, which is more cumbersome to use and
-allows _any_ `Shared.Msg` to be called from any page, even if that isn't desired.
-
-    module Pages.SignIn exposing (Model, Msg, page)
-
-
-    update : Msg -> Model -> ( Model, Effect Msg )
-    update msg model =
-        case msg of
-            ...
-
-            ApiResponded (Ok user) ->
-                ( model
-                , Effect.sendSharedMsg (Shared.Msg.SignInUser user)
-                )
-
-            ...
-
--}
-sendSharedMsg : Shared.Msg.Msg -> Effect msg
-sendSharedMsg =
-    SendSharedMsg
-
-
-
 -- INTERNALS
 
 
 {-| Elm Land depends on this function to connect pages and layouts
-together into your overall app.
+together into the overall app.
 -}
 map : (msg1 -> msg2) -> Effect msg1 -> Effect msg2
 map fn effect =
@@ -209,23 +143,18 @@ map fn effect =
             SendSharedMsg sharedMsg
 
 
-{-| Elm Land depends on this function to actually perform your Effects.
-
-Note that the incoming `Effect msg` is **not** `Effect mainMsg`, so you'll need to
-use the provided `options.fromMsg` before returning `Cmd mainMsg`
-
+{-| Elm Land depends on this function to perform your effects.
 -}
 toCmd :
     { key : Browser.Navigation.Key
     , url : Url
     , shared : Shared.Model.Model
-    , fromSharedMsg : Shared.Msg.Msg -> mainMsg
-    , fromMsg : msg -> mainMsg
-    , fromCmd : Cmd mainMsg -> mainMsg
-    , toCmd : mainMsg -> Cmd mainMsg
+    , fromSharedMsg : Shared.Msg.Msg -> msg
+    , fromCmd : Cmd msg -> msg
+    , toCmd : msg -> Cmd msg
     }
     -> Effect msg
-    -> Cmd mainMsg
+    -> Cmd msg
 toCmd options effect =
     case effect of
         None ->
@@ -235,7 +164,7 @@ toCmd options effect =
             Cmd.batch (List.map (toCmd options) list)
 
         SendCmd cmd ->
-            Cmd.map options.fromMsg cmd
+            cmd
 
         PushUrl url ->
             Browser.Navigation.pushUrl options.key url

@@ -51,7 +51,7 @@ update msg model =
     case msg of
         UserClickedSignOut ->
             ( model
-            , Effect.signOutUser
+            , Effect.signOut
             )
 
 

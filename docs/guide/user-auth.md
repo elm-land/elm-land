@@ -265,13 +265,18 @@ The form looks nice, but clicking "Sign in" doesn't actually send an HTTP reques
 
 The next step will involve talking to an actual REST API to get a user token.
 
-## Requesting an API token
+## Running the backend API
 
-In order to see this working with a real HTTP request, we'll need an example backend that accepts requests! For this example, I've created a simple Node.js server so you can follow along on your own machine. The code for it is available on GitHub here:
+In order to see this form work with a real HTTP request, we'll need a real backend API! For this sign-in example, we've created a simple Node.js API server. This means you can follow along on your own machine. Run these commands to get the server running at `http://localhost:5000`:
 
-https://github.com/elm-land/elm-land/tree/main/examples/05-user-auth/api-server
+```
+git clone https://github.com/elm-land/elm-land
+cd elm-land/examples/05-user-auth/api-server
+npm install
+node index.js
+```
 
-### How our REST API works
+### POST /api/sign-in
 
 This tiny web server accepts POST requests at `/api/sign-in` and sends an example JSON web token when __any__ email/password combo is provided.
 
@@ -315,7 +320,7 @@ POST "http://localhost:5000/api/sign-in"
 Status code: 200
 
 {
-  "token": "RYANS_SUPER_SECRET_TOKEN"
+  "token": "ryans-secret-token"
 }
 ```
 
@@ -329,9 +334,168 @@ Let's make sure the `elm/http` package is installed on our new Elm Land project:
 elm install elm/http
 ```
 
+### Defining a `Api.SignIn` module
+
+Whenever you're working with a REST API endpoint, we recommend creating a module that takes care of the details. 
+
+Let's create a new file at `src/Api/SignIn.elm` that will expose a `post` function that sends a `POST` request to the `/api/sign-in` function described above:
+
+```elm
+module Api.SignIn exposing (Data, post)
+
+import Effect exposing (Effect)
+import Http
+import Json.Decode
+import Json.Encode
+
+
+{-|
+The data we expect if the sign in attempt was successful.
+-}
+type alias Data =
+    { token : String
+    }
+
+
+{-| 
+Sends a POST request to our `/api/sign-in` endpoint, which
+returns our JWT token if a user was found with that email 
+and password.
+-}
+post :
+    { onResponse : Result Http.Error Data -> msg
+    , email : String
+    , password : String
+    }
+    -> Effect msg
+post options =
+    let
+        body : Json.Encode.Value
+        body =
+            Json.Encode.object
+                [ ( "email", Json.Encode.string options.email )
+                , ( "password", Json.Encode.string options.password )
+                ]
+
+        decoder : Json.Decode.Decoder Data
+        decoder =
+            Json.Decode.map Data
+                (Json.Decode.field "token" Json.Decode.string)
+
+        cmd : Cmd msg
+        cmd =
+            Http.post
+                { url = "http://localhost:5000/api/sign-in"
+                , body = Http.jsonBody body
+                , expect = Http.expectJson options.onResponse decoder
+                }
+    in
+    Effect.sendCmd cmd
+```
+
+Let's break down the important parts of this module, that might be new to you even after reading the [REST APIs](./rest-apis) guide that introduces sending HTTP requests with JSON responses:
+
+#### 1. We pass in our form body as a JSON object
+
+```elm {3-9}
+-- ...
+    let
+        body : Json.Encode.Value
+        body =
+            Json.Encode.object
+                [ ( "email", Json.Encode.string options.email )
+                , ( "password", Json.Encode.string options.password )
+                ]
+
+        -- ...
+    in
+-- ...
+```
+
+The `Json.Encode` module is part of [the elm/json package](https://package.elm-lang.org/packages/elm/json/latest/), and it allows us to serialize Elm values as JSON so they can be sent as strings in our HTML requests. For example, if the user enters the email `"ryan@elm.land"` and the password `"secret123"`, this would be the resulting JSON body encoded by the lines highlighted above:
+
+```json
+{ "email": "ryan@elm.land", "password": "secret123" }
+```
+
+#### 2. We define a JSON decoder that describes the response we expect
+
+```elm {5-8}
+-- ...
+    let
+        -- ...
+
+        decoder : Json.Decode.Decoder Data
+        decoder =
+            Json.Decode.map Data
+                (Json.Decode.field "token" Json.Decode.string)
+
+        -- ...
+    in
+-- ...
+```
+
+For `/api/sign-in`, we're expecting a JSON response like `{ "token": "???" }`. This JSON decoder describes the names of fields we expect, and what kinds of data are in those fields.
+
+On line 8 of the code snippet above, we're saying _"look for a field named 'token' and expect to find a `String` value there."_
+
+#### 3. We create a HTTP request using `Http.post`
+
+```elm {5-11}
+-- ...
+    let
+        -- ...
+
+        cmd : Cmd msg
+        cmd =
+            Http.post
+                { url = "http://localhost:5000/api/sign-in"
+                , body = Http.jsonBody body
+                , expect = Http.expectJson options.onResponse decoder
+                }
+    in
+-- ...
+```
+
+The `Http.post` function puts our API URL, JSON body, JSON decoder, and the `onResponse` callback function together in one place. This creates a `Cmd msg`, which is Elm's standard way of sending side-effects from a web app. We'll need one final function to convert this `Cmd msg` into the final `Effect msg` the sign-in page is expecting!
+
+#### 4. We convert the `Cmd msg` into an `Effect msg`
+
+```elm {5}
+-- ...
+    let
+        -- ...
+    in
+    Effect.sendCmd cmd
+
+```
+
+After importing Elm Land's `Effect` module, we can have access to the `Effect.sendCmd` function. This function will convert any `Cmd msg` into an `Effect msg`. 
+
+::: tip "Why not just return a `Cmd msg`?" 
+
+Later in the guide, we'll learn that `Effect msg` is a useful type because it can do _more_ that just send commands. For that reason, Elm Land applications use it by default, rather than the standard `Cmd msg` you'll see in other Elm applications.
+
+:::
+
+### Using our new `Api.SignIn.post` function
+
+
 Back in `src/Pages/SignIn.elm`, we'll want to update the `UserSubmittedForm` branch in our `update` function to send out an API request:
 
-```elm {7-14}
+```elm {3-4,10,21-25,28-36}
+module Pages.SignIn exposing (Model, Msg, page)
+
+import Api.SignIn
+import Http
+
+-- ...
+
+type Msg
+    = ...
+    | SignInApiResponded (Result Http.Error Api.SignIn.Data)
+
+
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
@@ -346,7 +510,220 @@ update msg model =
                 , password = model.password
                 }
             )
-        
+
+        SignInApiResponded (Ok { token }) ->
+            ( { model | isSubmittingForm = False }
+            , Effect.none
+            )
+
+        SignInApiResponded (Err httpError) ->
+            ( { model | isSubmittingForm = False }
+            , Effect.none
+            )
+
+-- ...
+```
+
+If you try using the sign-in form again in your browser, you'll be able to fill in the fields and submit the form. This time, an HTTP request will be sent to the API running at `http://localhost:5000`, and you will see the button is no longer in the "loading" state.
+
+The only thing left to do is handle the response in both cases: when the sign-in works and when it fails!
+
+## Storing the JSON web token
+
+After we successfully log in, the API gives us a JSON web token (or "JWT") that we can use for future API requests. It's our job to make sure that this token is available on other pages. For that reason, we're going to store the user token in the `Shared.Model`. The `Shared.Model` is available to every page in our application, and the data we store there will be available even when we navigate to other pages in our application.
+
+To get started, we'll need to customize the default `Shared` modules so we can add a field for storing our user token. Elm Land allows us to customize default modules using the `elm-land customize` command. Let's try it out:
+
+```sh
+elm-land customize shared
+```
+
+Running that command will move 3 new files into your `src` folder:
+
+1. `src/Shared.elm` – Defines the functions to manage the `Shared.Model`
+1. `src/Shared/Model.elm` – Defines the data that should be available on every page
+1. `src/Shared/Msg.elm` – Defines how the `Shared.Model` can be updated
+
+Let's edit `src/Shared/Model.elm` to conditionally store a user token:
+
+```elm {5-6}
+module Shared.Model exposing (Model)
+
+
+type alias Model =
+    { token : Maybe String
+    }
+```
+
+Because we don't always have a user token, we'll use a `Maybe String` to represent the possibility of the missing value. When we save this file, we should see some errors coming from `src/Shared.elm`. These are letting us know that we need to edit the `init` function to correctly initialize the `Shared.Model`. Let's fix those next:
+
+```elm {7}
+module Shared exposing (..)
+
 -- ...
 
+init : Result Json.Decode.Error Flags -> ( Model, Effect Msg )
+init flagsResult =
+    ( { token = Nothing } 
+    , Effect.none
+    )
+
+-- ...
+```
+
+### Updating the value of `shared.token`
+
+When `Pages.SignIn` gets the API response, it needs to tell the `Shared.Model` that the user token is now available. To make this happen, we're going to define our first custom `Effect msg` that is able to update the value of `shared.token`.
+
+This custom sign-in effect isn't built-in to Elm Land's default `Effect` module, because it's specific to our application. Let's use the `elm-land customize` command again, but this time to customize the `Effect` module:
+
+```
+elm-land customize effect
+```
+
+Just like before, this will move a new file into your `src` folder. This time around, that new file will be `src/Effect.elm`:
+
+```elm
+module Effect exposing
+    ( Effect
+    , none, batch
+    , sendCmd, sendMsg
+    , pushRoute, replaceRoute, loadExternalUrl
+    , map, toCmd
+    )
+
+-- ...
+```
+
+This is a high-level view of the existing Effect module, but we'll want to add two new custom effects of our own:
+
+1. `Effect.signIn` – Signs in the current user
+1. `Effect.signOut` – Signs out the current user
+
+Let's add them in by defining two new functions in `src/Effect.elm`:
+
+```elm {6,16-18,21-23}
+module Effect exposing
+    ( Effect
+    , none, batch
+    , sendCmd, sendMsg
+    , pushRoute, replaceRoute, loadExternalUrl
+    , signIn, signOut
+    , map, toCmd
+    )
+
+-- ...
+
+
+-- SHARED
+
+
+signIn : { token : String } -> Effect msg
+signIn options =
+    SendSharedMsg (Shared.Msg.SignIn options)
+
+
+signIn : Effect msg
+signIn =
+    SendSharedMsg Shared.Msg.SignOut
+
+-- ...
+```
+
+Using the existing `SendSharedMsg` effect, internally available in `src/Effect.elm` we can send any message we like to our `Shared.update` function. This code won't work until we add the new `SignIn` and `SignOut` variants.
+
+Let's edit `src/Shared/Msg.elm` to include these two variants:
+
+```elm {4-6}
+module Shared.Msg exposing (Msg(..))
+
+
+type Msg
+    = SignIn { token : String }
+    | SignOut
+```
+
+And update `src/Shared.elm` to handle the logic for each message:
+
+```elm {3-4,10-22}
+module Shared exposing (..)
+
+import Dict
+import Route.Path
+-- ...
+
+update : Route () -> Msg -> Model -> ( Model, Effect Msg )
+update route msg model =
+    case msg of
+        Shared.Msg.SignIn { token } ->
+            ( { model | token = Just token }
+            , Effect.pushRoute
+                { path = Route.Path.Home_
+                , query = Dict.empty
+                , hash = Nothing
+                }
+            )
+
+        Shared.Msg.SignOut ->
+            ( { model | token = Nothing }
+            , Effect.none
+            )
+```
+
+As an added bonus, the `Shared` module will even redirect users to the `Home_` page after a successful sign-in.
+
+### Sending `Effect.signIn`
+
+Now that our new custom effect is defined, and the logic is handled in our `Shared` modules, let's use it on our sign-in page:
+
+```elm {13}
+module Pages.SignIn exposing (Model, Msg, page)
+
+-- ...
+
+update : Msg -> Model -> ( Model, Effect Msg )
+update msg model =
+    case msg of
+        
+        -- ...
+
+        SignInApiResponded (Ok { token }) ->
+            ( { model | isSubmittingForm = False }
+            , Effect.signIn { token = token }
+            )
+
+        SignInApiResponded (Err httpError) ->
+            ( { model | isSubmittingForm = False }
+            , Effect.none
+            )
+
+-- ...
+```
+
+Let's try it out in the web browser. Fill out the form with a valid email address and any password you like, and you should see our application redirect you to the homepage. That's great!
+
+But what happens when a user makes a mistake filling out the form? What about when the API is unavailable or sends an unexpected response? Right now, our Elm application is ignoring both of those important scenarios. Let's handle those sign in errors the right way, so our app is more delightful for our users (and for ourselves later when debugging issues)!
+
+## Extending `Http.Error`
+
+Luckily for us, the `elm/http` package already enumerates all the things that can go wrong with an HTTP request. We don't need to remember all the edge cases, that's what the [`Http.Error` type](https://package.elm-lang.org/packages/elm/http/latest/Http#Error) does for us:
+
+```elm
+-- Taken from the official elm/http docs
+
+{-| A request can fail in a couple ways:
+
+- `BadUrl` means you did not provide a valid URL.
+- `Timeout` means it took too long to get a response.
+- `NetworkError` means the user turned off their wifi, went in a cave, etc.
+- `BadStatus` means you got a response back, but the status code indicates failure.
+- `BadBody` means you got a response back with a nice status code, but the body of the response was something unexpected. The String in this case is a debugging message that explains what went wrong with your JSON decoder or whatever.
+
+-}
+type Error
+    = BadUrl String
+    | Timeout
+    | NetworkError
+    | BadStatus Int
+    | BadBody String
 ```

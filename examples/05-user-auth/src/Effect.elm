@@ -1,23 +1,24 @@
 port module Effect exposing
-    ( Effect, none, map, batch
+    ( Effect
+    , none, batch
     , sendCmd, sendMsg
     , pushRoute, replaceRoute, loadExternalUrl
-    , toCmd
-    , signInUser, signOutUser
-    , setUserToken, resetUserToken
+    , signIn, signOut
+    , saveUserToken, clearUserToken
+    , map, toCmd
     )
 
 {-|
 
-@docs Effect, none, map, batch
+@docs Effect
+@docs none, batch
 @docs sendCmd, sendMsg
-@docs Msg, fromAction
 @docs pushRoute, replaceRoute, loadExternalUrl
-@docs toCmd
 
-@docs signInUser, signOutUser
+@docs signIn, signOut
+@docs saveUserToken, clearUserToken
 
-@docs setUserToken, resetUserToken
+@docs map, toCmd
 
 -}
 
@@ -109,33 +110,33 @@ loadExternalUrl =
 -- SHARED
 
 
-signInUser : Result Http.Error Domain.User.User -> Effect msg
-signInUser result =
+signIn : Result Http.Error Domain.User.User -> Effect msg
+signIn result =
     SendSharedMsg (Shared.Msg.SignInPageSignedInUser result)
 
 
-signOutUser : Effect msg
-signOutUser =
+signOut : Effect msg
+signOut =
     SendSharedMsg Shared.Msg.PageSignedOutUser
 
 
 
--- CUSTOM
+-- LOCAL STORAGE
 
 
 port saveToLocalStorage : { key : String, value : Json.Encode.Value } -> Cmd msg
 
 
-setUserToken : String -> Effect msg
-setUserToken token =
+saveUserToken : String -> Effect msg
+saveUserToken token =
     SaveToLocalStorage
         { key = "token"
         , value = Json.Encode.string token
         }
 
 
-resetUserToken : Effect msg
-resetUserToken =
+clearUserToken : Effect msg
+clearUserToken =
     SaveToLocalStorage
         { key = "token"
         , value = Json.Encode.null
@@ -178,13 +179,12 @@ toCmd :
     { key : Browser.Navigation.Key
     , url : Url
     , shared : Shared.Model.Model
-    , fromSharedMsg : Shared.Msg.Msg -> mainMsg
-    , fromCmd : Cmd mainMsg -> mainMsg
-    , toCmd : mainMsg -> Cmd mainMsg
-    , fromMsg : msg -> mainMsg
+    , fromSharedMsg : Shared.Msg.Msg -> msg
+    , fromCmd : Cmd msg -> msg
+    , toCmd : msg -> Cmd msg
     }
     -> Effect msg
-    -> Cmd mainMsg
+    -> Cmd msg
 toCmd options effect =
     case effect of
         None ->
@@ -194,7 +194,7 @@ toCmd options effect =
             Cmd.batch (List.map (toCmd options) list)
 
         SendCmd cmd ->
-            Cmd.map options.fromMsg cmd
+            cmd
 
         SendSharedMsg msg ->
             Task.succeed msg

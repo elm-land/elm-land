@@ -121,7 +121,7 @@ update route msg model =
 
         Shared.Msg.PageSignedOutUser ->
             ( { model | signInStatus = Domain.SignInStatus.NotSignedIn }
-            , Effect.resetUserToken
+            , Effect.clearUserToken
             )
 
 

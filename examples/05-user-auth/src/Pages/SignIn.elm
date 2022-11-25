@@ -101,7 +101,7 @@ update msg model =
         SignInApiResponded (Ok token) ->
             ( model
             , Effect.batch
-                [ Effect.setUserToken token
+                [ Effect.saveUserToken token
                 , Api.Me.get
                     { token = token
                     , onResponse = ApiMeResponded
@@ -111,7 +111,7 @@ update msg model =
 
         ApiMeResponded result ->
             ( model
-            , Effect.signInUser result
+            , Effect.signIn result
             )
 
 

@@ -1,5 +1,6 @@
 port module Effect exposing
-    ( Effect, none, batch
+    ( Effect
+    , none, batch
     , sendCmd, sendMsg
     , pushRoute, replaceRoute, loadExternalUrl
     , sendHttpGet
@@ -8,7 +9,8 @@ port module Effect exposing
 
 {-|
 
-@docs Effect, none, batch
+@docs Effect
+@docs none, batch
 @docs sendCmd, sendMsg
 @docs pushRoute, replaceRoute, loadExternalUrl
 
@@ -65,12 +67,22 @@ type Effect msg
     | PushUrl String
     | ReplaceUrl String
     | LoadExternalUrl String
+      -- SHARED
+    | SendSharedMsg Shared.Msg.Msg
       -- HTTP
-    | HttpGet
-        { url : String
-        , decoder : Json.Decode.Decoder msg
-        , onHttpError : Http.Error -> msg
-        }
+    | HttpRequest (HttpRequestDetails msg)
+
+
+type alias HttpRequestDetails msg =
+    { method : String
+    , url : String
+    , headers : List Http.Header
+    , body : Http.Body
+    , timeout : Maybe Float
+    , tracker : Maybe String
+    , decoder : Json.Decode.Decoder msg
+    , onHttpError : Http.Error -> msg
+    }
 
 
 
@@ -150,8 +162,13 @@ sendHttpGet options =
         onHttpError httpError =
             options.onResult (Err httpError)
     in
-    HttpGet
-        { url = options.url
+    HttpRequest
+        { method = "GET"
+        , url = options.url
+        , headers = []
+        , body = Http.emptyBody
+        , timeout = Nothing
+        , tracker = Nothing
         , decoder = Json.Decode.map onSuccess options.decoder
         , onHttpError = onHttpError
         }
@@ -184,9 +201,17 @@ map fn effect =
         LoadExternalUrl url ->
             LoadExternalUrl url
 
-        HttpGet data ->
-            HttpGet
-                { url = data.url
+        SendSharedMsg msg ->
+            SendSharedMsg msg
+
+        HttpRequest data ->
+            HttpRequest
+                { method = data.method
+                , url = data.url
+                , headers = data.headers
+                , body = data.body
+                , timeout = data.timeout
+                , tracker = data.tracker
                 , onHttpError = \httpError -> fn (data.onHttpError httpError)
                 , decoder = Json.Decode.map fn data.decoder
                 }
@@ -198,23 +223,22 @@ toCmd :
     { key : Browser.Navigation.Key
     , url : Url
     , shared : Shared.Model.Model
-    , fromSharedMsg : Shared.Msg.Msg -> mainMsg
-    , fromCmd : Cmd mainMsg -> mainMsg
-    , toCmd : mainMsg -> Cmd mainMsg
-    , fromMsg : msg -> mainMsg
+    , fromSharedMsg : Shared.Msg.Msg -> msg
+    , fromCmd : Cmd msg -> msg
+    , toCmd : msg -> Cmd msg
     }
     -> Effect msg
-    -> Cmd mainMsg
+    -> Cmd msg
 toCmd options effect =
     case effect of
         None ->
             Cmd.none
 
-        SendCmd cmd ->
-            Cmd.map options.fromMsg cmd
-
         Batch list ->
             Cmd.batch (List.map (toCmd options) list)
+
+        SendCmd cmd ->
+            cmd
 
         PushUrl url ->
             Browser.Navigation.pushUrl options.key url
@@ -225,51 +249,50 @@ toCmd options effect =
         LoadExternalUrl url ->
             Browser.Navigation.load url
 
-        HttpGet request ->
-            sendHttpGetRequestWithErrorReporting options request
+        SendSharedMsg msg ->
+            Task.succeed msg
+                |> Task.perform options.fromSharedMsg
+
+        HttpRequest request ->
+            sendGetRequestWithErrorReporting options request
 
 
 
 -- AUTOMATIC ERROR REPORTING
 
 
-sendHttpGetRequestWithErrorReporting :
+sendGetRequestWithErrorReporting :
     { options
-        | toCmd : mainMsg -> Cmd mainMsg
-        , fromCmd : Cmd mainMsg -> mainMsg
-        , fromMsg : msg -> mainMsg
+        | toCmd : msg -> Cmd msg
+        , fromCmd : Cmd msg -> msg
     }
-    ->
-        { url : String
-        , onHttpError : Http.Error -> msg
-        , decoder : Json.Decode.Decoder msg
-        }
-    -> Cmd mainMsg
-sendHttpGetRequestWithErrorReporting options request =
+    -> HttpRequestDetails msg
+    -> Cmd msg
+sendGetRequestWithErrorReporting options request =
     let
-        onHttpError : Http.Error -> mainMsg
-        onHttpError error =
-            options.fromMsg (request.onHttpError error)
-
-        toMsg : Result CustomError mainMsg -> mainMsg
+        toMsg : Result CustomError msg -> msg
         toMsg =
             fromCustomResultToMsg
                 { url = request.url
                 , toCmd = options.toCmd
                 , fromCmd = options.fromCmd
-                , onHttpError = onHttpError
+                , onHttpError = request.onHttpError
                 }
 
-        fromHttpResponse : Http.Response String -> Result CustomError mainMsg
+        fromHttpResponse : Http.Response String -> Result CustomError msg
         fromHttpResponse =
             fromHttpResponseToCustomResult
-                { decoder = Json.Decode.map options.fromMsg request.decoder
+                { decoder = request.decoder
                 }
     in
-    Http.get
-        { url = request.url
-        , expect =
-            Http.expectStringResponse toMsg fromHttpResponse
+    Http.request
+        { method = request.method
+        , url = request.url
+        , headers = request.headers
+        , body = request.body
+        , timeout = request.timeout
+        , tracker = request.tracker
+        , expect = Http.expectStringResponse toMsg fromHttpResponse
         }
 
 
