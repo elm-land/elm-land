@@ -12,13 +12,8 @@ module Shared exposing
 
 -}
 
-import Api.Me
-import Browser.Navigation
 import Dict
-import Domain.SignInStatus
-import Domain.User exposing (User)
 import Effect exposing (Effect)
-import Http
 import Json.Decode
 import Route exposing (Route)
 import Route.Path
@@ -27,18 +22,32 @@ import Shared.Msg
 
 
 
--- INIT
+-- FLAGS
 
 
 type alias Flags =
-    { token : Maybe String
+    { user : Maybe Shared.Model.User
     }
 
 
 decoder : Json.Decode.Decoder Flags
 decoder =
     Json.Decode.map Flags
-        (Json.Decode.maybe (Json.Decode.field "token" Json.Decode.string))
+        (Json.Decode.field "user" (Json.Decode.maybe userDecoder))
+
+
+userDecoder : Json.Decode.Decoder Shared.Model.User
+userDecoder =
+    Json.Decode.map5 Shared.Model.User
+        (Json.Decode.field "token" Json.Decode.string)
+        (Json.Decode.field "id" Json.Decode.string)
+        (Json.Decode.field "name" Json.Decode.string)
+        (Json.Decode.field "profileImageUrl" Json.Decode.string)
+        (Json.Decode.field "email" Json.Decode.string)
+
+
+
+-- INIT
 
 
 type alias Model =
@@ -51,28 +60,10 @@ init flagsResult route =
         flags : Flags
         flags =
             flagsResult
-                |> Result.withDefault { token = Nothing }
-
-        signInStatus : Domain.SignInStatus.SignInStatus
-        signInStatus =
-            case flags.token of
-                Nothing ->
-                    Domain.SignInStatus.NotSignedIn
-
-                Just token ->
-                    Domain.SignInStatus.SignedInWithToken token
+                |> Result.withDefault { user = Nothing }
     in
-    ( { signInStatus = signInStatus
-      }
-    , case flags.token of
-        Just token ->
-            Api.Me.get
-                { token = token
-                , onResponse = Shared.Msg.ApiMeResponded
-                }
-
-        Nothing ->
-            Effect.none
+    ( { user = flags.user }
+    , Effect.none
     )
 
 
@@ -87,41 +78,21 @@ type alias Msg =
 update : Route () -> Msg -> Model -> ( Model, Effect Msg )
 update route msg model =
     case msg of
-        Shared.Msg.ApiMeResponded (Ok user) ->
-            ( { model | signInStatus = Domain.SignInStatus.SignedInWithUser user }
-            , Effect.none
+        Shared.Msg.SignIn user ->
+            ( { model | user = Just user }
+            , Effect.batch
+                [ Effect.pushRoute
+                    { path = Route.Path.Home_
+                    , query = Dict.empty
+                    , hash = Nothing
+                    }
+                , Effect.saveUser user
+                ]
             )
 
-        Shared.Msg.ApiMeResponded (Err httpError) ->
-            ( { model | signInStatus = Domain.SignInStatus.FailedToSignIn httpError }
-            , Effect.none
-            )
-
-        Shared.Msg.SignInPageSignedInUser (Ok user) ->
-            let
-                redirectRoute : Maybe Route.Path.Path
-                redirectRoute =
-                    Dict.get "from" route.query
-                        |> Maybe.andThen Route.Path.fromString
-            in
-            ( { model | signInStatus = Domain.SignInStatus.SignedInWithUser user }
-            , Effect.pushRoute
-                { path =
-                    redirectRoute
-                        |> Maybe.withDefault Route.Path.Home_
-                , query = Dict.empty
-                , hash = Nothing
-                }
-            )
-
-        Shared.Msg.SignInPageSignedInUser (Err httpError) ->
-            ( { model | signInStatus = Domain.SignInStatus.FailedToSignIn httpError }
-            , Effect.none
-            )
-
-        Shared.Msg.PageSignedOutUser ->
-            ( { model | signInStatus = Domain.SignInStatus.NotSignedIn }
-            , Effect.clearUserToken
+        Shared.Msg.SignOut ->
+            ( { model | user = Nothing }
+            , Effect.clearUser
             )
 
 

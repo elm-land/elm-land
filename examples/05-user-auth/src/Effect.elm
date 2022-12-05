@@ -4,7 +4,7 @@ port module Effect exposing
     , sendCmd, sendMsg
     , pushRoute, replaceRoute, loadExternalUrl
     , signIn, signOut
-    , saveUserToken, clearUserToken
+    , saveUser, clearUser
     , map, toCmd
     )
 
@@ -16,7 +16,7 @@ port module Effect exposing
 @docs pushRoute, replaceRoute, loadExternalUrl
 
 @docs signIn, signOut
-@docs saveUserToken, clearUserToken
+@docs saveUser, clearUser
 
 @docs map, toCmd
 
@@ -24,8 +24,6 @@ port module Effect exposing
 
 import Browser.Navigation
 import Dict exposing (Dict)
-import Domain.User
-import Http
 import Json.Encode
 import Route exposing (Route)
 import Route.Path
@@ -37,39 +35,46 @@ import Url exposing (Url)
 
 
 type Effect msg
-    = -- Basics
+    = -- BASICS
       None
     | Batch (List (Effect msg))
     | SendCmd (Cmd msg)
-      -- Routing
+      -- ROUTING
     | PushUrl String
     | ReplaceUrl String
     | LoadExternalUrl String
-      -- Shared
+      -- SHARED
     | SendSharedMsg Shared.Msg.Msg
-      -- Custom
-    | SaveToLocalStorage { key : String, value : Json.Encode.Value }
+    | SendToLocalStorage { key : String, value : Json.Encode.Value }
 
 
 
 -- BASICS
 
 
+{-| Don't send any effect.
+-}
 none : Effect msg
 none =
     None
 
 
+{-| Send multiple effects at once.
+-}
 batch : List (Effect msg) -> Effect msg
 batch =
     Batch
 
 
+{-| Send a normal `Cmd msg` as an effect, something like `Http.get` or `Random.generate`.
+-}
 sendCmd : Cmd msg -> Effect msg
 sendCmd =
     SendCmd
 
 
+{-| Send a message as an effect. Useful when emitting events from UI components.
+-}
 sendMsg : msg -> Effect msg
 sendMsg msg =
     Task.succeed msg
@@ -81,6 +86,8 @@ sendMsg msg =
 -- ROUTING
 
 
+{-| Set the new route, and make the back button go back to the current route.
+-}
 pushRoute :
     { path : Route.Path.Path
     , query : Dict String String
@@ -91,6 +98,9 @@ pushRoute route =
     PushUrl (Route.toString route)
 
 
+{-| Set the new route, but replace the previous one, so clicking the back
+button **won't** go back to the previous route.
+-}
 replaceRoute :
     { path : Route.Path.Path
     , query : Dict String String
@@ -101,6 +111,8 @@ replaceRoute route =
     ReplaceUrl (Route.toString route)
 
 
+{-| Redirect users to a new URL, somewhere external your web application.
+-}
 loadExternalUrl : String -> Effect msg
 loadExternalUrl =
     LoadExternalUrl
@@ -110,35 +122,60 @@ loadExternalUrl =
 -- SHARED
 
 
-signIn : Result Http.Error Domain.User.User -> Effect msg
-signIn result =
-    SendSharedMsg (Shared.Msg.SignInPageSignedInUser result)
+signIn :
+    { token : String
+    , id : String
+    , name : String
+    , profileImageUrl : String
+    , email : String
+    }
+    -> Effect msg
+signIn user =
+    SendSharedMsg (Shared.Msg.SignIn user)
 
 
 signOut : Effect msg
 signOut =
-    SendSharedMsg Shared.Msg.PageSignedOutUser
+    SendSharedMsg Shared.Msg.SignOut
 
 
 
 -- LOCAL STORAGE
 
 
-port saveToLocalStorage : { key : String, value : Json.Encode.Value } -> Cmd msg
+port sendToLocalStorage :
+    { key : String
+    , value : Json.Encode.Value
+    }
+    -> Cmd msg
 
 
-saveUserToken : String -> Effect msg
-saveUserToken token =
-    SaveToLocalStorage
-        { key = "token"
-        , value = Json.Encode.string token
+saveUser :
+    { token : String
+    , id : String
+    , name : String
+    , profileImageUrl : String
+    , email : String
+    }
+    -> Effect msg
+saveUser user =
+    SendToLocalStorage
+        { key = "user"
+        , value =
+            Json.Encode.object
+                [ ( "token", Json.Encode.string user.token )
+                , ( "id", Json.Encode.string user.id )
+                , ( "name", Json.Encode.string user.name )
+                , ( "profileImageUrl", Json.Encode.string user.profileImageUrl )
+                , ( "email", Json.Encode.string user.email )
+                ]
         }
 
 
-clearUserToken : Effect msg
-clearUserToken =
-    SaveToLocalStorage
-        { key = "token"
+clearUser : Effect msg
+clearUser =
+    SendToLocalStorage
+        { key = "user"
         , value = Json.Encode.null
         }
 
@@ -147,6 +184,9 @@ clearUserToken =
 -- INTERNALS
 
 
+{-| Elm Land depends on this function to connect pages and layouts
+together into the overall app.
+-}
 map : (msg1 -> msg2) -> Effect msg1 -> Effect msg2
 map fn effect =
     case effect of
@@ -159,9 +199,6 @@ map fn effect =
         SendCmd cmd ->
             SendCmd (Cmd.map fn cmd)
 
-        SendSharedMsg msg ->
-            SendSharedMsg msg
-
         PushUrl url ->
             PushUrl url
 
@@ -171,10 +208,15 @@ map fn effect =
         LoadExternalUrl url ->
             LoadExternalUrl url
 
-        SaveToLocalStorage options ->
-            SaveToLocalStorage options
+        SendSharedMsg sharedMsg ->
+            SendSharedMsg sharedMsg
+
+        SendToLocalStorage value ->
+            SendToLocalStorage value
 
 
+{-| Elm Land depends on this function to perform your effects.
+-}
 toCmd :
     { key : Browser.Navigation.Key
     , url : Url
@@ -196,10 +238,6 @@ toCmd options effect =
         SendCmd cmd ->
             cmd
 
-        SendSharedMsg msg ->
-            Task.succeed msg
-                |> Task.perform options.fromSharedMsg
-
         PushUrl url ->
             Browser.Navigation.pushUrl options.key url
 
@@ -209,5 +247,9 @@ toCmd options effect =
         LoadExternalUrl url ->
             Browser.Navigation.load url
 
-        SaveToLocalStorage keyValueRecord ->
-            saveToLocalStorage keyValueRecord
+        SendSharedMsg sharedMsg ->
+            Task.succeed sharedMsg
+                |> Task.perform options.fromSharedMsg
+
+        SendToLocalStorage value ->
+            sendToLocalStorage value

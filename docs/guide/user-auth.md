@@ -2,9 +2,10 @@
 
 ### What we'll learn
 
-- How to make a sign-in form
-- How to store a JWT fetched from a REST API
-- How to redirect when a page should only be seen by signed-in users
+- How to __add a sign-in form__, with error handling
+- How to __use local storage__ to save user tokens
+- How to __automatically redirect to sign in__ pages
+- How to __use layouts__ to reuse UI and logic across pages
 
 <BrowserWindow src="/images/guide/user-auth.gif" alt="Demo of sign-in flow" />
 
@@ -19,11 +20,25 @@ This guide will walk you through how to build a complete sign-in process for a R
 1. Persisting user tokens with local storage, so they are still available after refresh
 1. Handling redirects from any pages that require signed-in users
 
+### Creating a new project
+
 To get started, let's create a new Elm Land project using the CLI:
 
 ```sh
 elm-land init user-auth
 ```
+
+When that's ready, we can run the Elm Land server:
+
+```sh
+cd user-auth
+```
+
+```sh
+elm-land server
+```
+
+Our new project should now be available at `http://localhost:1234`
 
 ## Creating a sign-in page
 
@@ -34,12 +49,6 @@ elm-land add page /sign-in
 ```
 
 In the last few guides, we used `page:static`, `page:sandbox`, or `page:element` to create a page. This time, we'll be using the standard `elm add page` command. This will give us a fully featured page that will become useful for sharing our signed-in user across pages. We'll dive into how to do this soon!
-
-Now that we have our new sign-in page, let's run the dev server:
-
-```sh
-elm-land server
-```
 
 Opening `http://localhost:1234/sign-in` in a web browser should show us a screen that looks like this:
 
@@ -58,7 +67,7 @@ To make our sign-in form look nice, let's use a CSS framework called [Bulma](htt
       ...
       "link": [
         { "rel": "stylesheet", "href": "https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" }
-      ]
+      ],
       ...
     }
   }
@@ -267,13 +276,17 @@ The next step will involve talking to an actual REST API to get a user token.
 
 ## Running the backend API
 
-In order to see this form work with a real HTTP request, we'll need a real backend API! For this sign-in example, we've created a simple Node.js API server. This means you can follow along on your own machine. Run these commands to get the server running at `http://localhost:5000`:
+In order to see this form work with a real HTTP request, we'll need a real backend API! For this sign-in example, we've created a simple Node.js API server. This means you can follow along on your own machine. 
 
-```
-git clone https://github.com/elm-land/elm-land
-cd elm-land/examples/05-user-auth/api-server
-npm install
-node index.js
+Run these commands to get the API running at `http://localhost:5000`:
+
+```bash
+# Clone the backend API project into an "api-server" folder
+npx degit elm-land/elm-land/examples/05-user-auth/api-server api-server
+
+# Enter that folder, and run the project
+cd api-server
+npm start
 ```
 
 ### POST /api/sign-in
@@ -511,7 +524,11 @@ update msg model =
 
 If you try using the sign-in form again in your browser, you'll be able to fill in the fields and submit the form. This time, an HTTP request will be sent to the API running at `http://localhost:5000`, and you will see the button is no longer in the "loading" state.
 
-The only thing left to do is handle the response in both cases: when the sign-in works and when it fails!
+In the bottom right corner, click on the Elm debugger– you should see that the API is receiving the secret token from the backend:
+
+![The Elm debugger, showing the latest message `SignInApiReponded (Ok "ryans-secret-token")`](./user-auth/03-debugger-token.png)
+
+This is great, but let's have our UI correctly handle the HTTP response for both cases: when sign-in works and when it doesn't!
 
 ## Sharing the JSON web token
 
@@ -608,8 +625,8 @@ signIn options =
     SendSharedMsg (Shared.Msg.SignIn options)
 
 
-signIn : Effect msg
-signIn =
+signOut : Effect msg
+signOut =
     SendSharedMsg Shared.Msg.SignOut
 
 -- ...
@@ -630,11 +647,10 @@ type Msg
 
 And update `src/Shared.elm` to handle the logic for each message:
 
-```elm {3-4,10-22}
+```elm {3,9-21}
 module Shared exposing (..)
 
 import Dict
-import Route.Path
 -- ...
 
 update : Route () -> Msg -> Model -> ( Model, Effect Msg )
@@ -685,7 +701,9 @@ update msg model =
 -- ...
 ```
 
-Let's try it out in the web browser. Fill out the form with a valid email address and any password you like, and you should see our application redirect you to the homepage. That's great!
+Let's try it out in the web browser. Fill out the form with a valid email address and any password you like, and you should see our application redirect you to the homepage.
+
+You can open the Elm debugger again and see that there is a value of `Just "ryans-secret-token"` in `model.shared`.
 
 But what happens when a user makes a mistake filling out the form? What about when the API is unavailable or sends an unexpected response? Right now, our Elm application is ignoring both of those important scenarios. Let's handle those sign in errors the right way, so our app is more delightful for our users (and for ourselves later when debugging issues)!
 
@@ -848,7 +866,7 @@ post options =
     Effect.sendCmd cmd
 
 
-handleHttpResponse : Response String -> Result (List Error) Data
+handleHttpResponse : Http.Response String -> Result (List Error) Data
 handleHttpResponse response =
     case response of
         Http.BadUrl_ _ ->
@@ -904,7 +922,7 @@ errorsDecoder =
 
 errorDecoder : Json.Decode.Decoder Error
 errorDecoder =
-    Json.decode.map2 Error
+    Json.Decode.map2 Error
         (Json.Decode.field "message" Json.Decode.string)
         (Json.Decode.field "field" (Json.Decode.maybe Json.Decode.string))
 ```
@@ -915,7 +933,7 @@ This sign in page's message variant is out of date, it's still expecting an `Htt
 
 Here are the changes to `src/Pages/SignIn.elm`:
 
-```elm {9,18,27,40-46,59,64,73,83-85,92-99,105,119-127,133-154}
+```elm {9,18,27,36-39,36-39,48-54,67,72,81,91-93,100-107,113,127-134,138-162}
 module Pages.SignIn exposing (Model, Msg, page)
 
 -- ...
@@ -949,6 +967,14 @@ update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
         -- ...
+
+        UserSubmittedForm ->
+            ( { model
+                | isSubmittingForm = True
+                , errors = []
+              }
+            , ...
+            )
 
         SignInApiResponded (Ok { token }) ->
             ( { model | isSubmittingForm = False }
@@ -988,7 +1014,7 @@ viewForm model =
 viewFormInput : 
     { field : Field
     , value : String
-    , error : Maybe String
+    , error : Maybe Api.SignIn.Error
     } 
     -> Html Msg
 viewFormInput options =
@@ -1074,7 +1100,7 @@ findFormError model =
 
 The highlighted code above takes care of everything from storing the errors in our `Model` to rendering them to our users. Now, we can submit the form without filling in any fields, and see those helpful error messages in the correct spots in our UI:
 
-![TODO: Replace this with GIF showing error states](./user-auth/02-form.gif)
+![Our sign-in form, showing inline error messages](./user-auth/04-error-handling.gif)
 
 ::: tip The fun part: Try to break the frontend!
 
@@ -1094,7 +1120,7 @@ To use the local storage API, we'll want to create another custom effect in our 
 
 We'll need to upgrade our `src/Effect.elm` file to define ports:
 
-```elm {1,8,14,18-38,47-48,56-57}
+```elm {1,5,8,14,18-38,47-48,56-57}
 port module Effect exposing
     ( Effect
     , none, batch
@@ -1342,9 +1368,15 @@ We can use this query parameter later to make sure we redirect them to the right
 
 ### Making the homepage auth only
 
-Now that this is set up, how hard is it to make an existing page auth-only? Pretty easy:
+Now that this is set up, how hard is it to make an existing page auth-only? Let's find out by replacing the original homepage with a new one:
 
-```elm {3,6}
+```sh
+elm-land add page /
+```
+
+And then adding these 3 lines of code:
+
+```elm {3,6-7}
 module Pages.Home_ exposing (Model, Msg, page)
 
 import Auth
@@ -1357,27 +1389,23 @@ page user shared route =
 -- ...
 ```
 
-Now that we've customized the `Auth` module, we can make _any_ page auth-only by adding `Auth.User` as the first argument to the `page` function.
+This is one of the few pieces of Elm Land magic. Adding `Auth.User` as the first argument to the `page` function will make that page auth-only. Because of the logic we defined in `Auth.elm`, this means it will redirect us to `/sign-in` if we're not signed in.
 
-Let's add three more pages:
+Now that we've customized the `Auth` module, we can make _any_ page auth-only by adding `Auth.User` as the first argument to the `page` function. Let's do this for two more pages:
 
 ```sh
 elm-land add page /settings
 ```
 
 ```sh
-elm-land add page /users
-```
-
-```sh
-elm-land add page /users/:id
+elm-land add page /profile/me
 ```
 
 Each of these can also be made auth-only pages by adding `Auth.User` as the first argument. Let's try it out:
 
 #### Making `Pages.Settings` auth-only
 
-```elm {3,6}
+```elm {3,6,7}
 module Pages.Settings exposing (Model, Msg, page)
 
 import Auth
@@ -1390,25 +1418,10 @@ page user shared route =
 -- ...
 ```
 
-#### Making `Pages.Users` auth-only
+#### Making `Pages.Profile.Me` auth-only
 
-```elm {3,6}
-module Pages.Users exposing (Model, Msg, page)
-
-import Auth
--- ...
-
-page : Auth.User -> Shared.Model -> Route () -> ( Model, Effect Msg )
-page user shared route =
-    ...
-
--- ...
-```
-
-#### Making `Pages.Users.Id_` auth-only
-
-```elm {3,6}
-module Pages.Users.Id_ exposing (Model, Msg, page)
+```elm {3,6,7}
+module Pages.Profile.Me exposing (Model, Msg, page)
 
 import Auth
 -- ...
@@ -1526,7 +1539,7 @@ import Api.Me
 
 type Msg
     = ...
-    | MeApiResponded (Result Http.Error Api.Me.User)
+    | MeApiResponded String (Result Http.Error Api.Me.User)
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
@@ -1624,7 +1637,7 @@ saveUser user =
                 [ ( "token", Json.Encode.string user.token )
                 , ( "id", Json.Encode.string user.id )
                 , ( "name", Json.Encode.string user.name )
-                , ( "profilePictureUrl", Json.Encode.string user.profilePictureUrl )
+                , ( "profileImageUrl", Json.Encode.string user.profileImageUrl )
                 , ( "email", Json.Encode.string user.email )
                 ]
         }
@@ -1756,9 +1769,9 @@ update route msg model =
 -- ...
 ```
 
-#### 5. Updating `Auth.User`
+#### 5. Updating the `Auth` module
 
-```elm {3,6-7}
+```elm {3,6-7,12-14}
 module Auth exposing (User, onPageLoad)
 
 import Shared.Model
@@ -1767,12 +1780,19 @@ import Shared.Model
 type alias User =
     Shared.Model.User
 
+
+onPageLoad : Shared.Model -> Route () -> Auth.Action.Action User
+onPageLoad shared route =
+    case shared.user of
+        Just user ->
+            Auth.Action.loadPageWithUser user
+
 -- ...
 ```
 
 ### 6. Updating our `src/interop.js` file
 
-The Elm compiler can't help you on the JavaScript side, so whenever you are working with ports– be sure to check if the JS side of things needs updating.
+The Elm compiler can't remind you about the code on the JavaScript side, so whenever you are working with ports– be sure to check if your JS needs any updating.
 
 In this case, we need to send `user` instead of `token` when our application starts up:
 
@@ -1787,67 +1807,547 @@ export const flags = ({ env }) => {
 // ...
 ```
 
-## Making it look pretty
+## Adding a sidebar layout
 
-To prove that it's all working, and wrap up this project– let's make a quick user preview component that can be rendered on all pages. We'll just add a bit of HTML to the homepage, profile, and settings page.
+To make it look nice, and show all the user authentication stuff is working as expected, let's add a sidebar layout that should be used on every page.
 
-In the next two guides, you'll learn how to create components and layouts in Elm Land, but for now, we'll make two simple components:
+This sidebar will show the currently signed-in user, and offer an easy way to sign out:
 
-2. `Components.Hero` for showing the page header
-1. `Components.UserAvatar` for showing the currently signed-in user
+![Our sidebar, navigating from one page to another](./user-auth/05-sidebar-links.gif)
 
+### Adding a new layout
 
-#### src/Components/Hero.elm
+Let's use the `elm-land add` command to add a new layout to our application:
 
-```elm
-module Components.Hero exposing (view)
-
-import Html exposing (Html)
-import Html.Attributes exposing (alt, class, src)
-
-
-view : { title : String, subtitle : String } -> Html msg
-view options =
-    Html.section [ class "hero is-medium is-info" ]
-        [ Html.div [ class "hero-body" ]
-            [ Html.p [ class "title" ]
-                [ Html.text options.title ]
-            , Html.p [ class "subtitle" ]
-                [ Html.text options.subtitle ]
-            ]
-        ]
+```sh
+elm-land add layout Sidebar
 ```
 
-#### src/Components/UserAvatar.elm
+::: details Here's the new code in the "src/Layouts/Sidebar.elm" file we just created
 
 ```elm
-module Components.UserAvatar exposing (view)
+module Layouts.Sidebar exposing (Model, Msg, Settings, layout)
+
+import Effect exposing (Effect)
+import Html exposing (Html)
+import Html.Attributes exposing (class)
+import Layout exposing (Layout)
+import Route exposing (Route)
+import Shared
+import View exposing (View)
+
+
+type alias Settings =
+    {}
+
+
+layout : Settings -> Shared.Model -> Route () -> Layout Model Msg mainMsg
+layout settings shared route =
+    Layout.new
+        { init = init
+        , update = update
+        , view = view
+        , subscriptions = subscriptions
+        }
+
+
+
+-- MODEL
+
+
+type alias Model =
+    {}
+
+
+init : () -> ( Model, Effect Msg )
+init _ =
+    ( {}
+    , Effect.none
+    )
+
+
+
+-- UPDATE
+
+
+type Msg
+    = ReplaceMe
+
+
+update : Msg -> Model -> ( Model, Effect Msg )
+update msg model =
+    case msg of
+        ReplaceMe ->
+            ( model
+            , Effect.none
+            )
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.none
+
+
+
+-- VIEW
+
+
+view : 
+    { fromMsg : Msg -> mainMsg
+    , content : View mainMsg
+    , model : Model
+    }
+    -> View mainMsg
+view { fromMsg, model, content } =
+    { title = content.title
+    , body = 
+        [ Html.text "Sidebar"
+        , Html.div [ class "page" ] content.body
+        ]
+    }
+
+```
+
+:::
+
+### Customizing our layout
+
+To get this layout looking the way we want, we'll need to take these three steps:
+
+#### 1. Allow pages to pass in a title and user
+
+When we use this layout in our pages later, we'll see that _each page_ can
+send in "settings" specific to that page.
+
+In this example, our sidebar layout will have a title at the top of each page. It will also need the current user, for display in the sidebar itself.
+
+Let's modify `src/Layouts/Sidebar.elm` to allow each page to pass in those details:
+
+```elm {3,6-9}
+module Layouts.Sidebar exposing (Settings, Model, Msg, layout)
 
 import Auth
-import Html exposing (Html)
-import Html.Attributes exposing (alt, class, src)
+-- ...
+
+type alias Settings =
+    { title : String
+    , user : Auth.User
+    }
+
+-- ...
+```
+
+By modifying the `Settings` type, our layout will ask each page to provide those two fields before it can be rendered. We'll cover that soon, when we learn about the `Page.withLayout` type.
+
+#### 2. Passing `settings` and `route` to `view`
+
+We can provide the `settings`, `shared`, or `route` values to any function we'd like by passing the value in as an input. 
+
+For our sidebar we'll want `settings` and `route` available in our `view` function, so that the `settings.title` and `settings.user` values are available when we render the HTML for the page.
+
+Having the `route` value will let us highlight the current page so our users know where they are.
+
+Here's how we can pass those values into our `view` function:
+
+```elm {10,17-19,25}
+module Layouts.Sidebar exposing (Settings, Model, Msg, layout)
+
+-- ...
+
+layout : Settings -> Shared.Model -> Route () -> Layout Model Msg mainMsg
+layout settings shared route =
+    Layout.new
+        { init = init
+        , update = update
+        , view = view settings route
+        , subscriptions = subscriptions
+        }
+
+-- ...
+
+view : 
+    Settings
+    -> Route ()
+    ->
+        { fromMsg : Msg -> mainMsg
+        , content : View mainMsg
+        , model : Model
+        }
+    -> View mainMsg
+view settings route { fromMsg, model, content } =
+    { title = content.title
+    , body = 
+        [ Html.text "Sidebar"
+        , Html.div [ class "page" ] content.body
+        ]
+    }
+```
+
+In the next step, we'll use this information to render the sidebar layout. Now that we have `Settings` and `Route ()`, we'll have everything we need.
+
+::: tip "Need `route` in your `init` function?"
+
+We can use this same strategy to pass in data to `init`, `update`, or `subscriptions`. 
+
+For example, if you want your `init` function to have access to the current URL, you can do the same trick with `init` and `route`:
+
+```elm {8}
+module Layouts.Sidebar exposing (Settings, Model, Msg, layout)
+
+-- ...
+
+layout : Settings -> Shared.Model -> Route () -> Layout Model Msg mainMsg
+layout settings shared route =
+    Layout.new
+        { init = init route
+        , update = update
+        , view = view settings
+        , subscriptions = subscriptions
+        }
+
+-- ...
+```
+
+This will make `route` available to `init`, and you can access any URL information you need.
+
+( We won't need to do this for the sidebar layout, this section is just to show you the high-level idea! )
+
+:::
 
 
-view : { user : Auth.User } -> Html msg
-view { user } =
-    Html.div [ class "media" ]
-        [ Html.div [ class "media-left" ]
-            [ Html.figure [ class "image is-48x48" ]
+#### 3. Updating `view` to make things look nice
+
+Here's the code we can add to our `view` function to make things look official:
+
+```elm {3-4,18,20-30,34-115}
+module Layouts.Sidebar exposing (Settings, Model, Msg, layout)
+
+import Html.Attributes exposing (alt, class, classList, src)
+import Route.Path
+-- ...
+
+
+view :
+    Settings
+    -> Route ()
+    ->
+        { fromMsg : Msg -> mainMsg
+        , content : View mainMsg
+        , model : Model
+        }
+    -> View mainMsg
+view settings route { fromMsg, model, content } =
+    { title = content.title ++ " | My Cool App"
+    , body =
+        [ Html.div [ class "is-flex", style "height" "100vh" ]
+            [ viewSidebar
+                { user = settings.user
+                , route = route
+                }
+            , viewMainContent
+                { title = settings.title
+                , content = content
+                }
+            ]
+        ]
+    }
+
+
+viewSidebar : { user : Auth.User, route : Route () } -> Html msg
+viewSidebar { user, route } =
+    Html.aside
+        [ class "is-flex is-flex-direction-column p-2"
+        , style "min-width" "200px"
+        , style "border-right" "solid 1px #eee"
+        ]
+        [ viewAppNameAndLogo
+        , viewSidebarLinks route
+        , viewSignOutButton user
+        ]
+
+
+viewAppNameAndLogo : Html msg
+viewAppNameAndLogo =
+    Html.div [ class "is-flex p-3" ]
+        [ Html.figure []
+            [ Html.img
+                [ src "https://bulma.io/images/placeholders/24x24.png"
+                , alt "My Cool App's logo"
+                ]
+                []
+            ]
+        , Html.span [ class "has-text-weight-bold pl-2" ]
+            [ Html.text "My Cool App" ]
+        ]
+
+
+viewSidebarLinks : Route () -> Html msg
+viewSidebarLinks route =
+    let
+        viewSidebarLink : ( String, Route.Path.Path ) -> Html msg
+        viewSidebarLink ( label, path ) =
+            Html.li []
+                [ Html.a
+                    [ Route.Path.href path
+                    , classList
+                        [ ( "is-active", route.path == path )
+                        ]
+                    ]
+                    [ Html.text label ]
+                ]
+    in
+    Html.div [ class "menu is-flex-grow-1" ]
+        [ Html.ul [ class "menu-list" ]
+            (List.map viewSidebarLink
+                [ ( "Dashboard", Route.Path.Home_ )
+                , ( "Settings", Route.Path.Settings )
+                , ( "Profile", Route.Path.Profile_Me )
+                ]
+            )
+        ]
+
+
+viewSignOutButton : Auth.User -> Html msg
+viewSignOutButton user =
+    Html.button [ class "button is-text is-fullwidth" ]
+        [ Html.div [ class "is-flex is-align-items-center" ]
+            [ Html.figure [ class "image is-24x24" ]
                 [ Html.img
-                    [ src user.profileImageUrl
+                    [ class "is-rounded"
+                    , src user.profileImageUrl
                     , alt user.name
                     ]
                     []
                 ]
-            ]
-        , Html.div [ class "media-content" ]
-            [ Html.p [ class "title is-4" ]
-                [ Html.text user.name ]
-            , Html.p [ class "subtitle is-6" ]
-                [ Html.text user.email ]
+            , Html.span [ class "pl-2" ] [ Html.text "Sign out" ]
             ]
         ]
+
+
+viewMainContent : { title : String, content : View msg } -> Html msg
+viewMainContent { title, content } =
+    Html.main_ [ class "is-flex is-flex-direction-column is-flex-grow-1" ]
+        [ Html.section [ class "hero is-info" ]
+            [ Html.div [ class "hero-body" ]
+                [ Html.h1 [ class "title" ] [ Html.text title ]
+                ]
+            ]
+        , Html.div [ class "p-4" ] content.body
+        ]
+
 ```
 
 
-### Adding the component to our pages
+### Adding layout to our pages
+
+Every page can opt-in to using a layout using the `Page.withLayout` function. This function allows every page to pass in their own settings and define which layout they'd like to use.
+
+Here's an example with `src/Pages/Home_.elm`:
+
+```elm {3,14,17-24}
+module Pages.Home_ exposing (Model, Msg, page)
+
+import Layouts
+-- ...
+
+page : Auth.User -> Shared.Model -> Route () -> Page Model Msg
+page user shared route =
+    Page.new
+        { init = init
+        , update = update
+        , subscriptions = subscriptions
+        , view = view
+        }
+        |> Page.withLayout (layout user)
+
+
+layout : Auth.User -> Model -> Layouts.Layout
+layout user model =
+    Layouts.Sidebar
+        { sidebar =
+            { title = "Dashboard"
+            , user = user
+            }
+        }
+
+-- ...
+```
+
+
+### Adding the layout to `Settings` and `Profile`
+
+You can do the same technique for any page you'd like to use the new `Sidebar` layout.
+
+Here are the changes for `src/Pages/Settings.elm`:
+
+
+```elm {3,14,17-24}
+module Pages.Settings exposing (Model, Msg, page)
+
+import Layouts
+-- ...
+
+page : Auth.User -> Shared.Model -> Route () -> Page Model Msg
+page user shared route =
+    Page.new
+        { init = init
+        , update = update
+        , subscriptions = subscriptions
+        , view = view
+        }
+        |> Page.withLayout (layout user)
+
+
+layout : Auth.User -> Model -> Layouts.Layout
+layout user model =
+    Layouts.Sidebar
+        { sidebar =
+            { title = "Settings"
+            , user = user
+            }
+        }
+
+-- ...
+```
+
+And here are the changes for `src/Pages/Profile/Me.elm`:
+
+```elm {3,14,17-24}
+module Pages.Profile.Me exposing (Model, Msg, page)
+
+import Layouts
+-- ...
+
+page : Auth.User -> Shared.Model -> Route () -> Page Model Msg
+page user shared route =
+    Page.new
+        { init = init
+        , update = update
+        , subscriptions = subscriptions
+        , view = view
+        }
+        |> Page.withLayout (layout user)
+
+
+layout : Auth.User -> Model -> Layouts.Layout
+layout user model =
+    Layouts.Sidebar
+        { sidebar =
+            { title = "Profile"
+            , user = user
+            }
+        }
+
+-- ...
+```
+
+
+Now when you visit the `http://localhost:1234`, here's what you should see the sidebar links are working as expected:
+
+![Our sidebar, navigating from one page to another](./user-auth/05-sidebar-links.gif)
+
+
+## Implementing sign out
+
+When we click the "Sign out" button, nothing is happening! This is the last thing we'll need to implement for this example to be complete– so let's do it!
+
+You may have noticed that our layout's `view` function is a bit more complicated than our page's `view` function.
+
+### Understanding the role of "mainMsg"
+
+There's this new `View mainMsg` type that's being returned, instead of the normal `View Msg` you may have expected to see. One of the constraints of Elm is that __lists cannot return items of different types__.
+
+If we want our HTML to send layout messages _and_ page messages, we're going to need to convert them into __one common type__: `mainMsg`. For this reason, we'll need to use `Html.map fromMsg` anywhere we want to use `Html Msg` within a layout file.
+
+Here's an example of how we can upgrade `viewSidebar` to return `Html Msg`, and then convert the output to the common `Html mainMsg` type:
+
+```elm {22,32}
+module Layouts.Sidebar exposing (Settings, Model, Msg, layout)
+
+-- ...
+
+view :
+    Settings
+    -> Route ()
+    ->
+        { fromMsg : Msg -> mainMsg
+        , content : View mainMsg
+        , model : Model
+        }
+    -> View mainMsg
+view settings route { fromMsg, model, content } =
+    { title = content.title ++ " | My Cool App"
+    , body =
+        [ Html.div [ class "is-flex", style "height" "100vh" ]
+            [ viewSidebar
+                { user = settings.user
+                , route = route
+                }
+                |> Html.map fromMsg
+            , viewMainContent
+                { title = settings.title
+                , content = content
+                }
+            ]
+        ]
+    }
+
+
+viewSidebar : { user : Auth.User, route : Route () } -> Html Msg
+viewSidebar { user, route } =
+    ...
+
+-- ...
+```
+
+Now that we've upgraded `viewSidebar` to return `Html Msg` ( rather than the generic, lowercase `Html msg` from before ), we'll be able to send actual `Msg` values when a user clicks the "Sign out" button.
+
+Let's add in the "Sign out" feature, so it's available for _every page_ that uses our sidebar layout:
+
+```elm {3,8,14-17,21,25}
+module Layouts.Sidebar exposing (Settings, Model, Msg, layout)
+
+import Html.Events
+-- ...
+
+
+type Msg
+    = UserClickedSignOut
+
+
+update : Msg -> Model -> ( Model, Effect Msg )
+update msg model =
+    case msg of
+        UserClickedSignOut ->
+            ( model
+            , Effect.signOut
+            )
+
+-- ...
+
+viewSignOutButton : Auth.User -> Html Msg
+viewSignOutButton user =
+    Html.button
+        [ class "button is-text is-fullwidth"
+        , Html.Events.onClick UserClickedSignOut
+        ]
+        [ Html.div [ class "is-flex is-align-items-center" ]
+            [ Html.figure [ class "image is-24x24" ]
+                [ Html.img
+                    [ class "is-rounded"
+                    , src user.profileImageUrl
+                    , alt user.name
+                    ]
+                    []
+                ]
+            , Html.span [ class "pl-2" ] [ Html.text "Sign out" ]
+            ]
+        ]
+
+-- ...
+```
+
+### That's it!
+
+We just added user authentication to an app, introduced
+The complete source code for this example is [available here on GitHub]().

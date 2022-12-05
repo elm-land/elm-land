@@ -45,14 +45,14 @@ newLayoutModule data =
         {- Example:
 
            type alias Settings =
-               ()
+               {}
 
         -}
         settingsTypeAlias : CodeGen.Declaration
         settingsTypeAlias =
             CodeGen.Declaration.typeAlias
                 { name = "Settings"
-                , annotation = CodeGen.Annotation.type_ "()"
+                , annotation = CodeGen.Annotation.record []
                 }
 
         {- Example:
@@ -163,7 +163,7 @@ newLayoutModule data =
                               , arguments = []
                               , expression =
                                     CodeGen.Expression.multilineTuple
-                                        [ CodeGen.Expression.record []
+                                        [ CodeGen.Expression.value "model"
                                         , CodeGen.Expression.value "Effect.none"
                                         ]
                               }

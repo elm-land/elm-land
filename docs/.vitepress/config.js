@@ -35,27 +35,27 @@ export default {
     sidebar: {
       '/guide/': [
         {
-          text: 'Guide',
+          text: 'Guides',
           items: [
             { text: 'Getting started', link: '/guide/' },
             { text: 'Pages and routes', link: '/guide/pages' },
             { text: 'User input', link: '/guide/user-input' },
             { text: 'REST APIs', link: '/guide/rest-apis' },
             { text: 'User authentication', link: '/guide/user-auth' },
-            { text: 'Components', link: '/guide/components' },
-            { text: 'Layouts', link: '/guide/layouts' },
-            { text: 'Query parameters', link: '/guide/query-parameters' },
-            { text: 'Working with JavaScript', link: '/guide/working-with-js' },
-            { text: 'TypeScript', link: '/guide/typescript' },
-            { text: 'CSS, assets, and static files', link: '/guide/assets-and-static-files' },
-            { text: 'Elm UI and Elm CSS', link: '/guide/elm-ui-and-views' },
-            { text: 'Custom 404 pages', link: '/guide/custom-404-pages' },
-            { text: 'Error reporting', link: '/guide/error-reporting' },
+            // { text: 'Components', link: '/guide/components' },
+            // { text: 'Layouts', link: '/guide/layouts' },
+            // { text: 'Query parameters', link: '/guide/query-parameters' },
+            // { text: 'Working with JavaScript', link: '/guide/working-with-js' },
+            // { text: 'TypeScript', link: '/guide/typescript' },
+            // { text: 'CSS, assets, and static files', link: '/guide/assets-and-static-files' },
+            // { text: 'Elm UI and Elm CSS', link: '/guide/elm-ui-and-views' },
+            // { text: 'Custom 404 pages', link: '/guide/custom-404-pages' },
+            // { text: 'Error reporting', link: '/guide/error-reporting' },
             { text: 'Deploying to production', link: '/guide/deploying' },
           ]
         },
         {
-          text: 'Configuration',
+          text: 'Other documentation',
           items: [
             { text: 'elm-land.json', link: '/guide/config/elm-land-json' },
             { text: 'CLI commands', link: '/guide/config/cli-commands' },

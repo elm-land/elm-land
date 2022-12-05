@@ -1,14 +1,15 @@
 export const flags = ({ env }) => {
+  // Called before our Elm application starts
   return {
-    token: JSON.parse(localStorage.token || null)
+    user: JSON.parse(window.localStorage.user || null)
   }
 }
 
-export const onReady = ({ app, env }) => {
-  // PORTS
-  if (app.ports && app.ports.saveToLocalStorage) {
-    app.ports.saveToLocalStorage.subscribe(({ key, value }) => {
-      localStorage[key] = JSON.stringify(value)
+export const onReady = ({ env, app }) => {
+  // Called after our Elm application starts
+  if (app.ports && app.ports.sendToLocalStorage) {
+    app.ports.sendToLocalStorage.subscribe(({ key, value }) => {
+      window.localStorage[key] = JSON.stringify(value)
     })
   }
 }

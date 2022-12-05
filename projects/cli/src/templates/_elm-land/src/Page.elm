@@ -25,7 +25,7 @@ type Page model msg
         , update : msg -> model -> ( model, Effect msg )
         , subscriptions : model -> Sub msg
         , view : model -> View msg
-        , layout : Maybe Layout
+        , toLayout : Maybe (model -> Layout)
         }
 
 
@@ -42,13 +42,13 @@ new options =
         , update = options.update
         , subscriptions = options.subscriptions
         , view = options.view
-        , layout = Nothing
+        , toLayout = Nothing
         }
 
 
-withLayout : Layout -> Page model msg -> Page model msg
-withLayout layout_ (Page page) =
-    Page { page | layout = Just layout_ }
+withLayout : (model -> Layout) -> Page model msg -> Page model msg
+withLayout toLayout_ (Page page) =
+    Page { page | toLayout = Just toLayout_ }
 
 
 sandbox :
@@ -63,7 +63,7 @@ sandbox options =
         , update = \msg model -> ( options.update msg model, Effect.none )
         , subscriptions = \_ -> Sub.none
         , view = options.view
-        , layout = Nothing
+        , toLayout = Nothing
         }
 
 
@@ -86,7 +86,7 @@ element options =
                     |> Tuple.mapSecond Effect.sendCmd
         , subscriptions = options.subscriptions
         , view = options.view
-        , layout = Nothing
+        , toLayout = Nothing
         }
 
 
@@ -110,6 +110,6 @@ subscriptions (Page page) =
     page.subscriptions
 
 
-layout : Page model msg -> Maybe Layouts.Layout
-layout (Page page) =
-    page.layout
+layout : model -> Page model msg -> Maybe Layouts.Layout
+layout model (Page page) =
+    Maybe.map (\fn -> fn model) page.toLayout

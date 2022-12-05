@@ -45,7 +45,7 @@ app.get('/api/me', (req, res) => {
   if (req.query.token === SECRET_TOKEN_EXAMPLE) {
     setTimeout(() => {
       res.status(200).json({
-        id: 1,
+        id: "1",
         name: 'Ryan Haskell-Glatz',
         profileImageUrl: 'https://avatars.githubusercontent.com/u/6187256?v=4',
         email: 'ryan@elm.land'

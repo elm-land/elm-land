@@ -1,4 +1,4 @@
-module Api.SignIn exposing (Field(..), FormError, post)
+module Api.SignIn exposing (Data, Error, post)
 
 import Effect exposing (Effect)
 import Http
@@ -6,139 +6,116 @@ import Json.Decode
 import Json.Encode
 
 
-type Field
-    = Email
-    | Password
-
-
-type alias FormError =
-    { field : Maybe Field
-    , message : String
+{-| The data we expect if the sign in attempt was successful.
+-}
+type alias Data =
+    { token : String
     }
 
 
+{-| How to create a `Data` value from JSON
+-}
+decoder : Json.Decode.Decoder Data
+decoder =
+    Json.Decode.map Data
+        (Json.Decode.field "token" Json.Decode.string)
+
+
+type alias Error =
+    { message : String
+    , field : Maybe String
+    }
+
+
+{-| Sends a POST request to our `/api/sign-in` endpoint, which
+returns our JWT token if a user was found with that email
+and password.
+-}
 post :
-    { email : String
+    { onResponse : Result (List Error) Data -> msg
+    , email : String
     , password : String
-    , onResponse : Result (List FormError) String -> msg
     }
     -> Effect msg
 post options =
     let
-        json : Json.Encode.Value
-        json =
+        body : Json.Encode.Value
+        body =
             Json.Encode.object
                 [ ( "email", Json.Encode.string options.email )
                 , ( "password", Json.Encode.string options.password )
                 ]
 
-        tokenDecoder : Json.Decode.Decoder String
-        tokenDecoder =
-            Json.Decode.field "token" Json.Decode.string
-
-        httpCmd : Cmd msg
-        httpCmd =
+        cmd : Cmd msg
+        cmd =
             Http.post
                 { url = "http://localhost:5000/api/sign-in"
-                , body = Http.jsonBody json
+                , body = Http.jsonBody body
                 , expect =
-                    expectHttpResponse
-                        { onResponse = options.onResponse
-                        , decoderForGoodStatusCode = tokenDecoder
-                        , decoderForBadStatusCode = formErrorsDecoder
-                        }
+                    Http.expectStringResponse
+                        options.onResponse
+                        handleHttpResponse
                 }
     in
-    Effect.sendCmd httpCmd
+    Effect.sendCmd cmd
 
 
-formErrorsDecoder : Json.Decode.Decoder (List FormError)
-formErrorsDecoder =
-    let
-        formErrorDecoder : Json.Decode.Decoder FormError
-        formErrorDecoder =
-            Json.Decode.map2 FormError
-                (Json.Decode.field "field" maybeFieldDecoder)
-                (Json.Decode.field "message" Json.Decode.string)
+handleHttpResponse : Http.Response String -> Result (List Error) Data
+handleHttpResponse response =
+    case response of
+        Http.BadUrl_ _ ->
+            Err
+                [ { message = "Unexpected URL format"
+                  , field = Nothing
+                  }
+                ]
 
-        maybeFieldDecoder : Json.Decode.Decoder (Maybe Field)
-        maybeFieldDecoder =
-            Json.Decode.string
-                |> Json.Decode.map fromStringToMaybeField
+        Http.Timeout_ ->
+            Err
+                [ { message = "Request timed out, please try again"
+                  , field = Nothing
+                  }
+                ]
 
-        fromStringToMaybeField : String -> Maybe Field
-        fromStringToMaybeField field =
-            case field of
-                "email" ->
-                    Just Email
+        Http.NetworkError_ ->
+            Err
+                [ { message = "Could not connect, please try again"
+                  , field = Nothing
+                  }
+                ]
 
-                "password" ->
-                    Just Password
+        Http.BadStatus_ { statusCode } body ->
+            case Json.Decode.decodeString errorsDecoder body of
+                Ok errors ->
+                    Err errors
 
-                _ ->
-                    Nothing
-    in
-    Json.Decode.field "errors" (Json.Decode.list formErrorDecoder)
-
-
-expectHttpResponse :
-    { onResponse : Result (List FormError) value -> msg
-    , decoderForGoodStatusCode : Json.Decode.Decoder value
-    , decoderForBadStatusCode : Json.Decode.Decoder (List FormError)
-    }
-    -> Http.Expect msg
-expectHttpResponse options =
-    let
-        fromHttpStringResponse :
-            Http.Response String
-            -> Result (List FormError) value
-        fromHttpStringResponse response =
-            case response of
-                Http.BadUrl_ _ ->
+                Err _ ->
                     Err
-                        [ { field = Nothing
-                          , message = "Unexpected URL format"
+                        [ { message = "Something unexpected happened"
+                          , field = Nothing
                           }
                         ]
 
-                Http.Timeout_ ->
+        Http.GoodStatus_ _ body ->
+            case Json.Decode.decodeString decoder body of
+                Ok data ->
+                    Ok data
+
+                Err _ ->
                     Err
-                        [ { field = Nothing
-                          , message = "Server did not respond"
+                        [ { message = "Something unexpected happened"
+                          , field = Nothing
                           }
                         ]
 
-                Http.NetworkError_ ->
-                    Err
-                        [ { field = Nothing
-                          , message = "Could not connect to server"
-                          }
-                        ]
 
-                Http.BadStatus_ { statusCode } rawJson ->
-                    case Json.Decode.decodeString options.decoderForBadStatusCode rawJson of
-                        Ok errors ->
-                            Err errors
+errorsDecoder : Json.Decode.Decoder (List Error)
+errorsDecoder =
+    Json.Decode.field "errors" (Json.Decode.list errorDecoder)
 
-                        Err _ ->
-                            Err
-                                [ { field = Nothing
-                                  , message = "Received status code " ++ String.fromInt statusCode
-                                  }
-                                ]
 
-                Http.GoodStatus_ _ rawJson ->
-                    case Json.Decode.decodeString options.decoderForGoodStatusCode rawJson of
-                        Ok value ->
-                            Ok value
-
-                        Err _ ->
-                            Err
-                                [ { field = Nothing
-                                  , message = "Received unexpected API response"
-                                  }
-                                ]
-    in
-    Http.expectStringResponse
-        options.onResponse
-        fromHttpStringResponse
+errorDecoder : Json.Decode.Decoder Error
+errorDecoder =
+    Json.Decode.map2 Error
+        (Json.Decode.field "message" Json.Decode.string)
+        (Json.Decode.field "field" (Json.Decode.maybe Json.Decode.string))

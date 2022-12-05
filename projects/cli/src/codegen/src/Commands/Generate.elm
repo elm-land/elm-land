@@ -731,42 +731,6 @@ fromEffectDeclaration options =
         }
 
 
-{-| This is a thing:
-
-        toLayoutFromPage : Model -> Maybe Layouts.Layout
-        toLayoutFromPage model =
-            case model.page of
-                PageModelAuthors pageModel ->
-                    let
-                        page =
-                            Pages.Authors.page model.shared (Route.fromUrl () model.url)
-                    in
-                    Page.layout page
-
-                PageModelBlogPosts pageModel ->
-                    let
-                        page =
-                            Pages.BlogPosts.page model.shared (Route.fromUrl () model.url)
-                    in
-                    Page.layout page
-
-                PageModelHome_ pageModel ->
-                    let
-                        page =
-                            Pages.Home_.page model.shared (Route.fromUrl () model.url)
-                    in
-                    Page.layout page
-
-                PageModelNotFound_ ->
-                    Nothing
-
-                Redirecting ->
-                    Nothing
-
-                Loading _ ->
-                    Nothing
-
--}
 toLayoutFromPageDeclaration : List PageFile -> CodeGen.Declaration
 toLayoutFromPageDeclaration pages =
     let
@@ -784,7 +748,7 @@ toLayoutFromPageDeclaration pages =
                               else
                                 CodeGen.Expression.value "Route.fromUrl () model.url"
                             , CodeGen.Expression.value ("toAuthProtectedPage model {{moduleName}}.page" |> String.replace "{{moduleName}}" (PageFile.toModuleName page))
-                            , CodeGen.Expression.value "Maybe.andThen Page.layout"
+                            , CodeGen.Expression.value "Maybe.andThen (Page.layout pageModel)"
                             ]
 
                     else
@@ -795,7 +759,7 @@ toLayoutFromPageDeclaration pages =
                               else
                                 CodeGen.Expression.value "Route.fromUrl () model.url"
                             , CodeGen.Expression.value ("{{moduleName}}.page model.shared" |> String.replace "{{moduleName}}" (PageFile.toModuleName page))
-                            , CodeGen.Expression.value "Page.layout"
+                            , CodeGen.Expression.value "Page.layout pageModel"
                             ]
 
                 else
@@ -1608,14 +1572,9 @@ toInitPageCaseExpression layouts pages =
                                 , CodeGen.Expression.operator ">>"
                                 , CodeGen.Expression.value "fromPageEffect model"
                                 ]
-                            , CodeGen.Expression.parens
-                                [ CodeGen.Expression.function
-                                    { name = "Page.init"
-                                    , arguments =
-                                        [ CodeGen.Expression.value "page"
-                                        , CodeGen.Expression.value "()"
-                                        ]
-                                    }
+                            , CodeGen.Expression.tuple
+                                [ CodeGen.Expression.value "pageModel"
+                                , CodeGen.Expression.value "pageEffect"
                                 ]
                             ]
                         }
@@ -1632,6 +1591,19 @@ toInitPageCaseExpression layouts pages =
                                 )
                       , expression = callAdvancedPageFunction page "model.url"
                       }
+                    , { argument = CodeGen.Argument.new "( pageModel, pageEffect )"
+                      , annotation = Nothing
+                      , expression =
+                            CodeGen.Expression.parens
+                                [ CodeGen.Expression.function
+                                    { name = "Page.init"
+                                    , arguments =
+                                        [ CodeGen.Expression.value "page"
+                                        , CodeGen.Expression.value "()"
+                                        ]
+                                    }
+                                ]
+                      }
                     ]
                 , in_ =
                     CodeGen.Expression.multilineRecord
@@ -1641,7 +1613,7 @@ toInitPageCaseExpression layouts pages =
                                 CodeGen.Expression.value "Nothing"
 
                             else
-                                CodeGen.Expression.value "Page.layout page |> Maybe.map (initLayout model)"
+                                CodeGen.Expression.value "Page.layout pageModel page |> Maybe.map (initLayout model)"
                           )
                         ]
                 }
