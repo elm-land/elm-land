@@ -60,7 +60,18 @@ let foundTypeScriptErrors = [
   '',
   intro.error(`found a ${Terminal.cyan('TypeScript')} error...`),
   `    When compiling your "${Terminal.pink('src/interop.ts')}" file, the TypeScript compiler`,
-  '    reported some issues. Those errors are provided above.',
+  '    reported some issues. Please review the errors above.',
+  '',
+].join('\n')
+
+let couldntFindTypeScriptBinary = (filepath) => [
+  '',
+  intro.error(`found a ${Terminal.cyan('TypeScript')} error...`),
+  `    When compiling your "${Terminal.pink('src/interop.ts')}" file, the TypeScript`,
+  '    compiler couldn\'t be detected on this computer.',
+  '',
+  '    This is likely a problem with Elm Land, please help us fix it:',
+  `    ${Terminal.cyan('https://github.com/elm-land/elm-land/issues')}`,
   '',
 ].join('\n')
 
@@ -94,6 +105,7 @@ module.exports = {
     didNotRecognizeCommand,
     notInElmLandProject,
     foundTypeScriptErrors,
+    couldntFindTypeScriptBinary,
     customizableFiles
   }
 }

@@ -12,8 +12,6 @@ module Shared exposing
 
 -}
 
-import Dict
-import Domain.User
 import Effect exposing (Effect)
 import Json.Decode
 import Route exposing (Route)
@@ -25,16 +23,15 @@ import Shared.Msg
 
 -- FLAGS
 
-
 type alias Flags =
-    { username : Maybe String
+    { message : String
     }
 
 
 decoder : Json.Decode.Decoder Flags
 decoder =
     Json.Decode.map Flags
-        (Json.Decode.maybe (Json.Decode.field "username" Json.Decode.string))
+        (Json.Decode.field "message" Json.Decode.string)
 
 
 
@@ -47,19 +44,11 @@ type alias Model =
 
 init : Result Json.Decode.Error Flags -> Route () -> ( Model, Effect Msg )
 init flagsResult route =
-    ( case flagsResult of
-        Ok flags ->
-            { user =
-                case flags.username of
-                    Just username ->
-                        Just { username = username }
-
-                    Nothing ->
-                        Nothing
-            }
-
-        Err problem ->
-            { user = Nothing }
+    let
+        _ =
+            Debug.log "FLAGS" flagsResult
+    in
+    ( {}
     , Effect.none
     )
 
@@ -75,13 +64,9 @@ type alias Msg =
 update : Route () -> Msg -> Model -> ( Model, Effect Msg )
 update route msg model =
     case msg of
-        Shared.Msg.SignInPageSignedIn { username } ->
-            ( { model | user = Just { username = username } }
-            , Effect.pushRoute
-                { path = Route.Path.Home_
-                , query = Dict.empty
-                , hash = Nothing
-                }
+        Shared.Msg.ExampleMsgReplaceMe ->
+            ( model
+            , Effect.none
             )
 
 

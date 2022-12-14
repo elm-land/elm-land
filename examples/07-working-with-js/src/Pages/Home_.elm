@@ -1,31 +1,21 @@
 module Pages.Home_ exposing (Model, Msg, page)
 
-import Auth
 import Effect exposing (Effect)
 import Html
-import Html.Attributes as Attr
-import Layouts
+import Html.Events
 import Page exposing (Page)
 import Route exposing (Route)
 import Shared
 import View exposing (View)
 
 
-page : Auth.User -> Shared.Model -> Route () -> Page Model Msg
-page user shared route =
+page : Shared.Model -> Route () -> Page Model Msg
+page shared route =
     Page.new
         { init = init
         , update = update
         , subscriptions = subscriptions
         , view = view
-        }
-        |> Page.withLayout (layout user)
-
-
-layout : Auth.User -> Layouts.Layout
-layout user =
-    Layouts.Sidebar
-        { sidebar = { user = user }
         }
 
 
@@ -49,15 +39,15 @@ init () =
 
 
 type Msg
-    = ExampleMsgReplaceMe
+    = UserClickedButton
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        ExampleMsgReplaceMe ->
+        UserClickedButton ->
             ( model
-            , Effect.none
+            , Effect.openWindowDialog "Hello, from Elm!"
             )
 
 
@@ -76,9 +66,11 @@ subscriptions model =
 
 view : Model -> View Msg
 view model =
-    { title = "Twooter"
+    { title = "Homepage"
     , body =
-        [ Html.h1 [ Attr.class "title is-2" ] [ Html.text "Top posts" ]
-        , Html.h2 [ Attr.class "subtitle is-5" ] [ Html.text "(Curated by a robot)" ]
+        [ Html.button
+            [ Html.Events.onClick UserClickedButton
+            ]
+            [ Html.text "Say hello!" ]
         ]
     }

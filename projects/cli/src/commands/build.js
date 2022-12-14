@@ -20,7 +20,7 @@ let run = async () => {
   return {
     message: [
       '',
-      Utils.intro.success(`successfully built your project at ${Terminal.cyan('./dist')}`),
+      Utils.intro.success(`successfully built your project to the ${Terminal.cyan('./dist')} folder`),
     ].join('\n'),
     files: [],
     effects: [

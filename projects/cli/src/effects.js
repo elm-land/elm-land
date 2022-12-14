@@ -2,12 +2,10 @@ const chokidar = require('chokidar')
 const path = require('path')
 const Vite = require('vite')
 const ElmVitePlugin = require('./vite-plugin/index.js')
-const TypeScriptChecker = require('vite-plugin-checker')
+const TypeScriptPlugin = require('./vite-plugin/typescript/index.js')
 const { Codegen } = require('./codegen')
 const { Files } = require('./files')
 const { Utils, Terminal } = require('./commands/_utils')
-const fs = require('fs')
-const ChildProcess = require('child_process')
 
 
 let srcPagesFolderFilepath = path.join(process.cwd(), 'src', 'Pages')
@@ -155,10 +153,13 @@ let runServer = async (options) => {
           debug,
           optimize: false
         }),
-        TypeScriptChecker.checker({ typescript: hasTsConfigJson, terminal: false })
+        TypeScriptPlugin.plugin()
+        // TypeScriptChecker.checker({ typescript: hasTsConfigJson, terminal: false })
       ],
       logLevel: 'silent'
     })
+
+    server.ws.on('error', (e) => console.error(e))
 
     await server.listen()
 
@@ -202,43 +203,6 @@ let generateElmFiles = async (config) => {
   }
 }
 
-// NOTE: This feels like a good `elm-land plugin typescript`, so folks
-// who don't want to use TypeScript don't need to have a `typescript` dependency!
-const verifyTypescriptCompiles = async () => {
-  let hasInteropTs = await Files.exists(path.join(process.cwd(), 'src', 'interop.ts'))
-
-  if (hasInteropTs) {
-    return new Promise((resolve, reject) => {
-      console.info('\n' + Utils.intro.info(`is compiling ${Terminal.cyan('src/interop.ts')}...`) + '\n')
-
-      // Here's where we'll expect to find the Typescript binary installed
-      const tscPaths = {
-        // When locally installed with `npm install -D elm-land`
-        // ✅ Tested with npm install -D, yarn, pnpm i
-        local: path.join(__dirname, '..', '..', 'typescript', 'bin', 'tsc'),
-        // When globally installed with `npm install -g elm-land`
-        // ✅ Tested with npm install -g, yarn, pnpm
-        global: path.join(__dirname, '..', 'node_modules', '.bin', 'tsc'),
-      }
-
-      const pathToTsc =
-        fs.existsSync(tscPaths.global)
-          ? tscPaths.global
-          : tscPaths.local
-
-      let tsc = ChildProcess.spawn(pathToTsc, ['src/interop.ts', '--noEmit'], { stdio: 'inherit' })
-      tsc.on('close', (code) => {
-        if (code !== 0) {
-          reject(Utils.foundTypeScriptErrors)
-        } else {
-          resolve(true)
-        }
-      })
-    })
-  } else {
-    return true
-  }
-}
 
 let handleEnvironmentVariables = ({ config }) => {
   try {
@@ -352,7 +316,7 @@ const build = async (config) => {
   await generateElmFiles(config)
 
   // Typecheck any TypeScript interop
-  await verifyTypescriptCompiles()
+  await TypeScriptPlugin.verifyTypescriptCompiles()
 
   // Build app in dist folder 
   try {

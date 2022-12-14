@@ -229,7 +229,8 @@ img.browser__image {
   border-radius: 0;
 }
 
-.vp-doc > div > p > img[src$=png] {
+.vp-doc > div > p > img[src$=png],
+.vp-doc > div > p > img[src$=gif] {
   max-height: 50vh;
   border-radius: 0;
   border: 0;

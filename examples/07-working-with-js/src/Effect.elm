@@ -3,7 +3,7 @@ port module Effect exposing
     , none, batch
     , sendCmd, sendMsg
     , pushRoute, replaceRoute, loadExternalUrl
-    , signInAs
+    , openWindowDialog
     , map, toCmd
     )
 
@@ -13,8 +13,7 @@ port module Effect exposing
 @docs none, batch
 @docs sendCmd, sendMsg
 @docs pushRoute, replaceRoute, loadExternalUrl
-
-@docs signInAs
+@docs openWindowDialog
 
 @docs map, toCmd
 
@@ -22,7 +21,7 @@ port module Effect exposing
 
 import Browser.Navigation
 import Dict exposing (Dict)
-import Process
+import Json.Encode
 import Route exposing (Route)
 import Route.Path
 import Route.Query
@@ -42,24 +41,41 @@ type Effect msg
     | ReplaceUrl String
     | LoadExternalUrl String
       -- SHARED
-    | SignInAs { username : String }
+    | SendSharedMsg Shared.Msg.Msg
+      -- PORTS
+    | SendMessageToJavaScript
+        { tag : String
+        , data : Json.Encode.Value
+        }
 
 
+
+-- BASICS
+
+
+{-| Don't send any effect.
+-}
 none : Effect msg
 none =
     None
 
 
+{-| Send multiple effects at once.
+-}
 batch : List (Effect msg) -> Effect msg
 batch =
     Batch
 
 
+{-| Send a normal `Cmd msg` as an effect, something like `Http.get` or `Random.generate`.
+-}
 sendCmd : Cmd msg -> Effect msg
 sendCmd =
     SendCmd
 
 
+{-| Send a message as an effect. Useful when emitting events from UI components.
+-}
 sendMsg : msg -> Effect msg
 sendMsg msg =
     Task.succeed msg
@@ -67,11 +83,12 @@ sendMsg msg =
         |> SendCmd
 
 
-signInAs : { username : String } -> Effect msg
-signInAs options =
-    SignInAs options
+
+-- ROUTING
 
 
+{-| Set the new route, and make the back button go back to the current route.
+-}
 pushRoute :
     { path : Route.Path.Path
     , query : Dict String String
@@ -82,6 +99,9 @@ pushRoute route =
     PushUrl (Route.toString route)
 
 
+{-| Set the new route, but replace the previous one, so clicking the back
+button **won't** go back to the previous route.
+-}
 replaceRoute :
     { path : Route.Path.Path
     , query : Dict String String
@@ -92,16 +112,34 @@ replaceRoute route =
     ReplaceUrl (Route.toString route)
 
 
+{-| Redirect users to a new URL, somewhere external your web application.
+-}
 loadExternalUrl : String -> Effect msg
 loadExternalUrl =
     LoadExternalUrl
 
 
 
--- TRANSFORMING EFFECTS
+-- PORTS
 
 
-{-| Elm Land needs this function to connect your pages and layouts together into one app
+port outgoing : { tag : String, data : Json.Encode.Value } -> Cmd msg
+
+
+openWindowDialog : String -> Effect msg
+openWindowDialog question =
+    SendMessageToJavaScript
+        { tag = "OPEN_WINDOW_DIALOG"
+        , data = Json.Encode.string question
+        }
+
+
+
+-- INTERNALS
+
+
+{-| Elm Land depends on this function to connect pages and layouts
+together into the overall app.
 -}
 map : (msg1 -> msg2) -> Effect msg1 -> Effect msg2
 map fn effect =
@@ -124,18 +162,14 @@ map fn effect =
         LoadExternalUrl url ->
             LoadExternalUrl url
 
-        SignInAs options ->
-            SignInAs options
+        SendSharedMsg sharedMsg ->
+            SendSharedMsg sharedMsg
+
+        SendMessageToJavaScript message ->
+            SendMessageToJavaScript message
 
 
-
--- PORTS
-
-
-port onSaveUser : { username : String } -> Cmd msg
-
-
-{-| Elm Land needs this function to actually perform your Effects
+{-| Elm Land depends on this function to perform your effects.
 -}
 toCmd :
     { key : Browser.Navigation.Key
@@ -152,11 +186,11 @@ toCmd options effect =
         None ->
             Cmd.none
 
-        SendCmd cmd ->
-            cmd
-
         Batch list ->
             Cmd.batch (List.map (toCmd options) list)
+
+        SendCmd cmd ->
+            cmd
 
         PushUrl url ->
             Browser.Navigation.pushUrl options.key url
@@ -167,11 +201,9 @@ toCmd options effect =
         LoadExternalUrl url ->
             Browser.Navigation.load url
 
-        SignInAs data ->
-            Cmd.batch
-                [ Process.sleep 500
-                    -- Simulate a delay of 500ms
-                    |> Task.map (\_ -> Shared.Msg.SignInPageSignedIn data)
-                    |> Task.perform options.fromSharedMsg
-                , onSaveUser data
-                ]
+        SendSharedMsg sharedMsg ->
+            Task.succeed sharedMsg
+                |> Task.perform options.fromSharedMsg
+
+        SendMessageToJavaScript message ->
+            outgoing message

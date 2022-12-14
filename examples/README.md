@@ -49,6 +49,6 @@ Learn how to build a sign-in page, store JWTs, and have pages automatically redi
 
 Learn how to work with URL parameters to build an interactive table with filtering and sorting.
 
-[Example code](./08-query-parameters/) • (Guide coming soon!)
+[Example code](./06-query-parameters/) • (Guide coming soon!)
 
-[![An animated GIF of the Fruit Vibes app](./08-query-parameters/screenshot.gif)](./08-query-parameters/)
+[![An animated GIF of the Fruit Vibes app](./06-query-parameters/screenshot.gif)](./06-query-parameters/)

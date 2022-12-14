@@ -45,7 +45,7 @@ export default {
             // { text: 'Components', link: '/guide/components' },
             // { text: 'Layouts', link: '/guide/layouts' },
             // { text: 'Query parameters', link: '/guide/query-parameters' },
-            // { text: 'Working with JavaScript', link: '/guide/working-with-js' },
+            { text: 'Working with JavaScript', link: '/guide/working-with-js' },
             // { text: 'TypeScript', link: '/guide/typescript' },
             // { text: 'CSS, assets, and static files', link: '/guide/assets-and-static-files' },
             // { text: 'Elm UI and Elm CSS', link: '/guide/elm-ui-and-views' },
@@ -55,7 +55,7 @@ export default {
           ]
         },
         {
-          text: 'Other documentation',
+          text: 'Reference',
           items: [
             { text: 'elm-land.json', link: '/guide/config/elm-land-json' },
             { text: 'CLI commands', link: '/guide/config/cli-commands' },
