@@ -1,4 +1,4 @@
-import './web-components/three-js.js'
+import './web-components/forest-demo.js'
 
 // This is called BEFORE your Elm app starts up
 // 

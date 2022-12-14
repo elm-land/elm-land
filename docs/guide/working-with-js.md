@@ -4,7 +4,9 @@
 
 - How to __send initial data__ when the app starts up
 - How to __call JavaScript code__ from your app
-- How to access __NPM modules__ and __environment variables__
+- How to use __NPM modules__ and define __web components__
+- How to __use TypeScript__ instead of JavaScript
+- How you can safely access __environment variables__
 
 
 ### Getting started
@@ -440,4 +442,298 @@ export const onReady = ({ app, env }) => {
 }
 ```
 
-![](./interop/01-window-alert.gif)
+![A demo of the window alert appearing after clicking "Say hello!"](./interop/01-window-alert.gif)
+
+## Using web components
+
+Another great way to work with existing JavaScript libraries is to define custom [web components](https://developer.mozilla.org/en-US/docs/Web/Web_Components) that are rendered within your Elm application.
+
+Just like a `<div>` or a `<span>`, you can render a `<my-custom-thing>` tag within your Elm application. That HTML element can run be used to safely embed your own JavaScript components.
+
+It's common to do this for things like Google Maps, or if you're embedding an existing React or Vue application within a mostly Elm app.
+
+### Let's use Three.js!
+
+For this example, we are going to use [the _amazing_ Three.js library](https://threejs.org/) to embed a cool, interactive 3D scene in our Elm Land application.
+
+Together we'll define a custom `<forest-demo>` component that will render this interactive Three.js example, complete with orbit controls and some example shapes:
+
+![A demo of a Three.js scene embedded in our Elm application](./interop/02-three-js-demo.gif)
+
+### The JavaScript side
+
+#### 1. Installing NPM modules
+
+To work with JavaScript modules, we'll need to track our dependencies in a `package.json` file. This will make it easy to run `npm install` and get them again later.
+
+Let's create a `package.json` file using `npm`:
+
+```sh
+npm init -y
+```
+
+This creates a new `package.json` file, and now we can install the `three` package as a NPM dependency:
+
+```sh
+npm install --save three
+```
+
+#### 2. Adding the web component
+
+Next, we'll want to create a new file at `src/web-components/forest-demo.js`.
+
+Copy the example snippet below, which is defined as a new custom web component:
+
+```js
+// 
+// This code was taken from this Three.js example:
+// https://github.com/mrdoob/three.js/blob/master/examples/webgl_lightprobe.html
+//
+
+import * as THREE from 'three'
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
+
+window.customElements.define('forest-demo', class extends HTMLElement {
+  connectedCallback() {
+    let size = {
+      width: 800,
+      height: 450
+    }
+
+    let camera, controls, scene, renderer
+    let self = this
+
+    init()
+    animate()
+
+    function init() {
+      scene = new THREE.Scene()
+      scene.background = new THREE.Color(0xcccccc)
+      scene.fog = new THREE.FogExp2(0xcccccc, 0.002)
+
+      renderer = new THREE.WebGLRenderer({ antialias: true })
+      renderer.setPixelRatio(window.devicePixelRatio)
+      renderer.setSize(size.width, size.height)
+
+      self.appendChild(renderer.domElement)
+
+      camera = new THREE.PerspectiveCamera(60, size.width / size.height, 1, 1000)
+      camera.position.set(400, 200, 0)
+
+      // controls
+      controls = new OrbitControls(camera, renderer.domElement)
+      controls.listenToKeyEvents(window)
+      controls.enableDamping = true
+      controls.dampingFactor = 0.05
+      controls.screenSpacePanning = false
+      controls.minDistance = 100
+      controls.maxDistance = 500
+      controls.maxPolarAngle = Math.PI / 2
+
+      // world
+      const geometry = new THREE.CylinderGeometry(0, 10, 30, 4, 1)
+      const material = new THREE.MeshPhongMaterial({ color: 0xffffff, flatShading: true })
+
+      for (let i = 0; i < 500; i++) {
+        const mesh = new THREE.Mesh(geometry, material)
+        mesh.position.x = Math.random() * 1600 - 800
+        mesh.position.y = 0
+        mesh.position.z = Math.random() * 1600 - 800
+        mesh.updateMatrix()
+        mesh.matrixAutoUpdate = false
+        scene.add(mesh)
+      }
+
+      // lights
+      const dirLight1 = new THREE.DirectionalLight(0xffffff)
+      dirLight1.position.set(1, 1, 1)
+      scene.add(dirLight1)
+
+      const dirLight2 = new THREE.DirectionalLight(0x002288)
+      dirLight2.position.set(-1, -1, -1)
+      scene.add(dirLight2)
+
+      const ambientLight = new THREE.AmbientLight(0x222222)
+      scene.add(ambientLight)
+
+      window.addEventListener('resize', onWindowResize)
+    }
+
+    function onWindowResize() {
+      camera.aspect = size.width / size.height
+      camera.updateProjectionMatrix()
+      renderer.setSize(size.width, size.height)
+    }
+
+    function animate() {
+      requestAnimationFrame(animate)
+      controls.update()
+      render()
+    }
+
+    function render() {
+      renderer.render(scene, camera)
+    }
+  }
+})
+```
+
+Now that we have that web component file, we'll need to import it into our `src/interop.js` file.
+
+#### 3. Using our web component
+
+Back in `src/interop.js`, and this line to the top of your file:
+
+```js {1}
+import './webcomponents/forest-demo.js'
+
+// ...
+```
+
+### The Elm side
+
+Now that the new web component is defined, adding it to our Elm application will be easy. 
+
+In our `src/Pages/Home_.elm` file, let's add this line to our `view` function, just below our "Say hello!" button from earlier:
+
+```elm {14}
+module Pages.Home_ exposing (Model, Msg, page)
+
+-- ...
+
+
+view : Model -> View Msg
+view model =
+    { title = "Homepage"
+    , body =
+        [ Html.button
+            [ Html.Events.onClick UserClickedButton
+            ]
+            [ Html.text "Say hello!" ]
+        , Html.node "forest-demo" [] []
+        ]
+    }
+```
+
+That's it! After adding that one line of Elm, you'll see the 3D scene is ready to interact with at `http://localhost:1234`:
+
+![A demo of a Three.js scene embedded in our Elm application](./interop/02-three-js-demo.gif)
+
+#### Rules for Web Components
+
+Web components are a great way to add JavaScript functionality to an Elm Land application. Here is some advice when using them in your own projects:
+
+1. __Don't make Elm and JS overwrite each other__
+
+    In this example, our JavaScript component used `this.appendChild` to insert
+    elements inside of itself. For that reason, we made sure to
+    use `[]` on the Elm side when defining the child list.
+
+    If we didn't, Elm will try to overwrite the JS elements, leading to
+    problems with the Virtual DOM and page rendering.
+
+    ```elm
+    -- ✅ DO
+    Html.node "forest-demo" [] []
+
+    -- 🚫 DON'T
+    Html.node "forest-demo" []
+        [ Html.text "Hello from inside <forest-demo>!!" ]
+    ```
+
+2. __Check out Luke's awesome talk!__
+
+    Luke Westby introduced how to reliably use web components with Elm in
+    his [Elm Europe 2018 talk](https://www.youtube.com/watch?v=tyFe9Pw6TVE).
+
+    This talk covers how to add HTML attributes, listen for changes to properties, and more!
+    ( I can't recommend this resource enough, I reference it all the time )
+
+## Using TypeScript
+
+All of the examples below were using a `src/interop.js` file to integrate with our Elm application. But what if you wanted to use [TypeScript](https://www.typescriptlang.org) instead?
+
+In Elm Land, you can upgrade _any_ project to use TypeScript by renaming the file from `interop.js` to `interop.ts`.
+
+It's really that easy!
+
+### What you can expect
+
+1. __TypeScript compiler errors__ will be displayed in your web browser on save, just like the Elm ones!
+2. __If you run `elm-land build`__, the command will let you know about any TypeScript compiler errors and fail the build.
+3. You can __add your own [tsconfig.json](https://www.typescriptlang.org/tsconfig) file__ to the root of your project (alongside `elm.json` and `package.json`), and Elm Land will automatically use that configuration.
+
+## Environment variables
+
+Elm Land allows you to safely access any environment variables from your `src/interop.js` file.
+
+You may have already spotted the `env` variable available to both the `flags` and `onReady` functions:
+
+
+```js {3,9}
+// ...
+
+export const flags = ({ env }) => {
+  // ...
+}
+
+// ...
+
+export const onReady = ({ app, env }) => {
+  // ...
+}
+```
+
+By default, for security reasons, __no environment variables__ are available. You'll need to edit your `elm-land.json` file's [app.env](./config/elm-land-json.md#appenv) property to allow your Elm application to access a given variable.
+
+::: warning Be thoughtful about what you expose!
+
+Any environment variables you expose in `app.env` will be accessible to _anyone_ with access to your website. Be sure to keep private information or secrets out of your `elm-land.json`
+
+:::
+
+Here's an example of exposing the `NODE_ENV` variable to your frontend:
+
+```json {3}
+{
+  "app": {
+    "env": [ "NODE_ENV" ],
+    ...
+  }
+}
+```
+
+Now that `NODE_ENV` has been listed as a variable, you'll have access to it within the `env` value passed into your Elm application.
+
+You can test this out yourself in `src/interop.js`:
+
+1. Add this `console.log` within your `flags` function to see the value of `env`:
+
+    ```js {4}
+    // ...
+
+    export const flags = ({ env }) => {
+      console.log(env)
+      // ...
+    }
+
+    // ...
+    ```
+
+2. Re-running `elm-land server` with your environment variable set:
+
+    ```sh
+    NODE_ENV=production elm-land server
+    ```
+
+3. Check your web browser's console output:
+
+    ```txt
+    { "NODE_ENV": "production" }
+    ```
+
+### Sending environment variables to Elm
+
+As seen earlier in this guide, you can send this environment variable as [initial data via flags](#sending-initial-data) or define an [incoming port](https://guide.elm-lang.org/interop/ports.html) that sends it in at a later time.
+
+From there, it's common to store your environment variables in your `Shared.Model`, which makes them accessible to any page that needs to use them!

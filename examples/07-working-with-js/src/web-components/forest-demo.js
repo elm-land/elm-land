@@ -1,13 +1,20 @@
-import * as THREE from 'three'
-// import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
-
 // 
-// This code was taken from Three.js examples:
+// This code was taken from this Three.js example:
 // https://github.com/mrdoob/three.js/blob/master/examples/webgl_lightprobe.html
-// 
-window.customElements.define('three-js', class HTMLElement {
+//
+
+import * as THREE from 'three'
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
+
+window.customElements.define('forest-demo', class extends HTMLElement {
   connectedCallback() {
+    let size = {
+      width: 800,
+      height: 450
+    }
+
     let camera, controls, scene, renderer
+    let self = this
 
     init()
     animate()
@@ -19,10 +26,11 @@ window.customElements.define('three-js', class HTMLElement {
 
       renderer = new THREE.WebGLRenderer({ antialias: true })
       renderer.setPixelRatio(window.devicePixelRatio)
-      renderer.setSize(window.innerWidth, window.innerHeight)
-      this.appendChild(renderer.domElement)
+      renderer.setSize(size.width, size.height)
 
-      camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000)
+      self.appendChild(renderer.domElement)
+
+      camera = new THREE.PerspectiveCamera(60, size.width / size.height, 1, 1000)
       camera.position.set(400, 200, 0)
 
       // controls
@@ -70,9 +78,9 @@ window.customElements.define('three-js', class HTMLElement {
     }
 
     function onWindowResize() {
-      camera.aspect = window.innerWidth / window.innerHeight
+      camera.aspect = size.width / size.height
       camera.updateProjectionMatrix()
-      renderer.setSize(window.innerWidth, window.innerHeight)
+      renderer.setSize(size.width, size.height)
     }
 
     function animate() {

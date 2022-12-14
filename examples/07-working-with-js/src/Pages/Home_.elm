@@ -72,5 +72,6 @@ view model =
             [ Html.Events.onClick UserClickedButton
             ]
             [ Html.text "Say hello!" ]
+        , Html.node "forest-demo" [] []
         ]
     }
