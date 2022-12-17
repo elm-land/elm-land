@@ -30,7 +30,10 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
         cache-dependency-path: projects/cli/package-lock.json
+    - run: node -p '[process.platform, process.arch]'
+    - run: ls -lah node_modules/@lydell/
     - run: npm install
+    - run: ls -lah node_modules/@lydell/
     - run: npm run setup
     - run: npm link
     - run: npm test
