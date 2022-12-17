@@ -15,7 +15,7 @@ jobs:
       run:
         working-directory: projects/cli
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     strategy:
       matrix:
