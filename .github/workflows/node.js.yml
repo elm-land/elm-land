@@ -15,7 +15,7 @@ jobs:
       run:
         working-directory: projects/cli
 
-    runs-on: macos-12
+    runs-on: ubuntu-latest
 
     strategy:
       matrix:
@@ -31,7 +31,7 @@ jobs:
         cache: 'npm'
         cache-dependency-path: projects/cli/package-lock.json
     - run: node -p '[process.platform, process.arch]'
-    - run: npm install
+    - run: npm ci --no-audit
     - run: npm run setup
     - run: npm link
     - run: npm test
