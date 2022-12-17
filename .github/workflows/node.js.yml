@@ -33,7 +33,7 @@ jobs:
     - run: node -p '[process.platform, process.arch]'
     - run: npm install
       continue-on-error: true
-    - run: ls -lah node_modules/@lydell/
+    - run: ls -lah /home/runner/work/elm-land/elm-land/projects/cli/node_modules/@lydell/
     - run: npm run setup
     - run: npm link
     - run: npm test
