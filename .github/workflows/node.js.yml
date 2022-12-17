@@ -32,8 +32,6 @@ jobs:
         cache-dependency-path: projects/cli/package-lock.json
     - run: node -p '[process.platform, process.arch]'
     - run: npm install
-      continue-on-error: true
-    - run: ls -lah /home/runner/work/elm-land/elm-land/projects/cli/node_modules/@lydell/
     - run: npm run setup
     - run: npm link
     - run: npm test
