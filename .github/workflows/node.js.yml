@@ -15,11 +15,13 @@ jobs:
       run:
         working-directory: projects/cli
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
 
     strategy:
+      fail-fast: false
       matrix:
-        node-version: [16.x,18.x]
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+        node-version: [16,18]
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
@@ -28,8 +30,6 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-        cache-dependency-path: projects/cli/package-lock.json
     - run: node -p '[process.platform, process.arch]'
     - run: npm ci --no-audit
     - run: npm run setup
