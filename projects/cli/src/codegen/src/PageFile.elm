@@ -395,8 +395,7 @@ toPageModelTypeDeclaration pages =
             in
             List.concat
                 [ List.map toCustomType pages
-                , [ ( "NotFound_", [] )
-                  , ( "Redirecting_", [] )
+                , [ ( "Redirecting_", [] )
                   , ( "Loading_", [ CodeGen.Annotation.type_ "(View Never)" ] )
                   ]
                 ]
@@ -414,7 +413,7 @@ isNotFoundPage (PageFile { filepath }) =
 
 hasDynamicParameters : PageFile -> Bool
 hasDynamicParameters page =
-    not (List.isEmpty (toDynamicParameterList page))
+    not (isNotFoundPage page) && not (List.isEmpty (toDynamicParameterList page))
 
 
 toDynamicParameterList : PageFile -> List String
@@ -455,7 +454,7 @@ toParamsRecordAnnotation (PageFile { filepath }) =
                 fields
     in
     filepath
-        |> List.filter (\str -> str /= "ALL_" && String.endsWith "_" str)
+        |> List.filter (\str -> str /= "ALL_" && str /= "NotFound_" && String.endsWith "_" str)
         |> List.map (String.dropRight 1)
         |> List.map Extras.String.fromPascalCaseToCamelCase
         |> List.map (\fieldName -> ( fieldName, CodeGen.Annotation.string ))
@@ -509,7 +508,7 @@ toRouteFromStringBranch page =
                     let
                         segmentPiece : String
                         segmentPiece =
-                            if String.endsWith "_" piece then
+                            if piece /= "NotFound_" && String.endsWith "_" piece then
                                 piece
                                     |> Extras.String.fromPascalCaseToCamelCase
 
@@ -583,6 +582,9 @@ type Specificity
 toSpecificity : String -> Specificity
 toSpecificity segment =
     if segment == "ALL_" then
+        CatchAll
+
+    else if segment == "NotFound_" then
         CatchAll
 
     else if String.endsWith "_" segment then

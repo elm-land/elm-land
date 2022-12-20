@@ -782,7 +782,7 @@ toLayoutFromPageDeclaration pages =
                 { value = CodeGen.Argument.new "model.page"
                 , branches =
                     List.map toBranch pages
-                        ++ List.map toNothingBranch [ "NotFound_", "Redirecting_", "Loading_ _" ]
+                        ++ List.map toNothingBranch [ "Redirecting_", "Loading_ _" ]
                 }
         }
 
@@ -824,10 +824,7 @@ toPageMsgCustomType pages =
                 []
             )
     in
-    List.concat
-        [ List.map toCustomType pages
-        , [ ( "NotFound_", [] ) ]
-        ]
+    List.map toCustomType pages
 
 
 runWhenAuthenticatedDeclaration : CodeGen.Declaration
@@ -1089,11 +1086,7 @@ toViewPageCaseExpression pages =
         , branches =
             List.concat
                 [ List.map toViewBranch pages
-                , [ { name = "Main.Pages.Model.NotFound_"
-                    , arguments = []
-                    , expression = CodeGen.Expression.value "Pages.NotFound_.page"
-                    }
-                  , { name = "Main.Pages.Model.Redirecting_"
+                , [ { name = "Main.Pages.Model.Redirecting_"
                     , arguments = []
                     , expression = CodeGen.Expression.value "View.none"
                     }
@@ -1255,20 +1248,7 @@ toUpdatePageCaseExpression pages =
     in
     CodeGen.Expression.caseExpression
         { value = CodeGen.Argument.new "( msg, model.page )"
-        , branches =
-            List.concat
-                [ List.map toBranch pages
-                , [ { name = "( Main.Pages.Msg.NotFound_, Main.Pages.Model.NotFound_ )"
-                    , arguments = []
-                    , expression =
-                        CodeGen.Expression.multilineTuple
-                            [ CodeGen.Expression.value "model.page"
-                            , CodeGen.Expression.value "Cmd.none"
-                            ]
-                    }
-                  , defaultCaseBranch
-                  ]
-                ]
+        , branches = List.map toBranch pages ++ [ defaultCaseBranch ]
         }
 
 
@@ -1416,11 +1396,7 @@ toSubscriptionPageCaseExpression pages =
         , branches =
             List.concat
                 [ List.map toBranch pages
-                , [ { name = "Main.Pages.Model.NotFound_"
-                    , arguments = []
-                    , expression = CodeGen.Expression.value "Sub.none"
-                    }
-                  , { name = "Main.Pages.Model.Redirecting_"
+                , [ { name = "Main.Pages.Model.Redirecting_"
                     , arguments = []
                     , expression = CodeGen.Expression.value "Sub.none"
                     }
@@ -1649,23 +1625,7 @@ toInitPageCaseExpression layouts pages =
     CodeGen.Expression.caseExpression
         { value = CodeGen.Argument.new "Route.Path.fromUrl model.url"
         , branches =
-            List.concat
-                [ List.map toBranch pages
-                , [ { name = "Route.Path.NotFound_"
-                    , arguments = []
-                    , expression =
-                        CodeGen.Expression.multilineRecord
-                            [ ( "page"
-                              , CodeGen.Expression.tuple
-                                    [ CodeGen.Expression.value "Main.Pages.Model.NotFound_"
-                                    , CodeGen.Expression.value "Cmd.none"
-                                    ]
-                              )
-                            , ( "layout", CodeGen.Expression.value "Nothing" )
-                            ]
-                    }
-                  ]
-                ]
+            List.map toBranch pages
         }
 
 
@@ -2046,11 +2006,8 @@ routePathElmModule data =
             [ CodeGen.Declaration.customType
                 { name = "Path"
                 , variants =
-                    List.concat
-                        [ data.pages
-                            |> List.map PageFile.toRouteVariant
-                        , [ ( "NotFound_", [] ) ]
-                        ]
+                    data.pages
+                        |> List.map PageFile.toRouteVariant
                 }
             , CodeGen.Declaration.function
                 { name = "fromUrl"
@@ -2189,11 +2146,6 @@ routePathFromStringExpression { pages } =
 toRoutePathToStringBranches : List PageFile -> List CodeGen.Expression.Branch
 toRoutePathToStringBranches files =
     List.map toRoutePathToStringBranch files
-        ++ [ { name = "NotFound_"
-             , arguments = []
-             , expression = CodeGen.Expression.list [ CodeGen.Expression.string "404" ]
-             }
-           ]
 
 
 toRoutePathToStringBranch : PageFile -> CodeGen.Expression.Branch
@@ -2216,6 +2168,9 @@ toRoutePathToStringBranch page =
                         (\piece ->
                             if piece == "ALL_" then
                                 CodeGen.Expression.value "String.join \"/\" (params.first_ :: params.rest_)"
+
+                            else if piece == "NotFound_" then
+                                CodeGen.Expression.string "404"
 
                             else if String.endsWith "_" piece then
                                 CodeGen.Expression.value
@@ -2588,7 +2543,7 @@ decoder =
     Json.Decode.map3 Data
         (Json.Decode.field "pages"
             (Json.Decode.list PageFile.decoder
-                |> Json.Decode.map ignoreNotFoundPage
+                -- |> Json.Decode.map ignoreNotFoundPage
                 |> Json.Decode.map PageFile.sortBySpecificity
             )
         )

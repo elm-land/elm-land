@@ -5,6 +5,11 @@ let generateElmLandFiles = async ({ pages, layouts, router }) => {
   let { Elm } = require('../dist/worker.js')
 
   let newFiles = await new Promise((resolve, reject) => {
+    // Insert not found page if it hasn't been customized yet
+    if (isMissingNotFoundPage(pages)) {
+      pages = pages.concat([hardcodedNotFoundPage])
+    }
+
     let app = Elm.Worker.init({
       flags: {
         tag: 'generate',
@@ -62,4 +67,25 @@ module.exports = {
     addNewPage,
     addNewLayout
   }
+}
+
+// Not found page
+
+const isMissingNotFoundPage = (pages = []) => {
+  let hasNotFoundPage = pages.some(page => page.filepath && page.filepath.length === 1 && page.filepath[0] === 'NotFound_')
+  return !hasNotFoundPage
+}
+
+
+const hardcodedNotFoundPage = {
+  filepath: ['NotFound_'],
+  contents: `module Pages.NotFound_ exposing (page)
+
+import View exposing (View)
+
+
+page : View msg
+page =
+    View.fromString "Page not found."
+`
 }

@@ -79,7 +79,7 @@ newStaticPageModule { hasViewBeenCustomized, page, url } =
                                     (PageFile.toList page
                                         |> List.map
                                             (\piece ->
-                                                if String.endsWith "_" piece then
+                                                if piece /= "NotFound_" && String.endsWith "_" piece then
                                                     CodeGen.Expression.value
                                                         ("params." ++ Extras.String.fromPascalCaseToCamelCase (String.dropRight 1 piece))
 
