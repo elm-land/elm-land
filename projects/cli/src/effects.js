@@ -438,7 +438,7 @@ const generateHtml = async (config) => {
     return `<${tagName}${toAttributeString(attrs)}>${child}</${tagName}>`
   }
 
-  let toHtmlTags = (tagName, tags) => {
+  let toHtmlTags = (tagName, tags = []) => {
     return tags.map(attrs =>
       Object.keys(attrs).length > 0
         ? `<${tagName}${toAttributeString(attrs)}></${tagName}>`
