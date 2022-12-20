@@ -14,6 +14,7 @@ jobs:
       run:
         working-directory: projects/cli
 
+    name: "Node.js"
     runs-on: macos-12
 
     strategy:
@@ -21,17 +22,17 @@ jobs:
         node-version: [16,18]
 
     steps:
-    - name: "Checkout latest code"
-      uses: actions/checkout@v3
-    - name: Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ matrix.node-version }}
-    - name: "Install NPM dependencies"
-      run: npm ci
-    - name: "Build Elm code generator"
-      run: npm run setup
-    - name: "Make elm-land available in terminal"
-      run: npm link
-    - name: "Run test suite"
-      run: npm test
+      - name: "Checkout latest code"
+        uses: actions/checkout@v3
+      - name: Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: "Install NPM dependencies"
+        run: npm ci
+      - name: "Build Elm code generator"
+        run: npm run setup
+      - name: "Make elm-land available in terminal"
+        run: npm link
+      - name: "Run test suite"
+        run: npm test
