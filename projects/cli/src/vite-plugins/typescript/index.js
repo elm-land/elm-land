@@ -31,7 +31,7 @@ const parseImportId = (id) => {
 
 const plugin = () => {
   return {
-    name: 'vite-plugin-elm',
+    name: 'vite-plugin-typescript',
     enforce: 'pre',
     async load(file) {
       const { valid } = parseImportId(file)

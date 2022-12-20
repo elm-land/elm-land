@@ -13,10 +13,10 @@ const viteProjectPath = (dependency) => `/${relative(process.cwd(), dependency)}
 const elmPaths = {
   // When locally installed with `npm install -D elm-land`
   // ✅ Tested with npm install -D, yarn, pnpm i
-  local: path.join(__dirname, '..', '..', '..', '@lydell', 'elm', 'bin', 'elm'),
+  local: path.join(__dirname, '..', '..', '..', '..', '@lydell', 'elm', 'bin', 'elm'),
   // When globally installed with `npm install -g elm-land`
   // ✅ Tested with npm install -g, yarn, pnpm
-  global: path.join(__dirname, '..', '..', 'node_modules', '.bin', 'elm'),
+  global: path.join(__dirname, '..', '..', '..', 'node_modules', '.bin', 'elm'),
 }
 
 const pathToElm =
