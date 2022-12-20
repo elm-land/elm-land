@@ -23,6 +23,7 @@ import Shared.Msg
 
 -- FLAGS
 
+
 type alias Flags =
     { message : String
     }
@@ -44,10 +45,6 @@ type alias Model =
 
 init : Result Json.Decode.Error Flags -> Route () -> ( Model, Effect Msg )
 init flagsResult route =
-    let
-        _ =
-            Debug.log "FLAGS" flagsResult
-    in
     ( {}
     , Effect.none
     )
