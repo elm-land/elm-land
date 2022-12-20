@@ -142,3 +142,19 @@ elm-land customize auth ................... handle user authentication
 Every Elm Land project consists of pages that connect to URL routes. This command 
 lists all the routes in your application, and which pages they correspond to. This
 is helpful when joining a new team, or trying to find out where a URL will take a user.
+
+#### Example
+
+Here's example output of what you'd see if you ran this command in the ["Pages and routes"](../pages.md) examples from the guide:
+
+```txt
+
+  🌈  Elm Land (v0.18.0) found 5 pages in your application
+  ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
+  src/Pages/Home_.elm ............... http://localhost:1234/
+  src/Pages/SignIn.elm .............. http://localhost:1234/sign-in
+  src/Pages/Blog/ALL_.elm ........... http://localhost:1234/blog/*
+  src/Pages/Settings/Account.elm .... http://localhost:1234/settings/account
+  src/Pages/Profile/Username_.elm ... http://localhost:1234/profile/:username
+
+```

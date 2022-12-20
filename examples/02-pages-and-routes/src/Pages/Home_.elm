@@ -10,7 +10,7 @@ page =
     { title = "Homepage"
     , body =
         [ Components.Sidebar.view
-            { page = Html.text "Hello, world!"
+            { page = Html.text "Homepage"
             }
         ]
     }

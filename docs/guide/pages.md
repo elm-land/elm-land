@@ -216,6 +216,95 @@ Here are some reasons you will see an underscore in page filenames:
 
 :::
 
+## Catch-all routes
+
+Some web applications have pages that need to respond to many different URLs with an unknown number of `/` characters between them.
+
+A popular example of this is [GitHub's code explorer page](https://github.com/elm-land/elm-land/tree/main/examples/01-hello-world), which needs to handle a pattern like this:
+
+```txt
+/:owner/:repo/tree/:branchName/*
+```
+
+There will always be an `owner`, `repo`, and `branch` name– but the number of files in a repo could mean any length of URL. It depends on the content of the project's repo.
+
+Here are some real URL examples to help you visualize how the depth of this page's URL could be _any_ length:
+
+```txt
+/elm/compiler/tree/master/README.md
+/elm-land/elm-land/tree/main/docs/README.md
+/elm-land/elm-land/tree/main/examples/01-hello-world/elm.json
+/elm-land/elm-land/tree/main/examples/02-pages-and-routes
+```
+
+### Adding a catch-all route
+
+Luckily, Elm Land supports creating pages like this! Let's use the `elm-land add page` CLI command to create a __"catch-all route"__ that matches deeply nested URL patterns.
+
+For simplicity, let's do one that matches `/blog/*`:
+
+```sh
+elm-land add page:static '/blog/*'
+```
+
+
+This will create a brand new file at `src/Pages/Blog/ALL_.elm`: 
+
+```elm
+module Pages.Blog.ALL_ exposing (page)
+
+import Html exposing (Html)
+import View exposing (View)
+
+
+page : { first_ : String, rest_ : List String } -> View msg
+page params =
+    { title = "Pages.Blog.ALL_"
+    , body =
+        [ Html.text
+            ("/blog/" ++
+                String.join "/" (params.first_ :: params.rest_)
+            )
+        ]
+    }
+
+```
+Just like we saw before with [dynamic routes](#dynamic-routes), the trailing `_` in this filename means this page does something special. In our case, the `ALL_.elm` filename is a reserved keyword for a "catch-all route".
+
+Try opening any of these URLs in our browser:
+
+- `http://localhost:1234/blog/hello`
+- `http://localhost:1234/blog/elm/land`
+- `http://localhost:1234/blog/elm/land/ui`
+
+All of those URLs will match our single page file.
+
+### Understanding catch-all parameters
+
+When working with catch-all routes, you'll have access to two special URL parameters in `route.params`:
+
+- `first_ : String` – The first URL parameter in the catch-all route
+- `rest_ : List String` – The remaining URL parameters
+
+Here's a visual of the URL parameters you'll get for the URLs we listed above:
+
+URL | `route.params`
+:-- | :--
+`/blog/hello` | `{ first_ = "hello", rest_ = [] }`
+`/blog/elm/land` | `{ first_ = "elm", rest_ = [ "land" ] }`
+`/blog/elm/land/ui` | `{ first_ = "elm", rest_ = [ "land", "ui" ] }`
+
+::: tip "Why not just one `List String`?"
+
+Elm Land provides the URL parameters in two separate variables so you
+don't need to worry about handling the case where your list
+is empty.
+
+This is another way to represent a "non-empty list", which is a popular
+data structure for guaranteeing that you don't have to handle an edge case
+for an impossible URL!
+
+:::
 
 ### Our project so far
 
@@ -228,6 +317,8 @@ src/
 |- Pages/
     |- Home_.elm
     |- SignIn.elm
+    |- Blog/
+        |- ALL_.elm
     |- Settings/
         |- Account.elm
     |- Profile/
