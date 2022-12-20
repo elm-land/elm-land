@@ -1,5 +1,24 @@
+
 const { Files } = require("../files")
-const { Utils } = require("./_utils")
+const { Utils, Terminal } = require("./_utils")
+
+let printHelpInfo = () => {
+  return {
+    message: [
+      '',
+      Utils.intro.success(`detected the ${Terminal.green('help')} command`),
+      `    Elm Land comes with a built-in development server powered`,
+      `    by ${Terminal.cyan('Vite 3.0')}. ⚡️`,
+      '',
+      `    By design, the dev server doesn't have many configuration `,
+      `    options, but you can provide the ${Terminal.pink('HOST')} or ${Terminal.pink('PORT')} environment`,
+      `    variables for more advanced use cases.`,
+      '',
+    ].join('\n'),
+    files: [],
+    effects: []
+  }
+}
 
 let run = async () => {
 
@@ -37,6 +56,6 @@ let run = async () => {
 
 module.exports = {
   Server: {
-    run
+    run, printHelpInfo
   }
 }

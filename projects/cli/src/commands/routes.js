@@ -2,6 +2,22 @@ const path = require('path')
 const { Files } = require("../files")
 const { Utils, Terminal } = require("./_utils")
 
+let printHelpInfo = () => {
+  return {
+    message: [
+      '',
+      Utils.intro.success(`detected the ${Terminal.green('help')} command`),
+      `    The ${Terminal.cyan('elm-land routes')} command is a way for you to see`,
+      `    all the URL routes in your Elm application.`,
+      ``,
+      `    ( This is inspired by the ${Terminal.cyan('Ruby on Rails')} community )`,
+      ''
+    ].join('\n'),
+    files: [],
+    effects: []
+  }
+}
+
 let run = async ({ url } = {}) => {
   try {
     await Files.readFromUserFolder('elm-land.json')
@@ -78,6 +94,6 @@ let run = async ({ url } = {}) => {
 
 module.exports = {
   Routes: {
-    run
+    run, printHelpInfo
   }
 }

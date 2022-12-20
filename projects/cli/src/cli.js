@@ -49,22 +49,46 @@ let run = async (commandFromCli) => {
 
   let subcommandHandlers = {
     'init': ([folderName] = []) => {
-      return Init.run({ name: folderName })
+      if (isHelpFlag(folderName)) {
+        return Init.printHelpInfo()
+      } else {
+        return Init.run({ name: folderName })
+      }
     },
-    'add': (args) => {
-      return Add.run({ arguments: args })
+    'add': (args = []) => {
+      if (isHelpFlag(args[0])) {
+        return Add.printHelpInfo()
+      } else {
+        return Add.run({ arguments: args })
+      }
     },
-    'server': (args) => {
-      return Server.run({})
+    'server': (args = []) => {
+      if (isHelpFlag(args[0])) {
+        return Server.printHelpInfo()
+      } else {
+        return Server.run({})
+      }
     },
-    'build': (args) => {
-      return Build.run({})
+    'build': (args = []) => {
+      if (isHelpFlag(args[0])) {
+        return Build.printHelpInfo()
+      } else {
+        return Build.run({})
+      }
     },
     'customize': ([moduleName] = []) => {
-      return Customize.run({ moduleName })
+      if (isHelpFlag(moduleName)) {
+        return Customize.printHelpInfo()
+      } else {
+        return Customize.run({ moduleName })
+      }
     },
     'routes': ([url] = []) => {
-      return Routes.run({ url })
+      if (isHelpFlag(url)) {
+        return Routes.printHelpInfo()
+      } else {
+        return Routes.run({ url })
+      }
     }
   }
 
@@ -79,7 +103,7 @@ let run = async (commandFromCli) => {
     }
   }
 
-  if (!subCommand || ['-h', 'help', '--help'].includes(subCommand)) {
+  if (!subCommand || isHelpFlag(subCommand)) {
     return {
       message: [
         '',
@@ -112,6 +136,10 @@ let run = async (commandFromCli) => {
       ].join('\n')
     )
   }
+}
+
+const isHelpFlag = (str) => {
+  return ['-h', '--help'].includes(str)
 }
 
 module.exports = {

@@ -2,6 +2,29 @@ const path = require('path')
 const { Files } = require("../files")
 const { Utils, Terminal } = require('./_utils')
 
+let helpMessage = [
+  `    For example, if your project was called "${Terminal.cyan('my-cool-app')}"`,
+  `    you'd run this command to get started:`,
+  '',
+  `    elm-land ${Terminal.pink('init my-cool-app')}`,
+  '',
+].join('\n')
+
+let printHelpInfo = () => {
+  return {
+    message: [
+      '',
+      Utils.intro.success(`detected the ${Terminal.green('help')} command`),
+      `    The ${Terminal.cyan('elm-land init')} command needs a folder name to`,
+      `    create a new Elm Land project.`,
+      '',
+      helpMessage
+    ].join('\n'),
+    files: [],
+    effects: []
+  }
+}
+
 let run = async (options = {}) => {
   let { name } = options
 
@@ -106,15 +129,11 @@ let run = async (options = {}) => {
     return Promise.reject([
       '',
       Utils.intro.error(`expected ${Terminal.red('a folder name')} for your project`),
-      `    For example, if your project was called "${Terminal.cyan('my-cool-app')}"`,
-      `    you'd run this command to get started:`,
-      '',
-      `    elm-land ${Terminal.pink('init my-cool-app')}`,
-      '',
+      helpMessage
     ].join('\n'))
   }
 }
 
 module.exports = {
-  Init: { run }
+  Init: { run, printHelpInfo }
 }

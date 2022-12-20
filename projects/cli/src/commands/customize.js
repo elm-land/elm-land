@@ -1,6 +1,29 @@
 const { Files } = require("../files")
 const { Utils, Terminal } = require("./_utils")
 
+let printHelpInfo = () => {
+  return {
+    message: [
+      '',
+      Utils.intro.success(`detected the ${Terminal.green('help')} command`),
+      `    The ${Terminal.cyan('elm-land customize')} command, you'll need to provide`,
+      `    the file you'd like to customize.`,
+      '',
+      '    Here are the customizable files:',
+      '',
+      ...(
+        Object.entries(Utils.customizableFiles)
+          .map(([command, { description }]) =>
+            `    elm-land customize ${Terminal.pink(command)} ${description}`
+          )
+      ),
+      ''
+    ].join('\n'),
+    files: [],
+    effects: []
+  }
+}
+
 let run = async ({ moduleName } = {}) => {
 
   try {
@@ -56,6 +79,6 @@ let run = async ({ moduleName } = {}) => {
 
 module.exports = {
   Customize: {
-    run
+    run, printHelpInfo
   }
 }

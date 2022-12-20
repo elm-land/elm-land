@@ -4,6 +4,25 @@ const path = require('path')
 const { Codegen } = require("../codegen")
 
 let addNewLayout = () => async ([name]) => {
+  if (name === '-h' || name === '--help') {
+    return {
+      message: [
+        '',
+        Utils.intro.success(`detected the ${Terminal.green('help')} command`),
+        `    The ${Terminal.cyan('elm-land add layout')} command, you'll need to provide`,
+        `    the module names for the new layouts you'd like to add.`,
+        '',
+        '    Here are some examples:',
+        '',
+        `    elm-land add layout ${Terminal.pink(`Default`)}`,
+        `    elm-land add layout ${Terminal.pink(`Sidebar.WithHeader`)}`,
+        ''
+      ].join('\n'),
+      files: [],
+      effects: []
+    }
+  }
+
   if (!name) {
     return Promise.reject([
       '',
@@ -95,7 +114,24 @@ let addNewPage = (kind) => async ([originalUrl]) => {
     ''
   ]
 
-  if (!originalUrl) {
+
+  if (originalUrl === '-h' || originalUrl === '--help') {
+    return {
+      message: [
+        '',
+        Utils.intro.success(`detected the ${Terminal.green('help')} command`),
+        `    The ${Terminal.cyan('elm-land add page')} command, you'll need to provide`,
+        `    the new URLs for the pages you'd like to add.`,
+        '',
+        ...pageAddExamples,
+        ''
+      ].join('\n'),
+      files: [],
+      effects: []
+    }
+  }
+
+  if (!originalUrl || originalUrl === '-h' || originalUrl === '--help') {
     return Promise.reject([
       '',
       Utils.intro.error(`expected a ${Terminal.cyan('<url>')} argument`),
@@ -183,6 +219,36 @@ let toNewPageModuleNamePieces = ({ url }) => {
     .map(toNewPageModuleNamePiece)
 }
 
+let subcommandList = [
+  '    Here are the commands:',
+  '',
+  `    elm-land add ${Terminal.pink('page <url>')} ....................... add a new page`,
+  `    elm-land add ${Terminal.pink('layout <module-name>')} ........... add a new layout`,
+  ``,
+  ``,
+  `    🌱 If you are following the guide at ${Terminal.cyan('https://elm.land/guide')}`,
+  `    here are some other commands for folks learning the framework:`,
+  ``,
+  `    elm-land add ${Terminal.pink('page:static <url>')} ...... add a new read-only page`,
+  `    elm-land add ${Terminal.pink('page:sandbox <url>')} ...... add a new stateful page`,
+  `    elm-land add ${Terminal.pink('page:element <url>')} ... add a new side-effect page`,
+]
+
+let printHelpInfo = () => {
+  return {
+    message: [
+      '',
+      Utils.intro.success(`detected the ${Terminal.green('help')} command`),
+      `    To use ${Terminal.cyan('elm-land add')}, you'll need to provide one of two`,
+      `    subcommands, depending on what you'd like to add:`,
+      '',
+      ...subcommandList,
+      '',
+    ].join('\n'),
+    files: [],
+    effects: []
+  }
+}
 
 let run = async ({ arguments }) => {
   let [subCommand, ...otherArgs] = arguments
@@ -202,27 +268,14 @@ let run = async ({ arguments }) => {
     return Promise.reject(Utils.didNotRecognizeCommand({
       baseCommand: 'elm-land add',
       subCommand: subCommand,
-      subcommandList: [
-        '    Here are the commands:',
-        '',
-        `    elm-land add ${Terminal.pink('page <url>')} ....................... add a new page`,
-        `    elm-land add ${Terminal.pink('layout <module-name>')} ........... add a new layout`,
-        ``,
-        ``,
-        `    🌱 If you are following the guide at ${Terminal.cyan('https://elm.land/guide')}`,
-        `    here are some other commands for folks learning the framework:`,
-        ``,
-        `    elm-land add ${Terminal.pink('page:static <url>')} ...... add a new read-only page`,
-        `    elm-land add ${Terminal.pink('page:sandbox <url>')} ...... add a new stateful page`,
-        `    elm-land add ${Terminal.pink('page:element <url>')} ... add a new side-effect page`,
-      ]
+      subcommandList: subcommandList
     }))
   }
 }
 
 module.exports = {
   Add: {
-    run
+    run, printHelpInfo
   }
 }
 
