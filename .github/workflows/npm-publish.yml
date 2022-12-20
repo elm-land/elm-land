@@ -12,7 +12,7 @@ jobs:
     defaults:
       run:
         working-directory: projects/cli
-    runs-on: ubuntu-latest
+    runs-on: macos-12
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -28,7 +28,7 @@ jobs:
       run:
         working-directory: projects/cli
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: macos-12
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
