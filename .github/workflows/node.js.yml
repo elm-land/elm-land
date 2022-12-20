@@ -15,12 +15,12 @@ jobs:
       run:
         working-directory: projects/cli
 
-    runs-on: ${{ matrix.os }}
+    runs-on: macOS-latest # ${{ matrix.os }}
 
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+        # os: [ubuntu-latest, macOS-latest, windows-latest]
         node-version: [16,18]
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
@@ -30,8 +30,8 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-    - run: node -p '[process.platform, process.arch]'
-    - run: npm ci --no-audit
+    # - run: node -p '[process.platform, process.arch]'
+    - run: npm ci
     - run: npm run setup
     - run: npm link
     - run: npm test
