@@ -1,8 +1,9 @@
 {
   "name": "elm-land",
-  "version": "0.17.3",
+  "version": "0.18.0",
   "description": "Reliable web apps for everyone",
   "main": "index.js",
+  "types": "./index.d.ts",
   "bin": {
     "elm-land": "src/index.js"
   },
@@ -35,11 +36,11 @@
     "bats": "1.7.0"
   },
   "dependencies": {
+    "@lydell/elm": "0.19.1-9",
     "chokidar": "3.5.3",
-    "elm": "0.19.1-5",
-    "elm-esm": "1.1.4",
     "node-elm-compiler": "5.0.6",
-    "terser": "5.14.0",
-    "vite": "3.0.9"
+    "terser": "5.15.1",
+    "typescript": "4.9.3",
+    "vite": "3.2.5"
   }
 }

@@ -27,13 +27,19 @@ const intro = {
   error: (message) => [
     `🌈  ${name} ${message}`,
     Terminal.red('    ' + '⎺'.repeat(stripAnsi(message).length + stripAnsi(name).length + 1))
+  ].join('\n'),
+
+  // Show header with red underline
+  info: (message) => [
+    `🌈  ${name} ${message}`,
+    Terminal.cyan('    ' + '⎺'.repeat(stripAnsi(message).length + stripAnsi(name).length + 1))
   ].join('\n')
 }
 
 let didNotRecognizeCommand = ({ baseCommand, subCommand, subcommandList }) => [
   '',
   subCommand === undefined
-    ? intro.error(`expected more arguments for ${Terminal.cyan(baseCommand)}`)
+    ? intro.error(`needs more details for ${Terminal.cyan(baseCommand)}`)
     : intro.error(`couldn't find an ${Terminal.cyan(`${baseCommand} ${subCommand}`)} command`),
   ...subcommandList,
   '',
@@ -50,25 +56,44 @@ let notInElmLandProject = [
   '',
 ].join('\n')
 
+let foundTypeScriptErrors = [
+  '',
+  intro.error(`found a ${Terminal.cyan('TypeScript')} error...`),
+  `    When compiling your "${Terminal.pink('src/interop.ts')}" file, the TypeScript compiler`,
+  '    reported some issues. Please review the errors above.',
+  '',
+].join('\n')
+
+let couldntFindTypeScriptBinary = (filepath) => [
+  '',
+  intro.error(`found a ${Terminal.cyan('TypeScript')} error...`),
+  `    When compiling your "${Terminal.pink('src/interop.ts')}" file, the TypeScript`,
+  '    compiler couldn\'t be detected on this computer.',
+  '',
+  '    This is likely a problem with Elm Land, please help us fix it:',
+  `    ${Terminal.cyan('https://github.com/elm-land/elm-land/issues')}`,
+  '',
+].join('\n')
+
 let customizableFiles = {
   'shared': {
-    filepath: 'Shared.elm',
+    filepaths: ['Shared.elm', 'Shared/Model.elm', 'Shared/Msg.elm'],
     description: '.................... share data across pages'
   },
   'not-found': {
-    filepath: 'Pages/NotFound_.elm',
+    filepaths: ['Pages/NotFound_.elm'],
     description: '... the 404 page shown for unknown routes'
   },
   'view': {
-    filepath: 'View.elm',
+    filepaths: ['View.elm'],
     description: '................ use Elm UI, Elm CSS, and more'
   },
   'effect': {
-    filepath: 'Effect.elm',
+    filepaths: ['Effect.elm'],
     description: '............. send custom effects from pages'
   },
   'auth': {
-    filepath: 'Auth.elm',
+    filepaths: ['Auth.elm'],
     description: '................... handle user authentication'
   },
 }
@@ -79,6 +104,8 @@ module.exports = {
     intro,
     didNotRecognizeCommand,
     notInElmLandProject,
+    foundTypeScriptErrors,
+    couldntFindTypeScriptBinary,
     customizableFiles
   }
 }

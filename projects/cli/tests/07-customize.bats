@@ -13,7 +13,7 @@ load helpers
   # Run elm-land customize without an argument
   run elm-land customize
   expectToFail
-  expectOutputContains "expected more arguments"
+  expectOutputContains "needs more details"
   expectOutputContains "Here are the commands"
 
   # Clean up tmp folder
@@ -52,10 +52,14 @@ load helpers
   # Run elm-land customize without an argument
   run elm-land customize shared
   expectToPass
-  expectOutputContains "created a file"
+  expectOutputContains "3 new files"
   expectOutputContains "./src/Shared.elm"
+  expectOutputContains "./src/Shared/Model.elm"
+  expectOutputContains "./src/Shared/Msg.elm"
 
   expectFileExists "src/Shared.elm"
+  expectFileExists "src/Shared/Model.elm"
+  expectFileExists "src/Shared/Msg.elm"
 
   # Clean up tmp folder
   cd ../..

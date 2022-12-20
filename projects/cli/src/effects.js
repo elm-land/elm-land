@@ -1,14 +1,20 @@
 const chokidar = require('chokidar')
 const path = require('path')
 const Vite = require('vite')
-const ElmVitePlugin = require('./vite-plugin/index.js')
+const ElmVitePlugin = require('./vite-plugins/elm/index.js')
+const TypeScriptPlugin = require('./vite-plugins/typescript/index.js')
 const { Codegen } = require('./codegen')
 const { Files } = require('./files')
-const { Utils } = require('./commands/_utils')
+const { Utils, Terminal } = require('./commands/_utils')
 
 
 let srcPagesFolderFilepath = path.join(process.cwd(), 'src', 'Pages')
 let srcLayoutsFolderFilepath = path.join(process.cwd(), 'src', 'Layouts')
+
+const mode = () =>
+  (process.env.NODE_ENV === 'production')
+    ? 'production'
+    : 'development'
 
 let runServer = async (options) => {
   let server
@@ -21,10 +27,23 @@ let runServer = async (options) => {
     await handleElmLandFiles()
 
     // Expose ENV variables explicitly allowed by the user
-    attemptToLoadEnvVariablesFromUserConfig()
+    handleEnvironmentVariables({ config })
 
-    // Listen for changes to static assets too, so the browser
-    // automatically shows the latest CSS changes or other static assets
+    // Listen for changes to the "src" folder, so the browser
+    // automatically refreshes when an Elm file is changed
+    let srcFolder = `${path.join(process.cwd(), 'src')}/**/*.elm`
+    let srcFolderWatcher = chokidar.watch(srcFolder, {
+      ignorePermissionErrors: true,
+      ignoreInitial: true
+    })
+    let mainElmPath = path.join(process.cwd(), '.elm-land', 'src', 'Main.elm')
+
+    srcFolderWatcher.on('all', () => {
+      Files.touch(mainElmPath)
+    })
+
+    // Listen for changes to static assets, so the browser
+    // automatically shows the latest asset changes
     let staticFolder = `${path.join(process.cwd(), 'static')}/**`
     let staticFolderWatcher = chokidar.watch(staticFolder, {
       ignorePermissionErrors: true,
@@ -37,13 +56,12 @@ let runServer = async (options) => {
     })
 
     // Listen for config file changes, regenerating the index.html
-    // and updating any changes to the environment variables
+    // and restart server in case there were any changes to the environment variables
     let configFilepath = path.join(process.cwd(), 'elm-land.json')
     let configFileWatcher = chokidar.watch(configFilepath, {
       ignorePermissionErrors: true,
       ignoreInitial: true
     })
-
     configFileWatcher.on('change', async () => {
       try {
         let oldConfig = config
@@ -52,19 +70,29 @@ let runServer = async (options) => {
         let result = await generateHtml(config)
 
         // We'll need a better way to check options that affect codegen eventually
-        if (config.app.options.useHashRouting != oldConfig.app.options.useHashRouting) {
+        if (config.app.router.useHashRouting != oldConfig.app.router.useHashRouting) {
           await generateElmFiles(config)
         }
 
-        let hadAnyEnvVarChanges = attemptToLoadEnvVariablesFromUserConfig(config)
-        if (hadAnyEnvVarChanges) {
-          server.restart(true)
-        }
+        handleEnvironmentVariables({ config })
+
+        server.restart(true)
 
         if (result.problem) {
           console.info(result.problem)
         }
       } catch (_) { }
+    })
+
+    // Listen for `.env` file changes, and restart the dev server
+    let envFilepath = path.join(process.cwd(), '.env')
+    let envFileWatcher = chokidar.watch(envFilepath, {
+      ignorePermissionErrors: true,
+      ignoreInitial: true
+    })
+    envFileWatcher.on('change', async () => {
+      handleEnvironmentVariables({ config })
+      server.restart(true)
     })
 
     // Listen for changes to interop file, so the page is automatically
@@ -94,7 +122,7 @@ let runServer = async (options) => {
     // if the customized versions are deleted
     let customizableFileFilepaths =
       Object.values(Utils.customizableFiles)
-        .map(({ filepath }) => path.join(process.cwd(), 'src', ...filepath.split('/')))
+        .flatMap(({ filepaths }) => filepaths.map(filepath => path.join(process.cwd(), 'src', ...filepath.split('/'))))
     let customizedFilepaths = chokidar.watch(customizableFileFilepaths, {
       ignorePermissionErrors: true,
       ignoreInitial: true
@@ -103,20 +131,18 @@ let runServer = async (options) => {
 
     // Check config for Elm debugger options
     let debug = false
+    try { debug = config.app.elm[mode()].debugger }
+    catch (_) { }
 
-    try {
-      if (process.env.NODE_ENV === 'production') {
-        debug = config.app.elm.production.debugger
-      } else {
-        debug = config.app.elm.development.debugger
-      }
-    } catch (_) { }
+    const hasTsConfigJson = await Files.exists(path.join(process.cwd(), 'tsconfig.json'))
 
-    // Run the vite server on options.port 
+    // Run the vite server on options.port
     server = await Vite.createServer({
       configFile: false,
       root: path.join(process.cwd(), '.elm-land', 'server'),
       publicDir: path.join(process.cwd(), 'static'),
+      envDir: process.cwd(),
+      envPrefix: 'ELM_LAND_',
       server: {
         host: options.host,
         port: options.port,
@@ -126,10 +152,13 @@ let runServer = async (options) => {
         ElmVitePlugin.plugin({
           debug,
           optimize: false
-        })
+        }),
+        TypeScriptPlugin.plugin()
       ],
       logLevel: 'silent'
     })
+
+    server.ws.on('error', (e) => console.error(e))
 
     await server.listen()
 
@@ -144,7 +173,7 @@ let runServer = async (options) => {
 
 let generateElmFiles = async (config) => {
   try {
-    let options = config.app.options
+    let router = config.app.router
     let pageFilepaths = Files.listElmFilepathsInFolder(srcPagesFolderFilepath)
     let layouts = Files.listElmFilepathsInFolder(srcLayoutsFolderFilepath).map(filepath => filepath.split('/'))
 
@@ -158,7 +187,7 @@ let generateElmFiles = async (config) => {
         }
       }))
 
-    let newFiles = await Codegen.generateElmLandFiles({ pages, layouts, options })
+    let newFiles = await Codegen.generateElmLandFiles({ pages, layouts, router })
 
     await Files.create(
       newFiles.map(generatedFile => ({
@@ -173,34 +202,36 @@ let generateElmFiles = async (config) => {
   }
 }
 
-let lastEnvKeysSeen = []
 
-let attemptToLoadEnvVariablesFromUserConfig = (config) => {
-  let hadAnyEnvVarChanges = false
+let handleEnvironmentVariables = ({ config }) => {
   try {
-    config = config || require(path.join(process.cwd(), 'elm-land.json'))
-    if (config) {
-      if (config.app && config.app.env && Array.isArray(config.app.env)) {
-        // Remove the old environment variables
-        for (var key of lastEnvKeysSeen) {
-          delete process.env[`VITE_${key}`]
-          hadAnyEnvVarChanges = true
-        }
+    if (config && config.app && config.app.env && Array.isArray(config.app.env)) {
+      const env = Vite.loadEnv(mode(), process.cwd(), '')
+      let allowed = config.app.env.reduce((obj, key) => {
+        obj[key] = env[key]
+        return obj
+      }, {})
 
-        // Add new environment variables
-        for (var key of config.app.env) {
-          if (typeof key === 'string') {
-            process.env[`VITE_${key}`] = process.env[key] || ''
-          }
+      // Remove all variables with `ELM_LAND_` prefix
+      for (var key in process.env) {
+        if (key.startsWith('ELM_LAND_')) {
+          delete process.env[key]
         }
-
-        // Set "lastEnvKeysSeen" for next time
-        lastEnvKeysSeen = config.app.env
       }
+
+      // Provide env variables with prefixes, so they are
+      // available in frontend code.
+      Object.keys(allowed).forEach(key => {
+        if (allowed[key]) {
+          process.env['ELM_LAND_' + key] = allowed[key]
+        }
+      })
+
+      return allowed
     }
   } catch (_) { }
 
-  return hadAnyEnvVarChanges
+  return {}
 }
 
 const attempt = (fn) => {
@@ -211,25 +242,29 @@ const attempt = (fn) => {
   }
 }
 
-const customize = async (filepath) => {
-  let source = path.join(__dirname, 'templates', '_elm-land', 'customizable', ...filepath.split('/'))
-  let destination = path.join(process.cwd(), 'src', ...filepath.split('/'))
+const customize = async (filepaths) => {
+  await Promise.all(
+    filepaths.map(async filepath => {
+      let source = path.join(__dirname, 'templates', '_elm-land', 'customizable', ...filepath.split('/'))
+      let destination = path.join(process.cwd(), 'src', ...filepath.split('/'))
 
-  let alreadyExists = await Files.exists(destination)
+      let alreadyExists = await Files.exists(destination)
 
-  if (!alreadyExists) {
-    // Copy the default into the user's `src` folder
-    await Files.copyPasteFile({
-      source,
-      destination,
+      if (!alreadyExists) {
+        // Copy the default into the user's `src` folder
+        await Files.copyPasteFile({
+          source,
+          destination,
+        })
+      }
+
+      try {
+        await Files.remove(path.join(process.cwd(), '.elm-land', 'src', ...filepath.split('/')))
+      } catch (_) {
+        // If the file isn't there, no worries
+      }
     })
-  }
-
-  try {
-    await Files.remove(path.join(process.cwd(), '.elm-land', 'src', ...filepath.split('/')))
-  } catch (_) {
-    // If the file isn't there, no worries
-  }
+  )
 
   return { problem: null }
 }
@@ -237,7 +272,7 @@ const customize = async (filepath) => {
 
 
 const syncCustomizableFiles = async () => {
-  let defaultFilepaths = Object.values(Utils.customizableFiles).map(obj => obj.filepath)
+  let defaultFilepaths = Object.values(Utils.customizableFiles).flatMap(obj => obj.filepaths)
 
   await Promise.all(defaultFilepaths.map(async filepath => {
     let fileInUsersSrcFolder = path.join(process.cwd(), 'src', ...filepath.split('/'))
@@ -269,35 +304,91 @@ const handleElmLandFiles = async () => {
 }
 
 const build = async (config) => {
-
   // Create default files in `.elm-land/src` if they aren't already 
   // defined by the user in the `src` folder
   await handleElmLandFiles()
 
-  // Load ENV variables
-  attemptToLoadEnvVariablesFromUserConfig()
+  // Ensure environment variables work as expected
+  handleEnvironmentVariables({ config })
 
   // Generate Elm files
   await generateElmFiles(config)
 
+  // Typecheck any TypeScript interop
+  await TypeScriptPlugin.verifyTypescriptCompiles()
+
   // Build app in dist folder 
-  await Vite.build({
-    configFile: false,
-    root: path.join(process.cwd(), '.elm-land', 'server'),
-    publicDir: path.join(process.cwd(), 'static'),
-    build: {
-      outDir: '../../dist'
-    },
-    plugins: [
-      ElmVitePlugin.plugin({
-        debug: false,
-        optimize: true
-      })
-    ],
-    logLevel: 'silent'
-  })
+  try {
+    await Vite.build({
+      configFile: false,
+      root: path.join(process.cwd(), '.elm-land', 'server'),
+      publicDir: path.join(process.cwd(), 'static'),
+      build: {
+        outDir: '../../dist'
+      },
+      envDir: process.cwd(),
+      envPrefix: 'ELM_LAND_',
+      plugins: [
+        ElmVitePlugin.plugin({
+          debug: false,
+          optimize: true
+        })
+      ],
+      logLevel: 'silent'
+    })
+  } catch (err) {
+    return handleViteBuildErrors(err)
+  }
 
   return { problem: null }
+}
+
+const handleViteBuildErrors = (err) => {
+  let message = (err ? err.message : '') || ''
+
+  try {
+    // Provide helpful error for missing local JS dependencies
+    if (message.includes('Could not resolve')) {
+      let [dependencyName, fileImportingPackage] = message.split('Could not resolve \'')[1].split(`' from `)
+      fileImportingPackage = fileImportingPackage.split('\n')[0]
+
+      message = [
+        `    The file ${Terminal.cyan(fileImportingPackage)} tried to import`,
+        `    another file at ${Terminal.pink(`"${dependencyName}"`)}, but it wasn't found.`,
+        '',
+        '    Maybe the file was deleted?'
+      ].join('\n')
+    }
+
+    // Provide helpful error for missing NPM dependencies
+    else if (message.includes('failed to resolve import')) {
+      let [dependencyName, fileImportingPackage] = message.split('failed to resolve import ')[1].split(' from "')
+      fileImportingPackage = fileImportingPackage.split('".')[0]
+
+      message = [
+        `    The file ${Terminal.cyan(fileImportingPackage)} tried to import`,
+        `    an NPM package named ${Terminal.pink(dependencyName)}, but it wasn't found.`,
+        '',
+        `    Make sure to run ${Terminal.cyan('npm install')} before running this command.`
+      ].join('\n')
+    }
+
+    return Promise.reject([
+      '',
+      Utils.intro.error('failed to build this project.'),
+      message,
+      ''
+    ].join('\n'))
+  } catch (_) { }
+
+  return Promise.reject([
+    '',
+    Utils.intro.error('failed to build this project.'),
+    `    Here's the problem that was reported:`,
+    '',
+    message.split('\n').map(line => '    ' + line).join('\n'),
+    ''
+  ].join('\n'))
 }
 
 // Generating index.html from elm-land.json file
@@ -418,7 +509,7 @@ let run = async (effects) => {
         results.push(await build(effect.config))
         break
       case 'customize':
-        results.push(await customize(effect.filepath))
+        results.push(await customize(effect.filepaths))
         break
       default:
         results.push({ problem: `❗️ Unrecognized effect: ${effect.kind}` })

@@ -3,17 +3,11 @@ module Pages.Settings exposing (Model, Msg, page)
 import Auth
 import Effect exposing (Effect)
 import Html
-import Html.Attributes as Attr
-import Layout exposing (Layout)
+import Layouts
 import Page exposing (Page)
 import Route exposing (Route)
 import Shared
 import View exposing (View)
-
-
-layout : Layout
-layout =
-    Layout.Navbar
 
 
 page : Auth.User -> Shared.Model -> Route () -> Page Model Msg
@@ -23,6 +17,17 @@ page user shared route =
         , update = update
         , subscriptions = subscriptions
         , view = view
+        }
+        |> Page.withLayout (layout user)
+
+
+layout : Auth.User -> Model -> Layouts.Layout
+layout user model =
+    Layouts.Sidebar
+        { sidebar =
+            { title = "Settings"
+            , user = user
+            }
         }
 
 
@@ -74,14 +79,5 @@ subscriptions model =
 view : Model -> View Msg
 view model =
     { title = "Settings"
-    , body =
-        [ Html.section [ Attr.class "hero is-light" ]
-            [ Html.div [ Attr.class "hero-body has-text-centered" ]
-                [ Html.h1 [ Attr.class "title" ] [ Html.text "Settings" ]
-                , Html.h2 [ Attr.class "subtitle" ]
-                    [ Html.text "Imagine there's a form here or something!"
-                    ]
-                ]
-            ]
-        ]
+    , body = [ Html.text "/settings" ]
     }

@@ -194,33 +194,24 @@ view route model =
 viewFilters : Route () -> Model -> Html Msg
 viewFilters route model =
     let
-        hasNoActiveFilters : Bool
-        hasNoActiveFilters =
-            List.all (\condition -> condition == True)
-                [ toSearchQuery route == Nothing
-                , toMaybeColor route == Nothing
+        hasActiveFilters : Bool
+        hasActiveFilters =
+            List.any (\condition -> condition == True)
+                [ toSearchQuery route /= Nothing
+                , toMaybeColor route /= Nothing
                 ]
     in
-    div [ class "level" ]
-        [ div [ class "level-left" ]
-            [ div [ class "level-item" ]
-                [ div [ class "is-flex" ]
-                    [ viewSearchbar model
-                    , viewColorFilter route
-                    ]
-                ]
+    div [ class "is-flex is-align-items-flex-end" ]
+        [ viewSearchbar model
+        , viewColorFilter route
+        , button
+            [ class "button"
+            , classList [ ( "is-link", hasActiveFilters ) ]
+            , disabled (Basics.not hasActiveFilters)
+            , Html.Events.onClick UserClickedClearFilters
             ]
-        , div [ class "level-right" ]
-            [ div [ class "level-item" ]
-                [ button
-                    [ class "button is-light is-small"
-                    , disabled hasNoActiveFilters
-                    , Html.Events.onClick UserClickedClearFilters
-                    ]
-                    [ span [] [ text "Clear filters" ]
-                    , span [ class "icon is-small" ] [ i [ class "fas fa-times" ] [] ]
-                    ]
-                ]
+            [ span [] [ text "Clear filters" ]
+            , span [ class "icon is-small" ] [ i [ class "fas fa-times" ] [] ]
             ]
         ]
 
@@ -267,15 +258,17 @@ viewColorFilter route =
         onInput selectedLabel =
             UserSelectedColor (fromStringToChoice selectedLabel)
     in
-    label [ class "field" ]
-        [ span [ class "label" ] [ text "Filter by color" ]
-        , div [ class "control" ]
-            [ div [ class "select" ]
-                [ select [ Html.Events.onInput onInput ]
-                    ([ option [] [ text "Select a color..." ]
-                     ]
-                        ++ List.map viewSelectOption Fruit.Color.list
-                    )
+    div [ class "mr-4" ]
+        [ label [ class "field" ]
+            [ span [ class "label" ] [ text "Filter by color" ]
+            , div [ class "control" ]
+                [ div [ class "select" ]
+                    [ select [ Html.Events.onInput onInput ]
+                        ([ option [] [ text "Select a color..." ]
+                         ]
+                            ++ List.map viewSelectOption Fruit.Color.list
+                        )
+                    ]
                 ]
             ]
         ]

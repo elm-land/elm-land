@@ -1,4 +1,4 @@
-# Working with REST APIs
+# REST APIs
 
 ### What we'll learn
 
@@ -904,7 +904,7 @@ viewPokemon index pokemon =
 
         pokemonDetailRoute : Route.Path.Path
         pokemonDetailRoute =
-            Route.Path.Pokemon__Name_
+            Route.Path.Pokemon_Name_
                 { name = pokemon.name
                 }
     in

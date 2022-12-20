@@ -1,0 +1,21 @@
+{
+  "name": "14-scss-and-assets",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm:dev:*\"",
+    "dev:sass": "sass -w assets/scss/main.scss static/dist/main.css",
+    "dev:elm-land": "elm-land server",
+    "build": "npm run build:sass && npm run build:elm-land",
+    "build:sass": "sass assets/scss/main.scss static/dist/main.css",
+    "build:elm-land": "elm-land build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "7.6.0",
+    "sass": "1.57.1"
+  }
+}

@@ -1,0 +1,16 @@
+@import "./_colors.scss";
+
+html, body {
+  height: 100%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: sans-serif;
+  color: $foreground;
+  background: $background;
+}

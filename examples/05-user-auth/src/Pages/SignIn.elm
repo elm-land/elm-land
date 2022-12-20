@@ -1,19 +1,15 @@
 module Pages.SignIn exposing (Model, Msg, page)
 
-import Api.User
-import Dict
+import Api.Me
+import Api.SignIn
 import Effect exposing (Effect)
 import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events
 import Http
-import Json.Decode
-import Json.Encode
 import Page exposing (Page)
 import Route exposing (Route)
-import Route.Path
 import Shared
-import Shared.Msg
 import View exposing (View)
 
 
@@ -23,7 +19,7 @@ page shared route =
         { init = init
         , update = update
         , subscriptions = subscriptions
-        , view = view route
+        , view = view
         }
 
 
@@ -34,8 +30,8 @@ page shared route =
 type alias Model =
     { email : String
     , password : String
-    , errors : List FormError
     , isSubmittingForm : Bool
+    , errors : List Api.SignIn.Error
     }
 
 
@@ -43,8 +39,8 @@ init : () -> ( Model, Effect Msg )
 init () =
     ( { email = ""
       , password = ""
-      , errors = []
       , isSubmittingForm = False
+      , errors = []
       }
     , Effect.none
     )
@@ -57,8 +53,8 @@ init () =
 type Msg
     = UserUpdatedInput Field String
     | UserSubmittedForm
-    | SignInApiResponded (Result (List FormError) String)
-    | UserApiResponded (Result Http.Error Api.User.User)
+    | SignInApiResponded (Result (List Api.SignIn.Error) Api.SignIn.Data)
+    | MeApiResponded String (Result Http.Error Api.Me.User)
 
 
 type Field
@@ -70,18 +66,12 @@ update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
         UserUpdatedInput Email value ->
-            ( { model
-                | email = value
-                , errors = clearErrorsFor Email model.errors
-              }
+            ( { model | email = value }
             , Effect.none
             )
 
         UserUpdatedInput Password value ->
-            ( { model
-                | password = value
-                , errors = clearErrorsFor Password model.errors
-              }
+            ( { model | password = value }
             , Effect.none
             )
 
@@ -90,135 +80,54 @@ update msg model =
                 | isSubmittingForm = True
                 , errors = []
               }
-            , Effect.fromCmd
-                (callSignInApi
-                    { email = model.email
-                    , password = model.password
-                    }
-                )
+            , Api.SignIn.post
+                { onResponse = SignInApiResponded
+                , email = model.email
+                , password = model.password
+                }
             )
 
-        SignInApiResponded (Err formErrors) ->
-            ( { model | errors = formErrors, isSubmittingForm = False }
+        SignInApiResponded (Ok { token }) ->
+            ( model
+            , Api.Me.get
+                { token = token
+                , onResponse = MeApiResponded token
+                }
+            )
+
+        SignInApiResponded (Err errors) ->
+            ( { model
+                | isSubmittingForm = False
+                , errors = errors
+              }
             , Effect.none
             )
 
-        SignInApiResponded (Ok token) ->
-            ( model
-            , Effect.batch
-                [ Effect.save
-                    { key = "token"
-                    , value = Json.Encode.string token
+        MeApiResponded token (Ok user) ->
+            ( { model | isSubmittingForm = False }
+            , Effect.signIn
+                { id = user.id
+                , name = user.name
+                , profileImageUrl = user.profileImageUrl
+                , email = user.email
+                , token = token
+                }
+            )
+
+        MeApiResponded _ (Err httpError) ->
+            let
+                error : Api.SignIn.Error
+                error =
+                    { field = Nothing
+                    , message = "User couldn't be found"
                     }
-                , Effect.fromCmd
-                    (Api.User.getCurrentUser
-                        { token = token
-                        , onResponse = UserApiResponded
-                        }
-                    )
-                ]
+            in
+            ( { model
+                | isSubmittingForm = False
+                , errors = [ error ]
+              }
+            , Effect.signOut
             )
-
-        UserApiResponded result ->
-            ( model
-            , Effect.fromSharedMsg (Shared.Msg.SignInPageSignedInUser result)
-            )
-
-
-clearErrorsFor : Field -> List FormError -> List FormError
-clearErrorsFor field errors =
-    errors
-        |> List.filter (\error -> error.field /= Just field)
-
-
-callSignInApi : { email : String, password : String } -> Cmd Msg
-callSignInApi form =
-    let
-        json : Json.Encode.Value
-        json =
-            Json.Encode.object
-                [ ( "email", Json.Encode.string form.email )
-                , ( "password", Json.Encode.string form.password )
-                ]
-
-        tokenDecoder : Json.Decode.Decoder String
-        tokenDecoder =
-            Json.Decode.field "token" Json.Decode.string
-    in
-    Http.post
-        { url = "http://localhost:5000/api/sign-in"
-        , body = Http.jsonBody json
-        , expect = expectApiResponse SignInApiResponded tokenDecoder
-        }
-
-
-expectApiResponse :
-    (Result (List FormError) value -> msg)
-    -> Json.Decode.Decoder value
-    -> Http.Expect msg
-expectApiResponse toMsg decoder =
-    Http.expectStringResponse toMsg (toFormApiResult decoder)
-
-
-type alias FormError =
-    { field : Maybe Field
-    , message : String
-    }
-
-
-formErrorsDecoder : Json.Decode.Decoder (List FormError)
-formErrorsDecoder =
-    let
-        formErrorDecoder : Json.Decode.Decoder FormError
-        formErrorDecoder =
-            Json.Decode.map2 FormError
-                (Json.Decode.field "field" Json.Decode.string
-                    |> Json.Decode.map fromStringToMaybeField
-                )
-                (Json.Decode.field "message" Json.Decode.string)
-
-        fromStringToMaybeField : String -> Maybe Field
-        fromStringToMaybeField field =
-            case field of
-                "email" ->
-                    Just Email
-
-                "password" ->
-                    Just Password
-
-                _ ->
-                    Nothing
-    in
-    Json.Decode.field "errors" (Json.Decode.list formErrorDecoder)
-
-
-toFormApiResult : Json.Decode.Decoder value -> Http.Response String -> Result (List FormError) value
-toFormApiResult decoder response =
-    case response of
-        Http.BadUrl_ _ ->
-            Err [ { field = Nothing, message = "Unexpected URL format" } ]
-
-        Http.Timeout_ ->
-            Err [ { field = Nothing, message = "Server did not respond" } ]
-
-        Http.NetworkError_ ->
-            Err [ { field = Nothing, message = "Could not connect to server" } ]
-
-        Http.BadStatus_ { statusCode } rawJson ->
-            case Json.Decode.decodeString formErrorsDecoder rawJson of
-                Ok errors ->
-                    Err errors
-
-                Err _ ->
-                    Err [ { field = Nothing, message = "Received status code " ++ String.fromInt statusCode } ]
-
-        Http.GoodStatus_ _ rawJson ->
-            case Json.Decode.decodeString decoder rawJson of
-                Ok value ->
-                    Ok value
-
-                Err _ ->
-                    Err [ { field = Nothing, message = "Received unexpected API response" } ]
 
 
 
@@ -234,82 +143,73 @@ subscriptions model =
 -- VIEW
 
 
-view : Route () -> Model -> View Msg
-view route model =
+view : Model -> View Msg
+view model =
     { title = "Sign in"
     , body =
-        [ viewPage route model
+        [ viewPage model
         ]
     }
 
 
-viewPage : Route () -> Model -> Html Msg
-viewPage route model =
-    Html.div [ Attr.class "is-flex hero is-light is-align-items-center is-justify-content-center", Attr.style "height" "100vh" ]
-        [ Html.div [ Attr.class "p-4 pb-6" ]
-            [ Html.h1 [ Attr.class "title" ] [ Html.text "Sign in" ]
-            , case Dict.get "from" route.query of
-                Just originalUrl ->
-                    Html.h2 [ Attr.class "subtitle is-size-6" ]
-                        [ Html.text ("Redirected from " ++ originalUrl) ]
-
-                _ ->
-                    Html.text ""
-            , viewForm model
+viewPage : Model -> Html Msg
+viewPage model =
+    Html.div [ Attr.class "columns is-mobile is-centered" ]
+        [ Html.div [ Attr.class "column is-narrow" ]
+            [ Html.div [ Attr.class "section" ]
+                [ Html.h1 [ Attr.class "title" ] [ Html.text "Sign in" ]
+                , viewForm model
+                ]
             ]
         ]
 
 
 viewForm : Model -> Html Msg
 viewForm model =
-    let
-        firstErrorForField : Field -> Maybe String
-        firstErrorForField field =
-            case List.filter (\err -> err.field == Just field) model.errors of
-                [] ->
-                    Nothing
-
-                error :: _ ->
-                    Just error.message
-
-        viewFormInput : { field : Field, value : String } -> Html Msg
-        viewFormInput options =
-            let
-                error : Maybe String
-                error =
-                    firstErrorForField options.field
-            in
-            Html.div [ Attr.class "field" ]
-                [ Html.label [ Attr.class "label" ] [ Html.text (fromFieldToLabel options.field) ]
-                , Html.div [ Attr.class "control" ]
-                    [ Html.input
-                        [ Attr.class "input"
-                        , Attr.classList [ ( "is-danger", error /= Nothing ) ]
-                        , Attr.disabled model.isSubmittingForm
-                        , Attr.type_ (fromFieldToInputType options.field)
-                        , Attr.value options.value
-                        , Html.Events.onInput (UserUpdatedInput options.field)
-                        ]
-                        []
-                    ]
-                , case error of
-                    Just message ->
-                        Html.p [ Attr.class "help is-danger" ] [ Html.text message ]
-
-                    Nothing ->
-                        Html.text ""
-                ]
-    in
     Html.form [ Attr.class "box", Html.Events.onSubmit UserSubmittedForm ]
         [ viewFormInput
             { field = Email
             , value = model.email
+            , error = findFieldError "email" model
             }
         , viewFormInput
             { field = Password
             , value = model.password
+            , error = findFieldError "password" model
             }
-        , viewFormControls model.isSubmittingForm
+        , viewFormControls model
+        ]
+
+
+viewFormInput :
+    { field : Field
+    , value : String
+    , error : Maybe Api.SignIn.Error
+    }
+    -> Html Msg
+viewFormInput options =
+    Html.div [ Attr.class "field" ]
+        [ Html.label [ Attr.class "label" ] [ Html.text (fromFieldToLabel options.field) ]
+        , Html.div [ Attr.class "control" ]
+            [ Html.input
+                [ Attr.class "input"
+                , Attr.classList
+                    [ ( "is-danger", options.error /= Nothing )
+                    ]
+                , Attr.type_ (fromFieldToInputType options.field)
+                , Attr.value options.value
+                , Html.Events.onInput (UserUpdatedInput options.field)
+                ]
+                []
+            ]
+        , case options.error of
+            Just error ->
+                Html.p
+                    [ Attr.class "help is-danger" ]
+                    [ Html.text error.message ]
+
+            Nothing ->
+                Html.text ""
         ]
 
 
@@ -333,16 +233,54 @@ fromFieldToInputType field =
             "password"
 
 
-viewFormControls : Bool -> Html Msg
-viewFormControls isSubmitting =
-    Html.div [ Attr.class "field is-grouped is-grouped-right" ]
-        [ Html.div
-            [ Attr.class "control" ]
-            [ Html.button
-                [ Attr.class "button is-link"
-                , Attr.disabled isSubmitting
-                , Attr.classList [ ( "is-loading", isSubmitting ) ]
+viewFormControls : Model -> Html Msg
+viewFormControls model =
+    Html.div []
+        [ Html.div [ Attr.class "field is-grouped is-grouped-right" ]
+            [ Html.div
+                [ Attr.class "control" ]
+                [ Html.button
+                    [ Attr.class "button is-link"
+                    , Attr.disabled model.isSubmittingForm
+                    , Attr.classList [ ( "is-loading", model.isSubmittingForm ) ]
+                    ]
+                    [ Html.text "Sign in" ]
                 ]
-                [ Html.text "Sign in" ]
             ]
+        , case findFormError model of
+            Just error ->
+                Html.p
+                    [ Attr.class "help content is-danger" ]
+                    [ Html.text error.message ]
+
+            Nothing ->
+                Html.text ""
         ]
+
+
+
+-- ERRORS
+
+
+findFieldError : String -> Model -> Maybe Api.SignIn.Error
+findFieldError field model =
+    let
+        hasMatchingField : Api.SignIn.Error -> Bool
+        hasMatchingField error =
+            error.field == Just field
+    in
+    model.errors
+        |> List.filter hasMatchingField
+        |> List.head
+
+
+findFormError : Model -> Maybe Api.SignIn.Error
+findFormError model =
+    let
+        doesntHaveField : Api.SignIn.Error -> Bool
+        doesntHaveField error =
+            error.field == Nothing
+    in
+    model.errors
+        |> List.filter doesntHaveField
+        |> List.head

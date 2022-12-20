@@ -1,77 +1,93 @@
 port module Effect exposing
-    ( Effect, none, map, batch
-    , fromCmd, fromSharedMsg
+    ( Effect
+    , none, batch
+    , sendCmd, sendMsg
     , pushRoute, replaceRoute, loadExternalUrl
-    , pushUrlPath
-    , save
-    , toCmd
+    , signIn, signOut
+    , saveUser, clearUser
+    , map, toCmd
     )
 
 {-|
 
-@docs Effect, none, map, batch
-@docs fromCmd, fromSharedMsg
-@docs Msg, fromAction
+@docs Effect
+@docs none, batch
+@docs sendCmd, sendMsg
 @docs pushRoute, replaceRoute, loadExternalUrl
-@docs pushUrlPath
-@docs save
-@docs toCmd
+
+@docs signIn, signOut
+@docs saveUser, clearUser
+
+@docs map, toCmd
 
 -}
 
-import Api.User
 import Browser.Navigation
 import Dict exposing (Dict)
-import Http
 import Json.Encode
 import Route exposing (Route)
 import Route.Path
 import Route.Query
+import Shared.Model
 import Shared.Msg
 import Task
 import Url exposing (Url)
 
 
 type Effect msg
-    = None
+    = -- BASICS
+      None
     | Batch (List (Effect msg))
-    | Cmd (Cmd msg)
-    | Shared Shared.Msg.Msg
+    | SendCmd (Cmd msg)
+      -- ROUTING
     | PushUrl String
     | ReplaceUrl String
     | LoadExternalUrl String
-    | SaveToLocalStorage { key : String, value : Json.Encode.Value }
+      -- SHARED
+    | SendSharedMsg Shared.Msg.Msg
+    | SendToLocalStorage { key : String, value : Json.Encode.Value }
 
 
+
+-- BASICS
+
+
+{-| Don't send any effect.
+-}
 none : Effect msg
 none =
     None
 
 
+{-| Send multiple effects at once.
+-}
 batch : List (Effect msg) -> Effect msg
 batch =
     Batch
 
 
-fromCmd : Cmd msg -> Effect msg
-fromCmd =
-    Cmd
+{-| Send a normal `Cmd msg` as an effect, something like `Http.get` or `Random.generate`.
+-}
+sendCmd : Cmd msg -> Effect msg
+sendCmd =
+    SendCmd
 
 
-fromSharedMsg : Shared.Msg.Msg -> Effect msg
-fromSharedMsg =
-    Shared
+{-| Send a message as an effect. Useful when emitting events from UI components.
+-}
+sendMsg : msg -> Effect msg
+sendMsg msg =
+    Task.succeed msg
+        |> Task.perform identity
+        |> SendCmd
 
 
 
 -- ROUTING
 
 
-pushUrlPath : String -> Effect msg
-pushUrlPath str =
-    PushUrl str
-
-
+{-| Set the new route, and make the back button go back to the current route.
+-}
 pushRoute :
     { path : Route.Path.Path
     , query : Dict String String
@@ -82,6 +98,9 @@ pushRoute route =
     PushUrl (Route.toString route)
 
 
+{-| Set the new route, but replace the previous one, so clicking the back
+button **won't** go back to the previous route.
+-}
 replaceRoute :
     { path : Route.Path.Path
     , query : Dict String String
@@ -92,27 +111,82 @@ replaceRoute route =
     ReplaceUrl (Route.toString route)
 
 
+{-| Redirect users to a new URL, somewhere external your web application.
+-}
 loadExternalUrl : String -> Effect msg
 loadExternalUrl =
     LoadExternalUrl
 
 
 
+-- SHARED
+
+
+signIn :
+    { token : String
+    , id : String
+    , name : String
+    , profileImageUrl : String
+    , email : String
+    }
+    -> Effect msg
+signIn user =
+    SendSharedMsg (Shared.Msg.SignIn user)
+
+
+signOut : Effect msg
+signOut =
+    SendSharedMsg Shared.Msg.SignOut
+
+
+
 -- LOCAL STORAGE
 
 
-port saveToLocalStorage : { key : String, value : Json.Encode.Value } -> Cmd msg
+port sendToLocalStorage :
+    { key : String
+    , value : Json.Encode.Value
+    }
+    -> Cmd msg
 
 
-save : { key : String, value : Json.Encode.Value } -> Effect msg
-save keyValueRecord =
-    SaveToLocalStorage keyValueRecord
+saveUser :
+    { token : String
+    , id : String
+    , name : String
+    , profileImageUrl : String
+    , email : String
+    }
+    -> Effect msg
+saveUser user =
+    SendToLocalStorage
+        { key = "user"
+        , value =
+            Json.Encode.object
+                [ ( "token", Json.Encode.string user.token )
+                , ( "id", Json.Encode.string user.id )
+                , ( "name", Json.Encode.string user.name )
+                , ( "profileImageUrl", Json.Encode.string user.profileImageUrl )
+                , ( "email", Json.Encode.string user.email )
+                ]
+        }
+
+
+clearUser : Effect msg
+clearUser =
+    SendToLocalStorage
+        { key = "user"
+        , value = Json.Encode.null
+        }
 
 
 
--- MAP
+-- INTERNALS
 
 
+{-| Elm Land depends on this function to connect pages and layouts
+together into the overall app.
+-}
 map : (msg1 -> msg2) -> Effect msg1 -> Effect msg2
 map fn effect =
     case effect of
@@ -122,11 +196,8 @@ map fn effect =
         Batch list ->
             Batch (List.map (map fn) list)
 
-        Cmd cmd ->
-            Cmd (Cmd.map fn cmd)
-
-        Shared msg ->
-            Shared msg
+        SendCmd cmd ->
+            SendCmd (Cmd.map fn cmd)
 
         PushUrl url ->
             PushUrl url
@@ -137,21 +208,25 @@ map fn effect =
         LoadExternalUrl url ->
             LoadExternalUrl url
 
-        SaveToLocalStorage options ->
-            SaveToLocalStorage options
+        SendSharedMsg sharedMsg ->
+            SendSharedMsg sharedMsg
+
+        SendToLocalStorage value ->
+            SendToLocalStorage value
 
 
-
--- Used by Main.elm
-
-
+{-| Elm Land depends on this function to perform your effects.
+-}
 toCmd :
     { key : Browser.Navigation.Key
-    , fromSharedMsg : Shared.Msg.Msg -> mainMsg
-    , fromPageMsg : msg -> mainMsg
+    , url : Url
+    , shared : Shared.Model.Model
+    , fromSharedMsg : Shared.Msg.Msg -> msg
+    , fromCmd : Cmd msg -> msg
+    , toCmd : msg -> Cmd msg
     }
     -> Effect msg
-    -> Cmd mainMsg
+    -> Cmd msg
 toCmd options effect =
     case effect of
         None ->
@@ -160,12 +235,8 @@ toCmd options effect =
         Batch list ->
             Cmd.batch (List.map (toCmd options) list)
 
-        Cmd cmd ->
-            Cmd.map options.fromPageMsg cmd
-
-        Shared msg ->
-            Task.succeed msg
-                |> Task.perform options.fromSharedMsg
+        SendCmd cmd ->
+            cmd
 
         PushUrl url ->
             Browser.Navigation.pushUrl options.key url
@@ -176,5 +247,9 @@ toCmd options effect =
         LoadExternalUrl url ->
             Browser.Navigation.load url
 
-        SaveToLocalStorage keyValueRecord ->
-            saveToLocalStorage keyValueRecord
+        SendSharedMsg sharedMsg ->
+            Task.succeed sharedMsg
+                |> Task.perform options.fromSharedMsg
+
+        SendToLocalStorage value ->
+            sendToLocalStorage value

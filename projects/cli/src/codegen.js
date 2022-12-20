@@ -1,14 +1,19 @@
 const path = require('path')
 const { Files } = require('./files')
 
-let generateElmLandFiles = async ({ pages, layouts, options }) => {
+let generateElmLandFiles = async ({ pages, layouts, router }) => {
   let { Elm } = require('../dist/worker.js')
 
   let newFiles = await new Promise((resolve, reject) => {
+    // Insert not found page if it hasn't been customized yet
+    if (isMissingNotFoundPage(pages)) {
+      pages = pages.concat([hardcodedNotFoundPage])
+    }
+
     let app = Elm.Worker.init({
       flags: {
         tag: 'generate',
-        data: { pages, layouts, options }
+        data: { pages, layouts, router }
       }
     })
     app.ports.onComplete.subscribe(resolve)
@@ -29,7 +34,7 @@ let addNewPage = async ({ kind, url, filepath }) => {
         data: {
           hasViewBeenCustomized,
           kind,
-          filepath,
+          page: { filepath, contents: '' },
           url
         }
       }
@@ -40,14 +45,14 @@ let addNewPage = async ({ kind, url, filepath }) => {
   return newFiles
 }
 
-let addNewLayout = async ({ kind, name }) => {
+let addNewLayout = async ({ moduleSegments }) => {
   let { Elm } = require('../dist/worker.js')
 
   let newFiles = await new Promise((resolve, reject) => {
     let app = Elm.Worker.init({
       flags: {
         tag: 'add-layout',
-        data: { kind, name }
+        data: { moduleSegments }
       }
     })
     app.ports.onComplete.subscribe(resolve)
@@ -62,4 +67,25 @@ module.exports = {
     addNewPage,
     addNewLayout
   }
+}
+
+// Not found page
+
+const isMissingNotFoundPage = (pages = []) => {
+  let hasNotFoundPage = pages.some(page => page.filepath && page.filepath.length === 1 && page.filepath[0] === 'NotFound_')
+  return !hasNotFoundPage
+}
+
+
+const hardcodedNotFoundPage = {
+  filepath: ['NotFound_'],
+  contents: `module Pages.NotFound_ exposing (page)
+
+import View exposing (View)
+
+
+page : View msg
+page =
+    View.fromString "Page not found."
+`
 }

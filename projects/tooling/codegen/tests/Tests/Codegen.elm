@@ -160,7 +160,6 @@ suite =
                                                 ]
                                             ]
                                           )
-                                        , ( "NotFound_", [] )
                                         ]
                                     }
                                 , CodeGen.Declaration.function

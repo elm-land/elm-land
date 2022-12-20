@@ -2,7 +2,6 @@ module Shared exposing
     ( Flags, decoder
     , Model, Msg
     , init, update, subscriptions
-    , SignInStatus(..)
     )
 
 {-|
@@ -10,49 +9,49 @@ module Shared exposing
 @docs Flags, decoder
 @docs Model, Msg
 @docs init, update, subscriptions
-@docs handleSharedMsg
-
-@docs SignInStatus
 
 -}
 
-import Api.User exposing (User)
-import Browser.Navigation
 import Dict
 import Effect exposing (Effect)
-import Http
 import Json.Decode
-import Json.Encode
 import Route exposing (Route)
 import Route.Path
-import Shared.Msg exposing (Msg(..))
+import Shared.Model
+import Shared.Msg
 
 
 
--- INIT
+-- FLAGS
 
 
 type alias Flags =
-    { token : Maybe String
+    { user : Maybe Shared.Model.User
     }
 
 
 decoder : Json.Decode.Decoder Flags
 decoder =
     Json.Decode.map Flags
-        (Json.Decode.maybe (Json.Decode.field "token" Json.Decode.string))
+        (Json.Decode.field "user" (Json.Decode.maybe userDecoder))
+
+
+userDecoder : Json.Decode.Decoder Shared.Model.User
+userDecoder =
+    Json.Decode.map5 Shared.Model.User
+        (Json.Decode.field "token" Json.Decode.string)
+        (Json.Decode.field "id" Json.Decode.string)
+        (Json.Decode.field "name" Json.Decode.string)
+        (Json.Decode.field "profileImageUrl" Json.Decode.string)
+        (Json.Decode.field "email" Json.Decode.string)
+
+
+
+-- INIT
 
 
 type alias Model =
-    { signInStatus : SignInStatus
-    }
-
-
-type SignInStatus
-    = NotSignedIn
-    | SignedInWithToken String
-    | SignedInWithUser User
-    | FailedToSignIn Http.Error
+    Shared.Model.Model
 
 
 init : Result Json.Decode.Error Flags -> Route () -> ( Model, Effect Msg )
@@ -61,30 +60,10 @@ init flagsResult route =
         flags : Flags
         flags =
             flagsResult
-                |> Result.withDefault { token = Nothing }
-
-        signInStatus : SignInStatus
-        signInStatus =
-            case flags.token of
-                Nothing ->
-                    NotSignedIn
-
-                Just token ->
-                    SignedInWithToken token
+                |> Result.withDefault { user = Nothing }
     in
-    ( { signInStatus = signInStatus
-      }
-    , case flags.token of
-        Just token ->
-            Effect.fromCmd
-                (Api.User.getCurrentUser
-                    { token = token
-                    , onResponse = UserApiResponded
-                    }
-                )
-
-        Nothing ->
-            Effect.none
+    ( { user = flags.user }
+    , Effect.none
     )
 
 
@@ -99,38 +78,21 @@ type alias Msg =
 update : Route () -> Msg -> Model -> ( Model, Effect Msg )
 update route msg model =
     case msg of
-        UserApiResponded (Ok user) ->
-            ( { model | signInStatus = SignedInWithUser user }
-            , Effect.none
+        Shared.Msg.SignIn user ->
+            ( { model | user = Just user }
+            , Effect.batch
+                [ Effect.pushRoute
+                    { path = Route.Path.Home_
+                    , query = Dict.empty
+                    , hash = Nothing
+                    }
+                , Effect.saveUser user
+                ]
             )
 
-        UserApiResponded (Err httpError) ->
-            ( { model | signInStatus = FailedToSignIn httpError }
-            , Effect.none
-            )
-
-        SignInPageSignedInUser (Ok user) ->
-            ( { model | signInStatus = SignedInWithUser user }
-            , case Dict.get "from" route.query of
-                Just redirectUrlPath ->
-                    Effect.pushUrlPath redirectUrlPath
-
-                Nothing ->
-                    Effect.pushRoute
-                        { path = Route.Path.Home_
-                        , query = Dict.empty
-                        , hash = Nothing
-                        }
-            )
-
-        SignInPageSignedInUser (Err httpError) ->
-            ( { model | signInStatus = FailedToSignIn httpError }
-            , Effect.none
-            )
-
-        PageSignedOutUser ->
-            ( { model | signInStatus = NotSignedIn }
-            , Effect.save { key = "token", value = Json.Encode.null }
+        Shared.Msg.SignOut ->
+            ( { model | user = Nothing }
+            , Effect.clearUser
             )
 
 

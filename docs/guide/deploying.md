@@ -16,7 +16,7 @@ elm-land build
 
 ```txt
 
-🌈  Elm Land successfully built your project at ./dist
+🌈  Elm Land successfully built your project to the ./dist folder
     ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
 ```
 

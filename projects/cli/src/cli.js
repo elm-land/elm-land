@@ -3,6 +3,7 @@ const { Add } = require('./commands/add')
 const { Server } = require('./commands/server')
 const { Build } = require('./commands/build')
 const { Customize } = require('./commands/customize')
+const { Routes } = require('./commands/routes')
 const { Utils, Terminal } = require('./commands/_utils')
 
 let { version } = require('../package.json')
@@ -14,9 +15,11 @@ let subcommandList = [
   `    🚀 elm-land ${Terminal.pink('server')} ................ run a local dev server`,
   `    📦 elm-land ${Terminal.pink('build')} .......... build your app for production`,
   `    📄 elm-land ${Terminal.pink('add page <url>')} ................ add a new page`,
-  `    📑 elm-land ${Terminal.pink('add layout <name>')} ........... add a new layout`,
-  `    🔧 elm-land ${Terminal.pink('customize <name>')} .. customize a default module`
+  `    🍱 elm-land ${Terminal.pink('add layout <name>')} ........... add a new layout`,
+  `    🔧 elm-land ${Terminal.pink('customize <name>')} .. customize a default module`,
+  `    🔍 elm-land ${Terminal.pink('routes')} ........... list all routes in your app`
 ]
+
 
 let run = async (commandFromCli) => {
   // ( This function accepts a string or string[] )
@@ -24,33 +27,72 @@ let run = async (commandFromCli) => {
     ? commandFromCli.split(' ')
     : commandFromCli
 
+
   let [_npx, _elmLand, subCommand, ...args] = command
+
+  // Elm Land will make sure these similar commands
+  // still work, for users switching from other tools.
+  // 
+  // This means typing "elm-land new" will automatically
+  // be translated to "elm-land init" so the right thing
+  // happens
+  // 
+  let aliases = {
+    'new': 'init',
+    'create': 'init',
+    'make': 'build',
+  }
+
+  if (aliases[subCommand]) {
+    subCommand = aliases[subCommand]
+  }
 
   let subcommandHandlers = {
     'init': ([folderName] = []) => {
-      return Init.run({ name: folderName })
+      if (isHelpFlag(folderName)) {
+        return Init.printHelpInfo()
+      } else {
+        return Init.run({ name: folderName })
+      }
     },
-    'new': ([folderName] = []) => {
-      return Init.run({ name: folderName })
+    'add': (args = []) => {
+      if (isHelpFlag(args[0])) {
+        return Add.printHelpInfo()
+      } else {
+        return Add.run({ arguments: args })
+      }
     },
-    'create': ([folderName] = []) => {
-      return Init.run({ name: folderName })
+    'server': (args = []) => {
+      if (isHelpFlag(args[0])) {
+        return Server.printHelpInfo()
+      } else {
+        return Server.run({})
+      }
     },
-    'add': (args) => {
-      return Add.run({ arguments: args })
-    },
-    'server': (args) => {
-      return Server.run({})
-    },
-    'build': (args) => {
-      return Build.run({})
+    'build': (args = []) => {
+      if (isHelpFlag(args[0])) {
+        return Build.printHelpInfo()
+      } else {
+        return Build.run({})
+      }
     },
     'customize': ([moduleName] = []) => {
-      return Customize.run({ moduleName })
+      if (isHelpFlag(moduleName)) {
+        return Customize.printHelpInfo()
+      } else {
+        return Customize.run({ moduleName })
+      }
+    },
+    'routes': ([url] = []) => {
+      if (isHelpFlag(url)) {
+        return Routes.printHelpInfo()
+      } else {
+        return Routes.run({ url })
+      }
     }
   }
 
-  if (['-v', '--version'].includes(subCommand)) {
+  if (['-v', 'version', '--version'].includes(subCommand)) {
     return {
       message: [
         '',
@@ -61,7 +103,7 @@ let run = async (commandFromCli) => {
     }
   }
 
-  if (!subCommand || ['-h', '-v', '--help', '--version'].includes(subCommand)) {
+  if (!subCommand || isHelpFlag(subCommand)) {
     return {
       message: [
         '',
@@ -94,6 +136,10 @@ let run = async (commandFromCli) => {
       ].join('\n')
     )
   }
+}
+
+const isHelpFlag = (str) => {
+  return ['-h', '--help'].includes(str)
 }
 
 module.exports = {

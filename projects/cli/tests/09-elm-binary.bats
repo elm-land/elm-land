@@ -24,7 +24,20 @@ load helpers
 
 @test "'elm-land build' should pass even if elm is globally installed with npm" {
   npm link
-  npm install -g elm
+  npm install -g elm --force
+
+  cd ../../examples/01-hello-world
+  run elm-land build
+  expectToPass
+
+  # Cleanup
+  rm -r .elm-land elm-stuff dist
+  cd ../../projects/cli
+}
+
+@test "'elm-land build' should pass even if @lydell/elm is globally installed with npm" {
+  npm link
+  npm install -g @lydell/elm --force
 
   cd ../../examples/01-hello-world
   run elm-land build
@@ -41,7 +54,7 @@ load helpers
 
   cp -r ../../examples/01-hello-world ../../examples/01-local-hello
   cd ../../examples/01-local-hello
-  echo '{ "dependencies": { "elm-land": "file:../../projects/cli/elm-land-0.17.3.tgz" } }' > package.json
+  echo '{ "dependencies": { "elm-land": "file:../../projects/cli/elm-land-0.18.0.tgz" } }' > package.json
   npm install
 
   run npx elm-land build
@@ -59,7 +72,7 @@ load helpers
 
   cp -r ../../examples/01-hello-world ../../examples/01-local-hello
   cd ../../examples/01-local-hello
-  echo '{ "dependencies": { "elm-land": "file:../../projects/cli/elm-land-0.17.3.tgz" } }' > package.json
+  echo '{ "dependencies": { "elm-land": "file:../../projects/cli/elm-land-0.18.0.tgz" } }' > package.json
   npm install -g yarn
   yarn
 
@@ -78,7 +91,7 @@ load helpers
 
   cp -r ../../examples/01-hello-world ../../examples/01-local-hello
   cd ../../examples/01-local-hello
-  echo '{ "dependencies": { "elm-land": "file:../../projects/cli/elm-land-0.17.3.tgz" } }' > package.json
+  echo '{ "dependencies": { "elm-land": "file:../../projects/cli/elm-land-0.18.0.tgz" } }' > package.json
   npm install -g pnpm
   pnpm install
 
@@ -89,4 +102,8 @@ load helpers
   cd ..
   rm -r 01-local-hello
   cd ../projects/cli
+}
+
+@test "reinstall elm-land" {
+  npm link
 }

@@ -15,9 +15,11 @@ html:not(.dark) {
   --vp-custom-block-warning-text: hsl(45deg 85% 30%);
   --vp-c-yellow-dimm-3: rgb(250, 253, 214, 0.75);
 
+  
+
   --vp-c-brand: hsl(153, 47%, 33%);
-  /* --vp-code-block-bg: var(--vp-c-white);
-  --vp-code-line-number-color: #24292F88; */
+  --vp-code-block-bg: var(--vp-c-bg-soft);
+  --vp-code-line-number-color: #24292F88;
 }
 
 html:not(.dark) .VPNav.no-sidebar, 
@@ -31,7 +33,13 @@ html:not(.dark) .VPNavBar.has-sidebar .content {
 
 .vp-doc a[href] {
   text-decoration: underline;
+  font-weight: inherit;
   color: inherit;
+}
+
+.language-txt > .lang,
+.language-sh > .lang {
+  display: none;
 }
 
 summary::marker {
@@ -119,10 +127,9 @@ details[open] summary {
 
 .vp-doc .language-sh pre::before {
   content: '$';
-  color: var(--vp-c-white-mute);
   position: absolute;
   left: 1.2rem;
-  opacity: 0.65;
+  opacity: 0.35;
   user-select: none;
 }
 
@@ -140,11 +147,15 @@ details[open] summary {
 }
 
 .vp-doc img {
-  max-height: 40vh;
+  image-rendering: optimizeQuality;
   margin: 2rem auto;
   border-radius: 1rem;
   box-shadow: 0 4px 8px var(--vp-c-bg-mute);
   border: solid 1px var(--vp-c-bg-mute);
+}
+
+.vp-doc > div > p > img {
+  max-height: 40vh;
 }
 
 .vp-doc blockquote > p {
@@ -174,7 +185,7 @@ details[open] summary {
 
 .browser__header {
   display: flex;
-  gap: 1.5rem;
+  gap: 1rem;
   align-items: center;
   padding: 8px 1rem;
   background-color: var(--vp-c-bg-mute);
@@ -203,8 +214,8 @@ details[open] summary {
 .browser__urlbar {
   background-color: var(--vp-c-bg-soft);
   flex: 1;
-  border-radius: 0.75rem;
-  padding: 0.25rem 1rem;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
   box-shadow: var(--vp-shadow-1);
   border: solid 1px var(--vp-c-divider-light);
   font-size: 1rem;
@@ -218,7 +229,8 @@ img.browser__image {
   border-radius: 0;
 }
 
-.vp-doc img[src$=png] {
+.vp-doc > div > p > img[src$=png],
+.vp-doc > div > p > img[src$=gif] {
   max-height: 50vh;
   border-radius: 0;
   border: 0;
@@ -235,6 +247,7 @@ img.browser__image {
   border-radius: 4px;
   text-decoration: none !important;
   background-color: var(--vp-c-bg-alt);
+  margin: 1.5rem 0;
 }
 
 .news-post:hover {
@@ -265,8 +278,9 @@ img.browser__image {
 }
 
 .vp-doc h1 { font-size: 2.5em; margin-left: -0.125em }
-.vp-doc h2 { font-size: 1.75em; padding-top: 1em; margin-left: -0.125em }
-.vp-doc h3 { font-size: 1.5em; padding-top: 1em; margin-left: -0.125em }
+.vp-doc h2 { font-size: 1.75em; padding-top: 1.5em; margin-left: -0.125em }
+.vp-doc h3 { font-size: 1.5em; padding-top: 1.5em; margin-left: -0.125em }
+.vp-doc h4 { font-family: var(--vp-font-family-header); font-size: 1.25em; padding-top: 2em; margin-left: -0.125em }
 
 .inline-emoji {
   display: inline;

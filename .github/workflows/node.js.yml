@@ -7,7 +7,6 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main ]
 
 jobs:
   build:
@@ -15,22 +14,25 @@ jobs:
       run:
         working-directory: projects/cli
 
-    runs-on: ubuntu-latest
+    name: "Node.js"
+    runs-on: macos-12
 
     strategy:
       matrix:
-        node-version: [16.x,18.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+        node-version: [16,18]
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-        cache-dependency-path: projects/cli/package-lock.json
-    - run: npm install
-    - run: npm run setup
-    - run: npm link
-    - run: npm test
+      - name: "Checkout latest code"
+        uses: actions/checkout@v3
+      - name: Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: "Install NPM dependencies"
+        run: npm ci
+      - name: "Build Elm code generator"
+        run: npm run setup
+      - name: "Make elm-land available in terminal"
+        run: npm link
+      - name: "Run test suite"
+        run: npm test

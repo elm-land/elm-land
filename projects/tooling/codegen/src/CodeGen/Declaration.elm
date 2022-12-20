@@ -1,15 +1,15 @@
 module CodeGen.Declaration exposing
-    ( Declaration
-    , function, customType, record, typeAlias
-    , comment, empty
+    ( Declaration, none
+    , function, customType, typeAlias
+    , comment
     , toString
     )
 
 {-|
 
-@docs Declaration
-@docs function, customType, record, typeAlias
-@docs comment, empty
+@docs Declaration, none
+@docs function, customType, typeAlias
+@docs comment
 
 @docs toString
 
@@ -24,7 +24,8 @@ import Util.String
 {-| A top-level custom type, type alias, or function in your Elm module.
 -}
 type Declaration
-    = FunctionDeclaration
+    = None
+    | FunctionDeclaration
         { name : String
         , annotation : CodeGen.Annotation.Annotation
         , arguments : List CodeGen.Argument.Argument
@@ -39,11 +40,23 @@ type Declaration
         , annotation : CodeGen.Annotation.Annotation
         }
     | CommentDeclaration (List String)
-    | Record
-        { name : CodeGen.Annotation.Annotation
-        , fields : List ( String, CodeGen.Annotation.Annotation )
-        }
-    | Empty
+
+
+{-| An empty declaration, useful when working with conditionals.
+
+    if hasLayouts then
+        CodeGen.Declaration.typeAlias
+            { name = "Layout"
+            , annotation = CodeGen.Annotation.record []
+            }
+
+    else
+        CodeGen.Declaration.none
+
+-}
+none : Declaration
+none =
+    None
 
 
 {-| Define a new function in your Elm module.
@@ -162,67 +175,28 @@ comment options =
     CommentDeclaration options
 
 
-{-| Create a record in your Elm module
-
-    {-
-        type alias Person =
-            { name : String
-            , age : Int
-            }
-    -}
-    CodeGen.Declaration.record
-        { name = CodeGen.Annotation.type_ "Person"
-        , fields =
-            [ ( "name", CodeGen.Annotation.type_ "String" )
-            , ( "age", CodeGen.Annotation.type_ "Int" )
-            ]
-        }
-
--}
-record :
-    { name : CodeGen.Annotation.Annotation
-    , fields : List ( String, CodeGen.Annotation.Annotation )
-    }
-    -> Declaration
-record options =
-    Record options
-
-
-{-| Outputs no declaration.
-
-This is useful when you need to conditionally create or leave out a declaration.
-
--}
-empty : Declaration
-empty =
-    Empty
-
-
 {-| Render a `Declaration` value as a `String`.
 
 ( This is used internally by `CodeGen.Module.toString` )
 
 -}
-toString : Declaration -> String
+toString : Declaration -> Maybe String
 toString declaration =
     case declaration of
+        None ->
+            Nothing
+
         FunctionDeclaration options ->
-            fromFunctionDeclarationToString options
+            Just (fromFunctionDeclarationToString options)
 
         CustomTypeDeclaration options ->
-            fromCustomTypeDeclarationToString options
+            Just (fromCustomTypeDeclarationToString options)
 
         TypeAliasDeclaration options ->
-            fromTypeAliasDeclarationToString options
+            Just (fromTypeAliasDeclarationToString options)
 
         CommentDeclaration lines ->
-            "\n" ++ (lines |> List.map (\line -> "-- " ++ line) |> String.join "\n")
-
-        Record options ->
-            fromRecordDeclarationToString options
-
-        Empty ->
-            ""
+            Just ("\n" ++ (lines |> List.map (\line -> "-- " ++ line) |> String.join "\n"))
 
 
 

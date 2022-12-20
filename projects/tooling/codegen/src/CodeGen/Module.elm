@@ -80,7 +80,7 @@ Renders the following:
 -}
 toString : Module -> String
 toString (Module options) =
-    "module {{name}} exposing ({{exposing}}){{imports}}{{declarations}}"
+    "module {{name}} exposing ({{exposing}}){{imports}}{{declarations}}\n"
         |> String.replace "{{name}}" (String.join "." options.name)
         |> String.replace "{{exposing}}" (String.join ", " options.exposing_)
         |> String.replace "{{imports}}"
@@ -95,5 +95,5 @@ toString (Module options) =
                 ""
 
              else
-                "\n\n\n" ++ String.join "\n\n\n" (List.map CodeGen.Declaration.toString options.declarations)
+                "\n\n\n" ++ String.join "\n\n\n" (List.filterMap CodeGen.Declaration.toString options.declarations)
             )

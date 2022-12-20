@@ -16,6 +16,8 @@ import Effect exposing (Effect)
 import Json.Decode
 import Route exposing (Route)
 import Route.Path
+import Shared.Model
+import Shared.Msg
 
 
 
@@ -36,7 +38,7 @@ decoder =
 
 
 type alias Model =
-    {}
+    Shared.Model.Model
 
 
 init : Result Json.Decode.Error Flags -> Route () -> ( Model, Effect Msg )
@@ -50,14 +52,14 @@ init flagsResult route =
 -- UPDATE
 
 
-type Msg
-    = ExampleMsgReplaceMe
+type alias Msg =
+    Shared.Msg.Msg
 
 
 update : Route () -> Msg -> Model -> ( Model, Effect Msg )
 update route msg model =
     case msg of
-        ExampleMsgReplaceMe ->
+        Shared.Msg.ExampleMsgReplaceMe ->
             ( model
             , Effect.none
             )
