@@ -9,6 +9,8 @@
 - How you can safely access __environment variables__
 
 
+![A demo of a Three.js scene embedded in our Elm application](./interop/02-three-js-demo.gif)
+
 ### Getting started
 
 Let's create a new Elm Land project, using the `elm-land init` command:
