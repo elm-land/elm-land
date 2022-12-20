@@ -36,3 +36,13 @@ function cleanupTmpFolder {
     rm -r tests/tmp
   fi
 }
+
+function expectElmExampleBuilds {
+  run elm-land build
+  expectToPass
+
+  expectOutputContains "successfully built"
+
+  rm -r .elm-land elm-stuff dist
+  cd ../../projects/cli
+}
