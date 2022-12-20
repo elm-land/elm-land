@@ -1,6 +1,25 @@
 # @elm-land/examples
 > Complete examples of [Elm Land](https://elm.land) apps for folks to explore.
 
+### Table of contents
+
+1. [Hello, world!](#1-hello-world)
+1. [Pages and routes](#2-pages-and-routes)
+1. [User input](#3-user-input)
+1. [REST APIs](#4-rest-apis)
+1. [User authentication](#5-user-authentication)
+1. [Query parameters](#6-query-parameters)
+1. [Working with JS](#7-working-with-js)
+
+#### Even more examples
+
+- [TypeScript interop](./10-typescript-interop/)
+- [Production error reporting with Sentry](./11-error-reporting/)
+- [Elm UI](./12-elm-ui/)
+- [Elm CSS](./13-elm-css/)
+- [SCSS and assets](./14-scss-and-assets/)
+- [Custom 404 pages](./15-custom-404-pages/)
+- [Hash-bashed routing](./16-hash-based-routing/)
 
 ## 1. Hello world!
 
@@ -49,6 +68,16 @@ Learn how to build a sign-in page, store JWTs, and have pages automatically redi
 
 Learn how to work with URL parameters to build an interactive table with filtering and sorting.
 
-[Example code](./06-query-parameters/) • (Guide coming soon!)
+[Example code](./06-query-parameters/) • (Guide in-progress)
 
 [![An animated GIF of the Fruit Vibes app](./06-query-parameters/screenshot.gif)](./06-query-parameters/)
+
+## 7. Working with JS
+
+Learn how to work with existing NPM packages, run JavaScript from Elm, and 
+
+[Example code](./07-working-with-js/) • [The guide](https://elm.land/guide/working-with-js)
+
+[![n animated demo of Three.js inside an Elm application](./07-working-with-js/screenshot.gif)](./07-working-with-js/)
+
+
