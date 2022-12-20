@@ -20,22 +20,35 @@ let subcommandList = [
   `    🔍 elm-land ${Terminal.pink('routes')} ........... list all routes in your app`
 ]
 
+
 let run = async (commandFromCli) => {
   // ( This function accepts a string or string[] )
   let command = typeof commandFromCli === 'string'
     ? commandFromCli.split(' ')
     : commandFromCli
 
+
   let [_npx, _elmLand, subCommand, ...args] = command
+
+  // Elm Land will make sure these similar commands
+  // still work, for users switching from other tools.
+  // 
+  // This means typing "elm-land new" will automatically
+  // be translated to "elm-land init" so the right thing
+  // happens
+  // 
+  let aliases = {
+    'new': 'init',
+    'create': 'init',
+    'make': 'build',
+  }
+
+  if (aliases[subCommand]) {
+    subCommand = aliases[subCommand]
+  }
 
   let subcommandHandlers = {
     'init': ([folderName] = []) => {
-      return Init.run({ name: folderName })
-    },
-    'new': ([folderName] = []) => {
-      return Init.run({ name: folderName })
-    },
-    'create': ([folderName] = []) => {
       return Init.run({ name: folderName })
     },
     'add': (args) => {
@@ -55,7 +68,7 @@ let run = async (commandFromCli) => {
     }
   }
 
-  if (['-v', '--version'].includes(subCommand)) {
+  if (['-v', 'version', '--version'].includes(subCommand)) {
     return {
       message: [
         '',
@@ -66,7 +79,7 @@ let run = async (commandFromCli) => {
     }
   }
 
-  if (!subCommand || ['-h', '-v', '--help', '--version'].includes(subCommand)) {
+  if (!subCommand || ['-h', 'help', '--help'].includes(subCommand)) {
     return {
       message: [
         '',
