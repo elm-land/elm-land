@@ -247,6 +247,7 @@ img.browser__image {
   border-radius: 4px;
   text-decoration: none !important;
   background-color: var(--vp-c-bg-alt);
+  margin: 1.5rem 0;
 }
 
 .news-post:hover {
