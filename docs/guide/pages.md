@@ -325,6 +325,24 @@ src/
         |- Username_.elm
 ```
 
+If you are ever curious about the routes in your Elm application, you can use the built-in `elm-land routes` command. Here's what that looks like:
+
+```sh
+elm-land routes
+```
+
+```txt
+
+  🌈  Elm Land (v0.18.0) found 5 pages in your application
+  ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
+  src/Pages/Home_.elm ............... http://localhost:1234/
+  src/Pages/SignIn.elm .............. http://localhost:1234/sign-in
+  src/Pages/Blog/ALL_.elm ........... http://localhost:1234/blog/*
+  src/Pages/Settings/Account.elm .... http://localhost:1234/settings/account
+  src/Pages/Profile/Username_.elm ... http://localhost:1234/profile/:username
+
+```
+
 ## Adding a sidebar
 
 So far, to navigate from one page to another, we've been manually changing the URL in the browser. In a real app, our users need a way to navigate the app within the UI. 
