@@ -119,7 +119,7 @@ layout user model =
 
 For more detail on how to build your application with the new layout system, be sure to check out [the official User Authentication example](../guide/user-auth). 
 
-It will walk you through building a hands-on example __from scratch__. This includes things local storage, talking to a backend API, and creating the layout we highlighted above!
+It will walk you through building a hands-on example __from scratch__. This includes things like local storage, talking to a backend API, and creating the layout we highlighted above!
 
 ## Catch-all routes
 
@@ -185,7 +185,7 @@ __Those are just a few!__ Check out the [examples](https://github.com/elm-land/e
 
 Ultimately, I'd love to see each of these examples as their own in-depth guide– but I want to get the latest release out for the Elm Land community. 
 
-It's important to me that I can release this version and get meaningful feedback as a I go! I'm looking forward to seeing more examples of how folks are using Elm Land in their own applications.
+It's important to me that I can release this version and get meaningful feedback as I go! I'm looking forward to seeing more examples of how folks are using Elm Land in their own applications.
 
 ## Community-driven features
 
