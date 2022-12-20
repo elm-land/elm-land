@@ -52,17 +52,23 @@ load helpers
     expectElmExampleBuilds
 }
 
-@test "'12-elm-css' example builds successfully" {
-  cd ../../examples/12-elm-css
+@test "'13-elm-css' example builds successfully" {
+  cd ../../examples/13-elm-css
     expectElmExampleBuilds
 }
 
-@test "'13-custom-404-pages' example builds successfully" {
-  cd ../../examples/13-custom-404-pages
+@test "'14-scss-and-assets' example builds successfully" {
+  cd ../../examples/14-scss-and-assets
+  run npm install
   expectElmExampleBuilds
 }
 
-# @test "'14-assets-and-static-files' example builds successfully" {
-#   cd ../../examples/14-assets-and-static-files
-#   expectElmExampleBuilds
-# }
+@test "'15-custom-404-pages' example builds successfully" {
+  cd ../../examples/15-custom-404-pages
+  expectElmExampleBuilds
+}
+
+@test "'16-hash-based-routing' example builds successfully" {
+  cd ../../examples/16-hash-based-routing
+  expectElmExampleBuilds
+}
