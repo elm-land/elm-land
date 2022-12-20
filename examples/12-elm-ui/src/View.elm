@@ -13,14 +13,15 @@ module View exposing
 -}
 
 import Browser
-import Html exposing (Html)
+import Element
 import Route exposing (Route)
 import Shared.Model
 
 
 type alias View msg =
     { title : String
-    , body : List (Html msg)
+    , attributes : List (Element.Attribute msg)
+    , element : Element.Element msg
     }
 
 
@@ -35,7 +36,7 @@ toBrowserDocument :
     -> Browser.Document msg
 toBrowserDocument { view } =
     { title = view.title
-    , body = view.body
+    , body = [ Element.layout view.attributes view.element ]
     }
 
 
@@ -44,7 +45,8 @@ toBrowserDocument { view } =
 map : (msg1 -> msg2) -> View msg1 -> View msg2
 map fn view =
     { title = view.title
-    , body = List.map (Html.map fn) view.body
+    , attributes = List.map (Element.mapAttribute fn) view.attributes
+    , element = Element.map fn view.element
     }
 
 
@@ -54,7 +56,8 @@ authenticated pages.
 none : View msg
 none =
     { title = ""
-    , body = []
+    , attributes = []
+    , element = Element.none
     }
 
 
@@ -68,5 +71,6 @@ the new page working in the web browser!
 fromString : String -> View msg
 fromString moduleName =
     { title = moduleName
-    , body = [ Html.text moduleName ]
+    , attributes = []
+    , element = Element.text moduleName
     }

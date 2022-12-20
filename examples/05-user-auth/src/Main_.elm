@@ -33,7 +33,7 @@ main =
     Browser.application
         { init = init
         , update = update
-        , view = View.toBrowserDocument << view
+        , view = view
         , subscriptions = subscriptions
         , onUrlChange = UrlChanged
         , onUrlRequest = UrlRequested
@@ -553,8 +553,22 @@ subscriptions model =
 -- VIEW
 
 
-view : Model -> View Msg
+view : Model -> Browser.Document Msg
 view model =
+    let
+        view_ : View Msg
+        view_ =
+            toView model
+    in
+    View.toBrowserDocument
+        { shared = model.shared
+        , route = Route.fromUrl () model.url
+        , view = view_
+        }
+
+
+toView : Model -> View Msg
+toView model =
     let
         route : Route ()
         route =

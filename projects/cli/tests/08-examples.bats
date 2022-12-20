@@ -36,32 +36,31 @@ load helpers
   expectElmExampleBuilds
 }
 
-# @test "'10-typescript-interop' example builds successfully" {
-#   cd ../../examples/10-typescript-interop
-#   run elm-land build
-#   expectToPass
+@test "'10-typescript-interop' example builds successfully" {
+  cd ../../examples/10-typescript-interop
+  expectElmExampleBuilds
+}
 
-#   expectOutputContains "successfully built"
+@test "'11-error-reporting' example builds successfully" {
+  cd ../../examples/11-error-reporting
+  run npm install
+  expectElmExampleBuilds
+}
 
-#   rm -r .elm-land elm-stuff dist
-#   cd ../../projects/cli
-# }
+@test "'12-elm-ui' example builds successfully" {
+  cd ../../examples/12-elm-ui
+    expectElmExampleBuilds
+}
 
-# @test "'11-error-reporting' example builds successfully" {
-#   cd ../../examples/11-error-reporting
-#   run npm install
-#   expectElmExampleBuilds
-# }
+@test "'12-elm-css' example builds successfully" {
+  cd ../../examples/12-elm-css
+    expectElmExampleBuilds
+}
 
-# @test "'12-elm-ui-and-more' example builds successfully" {
-#   cd ../../examples/12-elm-ui-and-more
-#     expectElmExampleBuilds
-# }
-
-# @test "'13-custom-404-pages' example builds successfully" {
-#   cd ../../examples/13-custom-404-pages
-#   expectElmExampleBuilds
-# }
+@test "'13-custom-404-pages' example builds successfully" {
+  cd ../../examples/13-custom-404-pages
+  expectElmExampleBuilds
+}
 
 # @test "'14-assets-and-static-files' example builds successfully" {
 #   cd ../../examples/14-assets-and-static-files

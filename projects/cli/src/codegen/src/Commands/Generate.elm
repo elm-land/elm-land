@@ -166,7 +166,7 @@ mainElmModule data =
                             [ CodeGen.Expression.multilineRecord
                                 [ ( "init", CodeGen.Expression.value "init" )
                                 , ( "update", CodeGen.Expression.value "update" )
-                                , ( "view", CodeGen.Expression.value "View.toBrowserDocument << view" )
+                                , ( "view", CodeGen.Expression.value "view" )
                                 , ( "subscriptions", CodeGen.Expression.value "subscriptions" )
                                 , ( "onUrlChange", CodeGen.Expression.value "UrlChanged" )
                                 , ( "onUrlRequest", CodeGen.Expression.value "UrlRequested" )
@@ -648,6 +648,35 @@ mainElmModule data =
             , CodeGen.Declaration.comment [ "VIEW" ]
             , CodeGen.Declaration.function
                 { name = "view"
+                , annotation =
+                    CodeGen.Annotation.function
+                        [ CodeGen.Annotation.type_ "Model"
+                        , CodeGen.Annotation.type_ "Browser.Document Msg"
+                        ]
+                , arguments = [ CodeGen.Argument.new "model" ]
+                , expression =
+                    CodeGen.Expression.letIn
+                        { let_ =
+                            [ { argument = CodeGen.Argument.new "view_"
+                              , annotation = Just (CodeGen.Annotation.type_ "View Msg")
+                              , expression = CodeGen.Expression.value "toView model"
+                              }
+                            ]
+                        , in_ =
+                            CodeGen.Expression.multilineFunction
+                                { name = "View.toBrowserDocument"
+                                , arguments =
+                                    [ CodeGen.Expression.multilineRecord
+                                        [ ( "shared", CodeGen.Expression.value "model.shared" )
+                                        , ( "route", CodeGen.Expression.value "Route.fromUrl () model.url" )
+                                        , ( "view", CodeGen.Expression.value "view_" )
+                                        ]
+                                    ]
+                                }
+                        }
+                }
+            , CodeGen.Declaration.function
+                { name = "toView"
                 , annotation =
                     CodeGen.Annotation.function
                         [ CodeGen.Annotation.type_ "Model"
