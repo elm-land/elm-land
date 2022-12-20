@@ -154,7 +154,6 @@ let runServer = async (options) => {
           optimize: false
         }),
         TypeScriptPlugin.plugin()
-        // TypeScriptChecker.checker({ typescript: hasTsConfigJson, terminal: false })
       ],
       logLevel: 'silent'
     })
