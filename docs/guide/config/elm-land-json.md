@@ -21,8 +21,7 @@ For reference, here is the default `elm-land.json` file that is created with eve
     "html": {
       "attributes": {
         "html": { "lang": "en" },
-        "head": {},
-        "body": {}
+        "head": {}
       },
       "title": "Elm Land",
       "meta": [
@@ -155,8 +154,7 @@ If you ever need to audit which variables are exposed to your frontend, this one
 ```elm
 { attributes : 
     { html : Dict String String 
-    , head : Dict String String 
-    , body : Dict String String 
+    , head : Dict String String
     }
 , title : String
 , meta : List (Dict String String)
@@ -181,7 +179,7 @@ Here is the general shape of that HTML template to give you an overview:
     {{ link tags }}
     {{ script tags }}
   </head>
-  <body {{attributes.body}} >
+  <body>
     <!-- Elm Land's entrypoint -->
   </body>
 </html>
@@ -200,8 +198,7 @@ If you'd like to use Elm, but for a website that needs HTML tags to be specified
 ::: info TYPE
 ```elm
 { html : Dict String String 
-, head : Dict String String 
-, body : Dict String String 
+, head : Dict String String
 }
 ```
 :::
@@ -289,49 +286,6 @@ __Output__: `index.html`
     <!-- ... -->
   </head>
   <!-- ... -->
-</html>
-```
-:::
-
-
-#### app.html.attributes.body
-
-::: info TYPE
-```elm
-Dict String String
-```
-:::
-
-Specifies which HTML attributes should render on the `<body>` tag. If the object is empty, no attributes will be added.
-
-::: tip EXAMPLE
-
-__Input__: `elm-land.json`
-
-```jsonc {7}
-{
-  "app": {
-    // ...
-    "html": {
-      "attributes": {
-        // ...
-        "body": { "class": "loading", "data-theme": "dark" }
-      },
-      // ...
-    }
-  }
-}
-```
-
-__Output__: `index.html`
-
-```html {4}
-<!DOCTYPE>
-<html lang="en">
-  <!-- ... -->
-  <body class="loading" data-theme="dark">
-    <!-- ... -->
-  </body>
 </html>
 ```
 :::
