@@ -1,11 +1,11 @@
 ---
-title: Building better apps
+title: Building a better Elm Land
 description: Learn how the project has evolved, and what's new in the big Elm Land v0.18.0 release!
 
 head:
   # OG Tags – https://ogp.me
   - [ meta, { "property": "og:type", "content": "article" } ]
-  - [ meta, { "property": "og:title", "content": "Building better apps" } ]
+  - [ meta, { "property": "og:title", "content": "Building a better Elm Land" } ]
   - [ meta, { "property": "og:description", "content": "Learn how the project has evolved, and what's new in the big Elm Land v0.18.0 release!" } ]
   - [ meta, { "property": "og:site_name", "content": "Elm Land" }]
   - [ meta, { "property": "og:url", "content": "https://elm.land/news/hello-world" } ]
@@ -18,14 +18,14 @@ head:
   # Twitter Card – https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/summary
   - [ meta, { "name": "twitter:card", "content": "summary" } ]
   - [ meta, { "name": "twitter:site", "content": "@elmland_" } ]
-  - [ meta, { "name": "twitter:title", "content": "Building better apps" } ]
+  - [ meta, { "name": "twitter:title", "content": "Building a better Elm Land" } ]
   - [ meta, { "name": "twitter:description", "content": "Learn how the project has evolved, and what's new in the big Elm Land v0.18.0 release!" } ]
   - [ meta, { "name": "twitter:image", "content": "https://elm.land/images/news/sprout.png" } ]
   - [ meta, { "name": "twitter:image:alt", "content": "The Elm Land logo and a sprouting sapling emoji" } ]
 
 ---
 
-# 🌱 Building better apps
+# 🌱 Building a better Elm Land
 
 Written by _Ryan_ on _December 20th, 2022_
 
@@ -133,7 +133,7 @@ Elm Land v0.18.0 comes with a new enhancement to the file-based routing system t
 
 This isn't a new idea by any means, Elm Land drew it's inspiration from popular JavaScript frameworks that solve the problem really well. 
 
-After exploring [Next.js' "Catch-all route"](https://nextjs.org/docs/routing/dynamic-routes#catch-all-routes), [Nuxt.js' "Unknown Dynamic Nested Route"](https://nuxtjs.org/docs/features/file-system-routing#unknown-dynamic-nested-routes), and [SvelteKit's "Rest parameters"](https://kit.svelte.dev/docs/advanced-routing#rest-parameters), Elm Land was ready to tackle this for the Elm ecosystem. 
+After exploring how this was done in [Next.js](https://nextjs.org/docs/routing/dynamic-routes#catch-all-routes), [Nuxt.js](https://nuxtjs.org/docs/features/file-system-routing#unknown-dynamic-nested-routes), [SvelteKit](https://kit.svelte.dev/docs/advanced-routing#rest-parameters), and [elm-pages](https://elm-pages.com/docs/file-based-routing#splat-routes), Elm Land was ready to tackle this problem, too!
 
 Here's how you can create a page like the one we see GitHub use above, using the official Elm Land CLI:
 
