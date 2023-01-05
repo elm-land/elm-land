@@ -1,4 +1,4 @@
-const version = '0.18.0'
+const version = '0.18.1'
 
 export default {
   title: 'Elm Land',
