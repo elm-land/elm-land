@@ -512,7 +512,7 @@ mainElmModule data =
                                                       , expression =
                                                             CodeGen.Expression.letIn
                                                                 { let_ =
-                                                                    [ { argument = CodeGen.Argument.new "{ page }"
+                                                                    [ { argument = CodeGen.Argument.new "{ layout, page }"
                                                                       , annotation = Nothing
                                                                       , expression =
                                                                             CodeGen.Expression.value "initPageAndLayout { key = model.key, shared = sharedModel, url = model.url, layout = model.layout }"
@@ -521,15 +521,24 @@ mainElmModule data =
                                                                       , annotation = Nothing
                                                                       , expression = CodeGen.Expression.value "page"
                                                                       }
+                                                                    , { argument = CodeGen.Argument.new "( layoutModel, layoutCmd )"
+                                                                      , annotation = Nothing
+                                                                      , expression =
+                                                                            CodeGen.Expression.multilineTuple
+                                                                                [ CodeGen.Expression.value "layout |> Maybe.map Tuple.first"
+                                                                                , CodeGen.Expression.value "layout |> Maybe.map Tuple.second |> Maybe.withDefault Cmd.none"
+                                                                                ]
+                                                                      }
                                                                     ]
                                                                 , in_ =
                                                                     CodeGen.Expression.multilineTuple
-                                                                        [ CodeGen.Expression.value "{ model | shared = sharedModel, page = pageModel }"
+                                                                        [ CodeGen.Expression.value "{ model | shared = sharedModel, page = pageModel, layout = layoutModel }"
                                                                         , CodeGen.Expression.multilineFunction
                                                                             { name = "Cmd.batch"
                                                                             , arguments =
                                                                                 [ CodeGen.Expression.multilineList
                                                                                     [ CodeGen.Expression.value "pageCmd"
+                                                                                    , CodeGen.Expression.value "layoutCmd"
                                                                                     , CodeGen.Expression.value "fromSharedEffect { model | shared = sharedModel } sharedEffect"
                                                                                     ]
                                                                                 ]

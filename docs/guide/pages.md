@@ -333,7 +333,7 @@ elm-land routes
 
 ```txt
 
-  🌈  Elm Land (v0.18.0) found 5 pages in your application
+  🌈  Elm Land (v0.18.1) found 5 pages in your application
   ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
   src/Pages/Home_.elm ............... http://localhost:1234/
   src/Pages/SignIn.elm .............. http://localhost:1234/sign-in
@@ -501,8 +501,7 @@ Let's add a `<link>` tag to our HTML by updating the `app.html.link` property:
     "html": {
       "attributes": {
         "html": { "lang": "en" },
-        "head": {},
-        "body": {}
+        "head": {}
       },
       "title": "My Elm Land App",
       "meta": [

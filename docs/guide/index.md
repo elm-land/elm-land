@@ -18,7 +18,7 @@
 
 ## Installation
 
-To get started, we'll need to install the latest version of _Elm Land_ from NPM. At the time of writing, the latest version of Elm Land is `v0.18.0`. Here's the NPM command that will install `elm-land` on your computer:
+To get started, we'll need to install the latest version of _Elm Land_ from NPM. At the time of writing, the latest version of Elm Land is `v0.18.1`. Here's the NPM command that will install `elm-land` on your computer:
 
 ```sh
 npm install -g elm-land@latest
@@ -29,7 +29,7 @@ When the install command has finished, you'll be able to run `elm-land` in your 
 ```txt
 $ elm-land
 
-🌈  Welcome to Elm Land! (v0.18.0)
+🌈  Welcome to Elm Land! (v0.18.1)
     ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
     Here are the available commands:
 

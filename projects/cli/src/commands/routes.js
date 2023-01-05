@@ -66,8 +66,8 @@ let run = async ({ url } = {}) => {
   }
 
   let lines = pages
+    .sort(sortRoutes)
     .map(segments => `    ${Terminal.cyan(`src/Pages/${segments}.elm`)} ... ${Terminal.pink(toUrl(segments.split(path.sep)))}`)
-    .sort((a, b) => a.length - b.length)
 
   let lengthOfFilepath = (str) => str.split('...')[0].length
 
@@ -91,6 +91,24 @@ let run = async ({ url } = {}) => {
     effects: []
   }
 }
+
+const sortRoutes = (a, b) => {
+  // Always put Home_.elm first, and NotFound_ last
+  if (a == 'Home_' || b == 'NotFound_') return -1
+  if (a == 'NotFound_' || b == 'Home_') return 1
+
+  // Attempt to sort by folder depth
+  let sortByFolderDepth = a.split('/').length - b.split('/').length
+
+  // If two items have the same folder depth, sort them alphabetically
+  if (sortByFolderDepth === 0) {
+    let sortAlphabetically = (a < b) ? -1 : (a > b) ? 1 : 0
+    return sortAlphabetically
+  } else {
+    return sortByFolderDepth
+  }
+}
+
 
 module.exports = {
   Routes: {

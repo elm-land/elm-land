@@ -8,8 +8,7 @@
     "html": {
       "attributes": {
         "html": { "lang": "en" },
-        "head": {},
-        "body": {}
+        "head": {}
       },
       "title": "My Elm Land App",
       "meta": [

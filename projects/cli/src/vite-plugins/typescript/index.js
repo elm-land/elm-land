@@ -83,7 +83,18 @@ const handleUnexpectedTypeScriptError = (reject) => (err) => {
 }
 
 const spawnNewTypeScriptBuild = () =>
-  ChildProcess.spawn(pathToTsc, ['src/interop.ts', '--noEmit'])
+  ChildProcess.spawn(pathToTsc, argsForTypeScript())
+
+const argsForTypeScript = () => {
+  const pathToTsConfigFile = path.join(process.cwd(), 'tsconfig.json')
+  const hasTsConfigFile = fs.existsSync(pathToTsConfigFile)
+
+  if (hasTsConfigFile) {
+    return ['--project', pathToTsConfigFile]
+  } else {
+    return ['src/interop.ts', '--noEmit', '--lib', 'es6,dom']
+  }
+}
 
 // Used during `elm-land server` to report errors
 // to users via the HMR overlay
@@ -126,7 +137,7 @@ const verifyTypescriptCompiles = async (mode) => {
     return new Promise((resolve, reject) => {
       console.info('\n' + Utils.intro.info(`is compiling ${Terminal.cyan('src/interop.ts')}...`))
 
-      let tsc = ChildProcess.spawn(pathToTsc, ['src/interop.ts', '--noEmit'], { stdio: 'inherit' })
+      let tsc = ChildProcess.spawn(pathToTsc, argsForTypeScript(), { stdio: 'inherit' })
       tsc.on('error', handleUnexpectedTypeScriptError(reject))
 
       tsc.on('close', (code) => {

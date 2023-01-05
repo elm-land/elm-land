@@ -29,6 +29,20 @@ let run = async (options = {}) => {
   let { name } = options
 
   if (name) {
+    if (name.includes(' ')) {
+      const modifiedFolderName = name.split(' ').filter(a => a).join('-').toLowerCase()
+      return Promise.reject([
+        '',
+        Utils.intro.error(`detected a ${Terminal.cyan('folder name with spaces')}`),
+        `    To prevent issues when running ${Terminal.cyan('elm-land build')}`,
+        '    your project folder should not contain spaces.',
+        '',
+        '    Please try again with a folder name like this:',
+        '',
+        `    ${Terminal.pink(`elm-land init ${modifiedFolderName}`)}`,
+        ''
+      ].join('\n'))
+    }
 
     let isNonEmptyFolder = await Files.isNonEmptyFolder(path.join(process.cwd(), name))
 

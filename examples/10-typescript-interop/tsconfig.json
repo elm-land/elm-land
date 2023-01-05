@@ -1,5 +1,8 @@
 {
+  "files": ["src/interop.ts"],
   "compilerOptions": {
-    "strict": true
+    "strict": true,
+    "lib": ["es6", "dom"],
+    "noEmit": true
   }
 }

@@ -665,6 +665,24 @@ It's really that easy!
 2. __If you run `elm-land build`__, the command will let you know about any TypeScript compiler errors and fail the build.
 3. You can __add your own [tsconfig.json](https://www.typescriptlang.org/tsconfig) file__ to the root of your project (alongside `elm.json` and `package.json`), and Elm Land will automatically use that configuration.
 
+
+::: tip Adding a `tsconfig.json`?
+
+We recommend using this minimal configuration as a starter, to prevent emitting unused JS files when Elm Land automatically checks your project during `elm-land server` and `elm-land build`:
+
+```json
+{
+  "files": ["src/interop.ts"],
+  "compilerOptions": {
+    "lib": ["es6", "dom"],
+    "noEmit": true,
+    "strict": true
+  }
+}
+```
+
+:::
+
 ## Environment variables
 
 Elm Land allows you to safely access any environment variables from your `src/interop.js` file.
