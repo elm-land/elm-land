@@ -431,8 +431,6 @@ const generateHtml = async (config) => {
 
   let htmlAttributes = toAttributeString(attempt(() => config.app.html.attributes.html))
   let headAttributes = toAttributeString(attempt(() => config.app.html.attributes.head))
-  let bodyAttributes = toAttributeString(attempt(() => config.app.html.attributes.body))
-
 
   let toHtmlTag = (tagName, attrs, child) => {
     return `<${tagName}${toAttributeString(attrs)}>${child}</${tagName}>`
@@ -469,7 +467,7 @@ const generateHtml = async (config) => {
   let htmlContent = `<!DOCTYPE html>
   <html${htmlAttributes}>
   <head${headAttributes}>${headTags}</head>
-  <body${bodyAttributes}>
+  <body>
     <div id="app"></div>
     <script type="module" src="./main.js"></script>
   </body>

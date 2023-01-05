@@ -501,8 +501,7 @@ Let's add a `<link>` tag to our HTML by updating the `app.html.link` property:
     "html": {
       "attributes": {
         "html": { "lang": "en" },
-        "head": {},
-        "body": {}
+        "head": {}
       },
       "title": "My Elm Land App",
       "meta": [
