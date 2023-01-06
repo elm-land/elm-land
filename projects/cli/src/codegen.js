@@ -2,7 +2,7 @@ const path = require('path')
 const { Files } = require('./files')
 
 let generateElmLandFiles = async ({ pages, layouts, router }) => {
-  let { Elm } = require('../dist/worker.js')
+  let { Elm } = require('../dist/codegen-worker.js')
 
   let newFiles = await new Promise((resolve, reject) => {
     // Insert not found page if it hasn't been customized yet
@@ -23,7 +23,7 @@ let generateElmLandFiles = async ({ pages, layouts, router }) => {
 }
 
 let addNewPage = async ({ kind, url, filepath }) => {
-  let { Elm } = require('../dist/worker.js')
+  let { Elm } = require('../dist/codegen-worker.js')
 
   let hasViewBeenCustomized = await Files.exists(path.join(process.cwd(), 'src', 'View.elm'))
 
@@ -46,7 +46,7 @@ let addNewPage = async ({ kind, url, filepath }) => {
 }
 
 let addNewLayout = async ({ moduleSegments }) => {
-  let { Elm } = require('../dist/worker.js')
+  let { Elm } = require('../dist/codegen-worker.js')
 
   let newFiles = await new Promise((resolve, reject) => {
     let app = Elm.Worker.init({

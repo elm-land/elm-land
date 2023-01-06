@@ -92,7 +92,11 @@ var parse = function (rawErrorString) {
     return undefined;
   }
 };
-var toColoredHtmlOutput = function (elmError, colorMap) {
+var toColoredHtmlOutput = function (elmError, colorMap = {
+  GREEN: 'mediumseagreen',
+  RED: 'indianred',
+  BLUE: 'dodgerblue',
+}) {
   var gap = "<br/>";
   // These can be passed in
   var colors = __assign({ RED: 'red', MAGENTA: 'magenta', YELLOW: 'yellow', GREEN: 'green', CYAN: 'cyan', BLUE: 'blue', BLACK: 'black', WHITE: 'white' }, colorMap);
@@ -130,7 +134,10 @@ var toColoredHtmlOutput = function (elmError, colorMap) {
       });
       return "<div ".concat(attrs, ">").concat(lines.join(gap.repeat(3)), "</div>");
     case 'error':
-      return "<div ".concat(attrs, ">").concat(render(elmError.message), "</div>");
+      return [
+        "<span style=\"color:cyan\">".concat(escapeHtml(header(elmError, elmError)), "</span>"),
+        "<div ".concat(attrs, ">").concat(render(elmError.message), "</div>")
+      ].join(gap.repeat(2))
   }
 };
 // INTERNALS
@@ -209,7 +216,10 @@ var toColoredTerminalOutput = function (elmError) {
       }, []);
       return output.join('\n\n');
     case 'error':
-      return render(elmError.message);
+      return [
+        (code(colors.CYAN) + header(elmError, elmError) + reset),
+        render(elmError.message)
+      ].join('\n\n')
   }
 };
 exports.toColoredTerminalOutput = toColoredTerminalOutput;

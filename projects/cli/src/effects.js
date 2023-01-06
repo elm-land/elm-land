@@ -6,6 +6,8 @@ const TypeScriptPlugin = require('./vite-plugins/typescript/index.js')
 const { Codegen } = require('./codegen')
 const { Files } = require('./files')
 const { Utils, Terminal } = require('./commands/_utils')
+const { validate } = require('./validate/index.js')
+const { default: ElmErrorJson } = require('./vite-plugins/elm/elm-error-json.js')
 
 
 let srcPagesFolderFilepath = path.join(process.cwd(), 'src', 'Pages')
@@ -71,7 +73,7 @@ let runServer = async (options) => {
 
         // We'll need a better way to check options that affect codegen eventually
         if (config.app.router.useHashRouting != oldConfig.app.router.useHashRouting) {
-          await generateElmFiles(config)
+          await generateElmFiles(config, server)
         }
 
         handleEnvironmentVariables({ config })
@@ -115,8 +117,7 @@ let runServer = async (options) => {
       ignoreInitial: true
     })
 
-    srcPagesAndLayoutsFolderWatcher.on('all', () => { generateElmFiles(config) })
-    await generateElmFiles(config)
+    srcPagesAndLayoutsFolderWatcher.on('all', () => { generateElmFiles(config, server) })
 
     // Listen for any changes to customizable files, so defaults are recreated
     // if the customized versions are deleted
@@ -159,6 +160,15 @@ let runServer = async (options) => {
     })
 
     server.ws.on('error', (e) => console.error(e))
+    server.ws.on('elm:client-ready', () => {
+      if (lastErrorSent) {
+        server.ws.send('elm:error', {
+          error: ElmErrorJson.toColoredHtmlOutput(lastErrorSent)
+        })
+      }
+    })
+
+    await generateElmFiles(config, server)
 
     await server.listen()
 
@@ -171,7 +181,9 @@ let runServer = async (options) => {
 
 }
 
-let generateElmFiles = async (config) => {
+let lastErrorSent = undefined
+
+let generateElmFiles = async (config, server = undefined) => {
   try {
     let router = config.app.router
     let pageFilepaths = Files.listElmFilepathsInFolder(srcPagesFolderFilepath)
@@ -187,15 +199,31 @@ let generateElmFiles = async (config) => {
         }
       }))
 
-    let newFiles = await Codegen.generateElmLandFiles({ pages, layouts, router })
+    let errors = await validate({ pages, layouts })
 
-    await Files.create(
-      newFiles.map(generatedFile => ({
-        kind: 'file',
-        name: `.elm-land/src/${generatedFile.filepath}`,
-        content: generatedFile.contents
-      }))
-    )
+    if (errors.length === 0) {
+      let newFiles = await Codegen.generateElmLandFiles({ pages, layouts, router })
+
+      await Files.create(
+        newFiles.map(generatedFile => ({
+          kind: 'file',
+          name: `.elm-land/src/${generatedFile.filepath}`,
+          content: generatedFile.contents
+        }))
+      )
+    } else if (server) {
+      lastErrorSent = errors[0]
+      server.ws.send('elm:error', {
+        error: ElmErrorJson.toColoredHtmlOutput(errors[0])
+      })
+    } else {
+      return Promise.reject([
+        '',
+        Utils.intro.error('failed to build project'),
+        errors.map(ElmErrorJson.toColoredTerminalOutput).join('\n\n'),
+        ''
+      ].join('\n'))
+    }
 
   } catch (err) {
     console.error(err)
