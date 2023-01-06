@@ -1,6 +1,6 @@
 {
   "name": "@elm-land/graphql",
-  "version": "0.18.1",
+  "version": "0.18.2",
   "description": "Generate Elm code from GraphQL files",
   "main": "src/index.js",
   "scripts": {
