@@ -156,7 +156,7 @@ let readFromUserFolder = async (filepath) => {
 
 // Pokes a file to trigger any related file-watchers
 let touch = (filepath) => {
-  let now = Date.now()
+  let now = new Date()
   fs.utimesSync(filepath, now, now)
 }
 
