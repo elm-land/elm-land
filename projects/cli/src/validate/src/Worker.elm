@@ -54,7 +54,42 @@ fromPageToError page =
     if Page.isNotExposingPageFunction page then
         Just
             (missingPageFunctionError
+                { name = "page"
+                , kind = "function"
+                , filepath = Page.filepath page
+                }
+            )
+
+    else if Page.isUnknownPage page then
+        Just
+            (missingPageAnnotationError
                 { filepath = Page.filepath page
+                }
+            )
+
+    else if Page.isInvalidPage page then
+        Just
+            (invalidPageFunctionError
+                { detectedTypeAnnotation = Page.toAnnotationForPageFunction page |> Maybe.withDefault "???"
+                , filepath = Page.filepath page
+                }
+            )
+
+    else if Page.isStatefulPage page && Page.isNotExposingModelType page then
+        Just
+            (missingPageFunctionError
+                { name = "Model"
+                , kind = "type"
+                , filepath = Page.filepath page
+                }
+            )
+
+    else if Page.isStatefulPage page && Page.isNotExposingMsgType page then
+        Just
+            (missingPageFunctionError
+                { name = "Msg"
+                , kind = "type"
+                , filepath = Page.filepath page
                 }
             )
 
@@ -66,7 +101,12 @@ fromPageToError page =
 -- CATALOG OF POSSIBLE ELM LAND ERRORS
 
 
-missingPageFunctionError : { filepath : Filepath } -> Error
+missingPageFunctionError :
+    { name : String
+    , kind : String
+    , filepath : Filepath
+    }
+    -> Error
 missingPageFunctionError options =
     let
         moduleName : String
@@ -75,21 +115,77 @@ missingPageFunctionError options =
     in
     Error.new
         { path = Filepath.toRelativeFilepath options.filepath
-        , title = "Missing page function"
+        , title = "Missing {{name}} function" |> String.replace "{{name}}" options.name
         , message =
-            [ Error.text "In order for Elm Land to build, every page needs to expose a "
-            , Error.yellow "`page`"
-            , Error.text " function.\n"
-            , Error.text """Please be sure to include "page" in your exposing list like this:
+            [ Error.text ("For Elm Land to build, this page file needs to expose a " |> String.replace "{{name}}" options.name)
+            , Error.yellow ("`{{name}}`" |> String.replace "{{name}}" options.name)
+            , Error.text (" {{kind}}.\n" |> String.replace "{{kind}}" options.kind)
+            , Error.text ("""Please be sure to include "{{name}}" in your exposing list like this:
 
-1|  module """
+1|  module """ |> String.replace "{{name}}" options.name)
             , Error.text moduleName
-            , Error.text " exposing (page)\n"
+            , Error.text (" exposing ({{name}})\n" |> String.replace "{{name}}" options.name)
             , Error.text (String.repeat (22 + String.length moduleName) " ")
-            , Error.green """^^^^"""
+            , Error.green (String.repeat (String.length options.name) "^")
             , Error.text "\n"
             , Error.underline "Hint:"
-            , Error.text " Read https://elm.land/errors/missing-page-function to learn more"
+            , Error.text
+                (" Read https://elm.land/problems#missing-{{name}}-{{kind}} to learn more"
+                    |> String.replace "{{name}}" (String.toLower options.name)
+                    |> String.replace "{{kind}}" (String.toLower options.kind)
+                )
+            ]
+        }
+
+
+invalidPageFunctionError : { detectedTypeAnnotation : String, filepath : Filepath } -> Error
+invalidPageFunctionError options =
+    Error.new
+        { path = Filepath.toRelativeFilepath options.filepath
+        , title = "Invalid page function"
+        , message =
+            [ Error.text "Elm Land ran into an unexpected page function value.\n\nIt looks like `page` has the type annotation:\n\n"
+            , Error.text "    page : "
+            , Error.text options.detectedTypeAnnotation
+            , Error.text ("\n" ++ String.repeat 11 " ")
+            , Error.red (String.repeat (String.length options.detectedTypeAnnotation) "^")
+            , Error.text "\nBut Elm Land expected one of these four options:\n\n"
+            , Error.text "    page : "
+            , Error.yellow "View msg\n\n"
+            , Error.text "    page : "
+            , Error.yellow "Page Model Msg\n\n"
+            , Error.text "    page : "
+            , Error.yellow "Shared.Model -> Route Params -> Page Model Msg\n\n"
+            , Error.text "    page : "
+            , Error.yellow "Auth.User -> Shared.Model -> Route Params -> Page Model Msg\n\n"
+            , Error.text "Without one of those four annotations, Elm Land can't connect this page to\n"
+            , Error.text "the rest of your web application.\n\n"
+            , Error.underline "Hint:"
+            , Error.text " Read https://elm.land/problems#invalid-page-function to learn more"
+            ]
+        }
+
+
+missingPageAnnotationError : { filepath : Filepath } -> Error
+missingPageAnnotationError options =
+    Error.new
+        { path = Filepath.toRelativeFilepath options.filepath
+        , title = "Missing page annotation"
+        , message =
+            [ Error.text "Elm Land could not find a type annotation for your `page` function. Please add\n"
+            , Error.text "a type annotation above your page function. Here are some examples:\n\n"
+            , Error.text "    page : "
+            , Error.yellow "View msg\n\n"
+            , Error.text "    page : "
+            , Error.yellow "Page Model Msg\n\n"
+            , Error.text "    page : "
+            , Error.yellow "Shared.Model -> Route Params -> Page Model Msg\n\n"
+            , Error.text "    page : "
+            , Error.yellow "Auth.User -> Shared.Model -> Route Params -> Page Model Msg\n\n"
+            , Error.text "Without one of those four annotations, Elm Land can't connect this page to\n"
+            , Error.text "the rest of your web application.\n\n"
+            , Error.underline "Hint:"
+            , Error.text " Read https://elm.land/problems#missing-page-annotation to learn more"
             ]
         }
 
