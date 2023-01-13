@@ -3,6 +3,7 @@ const path = require('path')
 const Vite = require('vite')
 const ElmVitePlugin = require('./vite-plugins/elm/index.js')
 const TypeScriptPlugin = require('./vite-plugins/typescript/index.js')
+const RewriteAllPlugin = require('vite-plugin-rewrite-all')
 const { Codegen } = require('./codegen')
 const { Files } = require('./files')
 const { Utils, Terminal } = require('./commands/_utils')
@@ -149,6 +150,7 @@ let runServer = async (options) => {
         fs: { allow: ['../..'] }
       },
       plugins: [
+        RewriteAllPlugin.default(),
         ElmVitePlugin.plugin({
           debug,
           optimize: false
