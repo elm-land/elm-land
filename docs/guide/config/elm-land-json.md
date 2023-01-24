@@ -32,6 +32,11 @@ For reference, here is the default `elm-land.json` file that is created with eve
       "link": [],
       "script": []
     },
+    "server": {
+      "proxy": {
+        "/api": "http://localhost:5000/"
+      }
+    },
     "router": {
       "useHashRouting": false
     }
@@ -473,6 +478,15 @@ __Output:__ `index.html`
 ```
 
 :::
+## app.server.proxy
+
+::: info TYPE
+```elm
+{ proxy : Record<string, string | ProxyOptions> }
+```
+:::
+
+Configure custom proxy rules for the dev server. Expects an object of { key: options } pairs. See https://vitejs.dev/config/server-options.html#server-proxy for examples. 
 
 ## app.router
 

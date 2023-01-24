@@ -38,7 +38,7 @@ let run = async () => {
 
   let port = process.env.PORT || 1234
   let host = process.env.HOST || '0.0.0.0'
-
+  let proxy = config?.server?.proxy || {}
   let formattedHost = host === '0.0.0.0' ? 'localhost' : host
 
   return {
@@ -49,7 +49,7 @@ let run = async () => {
     files: [],
     effects: [
       { kind: 'generateHtml', config },
-      { kind: 'runServer', options: { host, port } }
+      { kind: 'runServer', options: { host, port, proxy } }
     ]
   }
 }

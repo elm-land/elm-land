@@ -146,7 +146,8 @@ let runServer = async (options) => {
       server: {
         host: options.host,
         port: options.port,
-        fs: { allow: ['../..'] }
+        fs: { allow: ['../..'] },
+        proxy: options.proxy
       },
       plugins: [
         ElmVitePlugin.plugin({

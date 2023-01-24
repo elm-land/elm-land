@@ -21,6 +21,11 @@
       ],
       "script": []
     },
+    "server": {
+      "proxy": {
+        "/api": "http://localhost:5000/"
+      }
+    },
     "router": {
       "useHashRouting": false
     }
