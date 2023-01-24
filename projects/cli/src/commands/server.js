@@ -36,9 +36,9 @@ let run = async () => {
     // TODO: Warn user about invalid config JSON
   }
 
-  let port = process.env.PORT || 1234
-  let host = process.env.HOST || '0.0.0.0'
-  let proxy = config?.server?.proxy || {}
+  let port = process.env.PORT || (config?.app?.server?.port || 1234)
+  let host = process.env.HOST || (config?.app?.server?.host || '0.0.0.0')
+  let proxy = config?.app?.server?.proxy || {}
   let formattedHost = host === '0.0.0.0' ? 'localhost' : host
 
   return {
