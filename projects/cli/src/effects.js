@@ -150,7 +150,7 @@ let runServer = async (options) => {
         fs: { allow: ['../..'] }
       },
       plugins: [
-        RewriteAllPlugin.default(),
+        DotPathFixPlugin.plugin(),
         ElmVitePlugin.plugin({
           debug,
           optimize: false

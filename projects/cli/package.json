@@ -41,7 +41,6 @@
     "node-elm-compiler": "5.0.6",
     "terser": "5.15.1",
     "typescript": "4.9.3",
-    "vite": "3.2.5",
-    "vite-plugin-rewrite-all": "^1.0.1"
+    "vite": "3.2.5"
   }
 }
