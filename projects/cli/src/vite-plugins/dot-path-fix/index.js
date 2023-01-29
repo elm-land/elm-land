@@ -10,7 +10,6 @@ const plugin = () => {
                     next()
                 } else {
                     if (!req.url.startsWith('/@') && !fs.existsSync(`.${reqPath}`)) {
-                        console.log(reqPath, 'redir to /')
                         req.url = '/';
                     }
                     next();
