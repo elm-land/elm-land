@@ -20,6 +20,7 @@ html:not(.dark) {
   --vp-c-brand: hsl(153, 47%, 33%);
   --vp-code-block-bg: var(--vp-c-bg-soft);
   --vp-code-line-number-color: #24292F88;
+  --vp-code-line-highlight-color: hsl(153deg 47% 50% / 25%);
 }
 
 html:not(.dark) .VPNav.no-sidebar, 
