@@ -1,4 +1,5 @@
 const fs = require('fs')
+const path = require('path')
 
 const plugin = () => {
     return {
@@ -9,7 +10,7 @@ const plugin = () => {
                 if (reqPath == '/main.js') {
                     next()
                 } else {
-                    if (!req.url.startsWith('/@') && !fs.existsSync(`.${reqPath}`)) {
+                    if (!req.url.startsWith('/@') && !fs.existsSync(`.${reqPath}`) && !fs.existsSync(path.join(server.config.publicDir, reqPath))) {
                         req.url = '/';
                     }
                     next();
