@@ -27,6 +27,21 @@ load helpers
   cd ../../projects/cli
 }
 
+@test "'elm-land build' still works after creating a top-level catch-all page" {
+  cd ../../examples/01-hello-world
+
+  run elm-land add page "/*"
+  expectToPass
+
+  run elm-land build
+  expectToPass
+
+  expectOutputContains "successfully built"
+
+  rm -r .elm-land elm-stuff dist src/Pages/ALL_.elm
+  cd ../../projects/cli
+}
+
 @test "cleanup" {
   cleanupTmpFolder
 }
