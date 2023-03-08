@@ -2,7 +2,7 @@
 
 ## Overview
 
-The [Elm Land CLI] tool is available via NPM. This one command-line tool has everything you need
+The [Elm Land CLI](https://www.npmjs.com/package/elm-land) tool is available via NPM. This one command-line tool has everything you need
 to create new projects, run your development server, and even build your application for production.
 
 After installing, you can run `elm-land --help` to see these commands at any time. This page is a more

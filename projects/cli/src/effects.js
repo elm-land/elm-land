@@ -3,6 +3,7 @@ const path = require('path')
 const Vite = require('vite')
 const ElmVitePlugin = require('./vite-plugins/elm/index.js')
 const TypeScriptPlugin = require('./vite-plugins/typescript/index.js')
+const DotPathFixPlugin = require('./vite-plugins/dot-path-fix/index.js')
 const { Codegen } = require('./codegen')
 const { Files } = require('./files')
 const { Utils, Terminal } = require('./commands/_utils')
@@ -150,6 +151,7 @@ let runServer = async (options) => {
         fs: { allow: ['../..'] }
       },
       plugins: [
+        DotPathFixPlugin.plugin(),
         ElmVitePlugin.plugin({
           debug,
           optimize: false
