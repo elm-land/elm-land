@@ -2173,7 +2173,9 @@ routePathFromStringExpression { pages } =
                 { value = CodeGen.Argument.new "urlPathSegments"
                 , branches =
                     if List.any PageFile.isTopLevelCatchAllPage pages then
-                        List.map toBranch pages
+                        pages
+                            |> List.filter (\page -> not (PageFile.isNotFoundPage page))
+                            |> List.map toBranch
 
                     else
                         List.map toBranch pages ++ [ nothingBranch ]
