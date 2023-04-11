@@ -797,7 +797,7 @@ Elm includes helpful information about each error case in the `Http.Error` value
 
 ## Adding a detail page
 
-Our new homepage works great– but what if users want to see more detailed information about a Pokemon on a separate page?
+Our new homepage works great – but what if users want to see more detailed information about a Pokemon on a separate page?
 
 Let's make each of our Pokemon tiles clickable, so they take us to a "Pokemon Detail" page like `/pokemon/bulbasaur` or `/pokemon/pikachu`. We can create a new page with the Elm Land CLI:
 
