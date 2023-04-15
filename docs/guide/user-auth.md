@@ -524,7 +524,7 @@ update msg model =
 
 If you try using the sign-in form again in your browser, you'll be able to fill in the fields and submit the form. This time, an HTTP request will be sent to the API running at `http://localhost:5000`, and you will see the button is no longer in the "loading" state.
 
-In the bottom right corner, click on the Elm debugger– you should see that the API is receiving the secret token from the backend:
+In the bottom right corner, click on the Elm debugger – you should see that the API is receiving the secret token from the backend:
 
 ![The Elm debugger, showing the latest message `SignInApiReponded (Ok "ryans-secret-token")`](./user-auth/03-debugger-token.png)
 
@@ -1114,7 +1114,7 @@ Even when our API fails, our Elm app won't crash on our users. This is only one 
 
 ## Using local storage
 
-The approach we're using works great while we're using the app, but if we refresh the page– we have to sign-in all over again! Many applications will use [the local storage API](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) to save their JSON web tokens. This will make them available even after a user closes the tab and opens our app again later.
+The approach we're using works great while we're using the app, but if we refresh the page – we have to sign-in all over again! Many applications will use [the local storage API](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) to save their JSON web tokens. This will make them available even after a user closes the tab and opens our app again later.
 
 To use the local storage API, we'll want to create another custom effect in our `Effect` module. There's not an Elm package for working with local storage, so we will use [Elm ports](https://guide.elm-lang.org/interop/ports.html) to send a message to ask JavaScript to take care of this for us.
 
@@ -1289,7 +1289,7 @@ init flagsResult route =
 -- ...
 ```
 
-Now that everything is wired up, our application will check local storage for a token, and if it's already there– our application will have a value in the `Shared.Model`. This will be useful in the next section, when we add auth-only pages and automatic redirects.
+Now that everything is wired up, our application will check local storage for a token, and if it's already there – our application will have a value in the `Shared.Model`. This will be useful in the next section, when we add auth-only pages and automatic redirects.
 
 ## Defining auth-only pages
 
@@ -1587,7 +1587,7 @@ update msg model =
 -- ...
 ```
 
-This `/api/me` endpoint returned more user data, and we want it to be available on all of our auth-only pages. For that reason, we're going to pass in more information to our `Effect.signIn` function– and update `Auth.User` to store the extra fields.
+This `/api/me` endpoint returned more user data, and we want it to be available on all of our auth-only pages. For that reason, we're going to pass in more information to our `Effect.signIn` function – and update `Auth.User` to store the extra fields.
 
 When we make these changes, this means that all auth-only pages will have access to am id, name, profile picture, email, and a token for sending API requests.
 
@@ -1792,7 +1792,7 @@ onPageLoad shared route =
 
 ### 6. Updating our `src/interop.js` file
 
-The Elm compiler can't remind you about the code on the JavaScript side, so whenever you are working with ports– be sure to check if your JS needs any updating.
+The Elm compiler can't remind you about the code on the JavaScript side, so whenever you are working with ports – be sure to check if your JS needs any updating.
 
 In this case, we need to send `user` instead of `token` when our application starts up:
 
@@ -2249,7 +2249,7 @@ Now when you visit the `http://localhost:1234`, here's what you should see the s
 
 ## Implementing sign out
 
-When we click the "Sign out" button, nothing is happening! This is the last thing we'll need to implement for this example to be complete– so let's do it!
+When we click the "Sign out" button, nothing is happening! This is the last thing we'll need to implement for this example to be complete – so let's do it!
 
 You may have noticed that our layout's `view` function is a bit more complicated than our page's `view` function.
 
