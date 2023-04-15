@@ -197,6 +197,7 @@ viewFormInput options =
                     [ ( "is-danger", options.error /= Nothing )
                     ]
                 , Attr.type_ (fromFieldToInputType options.field)
+                , Attr.autocomplete True
                 , Attr.value options.value
                 , Html.Events.onInput (UserUpdatedInput options.field)
                 ]
