@@ -334,7 +334,7 @@ toCmd options effect =
 
 Instead of exposing the generic `SendMessageToJavaScript` value from this module, we define specific functions like `openWindowDialog` to make it easy for our code to perform side effects.
 
-Otherwise, they might make typos with the `tag` field or get confused when encoding the JSON. Our `openWindowDialog` defines a nicer API for the rest of our code, so we expose that instead:
+Otherwise, we might make typos with the `tag` field or get confused when encoding the JSON. Our `openWindowDialog` defines a nicer API for the rest of our code, so we expose that instead:
 
 ```elm {3,8-13}
 port module Effect exposing
