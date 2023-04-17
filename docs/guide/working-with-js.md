@@ -450,7 +450,7 @@ export const onReady = ({ app, env }) => {
 
 Another great way to work with existing JavaScript libraries is to define custom [web components](https://developer.mozilla.org/en-US/docs/Web/Web_Components) that are rendered within your Elm application.
 
-Just like a `<div>` or a `<span>`, you can render a `<my-custom-thing>` tag within your Elm application. That HTML element can run be used to safely embed your own JavaScript components.
+Just like a `<div>` or a `<span>`, you can render a `<my-custom-thing>` tag within your Elm application. That HTML element can be used to safely embed your own JavaScript components.
 
 It's common to do this for things like Google Maps, or if you're embedding an existing React or Vue application within a mostly Elm app.
 
