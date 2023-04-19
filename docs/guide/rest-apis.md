@@ -1327,6 +1327,6 @@ That was the last step, if we check our web browser, here's what we'll see:
 
 ### You did it! :tada:
 
-You are now both a Pokemon _and_ JSON decoding master! Getting comfortable with JSON decoding takes times, but now you're ready for the next exciting guide!
+You are now both a Pokemon _and_ JSON decoding master! Getting comfortable with JSON decoding takes time, but now you're ready for the next exciting guide!
 
 See you there!

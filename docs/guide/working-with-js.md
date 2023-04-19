@@ -334,7 +334,7 @@ toCmd options effect =
 
 Instead of exposing the generic `SendMessageToJavaScript` value from this module, we define specific functions like `openWindowDialog` to make it easy for our code to perform side effects.
 
-Otherwise, they might make typos with the `tag` field or get confused when encoding the JSON. Our `openWindowDialog` defines a nicer API for the rest of our code, so we expose that instead:
+Otherwise, we might make typos with the `tag` field or get confused when encoding the JSON. Our `openWindowDialog` defines a nicer API for the rest of our code, so we expose that instead:
 
 ```elm {3,8-13}
 port module Effect exposing
@@ -450,7 +450,7 @@ export const onReady = ({ app, env }) => {
 
 Another great way to work with existing JavaScript libraries is to define custom [web components](https://developer.mozilla.org/en-US/docs/Web/Web_Components) that are rendered within your Elm application.
 
-Just like a `<div>` or a `<span>`, you can render a `<my-custom-thing>` tag within your Elm application. That HTML element can run be used to safely embed your own JavaScript components.
+Just like a `<div>` or a `<span>`, you can render a `<my-custom-thing>` tag within your Elm application. That HTML element can be used to safely embed your own JavaScript components.
 
 It's common to do this for things like Google Maps, or if you're embedding an existing React or Vue application within a mostly Elm app.
 
@@ -587,7 +587,7 @@ Now that we have that web component file, we'll need to import it into our `src/
 Back in `src/interop.js`, and this line to the top of your file:
 
 ```js {1}
-import './webcomponents/forest-demo.js'
+import './web-components/forest-demo.js'
 
 // ...
 ```
