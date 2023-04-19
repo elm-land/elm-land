@@ -587,7 +587,7 @@ Now that we have that web component file, we'll need to import it into our `src/
 Back in `src/interop.js`, and this line to the top of your file:
 
 ```js {1}
-import './webcomponents/forest-demo.js'
+import './web-components/forest-demo.js'
 
 // ...
 ```
