@@ -1589,7 +1589,7 @@ update msg model =
 
 This `/api/me` endpoint returned more user data, and we want it to be available on all of our auth-only pages. For that reason, we're going to pass in more information to our `Effect.signIn` function– and update `Auth.User` to store the extra fields.
 
-When we make these changes, this means that all auth-only pages will have access to am id, name, profile picture, email, and a token for sending API requests.
+When we make these changes, this means that all auth-only pages will have access to an id, name, profile picture, email, and a token for sending API requests.
 
 ::: tip Elm has your back!
 
