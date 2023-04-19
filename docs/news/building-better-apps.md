@@ -195,7 +195,7 @@ Those two channels played a huge role in adding of the following highlighted fea
 
 ### Hash-based routing
 
-Some web hosting environments have contraints that make hosting apps with multiple pages difficult. `@mattcheely` tackled this problem head-on by adding hash-routing support to the project. Now any Elm Land user can easily opt-in to having their single-page apps use URLs like `/#/blog/123` in case `/blog/123` doesn't work with their workplace's hosting setup.
+Some web hosting environments have constraints that make hosting apps with multiple pages difficult. `@mattcheely` tackled this problem head-on by adding hash-routing support to the project. Now any Elm Land user can easily opt-in to having their single-page apps use URLs like `/#/blog/123` in case `/blog/123` doesn't work with their workplace's hosting setup.
 
 ### Support for &lt;script&gt; tags
 
