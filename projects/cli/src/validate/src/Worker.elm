@@ -70,10 +70,6 @@ fromPageToError page =
                     )
 
             Just problem ->
-                let
-                    _ =
-                        Debug.log "problem" problem
-                in
                 Just
                     (invalidPageFunctionError
                         { detectedTypeAnnotation = Page.toAnnotationForPageFunction page |> Maybe.withDefault "???"

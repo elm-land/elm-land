@@ -314,6 +314,15 @@ toPageKind (Page page) =
                         _ ->
                             False
 
+                isPageModelMsg : Elm.Syntax.TypeAnnotation.TypeAnnotation -> Bool
+                isPageModelMsg annotation =
+                    case annotation of
+                        Elm.Syntax.TypeAnnotation.Typed node vars ->
+                            isModuleNamed "Page" (toValue node) && isModelAndMsg vars
+
+                        _ ->
+                            False
+
                 findSharedRoutePageFunction :
                     Elm.Syntax.TypeAnnotation.TypeAnnotation
                     -> Result Problem PageKind
@@ -357,15 +366,22 @@ toPageKind (Page page) =
                             if isViewMsg typeAnnotation then
                                 Ok Static
 
-                            else if isModuleNamed "Page" (toValue node) && isModelAndMsg vars then
+                            else if isPageModelMsg typeAnnotation then
                                 Ok Stateful
 
                             else
                                 Err PageFunctionExpectedViewOrPageValue
 
                         Elm.Syntax.TypeAnnotation.FunctionTypeAnnotation left1 right1 ->
-                            if isValidParams page.filepath (toValue left1) && isViewMsg (toValue right1) then
-                                Ok Static
+                            if isValidParams page.filepath (toValue left1) then
+                                if isViewMsg (toValue right1) then
+                                    Ok Static
+
+                                else if isPageModelMsg (toValue right1) then
+                                    Ok Stateful
+
+                                else
+                                    Err PageFunctionExpectedTypeOrFunction
 
                             else if isAuthUser (toValue left1) then
                                 findSharedRoutePageFunction (toValue right1)
