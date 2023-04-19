@@ -2207,7 +2207,7 @@ toRoutePathToStringBranch page =
                     |> List.map
                         (\piece ->
                             if piece == "ALL_" then
-                                CodeGen.Expression.value "String.join \"/\" (params.first_ :: params.rest_)"
+                                CodeGen.Expression.value "String.join \"/\" params.all_"
 
                             else if piece == "NotFound_" then
                                 CodeGen.Expression.string "404"

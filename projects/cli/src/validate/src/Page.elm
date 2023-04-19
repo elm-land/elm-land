@@ -2,9 +2,10 @@ module Page exposing
     ( Page, decoder
     , filepath
     , toAnnotationForPageFunction
-    , isUnknownPage, isInvalidPage, isStatefulPage
+    , isStatefulPage
     , isNotExposingPageFunction
     , isNotExposingModelType, isNotExposingMsgType
+    , Problem(..), toProblem
     )
 
 {-|
@@ -86,41 +87,13 @@ fileDecoder =
 
 
 type PageKind
-    = Unknown
-    | Invalid
-    | Static
+    = Static
     | Stateful
 
 
 toAnnotationForPageFunction : Page -> Maybe String
 toAnnotationForPageFunction (Page page) =
-    let
-        pageFunction : Maybe Elm.Syntax.Expression.Function
-        pageFunction =
-            page.file.declarations
-                |> List.map Elm.Syntax.Node.value
-                |> List.filterMap toMaybeFunctionExpression
-                |> List.filter (isFunctionWithName "page")
-                |> List.head
-
-        toMaybeFunctionExpression : Elm.Syntax.Declaration.Declaration -> Maybe Elm.Syntax.Expression.Function
-        toMaybeFunctionExpression declaration =
-            case declaration of
-                Elm.Syntax.Declaration.FunctionDeclaration function ->
-                    Just function
-
-                _ ->
-                    Nothing
-
-        isFunctionWithName : String -> Elm.Syntax.Expression.Function -> Bool
-        isFunctionWithName targetName function =
-            function.declaration
-                |> Elm.Syntax.Node.value
-                |> .name
-                |> Elm.Syntax.Node.value
-                |> (==) targetName
-    in
-    case pageFunction of
+    case findPageFunction page.file of
         Just function ->
             case function.signature of
                 Just node ->
@@ -140,6 +113,33 @@ toAnnotationForPageFunction (Page page) =
 
         Nothing ->
             Nothing
+
+
+findPageFunction : Elm.Syntax.File.File -> Maybe Elm.Syntax.Expression.Function
+findPageFunction file =
+    let
+        toMaybeFunctionExpression : Elm.Syntax.Declaration.Declaration -> Maybe Elm.Syntax.Expression.Function
+        toMaybeFunctionExpression declaration =
+            case declaration of
+                Elm.Syntax.Declaration.FunctionDeclaration function ->
+                    Just function
+
+                _ ->
+                    Nothing
+
+        isFunctionWithName : String -> Elm.Syntax.Expression.Function -> Bool
+        isFunctionWithName targetName function =
+            function.declaration
+                |> Elm.Syntax.Node.value
+                |> .name
+                |> Elm.Syntax.Node.value
+                |> (==) targetName
+    in
+    file.declarations
+        |> List.map Elm.Syntax.Node.value
+        |> List.filterMap toMaybeFunctionExpression
+        |> List.filter (isFunctionWithName "page")
+        |> List.head
 
 
 fromAnnotationToString : Elm.Syntax.TypeAnnotation.TypeAnnotation -> String
@@ -224,41 +224,163 @@ fromRecordFieldToString recordField =
                 ]
 
 
-toPageKind : Page -> PageKind
-toPageKind page =
-    case toAnnotationForPageFunction page of
+type Problem
+    = PageFunctionNotFound
+    | PageFunctionMissingTypeAnnotation
+    | PageFunctionExpectedTypeOrFunction
+    | PageFunctionExpectedViewOrPageValue
+    | PageFunctionExpectedFunctionReturningPage
+    | PageFunctionExpectedRouteParams
+    | PageFunctionExpectedSharedModel
+
+
+toPageKind : Page -> Result Problem PageKind
+toPageKind (Page page) =
+    case findPageFunction page.file of
         Nothing ->
-            Unknown
+            Err PageFunctionNotFound
 
-        Just "View msg" ->
-            Static
+        Just { signature } ->
+            let
+                isAuthUser : Elm.Syntax.TypeAnnotation.TypeAnnotation -> Bool
+                isAuthUser annotation =
+                    case annotation of
+                        Elm.Syntax.TypeAnnotation.Typed node [] ->
+                            isModuleNamed "Auth.User" (toValue node)
 
-        Just "Page Model Msg" ->
-            Stateful
+                        _ ->
+                            False
 
-        Just "Shared.Model -> Route () -> Page Model Msg" ->
-            Stateful
+                isSharedModel : Elm.Syntax.TypeAnnotation.TypeAnnotation -> Bool
+                isSharedModel annotation =
+                    case annotation of
+                        Elm.Syntax.TypeAnnotation.Typed node [] ->
+                            isModuleNamed "Shared.Model" (toValue node)
 
-        Just "Auth.User -> Shared.Model -> Route () -> Page Model Msg" ->
-            Stateful
+                        _ ->
+                            False
 
-        Just _ ->
-            Invalid
+                isModuleNamed : String -> ( List String, String ) -> Bool
+                isModuleNamed str ( xs, x ) =
+                    String.split "." str == xs ++ [ x ]
 
+                isGenericMsgType : Elm.Syntax.TypeAnnotation.TypeAnnotation -> Bool
+                isGenericMsgType anno =
+                    case anno of
+                        Elm.Syntax.TypeAnnotation.GenericType "msg" ->
+                            True
 
-isUnknownPage : Page -> Bool
-isUnknownPage page =
-    toPageKind page == Unknown
+                        _ ->
+                            False
 
+                isModelAndMsg : List (Elm.Syntax.Node.Node Elm.Syntax.TypeAnnotation.TypeAnnotation) -> Bool
+                isModelAndMsg nodes =
+                    case List.map toValue nodes of
+                        [ Elm.Syntax.TypeAnnotation.Typed modelVar _, Elm.Syntax.TypeAnnotation.Typed msgVar _ ] ->
+                            isModuleNamed "Model" (toValue modelVar)
+                                && isModuleNamed "Msg" (toValue msgVar)
 
-isInvalidPage : Page -> Bool
-isInvalidPage page =
-    toPageKind page == Invalid
+                        _ ->
+                            False
+
+                toValue : Elm.Syntax.Node.Node value -> value
+                toValue =
+                    Elm.Syntax.Node.value
+
+                isRouteWithParamsMatching : Filepath -> Elm.Syntax.TypeAnnotation.TypeAnnotation -> Bool
+                isRouteWithParamsMatching filepath_ annotation =
+                    let
+                        isValidParams : Elm.Syntax.TypeAnnotation.TypeAnnotation -> Bool
+                        isValidParams params =
+                            fromAnnotationToString params
+                                == Filepath.toRouteParamsRecordString filepath_
+                    in
+                    case annotation of
+                        Elm.Syntax.TypeAnnotation.Typed node [ paramsArg ] ->
+                            isModuleNamed "Route" (toValue node) && isValidParams (toValue paramsArg)
+
+                        _ ->
+                            False
+
+                findSharedRoutePageFunction :
+                    Elm.Syntax.TypeAnnotation.TypeAnnotation
+                    -> Result Problem PageKind
+                findSharedRoutePageFunction annotation =
+                    case annotation of
+                        Elm.Syntax.TypeAnnotation.FunctionTypeAnnotation left2 right2 ->
+                            if isSharedModel (toValue left2) then
+                                case toValue right2 of
+                                    Elm.Syntax.TypeAnnotation.FunctionTypeAnnotation left3 right3 ->
+                                        if isRouteWithParamsMatching page.filepath (toValue left3) then
+                                            case toValue right3 of
+                                                Elm.Syntax.TypeAnnotation.Typed node vars ->
+                                                    if isModuleNamed "Page" (toValue node) && isModelAndMsg vars then
+                                                        Ok Stateful
+
+                                                    else
+                                                        Err PageFunctionExpectedViewOrPageValue
+
+                                                _ ->
+                                                    Err PageFunctionExpectedFunctionReturningPage
+
+                                        else
+                                            Err PageFunctionExpectedRouteParams
+
+                                    _ ->
+                                        Err PageFunctionExpectedRouteParams
+
+                            else
+                                Err PageFunctionExpectedSharedModel
+
+                        _ ->
+                            Err PageFunctionExpectedSharedModel
+            in
+            case signature |> Maybe.map (toValue >> .typeAnnotation >> toValue) of
+                Nothing ->
+                    Err PageFunctionMissingTypeAnnotation
+
+                Just typeAnnotation ->
+                    case typeAnnotation of
+                        Elm.Syntax.TypeAnnotation.Typed node vars ->
+                            if
+                                isModuleNamed "View" (toValue node)
+                                    && (List.head vars
+                                            |> Maybe.map (toValue >> isGenericMsgType)
+                                            |> Maybe.withDefault False
+                                       )
+                            then
+                                Ok Static
+
+                            else if isModuleNamed "Page" (toValue node) && isModelAndMsg vars then
+                                Ok Stateful
+
+                            else
+                                Err PageFunctionExpectedViewOrPageValue
+
+                        Elm.Syntax.TypeAnnotation.FunctionTypeAnnotation left1 right1 ->
+                            if isAuthUser (toValue left1) then
+                                findSharedRoutePageFunction (toValue right1)
+
+                            else
+                                findSharedRoutePageFunction typeAnnotation
+
+                        _ ->
+                            Err PageFunctionExpectedTypeOrFunction
 
 
 isStatefulPage : Page -> Bool
 isStatefulPage page =
-    toPageKind page == Stateful
+    toPageKind page == Ok Stateful
+
+
+toProblem : Page -> Maybe Problem
+toProblem page =
+    case toPageKind page of
+        Err problem ->
+            Just problem
+
+        Ok _ ->
+            Nothing
 
 
 

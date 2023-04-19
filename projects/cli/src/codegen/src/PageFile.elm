@@ -446,8 +446,9 @@ toParamsRecordAnnotation (PageFile { filepath }) =
         addConditionalCatchAllParameters fields =
             if isCatchAllRoute then
                 fields
-                    ++ [ ( "first_", CodeGen.Annotation.string )
-                       , ( "rest_", CodeGen.Annotation.type_ "List String" )
+                    ++ [ ( "all_"
+                         , CodeGen.Annotation.type_ "List String"
+                         )
                        ]
 
             else
@@ -460,6 +461,12 @@ toParamsRecordAnnotation (PageFile { filepath }) =
         |> List.map (\fieldName -> ( fieldName, CodeGen.Annotation.string ))
         |> addConditionalCatchAllParameters
         |> CodeGen.Annotation.record
+
+
+toParamsRecordAnnotationString : PageFile -> String
+toParamsRecordAnnotationString pageFile =
+    toParamsRecordAnnotation pageFile
+        |> CodeGen.Annotation.toString
 
 
 isTopLevelCatchAllPage : PageFile -> Bool
@@ -499,7 +506,7 @@ toRouteFromStringBranch page =
                     [ "[]" ]
 
                 "ALL_" :: [] ->
-                    [ "first_", "rest_" ]
+                    [ "all_" ]
 
                 "ALL_" :: rest ->
                     branchPattern ("all_" :: rest)
@@ -529,18 +536,15 @@ toRouteFromStringBranch page =
                     , arguments =
                         [ CodeGen.Expression.multilineRecord
                             (toDynamicParameterList page
-                                |> List.concatMap
+                                |> List.map
                                     (\str ->
                                         if str == "ALL_" then
-                                            [ ( "first_", CodeGen.Expression.value "first_" )
-                                            , ( "rest_", CodeGen.Expression.value "rest_" )
-                                            ]
+                                            ( "all_", CodeGen.Expression.value "all_" )
 
                                         else
-                                            [ ( str |> String.dropRight 1 |> Extras.String.fromPascalCaseToCamelCase
-                                              , CodeGen.Expression.value (str |> Extras.String.fromPascalCaseToCamelCase)
-                                              )
-                                            ]
+                                            ( str |> String.dropRight 1 |> Extras.String.fromPascalCaseToCamelCase
+                                            , CodeGen.Expression.value (str |> Extras.String.fromPascalCaseToCamelCase)
+                                            )
                                     )
                             )
                         ]

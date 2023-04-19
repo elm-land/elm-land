@@ -60,41 +60,48 @@ fromPageToError page =
                 }
             )
 
-    else if Page.isUnknownPage page then
-        Just
-            (missingPageAnnotationError
-                { filepath = Page.filepath page
-                }
-            )
-
-    else if Page.isInvalidPage page then
-        Just
-            (invalidPageFunctionError
-                { detectedTypeAnnotation = Page.toAnnotationForPageFunction page |> Maybe.withDefault "???"
-                , filepath = Page.filepath page
-                }
-            )
-
-    else if Page.isStatefulPage page && Page.isNotExposingModelType page then
-        Just
-            (missingPageFunctionError
-                { name = "Model"
-                , kind = "type"
-                , filepath = Page.filepath page
-                }
-            )
-
-    else if Page.isStatefulPage page && Page.isNotExposingMsgType page then
-        Just
-            (missingPageFunctionError
-                { name = "Msg"
-                , kind = "type"
-                , filepath = Page.filepath page
-                }
-            )
-
     else
-        Nothing
+        case Page.toProblem page of
+            Just Page.PageFunctionMissingTypeAnnotation ->
+                Just
+                    (missingPageAnnotationError
+                        { filepath = Page.filepath page
+                        }
+                    )
+
+            Just problem ->
+                let
+                    _ =
+                        Debug.log "problem" problem
+                in
+                Just
+                    (invalidPageFunctionError
+                        { detectedTypeAnnotation = Page.toAnnotationForPageFunction page |> Maybe.withDefault "???"
+                        , filepath = Page.filepath page
+                        }
+                    )
+
+            Nothing ->
+                if Page.isStatefulPage page && Page.isNotExposingModelType page then
+                    Just
+                        (missingPageFunctionError
+                            { name = "Model"
+                            , kind = "type"
+                            , filepath = Page.filepath page
+                            }
+                        )
+
+                else if Page.isStatefulPage page && Page.isNotExposingMsgType page then
+                    Just
+                        (missingPageFunctionError
+                            { name = "Msg"
+                            , kind = "type"
+                            , filepath = Page.filepath page
+                            }
+                        )
+
+                else
+                    Nothing
 
 
 
@@ -155,9 +162,15 @@ invalidPageFunctionError options =
             , Error.text "    page : "
             , Error.yellow "Page Model Msg\n\n"
             , Error.text "    page : "
-            , Error.yellow "Shared.Model -> Route Params -> Page Model Msg\n\n"
+            , Error.yellow
+                ("Shared.Model -> Route {{params}} -> Page Model Msg\n\n"
+                    |> String.replace "{{params}}" (Filepath.toRouteParamsRecordString options.filepath)
+                )
             , Error.text "    page : "
-            , Error.yellow "Auth.User -> Shared.Model -> Route Params -> Page Model Msg\n\n"
+            , Error.yellow
+                ("Auth.User -> Shared.Model -> Route {{params}} -> Page Model Msg\n\n"
+                    |> String.replace "{{params}}" (Filepath.toRouteParamsRecordString options.filepath)
+                )
             , Error.text "Without one of those four annotations, Elm Land can't connect this page to\n"
             , Error.text "the rest of your web application.\n\n"
             , Error.underline "Hint:"
