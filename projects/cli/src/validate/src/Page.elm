@@ -289,15 +289,27 @@ toPageKind (Page page) =
 
                 isRouteWithParamsMatching : Filepath -> Elm.Syntax.TypeAnnotation.TypeAnnotation -> Bool
                 isRouteWithParamsMatching filepath_ annotation =
-                    let
-                        isValidParams : Elm.Syntax.TypeAnnotation.TypeAnnotation -> Bool
-                        isValidParams params =
-                            fromAnnotationToString params
-                                == Filepath.toRouteParamsRecordString filepath_
-                    in
                     case annotation of
                         Elm.Syntax.TypeAnnotation.Typed node [ paramsArg ] ->
-                            isModuleNamed "Route" (toValue node) && isValidParams (toValue paramsArg)
+                            isModuleNamed "Route" (toValue node) && isValidParams filepath_ (toValue paramsArg)
+
+                        _ ->
+                            False
+
+                isValidParams : Filepath -> Elm.Syntax.TypeAnnotation.TypeAnnotation -> Bool
+                isValidParams filepath_ params =
+                    fromAnnotationToString params
+                        == Filepath.toRouteParamsRecordString filepath_
+
+                isViewMsg : Elm.Syntax.TypeAnnotation.TypeAnnotation -> Bool
+                isViewMsg annotation =
+                    case annotation of
+                        Elm.Syntax.TypeAnnotation.Typed node vars ->
+                            isModuleNamed "View" (toValue node)
+                                && (List.head vars
+                                        |> Maybe.map (toValue >> isGenericMsgType)
+                                        |> Maybe.withDefault False
+                                   )
 
                         _ ->
                             False
@@ -342,13 +354,7 @@ toPageKind (Page page) =
                 Just typeAnnotation ->
                     case typeAnnotation of
                         Elm.Syntax.TypeAnnotation.Typed node vars ->
-                            if
-                                isModuleNamed "View" (toValue node)
-                                    && (List.head vars
-                                            |> Maybe.map (toValue >> isGenericMsgType)
-                                            |> Maybe.withDefault False
-                                       )
-                            then
+                            if isViewMsg typeAnnotation then
                                 Ok Static
 
                             else if isModuleNamed "Page" (toValue node) && isModelAndMsg vars then
@@ -358,7 +364,10 @@ toPageKind (Page page) =
                                 Err PageFunctionExpectedViewOrPageValue
 
                         Elm.Syntax.TypeAnnotation.FunctionTypeAnnotation left1 right1 ->
-                            if isAuthUser (toValue left1) then
+                            if isValidParams page.filepath (toValue left1) && isViewMsg (toValue right1) then
+                                Ok Static
+
+                            else if isAuthUser (toValue left1) then
                                 findSharedRoutePageFunction (toValue right1)
 
                             else

@@ -147,6 +147,11 @@ missingPageFunctionError options =
 
 invalidPageFunctionError : { detectedTypeAnnotation : String, filepath : Filepath } -> Error
 invalidPageFunctionError options =
+    let
+        params : String
+        params =
+            Filepath.toRouteParamsRecordString options.filepath
+    in
     Error.new
         { path = Filepath.toRelativeFilepath options.filepath
         , title = "Invalid page function"
@@ -158,18 +163,26 @@ invalidPageFunctionError options =
             , Error.red (String.repeat (String.length options.detectedTypeAnnotation) "^")
             , Error.text "\nBut Elm Land expected one of these four options:\n\n"
             , Error.text "    page : "
-            , Error.yellow "View msg\n\n"
+            , case params of
+                "()" ->
+                    Error.yellow "View msg\n\n"
+
+                _ ->
+                    Error.yellow
+                        ("{{params}} -> View msg\n\n"
+                            |> String.replace "{{params}}" params
+                        )
             , Error.text "    page : "
             , Error.yellow "Page Model Msg\n\n"
             , Error.text "    page : "
             , Error.yellow
                 ("Shared.Model -> Route {{params}} -> Page Model Msg\n\n"
-                    |> String.replace "{{params}}" (Filepath.toRouteParamsRecordString options.filepath)
+                    |> String.replace "{{params}}" params
                 )
             , Error.text "    page : "
             , Error.yellow
                 ("Auth.User -> Shared.Model -> Route {{params}} -> Page Model Msg\n\n"
-                    |> String.replace "{{params}}" (Filepath.toRouteParamsRecordString options.filepath)
+                    |> String.replace "{{params}}" params
                 )
             , Error.text "Without one of those four annotations, Elm Land can't connect this page to\n"
             , Error.text "the rest of your web application.\n\n"
@@ -181,6 +194,11 @@ invalidPageFunctionError options =
 
 missingPageAnnotationError : { filepath : Filepath } -> Error
 missingPageAnnotationError options =
+    let
+        params : String
+        params =
+            Filepath.toRouteParamsRecordString options.filepath
+    in
     Error.new
         { path = Filepath.toRelativeFilepath options.filepath
         , title = "Missing page annotation"
@@ -188,13 +206,27 @@ missingPageAnnotationError options =
             [ Error.text "Elm Land could not find a type annotation for your `page` function. Please add\n"
             , Error.text "a type annotation above your page function. Here are some examples:\n\n"
             , Error.text "    page : "
-            , Error.yellow "View msg\n\n"
+            , case params of
+                "()" ->
+                    Error.yellow "View msg\n\n"
+
+                _ ->
+                    Error.yellow
+                        ("{{params}} -> View msg\n\n"
+                            |> String.replace "{{params}}" params
+                        )
             , Error.text "    page : "
             , Error.yellow "Page Model Msg\n\n"
             , Error.text "    page : "
-            , Error.yellow "Shared.Model -> Route Params -> Page Model Msg\n\n"
+            , Error.yellow
+                ("Shared.Model -> Route {{params}} -> Page Model Msg\n\n"
+                    |> String.replace "{{params}}" params
+                )
             , Error.text "    page : "
-            , Error.yellow "Auth.User -> Shared.Model -> Route Params -> Page Model Msg\n\n"
+            , Error.yellow
+                ("Auth.User -> Shared.Model -> Route {{params}} -> Page Model Msg\n\n"
+                    |> String.replace "{{params}}" params
+                )
             , Error.text "Without one of those four annotations, Elm Land can't connect this page to\n"
             , Error.text "the rest of your web application.\n\n"
             , Error.underline "Hint:"
