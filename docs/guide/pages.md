@@ -257,18 +257,16 @@ import Html exposing (Html)
 import View exposing (View)
 
 
-page : { first_ : String, rest_ : List String } -> View msg
+page : { all_ : List String } -> View msg
 page params =
     { title = "Pages.Blog.ALL_"
     , body =
-        [ Html.text
-            ("/blog/" ++
-                String.join "/" (params.first_ :: params.rest_)
-            )
+        [ Html.text ("/blog/" ++ String.join "/" params.all_)
         ]
     }
 
 ```
+
 Just like we saw before with [dynamic routes](#dynamic-routes), the trailing `_` in this filename means this page does something special. In our case, the `ALL_.elm` filename is a reserved keyword for a "catch-all route".
 
 Try opening any of these URLs in our browser:
@@ -281,30 +279,14 @@ All of those URLs will match our single page file.
 
 ### Understanding catch-all parameters
 
-When working with catch-all routes, you'll have access to two special URL parameters in `route.params`:
-
-- `first_ : String` – The first URL parameter in the catch-all route
-- `rest_ : List String` – The remaining URL parameters
-
-Here's a visual of the URL parameters you'll get for the URLs we listed above:
+When working with catch-all routes, you'll have access to the special `params.all_` parameter. Here's a quick visualization of how the value of `params.all_` will change, based on the URL:
 
 URL | `route.params`
 :-- | :--
-`/blog/hello` | `{ first_ = "hello", rest_ = [] }`
-`/blog/elm/land` | `{ first_ = "elm", rest_ = [ "land" ] }`
-`/blog/elm/land/ui` | `{ first_ = "elm", rest_ = [ "land", "ui" ] }`
+`/blog/hello` | `{ all_ = [ "hello" ] }`
+`/blog/elm/land` | `{ all_ = [ "elm", "land" ] }`
+`/blog/elm/land/ui` | `{ all_ = [ "elm", "land", "ui" ] }`
 
-::: tip "Why not just one `List String`?"
-
-Elm Land provides the URL parameters in two separate variables so you
-don't need to worry about handling the case where your list
-is empty.
-
-This is another way to represent a "non-empty list", which is a popular
-data structure for guaranteeing that you don't have to handle an edge case
-for an impossible URL!
-
-:::
 
 ### Our project so far
 
