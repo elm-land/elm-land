@@ -1,10 +1,9 @@
 const path = require('path')
-const { toColoredTerminalOutput } = require('../vite-plugins/elm/elm-error-json.js')
 
 let validate = async ({ pages, layouts }) => {
   let { Elm } = require('../../dist/validate-worker.js')
 
-  let elmLandErrors = await new Promise((resolve, reject) => {
+  let elmLandErrors = await new Promise((resolve) => {
     let app = Elm.Worker.init({
       flags: { pages, layouts }
     })

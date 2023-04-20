@@ -189,7 +189,7 @@ let generateElmFiles = async (config, server = undefined) => {
   try {
     let router = config.app.router
     let pageFilepaths = Files.listElmFilepathsInFolder(srcPagesFolderFilepath)
-    let layouts = Files.listElmFilepathsInFolder(srcLayoutsFolderFilepath).map(filepath => filepath.split('/'))
+    let layoutFilepaths = Files.listElmFilepathsInFolder(srcLayoutsFolderFilepath)
 
     let pages =
       await Promise.all(pageFilepaths.map(async filepath => {
@@ -201,10 +201,32 @@ let generateElmFiles = async (config, server = undefined) => {
         }
       }))
 
+    let layouts =
+      await Promise.all(layoutFilepaths.map(async filepath => {
+        let contents = await Files.readFromUserFolder(`src/Layouts/${filepath}.elm`)
+
+        return {
+          filepath: filepath.split('/'),
+          contents
+        }
+      }))
+
     let errors = await validate({ pages, layouts })
 
     if (errors.length === 0) {
-      let newFiles = await Codegen.generateElmLandFiles({ pages, layouts, router })
+      if (server) {
+        lastErrorSent = null
+        server.ws.send('elm:success', { msg: 'Success!' })
+      }
+
+      let layoutFilepathSegments =
+        layoutFilepaths.map(filepath => filepath.split('/'))
+
+      let newFiles = await Codegen.generateElmLandFiles({
+        pages,
+        layouts: layoutFilepathSegments,
+        router
+      })
 
       await Files.create(
         newFiles.map(generatedFile => ({

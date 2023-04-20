@@ -32,6 +32,7 @@ import Elm.Syntax.Module
 import Elm.Syntax.Node
 import Elm.Syntax.Signature
 import Elm.Syntax.TypeAnnotation
+import Extras.ElmSyntax
 import Filepath exposing (Filepath)
 import Json.Decode
 
@@ -93,135 +94,9 @@ type PageKind
 
 toAnnotationForPageFunction : Page -> Maybe String
 toAnnotationForPageFunction (Page page) =
-    case findPageFunction page.file of
-        Just function ->
-            case function.signature of
-                Just node ->
-                    let
-                        signature : Elm.Syntax.Signature.Signature
-                        signature =
-                            Elm.Syntax.Node.value node
-
-                        typeAnnotation : Elm.Syntax.TypeAnnotation.TypeAnnotation
-                        typeAnnotation =
-                            Elm.Syntax.Node.value signature.typeAnnotation
-                    in
-                    Just (fromAnnotationToString typeAnnotation)
-
-                Nothing ->
-                    Nothing
-
-        Nothing ->
-            Nothing
-
-
-findPageFunction : Elm.Syntax.File.File -> Maybe Elm.Syntax.Expression.Function
-findPageFunction file =
-    let
-        toMaybeFunctionExpression : Elm.Syntax.Declaration.Declaration -> Maybe Elm.Syntax.Expression.Function
-        toMaybeFunctionExpression declaration =
-            case declaration of
-                Elm.Syntax.Declaration.FunctionDeclaration function ->
-                    Just function
-
-                _ ->
-                    Nothing
-
-        isFunctionWithName : String -> Elm.Syntax.Expression.Function -> Bool
-        isFunctionWithName targetName function =
-            function.declaration
-                |> Elm.Syntax.Node.value
-                |> .name
-                |> Elm.Syntax.Node.value
-                |> (==) targetName
-    in
-    file.declarations
-        |> List.map Elm.Syntax.Node.value
-        |> List.filterMap toMaybeFunctionExpression
-        |> List.filter (isFunctionWithName "page")
-        |> List.head
-
-
-fromAnnotationToString : Elm.Syntax.TypeAnnotation.TypeAnnotation -> String
-fromAnnotationToString typeAnnotation =
-    case typeAnnotation of
-        Elm.Syntax.TypeAnnotation.GenericType varName ->
-            varName
-
-        Elm.Syntax.TypeAnnotation.Typed firstNode [] ->
-            fromModuleNodeToString firstNode
-
-        Elm.Syntax.TypeAnnotation.Typed firstNode [ otherNode ] ->
-            String.join " "
-                [ fromModuleNodeToString firstNode
-                , fromAnnotationToString (Elm.Syntax.Node.value otherNode)
-                ]
-
-        Elm.Syntax.TypeAnnotation.Typed firstNode restOfNodes ->
-            String.join " "
-                (fromModuleNodeToString firstNode
-                    :: List.map (fromAnnotationToString << Elm.Syntax.Node.value) restOfNodes
-                )
-
-        Elm.Syntax.TypeAnnotation.Unit ->
-            "()"
-
-        Elm.Syntax.TypeAnnotation.Tupled [] ->
-            "()"
-
-        Elm.Syntax.TypeAnnotation.Tupled list ->
-            "( " ++ String.join "," (List.map (fromAnnotationToString << Elm.Syntax.Node.value) list) ++ " )"
-
-        Elm.Syntax.TypeAnnotation.Record [] ->
-            "{}"
-
-        Elm.Syntax.TypeAnnotation.Record recordFieldNodes ->
-            "{ "
-                ++ (recordFieldNodes
-                        |> List.map Elm.Syntax.Node.value
-                        |> List.map fromRecordFieldToString
-                        |> String.join ", "
-                   )
-                ++ " }"
-
-        Elm.Syntax.TypeAnnotation.GenericRecord varNameNode recordDefinitionNode ->
-            case Elm.Syntax.Node.value recordDefinitionNode of
-                [] ->
-                    "{}"
-
-                recordFieldNodes ->
-                    "{ "
-                        ++ Elm.Syntax.Node.value varNameNode
-                        ++ " "
-                        ++ (recordFieldNodes
-                                |> List.map Elm.Syntax.Node.value
-                                |> List.map fromRecordFieldToString
-                                |> String.join ", "
-                           )
-                        ++ " }"
-
-        Elm.Syntax.TypeAnnotation.FunctionTypeAnnotation inputNode outputNode ->
-            String.join " -> "
-                [ (fromAnnotationToString << Elm.Syntax.Node.value) inputNode
-                , (fromAnnotationToString << Elm.Syntax.Node.value) outputNode
-                ]
-
-
-fromModuleNodeToString : Elm.Syntax.Node.Node ( List String, String ) -> String
-fromModuleNodeToString node =
-    case Elm.Syntax.Node.value node of
-        ( list, str ) ->
-            String.join "." (list ++ [ str ])
-
-
-fromRecordFieldToString : Elm.Syntax.TypeAnnotation.RecordField -> String
-fromRecordFieldToString recordField =
-    case recordField of
-        ( keyNode, valueNode ) ->
-            String.join " : "
-                [ Elm.Syntax.Node.value keyNode
-                , (fromAnnotationToString << Elm.Syntax.Node.value) valueNode
-                ]
+    Extras.ElmSyntax.toAnnotationForFunction
+        "page"
+        page.file
 
 
 type Problem
@@ -236,7 +111,7 @@ type Problem
 
 toPageKind : Page -> Result Problem PageKind
 toPageKind (Page page) =
-    case findPageFunction page.file of
+    case Extras.ElmSyntax.findFunction "page" page.file of
         Nothing ->
             Err PageFunctionNotFound
 
@@ -298,7 +173,7 @@ toPageKind (Page page) =
 
                 isValidParams : Filepath -> Elm.Syntax.TypeAnnotation.TypeAnnotation -> Bool
                 isValidParams filepath_ params =
-                    fromAnnotationToString params
+                    Extras.ElmSyntax.fromAnnotationToString params
                         == Filepath.toRouteParamsRecordString filepath_
 
                 isViewMsg : Elm.Syntax.TypeAnnotation.TypeAnnotation -> Bool
@@ -413,67 +288,15 @@ toProblem page =
 
 
 isNotExposingPageFunction : Page -> Bool
-isNotExposingPageFunction page =
-    isNotExposing "page" page
+isNotExposingPageFunction (Page page) =
+    Extras.ElmSyntax.isNotExposing "page" page.file
 
 
 isNotExposingModelType : Page -> Bool
-isNotExposingModelType page =
-    isNotExposing "Model" page
+isNotExposingModelType (Page page) =
+    Extras.ElmSyntax.isNotExposing "Model" page.file
 
 
 isNotExposingMsgType : Page -> Bool
-isNotExposingMsgType page =
-    isNotExposing "Msg" page
-
-
-isNotExposing : String -> Page -> Bool
-isNotExposing targetName (Page page) =
-    let
-        moduleDefinition : Elm.Syntax.Module.DefaultModuleData
-        moduleDefinition =
-            case Elm.Syntax.Node.value page.file.moduleDefinition of
-                Elm.Syntax.Module.NormalModule data ->
-                    data
-
-                Elm.Syntax.Module.PortModule data ->
-                    data
-
-                Elm.Syntax.Module.EffectModule data ->
-                    { moduleName = data.moduleName
-                    , exposingList = data.exposingList
-                    }
-
-        exposingList : Elm.Syntax.Exposing.Exposing
-        exposingList =
-            Elm.Syntax.Node.value moduleDefinition.exposingList
-    in
-    case exposingList of
-        Elm.Syntax.Exposing.All _ ->
-            False
-
-        Elm.Syntax.Exposing.Explicit nodes ->
-            let
-                topLevelExposeList : List String
-                topLevelExposeList =
-                    nodes
-                        |> List.map toName
-
-                toName : Elm.Syntax.Node.Node Elm.Syntax.Exposing.TopLevelExpose -> String
-                toName node =
-                    case Elm.Syntax.Node.value node of
-                        Elm.Syntax.Exposing.InfixExpose name ->
-                            name
-
-                        Elm.Syntax.Exposing.FunctionExpose name ->
-                            name
-
-                        Elm.Syntax.Exposing.TypeOrAliasExpose name ->
-                            name
-
-                        Elm.Syntax.Exposing.TypeExpose { name } ->
-                            name
-            in
-            topLevelExposeList
-                |> List.member targetName
-                |> not
+isNotExposingMsgType (Page page) =
+    Extras.ElmSyntax.isNotExposing "Msg" page.file

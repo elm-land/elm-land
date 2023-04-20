@@ -4,6 +4,7 @@ import Error exposing (Error)
 import Filepath exposing (Filepath)
 import Json.Decode
 import Json.Encode
+import Layout exposing (Layout)
 import Page exposing (Page)
 import Platform
 
@@ -31,10 +32,27 @@ type alias Model =
 init : Json.Decode.Value -> ( Model, Cmd Msg )
 init flags =
     let
+        layouts : List Layout
+        layouts =
+            flags
+                |> Json.Decode.decodeValue
+                    (Json.Decode.field "layouts"
+                        (Json.Decode.list Layout.decoder)
+                    )
+                |> Result.withDefault []
+
+        errorsFromLayouts : List Error
+        errorsFromLayouts =
+            layouts
+                |> List.filterMap fromLayoutToError
+
         pages : List Page
         pages =
             flags
-                |> Json.Decode.decodeValue (Json.Decode.field "pages" (Json.Decode.list Page.decoder))
+                |> Json.Decode.decodeValue
+                    (Json.Decode.field "pages"
+                        (Json.Decode.list Page.decoder)
+                    )
                 |> Result.withDefault []
 
         errorsFromPages : List Error
@@ -43,17 +61,76 @@ init flags =
                 |> List.filterMap fromPageToError
     in
     ( {}
-    , errorsFromPages
+    , (errorsFromPages ++ errorsFromLayouts)
         |> List.map Error.toJson
         |> onComplete
     )
+
+
+fromLayoutToError : Layout -> Maybe Error
+fromLayoutToError layout =
+    if Layout.isNotExposingLayoutFunction layout then
+        Just
+            (missingFunctionError
+                { name = "layout"
+                , kind = "layout"
+                , filepath = Layout.filepath layout
+                }
+            )
+
+    else if Layout.isNotExposingSettingsType layout then
+        Just
+            (missingTypeError
+                { name = "Settings"
+                , kind = "layout"
+                , filepath = Layout.filepath layout
+                }
+            )
+
+    else if Layout.isNotExposingModelType layout then
+        Just
+            (missingTypeError
+                { name = "Model"
+                , kind = "layout"
+                , filepath = Layout.filepath layout
+                }
+            )
+
+    else if Layout.isNotExposingMsgType layout then
+        Just
+            (missingTypeError
+                { name = "Msg"
+                , kind = "layout"
+                , filepath = Layout.filepath layout
+                }
+            )
+
+    else
+        case Layout.toProblem layout of
+            Just Layout.MissingTypeAnnotation ->
+                Just
+                    (missingLayoutAnnotationError
+                        { filepath = Layout.filepath layout
+                        }
+                    )
+
+            Just problem ->
+                Just
+                    (unexpectedLayoutAnnotationError
+                        { detectedTypeAnnotation = Layout.toAnnotationForLayoutFunction layout |> Maybe.withDefault "???"
+                        , filepath = Layout.filepath layout
+                        }
+                    )
+
+            Nothing ->
+                Nothing
 
 
 fromPageToError : Page -> Maybe Error
 fromPageToError page =
     if Page.isNotExposingPageFunction page then
         Just
-            (missingPageFunctionError
+            (missingFunctionError
                 { name = "page"
                 , kind = "function"
                 , filepath = Page.filepath page
@@ -71,7 +148,7 @@ fromPageToError page =
 
             Just problem ->
                 Just
-                    (invalidPageFunctionError
+                    (unexpectedPageAnnotationError
                         { detectedTypeAnnotation = Page.toAnnotationForPageFunction page |> Maybe.withDefault "???"
                         , filepath = Page.filepath page
                         }
@@ -80,18 +157,18 @@ fromPageToError page =
             Nothing ->
                 if Page.isStatefulPage page && Page.isNotExposingModelType page then
                     Just
-                        (missingPageFunctionError
+                        (missingTypeError
                             { name = "Model"
-                            , kind = "type"
+                            , kind = "page"
                             , filepath = Page.filepath page
                             }
                         )
 
                 else if Page.isStatefulPage page && Page.isNotExposingMsgType page then
                     Just
-                        (missingPageFunctionError
+                        (missingTypeError
                             { name = "Msg"
-                            , kind = "type"
+                            , kind = "page"
                             , filepath = Page.filepath page
                             }
                         )
@@ -104,13 +181,128 @@ fromPageToError page =
 -- CATALOG OF POSSIBLE ELM LAND ERRORS
 
 
-missingPageFunctionError :
+missingFunctionError :
     { name : String
     , kind : String
     , filepath : Filepath
     }
     -> Error
-missingPageFunctionError options =
+missingFunctionError options =
+    missingFunctionOrTypeError
+        { name = options.name
+        , kind = options.kind
+        , typeOrFunction = "function"
+        , filepath = options.filepath
+        }
+
+
+missingTypeError :
+    { name : String
+    , kind : String
+    , filepath : Filepath
+    }
+    -> Error
+missingTypeError options =
+    missingFunctionOrTypeError
+        { name = options.name
+        , kind = options.kind
+        , typeOrFunction = "type"
+        , filepath = options.filepath
+        }
+
+
+
+-- PAGE FILE ERRORS
+
+
+toValidPageFunctionAnnotations : Filepath -> List String
+toValidPageFunctionAnnotations filepath =
+    let
+        params : String
+        params =
+            Filepath.toRouteParamsRecordString filepath
+    in
+    [ case params of
+        "()" ->
+            "View msg"
+
+        _ ->
+            "{{params}} -> View msg"
+                |> String.replace "{{params}}" params
+    , "Page Model Msg"
+    , "Shared.Model -> Route {{params}} -> Page Model Msg"
+        |> String.replace "{{params}}" params
+    , "Auth.User -> Shared.Model -> Route {{params}} -> Page Model Msg"
+        |> String.replace "{{params}}" params
+    ]
+
+
+missingPageAnnotationError : { filepath : Filepath } -> Error
+missingPageAnnotationError options =
+    missingFunctionAnnotationError
+        { functionName = "page"
+        , validAnnotations = toValidPageFunctionAnnotations options.filepath
+        }
+        options
+
+
+unexpectedPageAnnotationError :
+    { detectedTypeAnnotation : String
+    , filepath : Filepath
+    }
+    -> Error
+unexpectedPageAnnotationError options =
+    unexpectedAnnotationError
+        { functionName = "page"
+        , validAnnotations = toValidPageFunctionAnnotations options.filepath
+        }
+        options
+
+
+
+-- LAYOUT FILE ERRORS
+
+
+validLayoutFunctionAnnotations : List String
+validLayoutFunctionAnnotations =
+    [ "Settings -> Shared.Model -> Route () -> Layout Model Msg mainMsg"
+    ]
+
+
+missingLayoutAnnotationError : { filepath : Filepath } -> Error
+missingLayoutAnnotationError options =
+    missingFunctionAnnotationError
+        { functionName = "layout"
+        , validAnnotations = validLayoutFunctionAnnotations
+        }
+        options
+
+
+unexpectedLayoutAnnotationError :
+    { detectedTypeAnnotation : String
+    , filepath : Filepath
+    }
+    -> Error
+unexpectedLayoutAnnotationError options =
+    unexpectedAnnotationError
+        { functionName = "layout"
+        , validAnnotations = validLayoutFunctionAnnotations
+        }
+        options
+
+
+
+-- COMMON ANNOTATION ERRORS
+
+
+missingFunctionOrTypeError :
+    { name : String
+    , kind : String
+    , typeOrFunction : String
+    , filepath : Filepath
+    }
+    -> Error
+missingFunctionOrTypeError options =
     let
         moduleName : String
         moduleName =
@@ -118,116 +310,143 @@ missingPageFunctionError options =
     in
     Error.new
         { path = Filepath.toRelativeFilepath options.filepath
-        , title = "Missing {{name}} function" |> String.replace "{{name}}" options.name
+        , title =
+            "Missing exposed {{typeOrFunction}}"
+                |> String.replace "{{name}}" options.name
+                |> String.replace "{{typeOrFunction}}" options.typeOrFunction
         , message =
-            [ Error.text ("For Elm Land to build, this page file needs to expose a " |> String.replace "{{name}}" options.name)
-            , Error.yellow ("`{{name}}`" |> String.replace "{{name}}" options.name)
-            , Error.text (" {{kind}}.\n" |> String.replace "{{kind}}" options.kind)
-            , Error.text ("""Please be sure to include "{{name}}" in your exposing list like this:
-
-1|  module """ |> String.replace "{{name}}" options.name)
-            , Error.text moduleName
-            , Error.text (" exposing ({{name}})\n" |> String.replace "{{name}}" options.name)
+            [ "I expected this {{kind}} file to expose a "
+                |> String.replace "{{kind}}" options.kind
+                |> Error.text
+            , "{{name}}"
+                |> String.replace "{{name}}" options.name
+                |> Error.yellow
+            , " {{typeOrFunction}}:\n\n"
+                |> String.replace "{{typeOrFunction}}" options.typeOrFunction
+                |> Error.text
+            , Error.text "1|  module "
+            , Error.yellow moduleName
+            , " exposing ({{name}})\n"
+                |> String.replace "{{name}}" options.name
+                |> Error.text
             , Error.text (String.repeat (22 + String.length moduleName) " ")
             , Error.green (String.repeat (String.length options.name) "^")
-            , Error.text "\n"
+            , Error.text "\nThis value is used internally by Elm Land, so it will need to accessible\nfrom outside the current module.\n\n"
             , Error.underline "Hint:"
-            , Error.text
-                (" Read https://elm.land/problems#missing-{{name}}-{{kind}} to learn more"
-                    |> String.replace "{{name}}" (String.toLower options.name)
-                    |> String.replace "{{kind}}" (String.toLower options.kind)
-                )
+            , " Read https://elm.land/problems#missing-exposed-{{typeOrFunction}} to learn more"
+                |> String.replace "{{typeOrFunction}}" (String.toLower options.typeOrFunction)
+                |> Error.text
             ]
         }
 
 
-invalidPageFunctionError : { detectedTypeAnnotation : String, filepath : Filepath } -> Error
-invalidPageFunctionError options =
+missingFunctionAnnotationError :
+    { functionName : String
+    , validAnnotations : List String
+    }
+    ->
+        { filepath : Filepath
+        }
+    -> Error
+missingFunctionAnnotationError { functionName, validAnnotations } options =
     let
         params : String
         params =
             Filepath.toRouteParamsRecordString options.filepath
+
+        units : String
+        units =
+            if List.length validAnnotations == 1 then
+                "this annotation"
+
+            else
+                "one of these annotations"
     in
     Error.new
         { path = Filepath.toRelativeFilepath options.filepath
-        , title = "Invalid page function"
+        , title = "Missing type annotation"
         , message =
-            [ Error.text "Elm Land ran into an unexpected page function value.\n\nIt looks like `page` has the type annotation:\n\n"
-            , Error.text "    page : "
-            , Error.text options.detectedTypeAnnotation
-            , Error.text ("\n" ++ String.repeat 11 " ")
-            , Error.red (String.repeat (String.length options.detectedTypeAnnotation) "^")
-            , Error.text "\nBut Elm Land expected one of these four options:\n\n"
-            , Error.text "    page : "
-            , case params of
-                "()" ->
-                    Error.yellow "View msg\n\n"
-
-                _ ->
-                    Error.yellow
-                        ("{{params}} -> View msg\n\n"
-                            |> String.replace "{{params}}" params
+            List.concat
+                [ [ Error.text "I could not find a type annotation for your "
+                  , Error.yellow functionName
+                  , " function.\n\nI recommend {{units}}:\n\n"
+                        |> String.replace "{{units}}" units
+                        |> Error.text
+                  ]
+                , validAnnotations
+                    |> List.concatMap
+                        (\anno ->
+                            [ "  {{functionName}} : "
+                                |> String.replace "{{functionName}}" functionName
+                                |> Error.text
+                            , Error.yellow (anno ++ "\n\n")
+                            ]
                         )
-            , Error.text "    page : "
-            , Error.yellow "Page Model Msg\n\n"
-            , Error.text "    page : "
-            , Error.yellow
-                ("Shared.Model -> Route {{params}} -> Page Model Msg\n\n"
-                    |> String.replace "{{params}}" params
-                )
-            , Error.text "    page : "
-            , Error.yellow
-                ("Auth.User -> Shared.Model -> Route {{params}} -> Page Model Msg\n\n"
-                    |> String.replace "{{params}}" params
-                )
-            , Error.text "Without one of those four annotations, Elm Land can't connect this page to\n"
-            , Error.text "the rest of your web application.\n\n"
-            , Error.underline "Hint:"
-            , Error.text " Read https://elm.land/problems#invalid-page-function to learn more"
-            ]
+                , [ "Although Elm annotations are optional, Elm Land requires an annotation for\nthis particular function to avoid showing errors in generated code.\n\n"
+                        |> Error.text
+                  , Error.underline "Hint:"
+                  , Error.text " Read https://elm.land/problems#missing-type-annotation to learn more"
+                  ]
+                ]
         }
 
 
-missingPageAnnotationError : { filepath : Filepath } -> Error
-missingPageAnnotationError options =
+unexpectedAnnotationError :
+    { functionName : String
+    , validAnnotations : List String
+    }
+    -> { detectedTypeAnnotation : String, filepath : Filepath }
+    -> Error
+unexpectedAnnotationError { functionName, validAnnotations } options =
     let
         params : String
         params =
             Filepath.toRouteParamsRecordString options.filepath
+
+        units : String
+        units =
+            if List.length validAnnotations == 1 then
+                "this annotation"
+
+            else
+                "one of these annotations"
     in
     Error.new
         { path = Filepath.toRelativeFilepath options.filepath
-        , title = "Missing page annotation"
+        , title = "Unexpected type annotation"
         , message =
-            [ Error.text "Elm Land could not find a type annotation for your `page` function. Please add\n"
-            , Error.text "a type annotation above your page function. Here are some examples:\n\n"
-            , Error.text "    page : "
-            , case params of
-                "()" ->
-                    Error.yellow "View msg\n\n"
-
-                _ ->
-                    Error.yellow
-                        ("{{params}} -> View msg\n\n"
-                            |> String.replace "{{params}}" params
+            List.concat
+                [ [ Error.text "I found an unexpected type annotation on this "
+                  , Error.yellow functionName
+                  , Error.text " function.\n\n"
+                  , Error.text
+                        ("  {{functionName}} : "
+                            |> String.replace "{{functionName}}" functionName
                         )
-            , Error.text "    page : "
-            , Error.yellow "Page Model Msg\n\n"
-            , Error.text "    page : "
-            , Error.yellow
-                ("Shared.Model -> Route {{params}} -> Page Model Msg\n\n"
-                    |> String.replace "{{params}}" params
-                )
-            , Error.text "    page : "
-            , Error.yellow
-                ("Auth.User -> Shared.Model -> Route {{params}} -> Page Model Msg\n\n"
-                    |> String.replace "{{params}}" params
-                )
-            , Error.text "Without one of those four annotations, Elm Land can't connect this page to\n"
-            , Error.text "the rest of your web application.\n\n"
-            , Error.underline "Hint:"
-            , Error.text " Read https://elm.land/problems#missing-page-annotation to learn more"
-            ]
+                  , Error.text options.detectedTypeAnnotation
+                  , Error.text ("\n" ++ String.repeat (5 + String.length functionName) " ")
+                  , Error.red (String.repeat (String.length options.detectedTypeAnnotation) "^")
+                  , "\nI recommend {{units}}:\n\n"
+                        |> String.replace "{{units}}" units
+                        |> Error.text
+                  ]
+                , validAnnotations
+                    |> List.concatMap
+                        (\anno ->
+                            [ Error.text
+                                ("  {{functionName}} : "
+                                    |> String.replace "{{functionName}}" functionName
+                                )
+                            , Error.yellow (anno ++ "\n\n")
+                            ]
+                        )
+                , [ "Although Elm annotations are optional, Elm Land requires an annotation for\nthis particular function to avoid showing errors in generated code.\n\n"
+                        |> Error.text
+                  , Error.underline "Hint:"
+                  , Error.text
+                        " Read https://elm.land/problems#unexpected-type-annotation to learn more"
+                  ]
+                ]
         }
 
 
