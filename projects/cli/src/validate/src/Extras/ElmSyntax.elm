@@ -160,7 +160,7 @@ fromAnnotationToStringHelper needsParens typeAnnotation =
             "()"
 
         Elm.Syntax.TypeAnnotation.Tupled list ->
-            "( " ++ String.join "," (List.map (fromAnnotationToString << Elm.Syntax.Node.value) list) ++ " )"
+            "( " ++ String.join ", " (List.map (fromAnnotationToString << Elm.Syntax.Node.value) list) ++ " )"
 
         Elm.Syntax.TypeAnnotation.Record [] ->
             "{}"
