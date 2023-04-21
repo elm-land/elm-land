@@ -113,12 +113,22 @@ let runServer = async (options) => {
 
     // Listen for changes to src/Pages and src/Layouts folders, to prevent
     // generated code from getting out of sync
-    let srcPagesAndLayoutsFolderWatcher = chokidar.watch([srcPagesFolderFilepath, srcLayoutsFolderFilepath], {
+    let srcPagesAndLayoutsAndCustomizedFileWatcher = chokidar.watch([
+      srcPagesFolderFilepath,
+      srcLayoutsFolderFilepath,
+      path.join(process.cwd(), 'src', 'Auth.elm'),
+      path.join(process.cwd(), 'src', 'Shared.elm'),
+      path.join(process.cwd(), 'src', 'Shared', 'Model.elm'),
+      path.join(process.cwd(), 'src', 'Shared', 'Msg.elm'),
+      path.join(process.cwd(), 'src', 'Effect.elm'),
+      path.join(process.cwd(), 'src', 'View.elm')
+    ], {
       ignorePermissionErrors: true,
       ignoreInitial: true
     })
 
-    srcPagesAndLayoutsFolderWatcher.on('all', () => { generateElmFiles(config, server) })
+    // srcPagesAndLayoutsFolderWatcher.on('all', () => { generateElmFiles(config, server) })
+    srcPagesAndLayoutsAndCustomizedFileWatcher.on('all', () => { generateElmFiles(config, server) })
 
     // Listen for any changes to customizable files, so defaults are recreated
     // if the customized versions are deleted
@@ -211,11 +221,23 @@ let generateElmFiles = async (config, server = undefined) => {
         }
       }))
 
-    let errors = await validate({ pages, layouts })
+    let view = await Files.readFromUserFolder('src/View.elm').catch(_ => null)
+
+    let errors = await validate({
+      pages,
+      layouts,
+      auth: await Files.readFromUserFolder('src/Auth.elm').catch(_ => null),
+      shared: await Files.readFromUserFolder('src/Shared.elm').catch(_ => null),
+      sharedModel: await Files.readFromUserFolder('src/Shared/Model.elm').catch(_ => null),
+      sharedMsg: await Files.readFromUserFolder('src/Shared/Msg.elm').catch(_ => null),
+      effect: await Files.readFromUserFolder('src/Effect.elm').catch(_ => null),
+      view
+    })
 
     if (errors.length === 0) {
       if (server) {
         lastErrorSent = null
+        validation.hasErrors = false
         server.ws.send('elm:success', { msg: 'Success!' })
       }
 
@@ -236,6 +258,7 @@ let generateElmFiles = async (config, server = undefined) => {
         }))
       )
     } else if (server) {
+      validation.hasErrors = true
       lastErrorSent = errors[0]
       server.ws.send('elm:error', {
         error: ElmErrorJson.toColoredHtmlOutput(errors[0])
@@ -355,6 +378,8 @@ const handleElmLandFiles = async () => {
   })
 }
 
+const validation = { hasErrors: false }
+
 const build = async (config) => {
   // Create default files in `.elm-land/src` if they aren't already 
   // defined by the user in the `src` folder
@@ -382,6 +407,7 @@ const build = async (config) => {
       envPrefix: 'ELM_LAND_',
       plugins: [
         ElmVitePlugin.plugin({
+          validation,
           debug: false,
           optimize: true
         })

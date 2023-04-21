@@ -75,7 +75,7 @@ const plugin = (opts) => {
       server = server_
 
       server.ws.on('elm:client-ready', () => {
-        if (lastErrorSent) {
+        if (lastErrorSent && (opts.validation ? (opts.validation.hasErrors === false) : false)) {
           server.ws.send('elm:error', {
             error: ElmErrorJson.toColoredHtmlOutput(lastErrorSent)
           })
@@ -148,6 +148,7 @@ const plugin = (opts) => {
           dependencies.forEach(this.addWatchFile.bind(this))
         }
 
+        // SUSPICIOUS, this line might make the error overlay clear unexpectedly
         lastErrorSent = null
         if (server) {
           server.ws.send('elm:success', { msg: 'Success!' })

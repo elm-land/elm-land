@@ -1,12 +1,10 @@
 const path = require('path')
 
-let validate = async ({ pages, layouts }) => {
+let validate = async (flags) => {
   let { Elm } = require('../../dist/validate-worker.js')
 
   let elmLandErrors = await new Promise((resolve) => {
-    let app = Elm.Worker.init({
-      flags: { pages, layouts }
-    })
+    let app = Elm.Worker.init({ flags })
     app.ports.onComplete.subscribe(errors => {
       errors.forEach(error => {
         error.path = path.join(process.cwd(), error.path)

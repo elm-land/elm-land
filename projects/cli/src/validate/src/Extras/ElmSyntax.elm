@@ -129,6 +129,11 @@ findFunction functionName file =
 
 fromAnnotationToString : Elm.Syntax.TypeAnnotation.TypeAnnotation -> String
 fromAnnotationToString typeAnnotation =
+    fromAnnotationToStringHelper False typeAnnotation
+
+
+fromAnnotationToStringHelper : Bool -> Elm.Syntax.TypeAnnotation.TypeAnnotation -> String
+fromAnnotationToStringHelper needsParens typeAnnotation =
     case typeAnnotation of
         Elm.Syntax.TypeAnnotation.GenericType varName ->
             varName
@@ -186,10 +191,28 @@ fromAnnotationToString typeAnnotation =
                         ++ " }"
 
         Elm.Syntax.TypeAnnotation.FunctionTypeAnnotation inputNode outputNode ->
+            let
+                left =
+                    Elm.Syntax.Node.value inputNode
+            in
             String.join " -> "
-                [ (fromAnnotationToString << Elm.Syntax.Node.value) inputNode
-                , (fromAnnotationToString << Elm.Syntax.Node.value) outputNode
+                [ if isFunctionAnnotation left then
+                    "(" ++ fromAnnotationToString left ++ ")"
+
+                  else
+                    fromAnnotationToString left
+                , fromAnnotationToString (Elm.Syntax.Node.value outputNode)
                 ]
+
+
+isFunctionAnnotation : Elm.Syntax.TypeAnnotation.TypeAnnotation -> Bool
+isFunctionAnnotation anno =
+    case anno of
+        Elm.Syntax.TypeAnnotation.FunctionTypeAnnotation _ _ ->
+            True
+
+        _ ->
+            False
 
 
 fromModuleNodeToString : Elm.Syntax.Node.Node ( List String, String ) -> String

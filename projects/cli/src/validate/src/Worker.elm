@@ -1,5 +1,6 @@
 port module Worker exposing (main)
 
+import CustomizableFile exposing (CustomizableFile)
 import Error exposing (Error)
 import Filepath exposing (Filepath)
 import Json.Decode
@@ -27,6 +28,45 @@ main =
 
 type alias Model =
     {}
+
+
+type alias CustomizedFiles =
+    { auth : Maybe CustomizableFile
+    , shared : Maybe CustomizableFile
+    , sharedModel : Maybe CustomizableFile
+    , sharedMsg : Maybe CustomizableFile
+    , effect : Maybe CustomizableFile
+    , view : Maybe CustomizableFile
+    }
+
+
+customizedFilesDecoder : Json.Decode.Decoder CustomizedFiles
+customizedFilesDecoder =
+    Json.Decode.map6 CustomizedFiles
+        (CustomizableFile.decoder ( "Auth", [] )
+            |> Json.Decode.field "auth"
+            |> Json.Decode.maybe
+        )
+        (CustomizableFile.decoder ( "Shared", [] )
+            |> Json.Decode.field "shared"
+            |> Json.Decode.maybe
+        )
+        (CustomizableFile.decoder ( "Shared", [ "Model" ] )
+            |> Json.Decode.field "sharedModel"
+            |> Json.Decode.maybe
+        )
+        (CustomizableFile.decoder ( "Shared", [ "Msg" ] )
+            |> Json.Decode.field "sharedMsg"
+            |> Json.Decode.maybe
+        )
+        (CustomizableFile.decoder ( "Effect", [] )
+            |> Json.Decode.field "effect"
+            |> Json.Decode.maybe
+        )
+        (CustomizableFile.decoder ( "View", [] )
+            |> Json.Decode.field "view"
+            |> Json.Decode.maybe
+        )
 
 
 init : Json.Decode.Value -> ( Model, Cmd Msg )
@@ -59,12 +99,157 @@ init flags =
         errorsFromPages =
             pages
                 |> List.filterMap fromPageToError
+
+        customizedFiles : CustomizedFiles
+        customizedFiles =
+            flags
+                |> Json.Decode.decodeValue customizedFilesDecoder
+                |> Result.withDefault
+                    { auth = Nothing
+                    , shared = Nothing
+                    , sharedModel = Nothing
+                    , sharedMsg = Nothing
+                    , effect = Nothing
+                    , view = Nothing
+                    }
+
+        errorsFromCustomizedFiles : List Error
+        errorsFromCustomizedFiles =
+            List.filterMap identity
+                [ toCustomizableErrors customizedFiles.auth
+                    { types = [ "User" ]
+                    , functions =
+                        [ ( "onPageLoad", "Shared.Model -> Route () -> Auth.Action.Action User" )
+                        ]
+                    }
+                , toCustomizableErrors customizedFiles.shared
+                    { types = [ "Flags", "Model", "Msg" ]
+                    , functions =
+                        [ ( "decoder", "Json.Decode.Decoder Flags" )
+                        , ( "init", "Result Json.Decode.Error Flags -> Route () -> ( Model, Effect Msg )" )
+                        , ( "update", "Route () -> Msg -> Model -> ( Model, Effect Msg )" )
+                        , ( "subscriptions", "Route () -> Model -> Sub Msg" )
+                        ]
+                    }
+                , toCustomizableErrors customizedFiles.sharedModel
+                    { types = [ "Model" ]
+                    , functions = []
+                    }
+                , toCustomizableErrors customizedFiles.sharedMsg
+                    { types = [ "Msg" ]
+                    , functions = []
+                    }
+                , toCustomizableErrors customizedFiles.effect
+                    { types = [ "Effect" ]
+                    , functions =
+                        [ ( "none", "Effect msg" )
+                        , ( "map", "(msg1 -> msg2) -> Effect msg1 -> Effect msg2" )
+                        , ( "toCmd", "{ key : Browser.Navigation.Key, url : Url , shared : Shared.Model.Model, fromSharedMsg : Shared.Msg.Msg -> msg, fromCmd : Cmd msg -> msg, toCmd : msg -> Cmd msg } -> Effect msg -> Cmd msg" )
+                        , ( "sendCmd", "Cmd msg -> Effect msg" )
+                        , ( "replaceRoute", "{ path : Route.Path.Path, query : Dict String String, hash : Maybe String } -> Effect msg" )
+                        , ( "pushRoute", "{ path : Route.Path.Path, query : Dict String String, hash : Maybe String } -> Effect msg" )
+                        ]
+                    }
+                , toCustomizableErrors customizedFiles.view
+                    { types = [ "View" ]
+                    , functions =
+                        [ ( "toBrowserDocument", "{ shared : Shared.Model.Model, route : Route (), view : View msg } -> Browser.Document msg" )
+                        , ( "map", "(msg1 -> msg2) -> View msg1 -> View msg2" )
+                        , ( "none", "View msg" )
+                        , ( "fromString", "String -> View msg" )
+                        ]
+                    }
+                ]
     in
     ( {}
-    , (errorsFromPages ++ errorsFromLayouts)
+    , (errorsFromPages ++ errorsFromLayouts ++ errorsFromCustomizedFiles)
         |> List.map Error.toJson
         |> onComplete
     )
+
+
+toCustomizableErrors :
+    Maybe CustomizableFile
+    ->
+        { types : List String
+        , functions : List ( String, String )
+        }
+    -> Maybe Error
+toCustomizableErrors maybe options =
+    case maybe of
+        Nothing ->
+            Nothing
+
+        Just file ->
+            let
+                firstTypeNotExposed : Maybe String
+                firstTypeNotExposed =
+                    options.types
+                        |> List.filter (\typeName -> CustomizableFile.isNotExposing typeName file)
+                        |> List.head
+
+                firstFunctionNotExposed : Maybe String
+                firstFunctionNotExposed =
+                    options.functions
+                        |> List.filter (\( name, _ ) -> CustomizableFile.isNotExposing name file)
+                        |> List.head
+                        |> Maybe.map Tuple.first
+
+                firstFunctionWithMissingAnnotation : Maybe ( ( String, String ), CustomizableFile.Problem )
+                firstFunctionWithMissingAnnotation =
+                    options.functions
+                        |> List.filterMap
+                            (\( name, anno ) ->
+                                CustomizableFile.findProblemWithFunctionAnnotation
+                                    { name = name
+                                    , expected = anno
+                                    , file = file
+                                    }
+                                    |> Maybe.map (Tuple.pair ( name, anno ))
+                            )
+                        |> List.head
+            in
+            [ firstTypeNotExposed
+                |> Maybe.map
+                    (\typeName ->
+                        missingTypeError
+                            { name = typeName
+                            , kind = "customized"
+                            , filepath = CustomizableFile.filepath file
+                            }
+                    )
+            , firstFunctionNotExposed
+                |> Maybe.map
+                    (\name ->
+                        missingFunctionError
+                            { name = name
+                            , kind = "customized"
+                            , filepath = CustomizableFile.filepath file
+                            }
+                    )
+            , firstFunctionWithMissingAnnotation
+                |> Maybe.map
+                    (\( ( name, anno ), problem ) ->
+                        case problem of
+                            CustomizableFile.MissingTypeAnnotation ->
+                                missingFunctionAnnotationError
+                                    { functionName = name
+                                    , validAnnotations = [ anno ]
+                                    }
+                                    { filepath = CustomizableFile.filepath file }
+
+                            CustomizableFile.InvalidTypeAnnotation actual ->
+                                unexpectedAnnotationError
+                                    { functionName = name
+                                    , validAnnotations = [ anno ]
+                                    }
+                                    { detectedTypeAnnotation = actual
+                                    , filepath = CustomizableFile.filepath file
+                                    }
+                    )
+            ]
+                |> List.filterMap identity
+                |> List.head
 
 
 fromLayoutToError : Layout -> Maybe Error

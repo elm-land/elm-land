@@ -1,12 +1,12 @@
 module Filepath exposing
-    ( Filepath(..), decoder
+    ( Filepath, decoder, fromList
     , toRelativeFilepath, toModuleName
     , toRouteParamsRecordString
     )
 
 {-|
 
-@docs Filepath, decoder
+@docs Filepath, decoder, fromList
 @docs toRelativeFilepath, toModuleName
 
 -}
@@ -18,6 +18,11 @@ import Json.Decode
 
 type Filepath
     = Filepath ( String, List String )
+
+
+fromList : ( String, List String ) -> Filepath
+fromList =
+    Filepath
 
 
 {-| Create a Filepath from a JSON response. Expects a list of strings
@@ -49,7 +54,7 @@ decoder options =
 -}
 toRelativeFilepath : Filepath -> String
 toRelativeFilepath (Filepath ( first, rest )) =
-    "src/" ++ first ++ "/" ++ String.join "/" rest ++ ".elm"
+    "src/" ++ String.join "/" (first :: rest) ++ ".elm"
 
 
 {-|
@@ -61,7 +66,7 @@ toRelativeFilepath (Filepath ( first, rest )) =
 -}
 toModuleName : Filepath -> String
 toModuleName (Filepath ( first, rest )) =
-    first ++ "." ++ String.join "." rest
+    String.join "." (first :: rest)
 
 
 {-| Copied implementation from `PageFile`, but I shouldn't have!
