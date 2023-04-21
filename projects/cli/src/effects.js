@@ -403,7 +403,6 @@ const build = async (config) => {
       envPrefix: 'ELM_LAND_',
       plugins: [
         ElmVitePlugin.plugin({
-          validation,
           debug: false,
           optimize: true
         })
