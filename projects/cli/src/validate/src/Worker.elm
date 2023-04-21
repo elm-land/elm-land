@@ -144,7 +144,7 @@ init flags =
                     , functions =
                         [ ( "none", "Effect msg" )
                         , ( "map", "(msg1 -> msg2) -> Effect msg1 -> Effect msg2" )
-                        , ( "toCmd", "{ key : Browser.Navigation.Key, url : Url , shared : Shared.Model.Model, fromSharedMsg : Shared.Msg.Msg -> msg, fromCmd : Cmd msg -> msg, toCmd : msg -> Cmd msg } -> Effect msg -> Cmd msg" )
+                        , ( "toCmd", "{ key : Browser.Navigation.Key, url : Url, shared : Shared.Model.Model, fromSharedMsg : Shared.Msg.Msg -> msg, fromCmd : Cmd msg -> msg, toCmd : msg -> Cmd msg } -> Effect msg -> Cmd msg" )
                         , ( "sendCmd", "Cmd msg -> Effect msg" )
                         , ( "replaceRoute", "{ path : Route.Path.Path, query : Dict String String, hash : Maybe String } -> Effect msg" )
                         , ( "pushRoute", "{ path : Route.Path.Path, query : Dict String String, hash : Maybe String } -> Effect msg" )
