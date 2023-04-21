@@ -229,7 +229,7 @@ let subcommandList = [
   `    🌱 If you are following the guide at ${Terminal.cyan('https://elm.land/guide')}`,
   `    here are some other commands for folks learning the framework:`,
   ``,
-  `    elm-land add ${Terminal.pink('page:static <url>')} ...... add a new read-only page`,
+  `    elm-land add ${Terminal.pink('page:intro <url>')} ...... add a new read-only page`,
   `    elm-land add ${Terminal.pink('page:sandbox <url>')} ...... add a new stateful page`,
   `    elm-land add ${Terminal.pink('page:element <url>')} ... add a new side-effect page`,
 ]
@@ -254,7 +254,7 @@ let run = async ({ arguments }) => {
   let [subCommand, ...otherArgs] = arguments
   let subCommandHandlers = {
     'page': addNewPage('new'),
-    'page:static': addNewPage('static'),
+    'page:intro': addNewPage('static'),
     'page:sandbox': addNewPage('sandbox'),
     'page:element': addNewPage('element'),
     'layout': addNewLayout()
