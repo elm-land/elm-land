@@ -237,7 +237,6 @@ let generateElmFiles = async (config, server = undefined) => {
     if (errors.length === 0) {
       if (server) {
         lastErrorSent = null
-        validation.hasErrors = false
         server.ws.send('elm:success', { msg: 'Success!' })
       }
 
@@ -258,7 +257,6 @@ let generateElmFiles = async (config, server = undefined) => {
         }))
       )
     } else if (server) {
-      validation.hasErrors = true
       lastErrorSent = errors[0]
       server.ws.send('elm:error', {
         error: ElmErrorJson.toColoredHtmlOutput(errors[0])
@@ -377,8 +375,6 @@ const handleElmLandFiles = async () => {
     destination: path.join(process.cwd(), '.elm-land'),
   })
 }
-
-const validation = { hasErrors: false }
 
 const build = async (config) => {
   // Create default files in `.elm-land/src` if they aren't already 
