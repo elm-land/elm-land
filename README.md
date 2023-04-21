@@ -16,10 +16,12 @@ The code for this GitHub project is broken down into smaller projects:
 
 ### Plugins
 
-The Elm Land CLI will come with optional plugins for making web apps, designed to fit really well together!
+The Elm Land CLI will eventually come with optional plugins. Each plugin is designed to fit really well together.
 
-- __[@elm-land/graphql](./projects/graphql/)__ - The plugin that converts GraphQL files into Elm code
-- __[@elm-land/ui](./projects/ui/)__ - The plugin that generates CSS and Elm code for your design system
+Here are the plugins that we plan to build after Elm Land 1.0:
+
+- `@elm-land/graphql` - Converts GraphQL files into Elm code
+- `@elm-land/ui` - Create a design system using Elm
 
 
 ### Tooling
