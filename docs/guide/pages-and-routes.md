@@ -55,7 +55,7 @@ To get started, let's start with a page that is displayed when a user visits the
 We can create our sign-in page using the `elm-land add page` command shown below:
 
 ```sh
-elm-land add page:static /sign-in
+elm-land add page:intro /sign-in
 ```
 
 ```txt
@@ -65,7 +65,7 @@ elm-land add page:static /sign-in
     ./src/Pages/SignIn.elm
 ```
 
-The `elm-land add page:static` command created a view-only page that allows us to customize two things:
+The `elm-land add page:intro` command created a view-only page that allows us to customize two things:
 - `title` - the text shown in the browser tab
 - `body` - the HTML we want to render on the screen
 
@@ -98,7 +98,7 @@ Some pages in our app need a URL like `/settings/account` or `/settings/notifica
 A __nested route__ is what we call a route with more than one slash in the URL. Let's add a nested route for account settings:
 
 ```sh
-elm-land add page:static /settings/account
+elm-land add page:intro /settings/account
 ```
 
 ```txt
@@ -135,7 +135,7 @@ This is what we see when we visit `http://localhost:1234/settings/account`
 You can nest routes as much as you like, it doesn't have to be only two-levels deep:
 
 ```sh
-elm-land add page:static /something/really/nested/like/super/nested
+elm-land add page:intro /something/really/nested/like/super/nested
 ```
 
 That command will create a file in a __bunch__ of nested folders inside your `src/Pages` directory, and be available when visiting the provided URL.
@@ -151,7 +151,7 @@ When we need a page to handle URLs like `/profile/ryan`, `/profile/duncan`, or `
 A __dynamic route__ passes in URL parameters (like `username`) to your page as an input, so it can handle the dynamic values.
 
 ```sh
-elm-land add page:static /profile/:username
+elm-land add page:intro /profile/:username
 ```
 
 ![Browser window showing the profile page](./pages/profile-ryan.png)
@@ -244,7 +244,7 @@ Luckily, Elm Land supports creating pages like this! Let's use the `elm-land add
 For simplicity, let's do one that matches `/blog/*`:
 
 ```sh
-elm-land add page:static '/blog/*'
+elm-land add page:intro '/blog/*'
 ```
 
 

@@ -24,10 +24,8 @@ page user shared route =
 layout : Auth.User -> Model -> Layouts.Layout
 layout user model =
     Layouts.Sidebar
-        { sidebar =
-            { title = "Dashboard"
-            , user = user
-            }
+        { title = "Dashboard"
+        , user = user
         }
 
 

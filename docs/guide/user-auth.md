@@ -48,7 +48,7 @@ We can use the CLI to create a new page at `/sign-in`:
 elm-land add page /sign-in
 ```
 
-In the last few guides, we used `page:static`, `page:sandbox`, or `page:element` to create a page. This time, we'll be using the standard `elm add page` command. This will give us a fully featured page that will become useful for sharing our signed-in user across pages. We'll dive into how to do this soon!
+In the last few guides, we used `page:intro`, `page:sandbox`, or `page:element` to create a page. This time, we'll be using the standard `elm add page` command. This will give us a fully featured page that will become useful for sharing our signed-in user across pages. We'll dive into how to do this soon!
 
 Opening `http://localhost:1234/sign-in` in a web browser should show us a screen that looks like this:
 
@@ -1841,7 +1841,7 @@ type alias Settings =
     {}
 
 
-layout : Settings -> Shared.Model -> Route () -> Layout Model Msg mainMsg
+layout : Settings -> Shared.Model -> Route () -> Layout Model Msg contentMsg
 layout settings shared route =
     Layout.new
         { init = init
@@ -1893,12 +1893,12 @@ subscriptions model =
 
 
 view : 
-    { fromMsg : Msg -> mainMsg
-    , content : View mainMsg
+    { toContentMsg : Msg -> contentMsg
+    , content : View contentMsg
     , model : Model
     }
-    -> View mainMsg
-view { fromMsg, model, content } =
+    -> View contentMsg
+view { toContentMsg, model, content } =
     { title = content.title
     , body = 
         [ Html.text "Sidebar"
@@ -1954,7 +1954,7 @@ module Layouts.Sidebar exposing (Settings, Model, Msg, layout)
 
 -- ...
 
-layout : Settings -> Shared.Model -> Route () -> Layout Model Msg mainMsg
+layout : Settings -> Shared.Model -> Route () -> Layout Model Msg contentMsg
 layout settings shared route =
     Layout.new
         { init = init
@@ -1969,12 +1969,12 @@ view :
     Settings
     -> Route ()
     ->
-        { fromMsg : Msg -> mainMsg
-        , content : View mainMsg
+        { toContentMsg : Msg -> contentMsg
+        , content : View contentMsg
         , model : Model
         }
-    -> View mainMsg
-view settings route { fromMsg, model, content } =
+    -> View contentMsg
+view settings route { toContentMsg, model, content } =
     { title = content.title
     , body = 
         [ Html.text "Sidebar"
@@ -1996,7 +1996,7 @@ module Layouts.Sidebar exposing (Settings, Model, Msg, layout)
 
 -- ...
 
-layout : Settings -> Shared.Model -> Route () -> Layout Model Msg mainMsg
+layout : Settings -> Shared.Model -> Route () -> Layout Model Msg contentMsg
 layout settings shared route =
     Layout.new
         { init = init route
@@ -2031,12 +2031,12 @@ view :
     Settings
     -> Route ()
     ->
-        { fromMsg : Msg -> mainMsg
-        , content : View mainMsg
+        { toContentMsg : Msg -> contentMsg
+        , content : View contentMsg
         , model : Model
         }
-    -> View mainMsg
-view settings route { fromMsg, model, content } =
+    -> View contentMsg
+view settings route { toContentMsg, model, content } =
     { title = content.title ++ " | My Cool App"
     , body =
         [ Html.div [ class "is-flex", style "height" "100vh" ]
@@ -2164,10 +2164,8 @@ page user shared route =
 layout : Auth.User -> Model -> Layouts.Layout
 layout user model =
     Layouts.Sidebar
-        { sidebar =
-            { title = "Dashboard"
-            , user = user
-            }
+        { title = "Dashboard"
+        , user = user
         }
 
 -- ...
@@ -2201,10 +2199,8 @@ page user shared route =
 layout : Auth.User -> Model -> Layouts.Layout
 layout user model =
     Layouts.Sidebar
-        { sidebar =
-            { title = "Settings"
-            , user = user
-            }
+        { title = "Dashboard"
+        , user = user
         }
 
 -- ...
@@ -2232,10 +2228,8 @@ page user shared route =
 layout : Auth.User -> Model -> Layouts.Layout
 layout user model =
     Layouts.Sidebar
-        { sidebar =
-            { title = "Profile"
-            , user = user
-            }
+        { title = "Profile"
+        , user = user
         }
 
 -- ...
@@ -2253,13 +2247,13 @@ When we click the "Sign out" button, nothing is happening! This is the last thin
 
 You may have noticed that our layout's `view` function is a bit more complicated than our page's `view` function.
 
-### Understanding the role of "mainMsg"
+### Understanding the role of "contentMsg"
 
-There's this new `View mainMsg` type that's being returned, instead of the normal `View Msg` you may have expected to see. One of the constraints of Elm is that __lists cannot return items of different types__.
+There's this new `View contentMsg` type that's being returned, instead of the normal `View Msg` you may have expected to see. One of the constraints of Elm is that __lists cannot return items of different types__.
 
-If we want our HTML to send layout messages _and_ page messages, we're going to need to convert them into __one common type__: `mainMsg`. For this reason, we'll need to use `Html.map fromMsg` anywhere we want to use `Html Msg` within a layout file.
+If we want our HTML to send layout messages _and_ page messages, we're going to need to convert them into __one common type__: `contentMsg`. For this reason, we'll need to use `Html.map toContentMsg` anywhere we want to use `Html Msg` within a layout file.
 
-Here's an example of how we can upgrade `viewSidebar` to return `Html Msg`, and then convert the output to the common `Html mainMsg` type:
+Here's an example of how we can upgrade `viewSidebar` to return `Html Msg`, and then convert the output to the common `Html contentMsg` type:
 
 ```elm {22,32}
 module Layouts.Sidebar exposing (Settings, Model, Msg, layout)
@@ -2270,12 +2264,12 @@ view :
     Settings
     -> Route ()
     ->
-        { fromMsg : Msg -> mainMsg
-        , content : View mainMsg
+        { toContentMsg : Msg -> contentMsg
+        , content : View contentMsg
         , model : Model
         }
-    -> View mainMsg
-view settings route { fromMsg, model, content } =
+    -> View contentMsg
+view settings route { toContentMsg, model, content } =
     { title = content.title ++ " | My Cool App"
     , body =
         [ Html.div [ class "is-flex", style "height" "100vh" ]
@@ -2283,7 +2277,7 @@ view settings route { fromMsg, model, content } =
                 { user = settings.user
                 , route = route
                 }
-                |> Html.map fromMsg
+                |> Html.map toContentMsg
             , viewMainContent
                 { title = settings.title
                 , content = content

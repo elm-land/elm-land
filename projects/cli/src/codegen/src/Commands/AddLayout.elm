@@ -57,7 +57,7 @@ newLayoutModule data =
 
         {- Example:
 
-           layout : Settings -> Shared.Model -> Route () -> Layout Model Msg mainMsg
+           layout : Settings -> Shared.Model -> Route () -> Layout Model Msg contentMsg
            layout settings shared route =
                Layout.new
                    { init = init
@@ -71,7 +71,7 @@ newLayoutModule data =
         layoutFunction =
             CodeGen.Declaration.function
                 { name = "layout"
-                , annotation = CodeGen.Annotation.type_ "Settings -> Shared.Model -> Route () -> Layout Model Msg mainMsg"
+                , annotation = CodeGen.Annotation.type_ "Settings -> Shared.Model -> Route () -> Layout Model Msg contentMsg"
                 , arguments =
                     [ CodeGen.Argument.new "settings"
                     , CodeGen.Argument.new "shared"
@@ -188,12 +188,12 @@ newLayoutModule data =
         {- Example:
 
            view :
-               { fromMsg : Msg -> mainMsg
-               , content : View mainMsg
+               { toContentMsg : Msg -> contentMsg
+               , content : View contentMsg
                , model : Model
                }
-               -> View mainMsg
-           view { fromMsg, model, content } =
+               -> View contentMsg
+           view { toContentMsg, model, content } =
                { title = content.title
                , body =
                    [ Html.text "Header"
@@ -205,8 +205,8 @@ newLayoutModule data =
         viewFunction =
             CodeGen.Declaration.function
                 { name = "view"
-                , annotation = CodeGen.Annotation.type_ "{ fromMsg : Msg -> mainMsg, content : View mainMsg, model : Model } -> View mainMsg"
-                , arguments = [ CodeGen.Argument.new "{ fromMsg, model, content }" ]
+                , annotation = CodeGen.Annotation.type_ "{ toContentMsg : Msg -> contentMsg, content : View contentMsg, model : Model } -> View contentMsg"
+                , arguments = [ CodeGen.Argument.new "{ toContentMsg, model, content }" ]
                 , expression =
                     CodeGen.Expression.multilineRecord
                         [ ( "title", CodeGen.Expression.value "content.title" )

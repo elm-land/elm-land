@@ -39,9 +39,9 @@ For reference, here is the default `elm-land.json` file that is created with eve
 }
 ```
 
-There are no hidden defaults here, everything in this JSON file is explicit defined to prevent unexpected behavior. In the next version of Elm Land, missing fields will prevent Elm Land commands from working at all ( but we'll provide you with a helpful error message about what's missing! )
+There are no hidden defaults here, everything in this JSON file is explicitly defined to prevent unexpected behavior. When you run `elm-land server` or `elm-land build`, any missing fields in this file show a helpful message. That message will explain which fields are missing, and how you can fix the problem.
 
-Each section below will give you a detailed look into the purpose and type of each setting
+The sections below provide more details on the purpose of each individual field.
 
 ## app.elm
 
@@ -172,7 +172,7 @@ Here is the general shape of that HTML template to give you an overview:
 
 ```html
 <!DOCTYPE html>
-  <html {{attributes.html}} >
+<html {{attributes.html}} >
   <head {{attributes.head}} >
     <title>{{title}}</title>
     {{ meta tags }}
@@ -235,7 +235,7 @@ __Input__: `elm-land.json`
 }
 ```
 
-__Output__: `index.html`
+__Output__: `dist/index.html`
 
 ```html {2}
 <!DOCTYPE>
@@ -277,7 +277,7 @@ __Input__: `elm-land.json`
 }
 ```
 
-__Output__: `index.html`
+__Output__: `dist/index.html`
 
 ```html {3}
 <!DOCTYPE>
@@ -320,7 +320,7 @@ __Input__: `elm-land.json`
 }
 ```
 
-__Output__: `index.html`
+__Output__: `dist/index.html`
 
 ```html {4}
 <!DOCTYPE>
@@ -364,7 +364,7 @@ __Input__: `elm-land.json`
 }
 ```
 
-__Output:__ `index.html`
+__Output__: `dist/index.html`
 
 ```html {5-6}
 <!DOCTYPE html>
@@ -413,7 +413,7 @@ __Input__: `elm-land.json`
 }
 ```
 
-__Output:__ `index.html`
+__Output__: `dist/index.html`
 
 ```html {5-6}
 <!DOCTYPE html>
@@ -459,7 +459,7 @@ __Input__: `elm-land.json`
 }
 ```
 
-__Output:__ `index.html`
+__Output__: `dist/index.html`
 
 ```html {5}
 <!DOCTYPE html>
@@ -493,18 +493,16 @@ Bool
 :::
 
 Some hosting environments don't easily support standard URL path routing. For that reason, we've 
-added an option for users to have Routes use URLs with `/#/` prefix.
+added an option for users to have their URLs with `/#/` prefix.
 
 Hash-based routing still supports query parameters, fragments, and everything else the standard Elm Land
-routing uses.
-
-Using `Route.Path.toString` will automatically render the correct URL, depending on the setting.
+routing uses. Using `Route.Path.toString` will automatically render the correct URL, depending on the value of `useHashRouting`.
 
 __When `useHashRouting` is `false`__
 
 Standard web application behavior:
 
-```
+```txt
 Route.Path.Home_ ....................... /
 Route.Path.SignIn ...................... /sign-in
 Route.Path.Users ....................... /users
@@ -515,7 +513,7 @@ __When `useHashRouting` is `true`__
 
 Legacy hash-based URL prefixes will be applied.
 
-```
+```txt
 Route.Path.Home_ ....................... /#/
 Route.Path.SignIn ...................... /#/sign-in
 Route.Path.Users ....................... /#/users

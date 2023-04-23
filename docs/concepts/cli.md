@@ -42,6 +42,22 @@ This command starts a development server (powered by [Vite](https://vitejs.dev))
 port `1234` is already taken, the server will automatically find the next available port.
 
 
+#### Server configuration
+
+Although Elm Land is using Vite under the hood, we don't allow users to customize it with their own `vite.config.js` file. This may sound like a weird choice, but it
+means that __Elm Land can automatically upgrade your project__ to the latest blazing-fast JS developer tooling.
+
+All configuration can be specified in [the `elm-land.json` file](./elm-land-json), so you can still add `<link>` tags, work with environment variables, and more!
+
+::: tip The JavaScript ecosystem moves fast!
+
+When Elm Land got started, it was using __Vite 2__. Already, the choice to use `elm-land.json` has enabled us to seamlessly upgrade all Elm Land users to __Vite 4__.
+
+Next, we're looking to add `elm-watch` to our existing Vite setup. That will combine the best-in-class Elm hot reloading experience with the _incredible_ developer experience of Vite!
+
+:::
+
+
 ## elm-land build
 
 ```txt
@@ -52,7 +68,8 @@ port `1234` is already taken, the server will automatically find the next availa
 
 This command builds your Elm Land app in production-mode. This includes running the Elm compiler with `--optimize` flag, and even JS minification with [terser](https://terser.org/). The result is a static site that is ready to be hosted from the `./dist` folder.
 
-Visit the [Deploying to production](../deploying) guide to learn how to correctly set up SPA redirects to the single `dist/index.html` file.
+Visit the [Deploying to production](../guide/deploying) guide to learn how to correctly set up SPA redirects to the single `dist/index.html` file.
+
 
 ## elm-land add page
 
@@ -64,7 +81,6 @@ Visit the [Deploying to production](../deploying) guide to learn how to correctl
 
 This scaffolding command generates a new Elm Land page in your `src/Pages` folder. 
 
-In the start of the guide, there are also mentions of `page:static`, `page:sandbox`, and `page:element`– but these commands are designed for learning the basics of the framework. Because there is no command for upgrading an existing page, we recommend using the complete`elm-land add page` after you've learned the basics.
 
 #### Arguments
 
@@ -79,6 +95,13 @@ elm-land add page /users/:id ..... Creates "src/Pages/Users/Id_.elm"
 elm-land add page '/users/*' ..... Creates "src/Pages/Users/ALL_.elm"
 ```
 
+::: tip "Wait, what about the other page types?"
+
+In the start of the guide, you may have seen commands like `page:intro`, `page:sandbox`, and `page:element`. It's possible to add those pages to your app, but they are __intended for learning the basics__ of the Elm Land framework. 
+
+__Because there is no command for upgrading an existing page__, we recommend using the complete `elm-land add page` once you're comfortable with The Elm Architecture!
+
+:::
 
 ## elm-land add layout
 
@@ -91,7 +114,7 @@ elm-land add page '/users/*' ..... Creates "src/Pages/Users/ALL_.elm"
 This scaffolding command generates a new Elm Land layout in your `src/Layouts` folder. Layouts are automatically
 nested based on their filepath, so `Layouts.Sidebar.WithHeader` will be contained within a `Layouts.Sidebar`.
 
-Check out the [Layouts guide](../layouts) for more details on how they work.
+Check out the [Layouts guide](../guide/layouts) for more details on how they work.
 
 #### Arguments
 
@@ -145,7 +168,7 @@ is helpful when joining a new team, or trying to find out where a URL will take 
 
 #### Example
 
-Here's example output of what you'd see if you ran this command in the ["Pages and routes"](../pages.md) examples from the guide:
+Here's example output of what you'd see if you ran this command in the ["Pages and routes"](../guide/pages.md) examples from the guide:
 
 ```txt
 

@@ -114,7 +114,7 @@ toProblem layout =
             Just MissingTypeAnnotation
 
         Just str ->
-            if str == "Settings -> Shared.Model -> Route () -> Layout Model Msg mainMsg" then
+            if str == "Settings -> Shared.Model -> Route () -> Layout Model Msg contentMsg" then
                 Nothing
 
             else

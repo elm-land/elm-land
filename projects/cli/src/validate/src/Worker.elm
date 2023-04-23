@@ -450,7 +450,8 @@ unexpectedPageAnnotationError options =
 
 validLayoutFunctionAnnotations : List String
 validLayoutFunctionAnnotations =
-    [ "Settings -> Shared.Model -> Route () -> Layout Model Msg mainMsg"
+    [ "Settings -> Shared.Model -> Route () -> Layout Model Msg contentMsg"
+    , "Settings contentMsg -> Shared.Model -> Route () -> Layout Model Msg contentMsg"
     ]
 
 

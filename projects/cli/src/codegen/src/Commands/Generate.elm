@@ -708,17 +708,17 @@ mainElmModule data =
             , fromEffectDeclaration
                 { name = "fromPageEffect"
                 , msgType = "Main.Pages.Msg.Msg"
-                , fromMsg = "PageSent"
+                , toContentMsg = "PageSent"
                 }
             , fromEffectDeclaration
                 { name = "fromLayoutEffect"
                 , msgType = "Main.Layouts.Msg.Msg"
-                , fromMsg = "LayoutSent"
+                , toContentMsg = "LayoutSent"
                 }
             , fromEffectDeclaration
                 { name = "fromSharedEffect"
                 , msgType = "Shared.Msg"
-                , fromMsg = "SharedSent"
+                , toContentMsg = "SharedSent"
                 }
             ]
         }
@@ -727,7 +727,7 @@ mainElmModule data =
 fromEffectDeclaration :
     { name : String
     , msgType : String
-    , fromMsg : String
+    , toContentMsg : String
     }
     -> CodeGen.Declaration
 fromEffectDeclaration options =
@@ -759,7 +759,7 @@ fromEffectDeclaration options =
                         [ CodeGen.Expression.function
                             { name = "Effect.map"
                             , arguments =
-                                [ CodeGen.Expression.value options.fromMsg
+                                [ CodeGen.Expression.value options.toContentMsg
                                 , CodeGen.Expression.value "effect"
                                 ]
                             }
@@ -1029,7 +1029,7 @@ toViewCaseExpression layouts =
                                             |> String.replace "{{lastPartFieldName}}" (LayoutFile.toLastPartFieldName layout)
                                         )
                                   )
-                                , ( "fromMsg"
+                                , ( "toContentMsg"
                                   , "Main.Layouts.Msg.{{name}} >> LayoutSent"
                                         |> String.replace "{{name}}" (LayoutFile.toVariantName layout)
                                         |> CodeGen.Expression.value

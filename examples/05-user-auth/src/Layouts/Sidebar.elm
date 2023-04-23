@@ -18,7 +18,7 @@ type alias Settings =
     }
 
 
-layout : Settings -> Shared.Model -> Route () -> Layout Model Msg mainMsg
+layout : Settings -> Shared.Model -> Route () -> Layout Model Msg contentMsg
 layout settings shared route =
     Layout.new
         { init = init
@@ -73,12 +73,12 @@ view :
     Settings
     -> Route ()
     ->
-        { fromMsg : Msg -> mainMsg
-        , content : View mainMsg
+        { toContentMsg : Msg -> contentMsg
+        , content : View contentMsg
         , model : Model
         }
-    -> View mainMsg
-view settings route { fromMsg, model, content } =
+    -> View contentMsg
+view settings route { toContentMsg, model, content } =
     { title = content.title ++ " | My Cool App"
     , body =
         [ Html.div [ class "is-flex", style "height" "100vh" ]
@@ -86,7 +86,7 @@ view settings route { fromMsg, model, content } =
                 { user = settings.user
                 , route = route
                 }
-                |> Html.map fromMsg
+                |> Html.map toContentMsg
             , viewMainContent
                 { title = settings.title
                 , content = content
