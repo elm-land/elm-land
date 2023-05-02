@@ -15,7 +15,7 @@ let addNewLayout = () => async ([name]) => {
         '    Here are some examples:',
         '',
         `    elm-land add layout ${Terminal.pink(`Default`)}`,
-        `    elm-land add layout ${Terminal.pink(`Sidebar.WithHeader`)}`,
+        `    elm-land add layout ${Terminal.pink(`Sidebar.Header`)}`,
         ''
       ].join('\n'),
       files: [],
@@ -30,7 +30,7 @@ let addNewLayout = () => async ([name]) => {
       '    Here are some examples:',
       '',
       `    elm-land add layout ${Terminal.pink(`Default`)}`,
-      `    elm-land add layout ${Terminal.pink(`Sidebar.WithHeader`)}`,
+      `    elm-land add layout ${Terminal.pink(`Sidebar.Header`)}`,
       ''
     ].join('\n'))
   }
@@ -56,7 +56,7 @@ let addNewLayout = () => async ([name]) => {
       '    Here are some examples:',
       '',
       `    elm-land add layout ${Terminal.pink(`Sidebar`)}`,
-      `    elm-land add layout ${Terminal.pink(`Sidebar.WithHeader`)}`,
+      `    elm-land add layout ${Terminal.pink(`Sidebar.Header`)}`,
       ''
     ].join('\n'))
   }
@@ -74,7 +74,7 @@ let addNewLayout = () => async ([name]) => {
       '    Here are some examples:',
       '',
       `    elm-land add layout ${Terminal.pink(`Sidebar.WithTabs`)}`,
-      `    elm-land add layout ${Terminal.pink(`Sidebar.WithHeader`)}`,
+      `    elm-land add layout ${Terminal.pink(`Sidebar.Header`)}`,
       ''
     ].join('\n'))
   }

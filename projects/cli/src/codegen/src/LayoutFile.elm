@@ -55,9 +55,9 @@ decoder =
 
 {-| Returns a list of filepath segments.
 
-For example, the layout file at `src/Layouts/Sidebar/WithHeader.elm` would return:
+For example, the layout file at `src/Layouts/Sidebar/Header.elm` would return:
 
-    [ "Sidebar", "WithHeader" ]
+    [ "Sidebar", "Header" ]
 
 -}
 toList : LayoutFile -> List String
@@ -71,9 +71,9 @@ toList (LayoutFile list) =
     toModuleName layout
         == "Layouts.Sidebar"
 
-    -- `src/Layouts/Sidebar/WithHeader.elm`
+    -- `src/Layouts/Sidebar/Header.elm`
     toModuleName layout
-        == "Layouts.Sidebar.WithHeader"
+        == "Layouts.Sidebar.Header"
 
 -}
 toModuleName : LayoutFile -> String
@@ -89,7 +89,7 @@ to select the layout for a given page. Here's an example:
         | Sidebar Layouts.Sidebar.Settings
         | Sidebar_WithHeader
             { sidebar : Layouts.Sidebar.Settings
-            , withHeader : Layouts.Sidebar.WithHeader.Settings
+            , header : Layouts.Sidebar.Header.Settings
             }
 
 -}
@@ -118,7 +118,7 @@ the active layout. Here's an example:
         | Sidebar Layouts.Sidebar.Model
         | Sidebar_WithHeader
             { sidebar : Layouts.Sidebar.Model
-            , withHeader : Layouts.Sidebar.WithHeader.Model
+            , header : Layouts.Sidebar.Header.Model
             }
 
 -}
@@ -243,7 +243,7 @@ toLayoutRouteVariant options layoutFile =
     toVariantName layout
         == "Sidebar"
 
-    -- `src/Layouts/Sidebar/WithHeader.elm`
+    -- `src/Layouts/Sidebar/Header.elm`
     toVariantName layout
         == "Sidebar_WithHeader"
 
@@ -267,17 +267,17 @@ For example, imagine our app has the following layouts:
   - Default
   - Sidebar
   - Sidebar.WithModal
-  - Sidebar.WithHeader
-  - Sidebar.WithHeader.WithTabs
+  - Sidebar.Header
+  - Sidebar.Header.WithTabs
 
 Because layouts can be nested, we want to make sure that we handle each case correctly:
 
-  - `Sidebar.WithHeader -> Sidebar.WithModal`
+  - `Sidebar.Header -> Sidebar.WithModal`
       - Preserve the existing `sidebar` model, but initialize a new `withModal` layout state
-  - `Sidebar.WithHeader -> Sidebar`
+  - `Sidebar.Header -> Sidebar`
       - Preserve the existing `sidebar` model
-  - `Sidebar -> Sidebar.WithHeader`
-      - Preserve the existing `sidebar` model, and initialize a new `withHeader` layout state
+  - `Sidebar -> Sidebar.Header`
+      - Preserve the existing `sidebar` model, and initialize a new `header` layout state
   - `Default -> Sidebar.WithModal`
       - Because these are two completely different layouts, we'll need to initialize `sidebar` and `withModal`
 

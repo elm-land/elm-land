@@ -112,20 +112,20 @@ __Because there is no command for upgrading an existing page__, we recommend usi
 #### Description
 
 This scaffolding command generates a new Elm Land layout in your `src/Layouts` folder. Layouts are automatically
-nested based on their filepath, so `Layouts.Sidebar.WithHeader` will be contained within a `Layouts.Sidebar`.
+nested based on their filepath, so `Layouts.Sidebar.Header` will be contained within a `Layouts.Sidebar`.
 
 Check out the [Layouts guide](../guide/layouts) for more details on how they work.
 
 #### Arguments
 
-`<name>` – the name of the Elm module, can include a `.` if creating a nested layout.
+`<name>` – the name of the new Elm layout module
 
 Here are some examples:
 
-```
-elm-land add layout Default .............. Creates "src/Layouts/Default.elm"
-elm-land add layout Sidebar .............. Creates "src/Layouts/Sidebar.elm"
-elm-land add layout Sidebar.WithHeader ... Creates "src/Layouts/Sidebar/WithHeader.elm"
+```txt
+elm-land add layout Default .......... Creates "src/Layouts/Default.elm"
+elm-land add layout Sidebar .......... Creates "src/Layouts/Sidebar.elm"
+elm-land add layout Sidebar.Header ... Creates "src/Layouts/Sidebar/Header.elm"
 ```
 
 ## elm-land customize

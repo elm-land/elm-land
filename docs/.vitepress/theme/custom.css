@@ -169,7 +169,8 @@ details[open] summary:before {
 }
 
 /* Little browser window */
-.VPNavBar.has-sidebar .curtain::before {
+.VPNavBar.has-sidebar .curtain::before,
+.aside-curtain {
   display: none !important;
 }
 

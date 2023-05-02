@@ -31,11 +31,11 @@ const sidebar = [
       { text: 'Layouts', link: '/concepts/layouts' },
       { text: 'Components', link: '/concepts/components' },
       { text: 'Shared', link: '/concepts/shared' },
-      { text: 'Effects', link: '/concepts/effects' },
+      { text: 'Effect', link: '/concepts/effect' },
       { text: 'View', link: '/concepts/view' },
       { text: 'Auth', link: '/concepts/auth' },
       { text: 'Custom 404 pages', link: '/concepts/404' },
-      { text: 'Routes', link: '/concepts/routes' },
+      { text: 'Route', link: '/concepts/route' },
     ]
   },
   {
