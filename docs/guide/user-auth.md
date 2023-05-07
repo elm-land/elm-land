@@ -2022,7 +2022,7 @@ Here's the code we can add to our `view` function to make things look official:
 ```elm {3-4,18,20-30,34-115}
 module Layouts.Sidebar exposing (Settings, Model, Msg, layout)
 
-import Html.Attributes exposing (alt, class, classList, src)
+import Html.Attributes exposing (alt, class, classList, src, style)
 import Route.Path
 -- ...
 
