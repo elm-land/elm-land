@@ -3,7 +3,7 @@
 
 ## Introduction
 
-Hello there, and welcome to Elm Land: a framework to help you build reliable web apps.
+__Welcome to Elm Land__, a framework designed to help you build reliable web apps.
 
 Elm Land's goal is to provide easy-to-learn conventions, great developer tooling, hands-on guides, and resources for building real world applications. This guide assumes a bit of experience with HTML, CSS, and JavaScript, but __if you're new to Elm, that's _perfect!___
 
