@@ -114,7 +114,7 @@ __Because there is no command for upgrading an existing page__, we recommend usi
 This scaffolding command generates a new Elm Land layout in your `src/Layouts` folder. Layouts are automatically
 nested based on their filepath, so `Layouts.Sidebar.Header` will be contained within a `Layouts.Sidebar`.
 
-Check out the [Layouts guide](../guide/layouts) for more details on how they work.
+Check out the [Layouts guide](./layouts) for more details on how they work.
 
 #### Arguments
 
@@ -168,7 +168,7 @@ is helpful when joining a new team, or trying to find out where a URL will take 
 
 #### Example
 
-Here's example output of what you'd see if you ran this command in the ["Pages and routes"](../guide/pages.md) examples from the guide:
+Here's example output of what you'd see if you ran this command in the ["Pages and routes"](./pages.md) examples from the guide:
 
 ```txt
 

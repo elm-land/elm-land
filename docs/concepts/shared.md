@@ -123,7 +123,7 @@ init flagsResult route =
 ```
 
 It takes in two arguments as input:
-1. `flagsResult` - The result of decoding the [Shared.Flags](#sharedflags) type (covered next)
+1. `flagsResult` - The result of decoding the [Shared.Flags](#shared-flags) type (covered next)
 1. `route` - Information about the current URL, including query parameters, path, etc
 
 And returns the initial value of `Shared.Model` and any effects that need to run. For a real user authentication example, check out the [User Auth](../guide/user-auth.md) guide.

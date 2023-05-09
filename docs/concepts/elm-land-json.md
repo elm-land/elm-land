@@ -301,7 +301,7 @@ String
 
 Before your Elm application loads, the HTML file will have a default title. This title will appear in the top tab of the web browser, but only when JavaScript is disabled or if the Elm Land application hasn't run yet.
 
-Once the app is ready, Elm Land will use the tab title defined by the page you are currently on, which can be modified by that page's layout. Check out [Pages and routes](../pages.md) to better understand the `title` property.
+Once the app is ready, Elm Land will use the tab title defined by the page you are currently on, which can be modified by that page's layout. Check out [Pages and routes](../guide/pages-and-routes.md) to better understand the `title` property.
 
 ::: tip EXAMPLE
 
@@ -391,7 +391,7 @@ List (Dict String String)
 
 For each item in the list, a `<link>` tag will be rendered within the `<head>` tag. Each item in the list represents the attributes that should be rendered with the new HTML element.
 
-Feel free to visit the guide on [Assets and static files](../assets-and-static-files.md) to understand how to reference local icons, images, and CSS from the `./static` folder.
+Feel free to visit the example on [Assets and static files](https://github.com/elm-land/elm-land/tree/main/examples/14-scss-and-assets) to understand how to reference local icons, images, and CSS from the `./static` folder.
 
 ::: tip EXAMPLE
 

@@ -483,7 +483,7 @@ Use the `Page.withOnUrlChanged` whenever you want to know if any "query paramete
 
 ::: tip But wait, there's more!
 
-Be sure to check out [Page.withOnQueryParameterChanged](#pagewithonqueryparameterchanged) and [Page.withOnHashChanged](#pagewithonhashchanged) below, for nicer, less general APIs for common URL changes.
+Be sure to check out [Page.withOnQueryParameterChanged](#page-withonqueryparameterchanged) and [Page.withOnHashChanged](#page-withonhashchanged) below, for nicer, less general APIs for common URL changes.
 
 :::
 
