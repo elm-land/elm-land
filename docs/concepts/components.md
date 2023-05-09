@@ -14,9 +14,9 @@ In this section, we'll be showing you how to do all the same stuff with `.elm` f
 
 After exploring many different techniques for building Elm components, we've found a simple system that works great! We'll be referring to this system as "the 123s of Elm components", because of the three step system. Each step will build on the last, so we'll tackle them each in order:
 
-1. [Simple view functions](#1-simple-view-functions)
-1. [Configurable components](#2-configurable-components)
-1. [Stateful components](#3-stateful-components)
+1. [Simple view functions](#_1-simple-view-functions)
+1. [Configurable components](#_2-configurable-components)
+1. [Stateful components](#_3-stateful-components)
 
 
 ## 1. Simple view functions
