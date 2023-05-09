@@ -21,7 +21,6 @@ import Browser.Navigation
 import Dict exposing (Dict)
 import Route exposing (Route)
 import Route.Path
-import Route.Query
 import Shared.Model
 import Shared.Msg
 import Task

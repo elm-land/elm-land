@@ -14,7 +14,7 @@ We have [a public roadmap on GitHub](https://github.com/elm-land/elm-land/wiki/R
 
 Many of the more recent features have come from users reporting on their experiences using Elm Land in practice.
 
-## "Can I do server-side rendering?"
+## "Does Elm Land support server-side rendering?"
 
 Elm Land focuses on creating and deploying __single-page applications__. This helps keep hosting costs low or, in most cases, completely free!
 
@@ -22,4 +22,4 @@ It also eliminates complexity during development. Understanding why some parts o
 
 Because we only support client-side rendering, Elm Land is a great choice for "web applications". For example, if your app is behind a sign-in page, SEO doesn't matter as much. 
 
-If you are creating "websites", like this one, we recommend using a tool that better fits the problem at hand. 
+If you are creating "websites", like this one, we recommend using a tool that better fits the problem at hand.

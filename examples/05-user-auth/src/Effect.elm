@@ -27,7 +27,6 @@ import Dict exposing (Dict)
 import Json.Encode
 import Route exposing (Route)
 import Route.Path
-import Route.Query
 import Shared.Model
 import Shared.Msg
 import Task

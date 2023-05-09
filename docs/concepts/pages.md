@@ -313,7 +313,7 @@ route.params ==
     }
 ```
 
-__Note:__ To avoid confusion with a dynamic route `All_.elm`, Elm Land adds a trailing underscore after `all_`.
+__Note:__ To avoid confusion with a dynamic route `All_.elm`, Elm Land adds a trailing underscore after `all_` on the params.
 
 #### Simple catch-all example
 
