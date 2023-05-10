@@ -20,8 +20,8 @@ export const init = ({ env }) => {
 
 // Listen for errors from Elm, and report them to Sentry
 export const handlePorts = (ports) => {
-  ports.sendHttpErrorToSentry.subscribe(sendHttpError)
-  ports.sendJsonDecodeErrorToSentry.subscribe(sendJsonDecodeError)
+  ports.sendHttpErrorToSentry_.subscribe(sendHttpError)
+  ports.sendJsonDecodeErrorToSentry_.subscribe(sendJsonDecodeError)
 }
 
 const sendHttpError = (event) => {

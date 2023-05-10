@@ -4,6 +4,7 @@ port module Effect exposing
     , sendCmd, sendMsg
     , pushRoute, replaceRoute, loadExternalUrl
     , sendHttpGet
+    , sendHttpErrorToSentry, sendJsonDecodeErrorToSentry
     , map, toCmd
     )
 
@@ -15,6 +16,7 @@ port module Effect exposing
 @docs pushRoute, replaceRoute, loadExternalUrl
 
 @docs sendHttpGet
+@docs sendHttpErrorToSentry, sendJsonDecodeErrorToSentry
 
 @docs map, toCmd
 
@@ -37,7 +39,7 @@ import Url exposing (Url)
 -- PORTS
 
 
-port sendHttpErrorToSentry :
+port sendHttpErrorToSentry_ :
     { url : String
     , response : Maybe String
     , error : String
@@ -45,7 +47,7 @@ port sendHttpErrorToSentry :
     -> Cmd msg
 
 
-port sendJsonDecodeErrorToSentry :
+port sendJsonDecodeErrorToSentry_ :
     { url : String
     , response : String
     , error : String
@@ -70,6 +72,16 @@ type Effect msg
     | SendSharedMsg Shared.Msg.Msg
       -- HTTP
     | HttpRequest (HttpRequestDetails msg)
+    | SendJsonDecodeErrorToSentry
+        { url : String
+        , response : String
+        , error : String
+        }
+    | SendHttpErrorToSentry
+        { url : String
+        , response : Maybe String
+        , error : String
+        }
 
 
 type alias HttpRequestDetails msg =
@@ -174,6 +186,30 @@ sendHttpGet options =
 
 
 
+-- ERROR REPORTING
+
+
+sendJsonDecodeErrorToSentry :
+    { url : String
+    , response : String
+    , error : String
+    }
+    -> Effect msg
+sendJsonDecodeErrorToSentry data =
+    SendJsonDecodeErrorToSentry data
+
+
+sendHttpErrorToSentry :
+    { url : String
+    , response : Maybe String
+    , error : String
+    }
+    -> Effect msg
+sendHttpErrorToSentry data =
+    SendHttpErrorToSentry data
+
+
+
 -- INTERALS
 
 
@@ -215,6 +251,12 @@ map fn effect =
                 , decoder = Json.Decode.map fn data.decoder
                 }
 
+        SendJsonDecodeErrorToSentry data ->
+            SendJsonDecodeErrorToSentry data
+
+        SendHttpErrorToSentry data ->
+            SendHttpErrorToSentry data
+
 
 {-| Elm Land needs this function to actually perform your Effects
 -}
@@ -223,7 +265,7 @@ toCmd :
     , url : Url
     , shared : Shared.Model.Model
     , fromSharedMsg : Shared.Msg.Msg -> msg
-    , fromCmd : Cmd msg -> msg
+    , batch : List msg -> msg
     , toCmd : msg -> Cmd msg
     }
     -> Effect msg
@@ -255,6 +297,12 @@ toCmd options effect =
         HttpRequest request ->
             sendGetRequestWithErrorReporting options request
 
+        SendJsonDecodeErrorToSentry data ->
+            sendJsonDecodeErrorToSentry_ data
+
+        SendHttpErrorToSentry data ->
+            sendHttpErrorToSentry_ data
+
 
 
 -- AUTOMATIC ERROR REPORTING
@@ -262,8 +310,8 @@ toCmd options effect =
 
 sendGetRequestWithErrorReporting :
     { options
-        | toCmd : msg -> Cmd msg
-        , fromCmd : Cmd msg -> msg
+        | fromSharedMsg : Shared.Msg.Msg -> msg
+        , batch : List msg -> msg
     }
     -> HttpRequestDetails msg
     -> Cmd msg
@@ -273,8 +321,8 @@ sendGetRequestWithErrorReporting options request =
         toMsg =
             fromCustomResultToMsg
                 { url = request.url
-                , toCmd = options.toCmd
-                , fromCmd = options.fromCmd
+                , fromSharedMsg = options.fromSharedMsg
+                , batch = options.batch
                 , onHttpError = request.onHttpError
                 }
 
@@ -354,8 +402,8 @@ httpErrorToJsonString httpError =
 
 fromCustomResultToMsg :
     { url : String
-    , fromCmd : Cmd msg -> msg
-    , toCmd : msg -> Cmd msg
+    , batch : List msg -> msg
+    , fromSharedMsg : Shared.Msg.Msg -> msg
     , onHttpError : Http.Error -> msg
     }
     -> Result CustomError msg
@@ -366,30 +414,29 @@ fromCustomResultToMsg options result =
             msg
 
         Err customError ->
-            options.fromCmd
-                (Cmd.batch
-                    [ -- Let the original page handle the error
-                      customError
-                        |> toHttpError
-                        |> options.onHttpError
-                        |> options.toCmd
-                    , -- Report the error to Sentry
-                      case customError of
-                        JsonDecodeError { response, reason } ->
-                            sendJsonDecodeErrorToSentry
-                                { url = options.url
-                                , response = response
-                                , error = reason
-                                }
+            options.batch
+                [ -- Let the original page handle the error
+                  customError
+                    |> toHttpError
+                    |> options.onHttpError
+                , -- Report the error to Sentry
+                  case customError of
+                    JsonDecodeError { response, reason } ->
+                        Shared.Msg.SendJsonDecodeErrorToSentry
+                            { url = options.url
+                            , response = response
+                            , error = reason
+                            }
+                            |> options.fromSharedMsg
 
-                        OtherHttpError { response, reason } ->
-                            sendHttpErrorToSentry
-                                { url = options.url
-                                , response = response
-                                , error = httpErrorToJsonString reason
-                                }
-                    ]
-                )
+                    OtherHttpError { response, reason } ->
+                        Shared.Msg.SendHttpErrorToSentry
+                            { url = options.url
+                            , response = response
+                            , error = httpErrorToJsonString reason
+                            }
+                            |> options.fromSharedMsg
+                ]
 
 
 fromHttpResponseToCustomResult : { decoder : Json.Decode.Decoder msg } -> Http.Response String -> Result CustomError msg

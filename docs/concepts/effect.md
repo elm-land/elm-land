@@ -352,7 +352,7 @@ toCmd :
     , url : Url
     , shared : Shared.Model.Model
     , fromSharedMsg : Shared.Msg.Msg -> msg
-    , fromCmd : Cmd msg -> msg
+    , batch : List msg -> msg
     , toCmd : msg -> Cmd msg
     }
     -> Effect msg
