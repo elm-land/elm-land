@@ -396,7 +396,7 @@ toPageModelTypeDeclaration pages =
             List.concat
                 [ List.map toCustomType pages
                 , [ ( "Redirecting_", [] )
-                  , ( "Loading_", [ CodeGen.Annotation.type_ "(View Never)" ] )
+                  , ( "Loading_", [] )
                   ]
                 ]
     in

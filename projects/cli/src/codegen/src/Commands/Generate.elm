@@ -820,7 +820,7 @@ toLayoutFromPageDeclaration pages =
                 { value = CodeGen.Argument.new "model.page"
                 , branches =
                     List.map toBranch pages
-                        ++ List.map toNothingBranch [ "Redirecting_", "Loading_ _" ]
+                        ++ List.map toNothingBranch [ "Redirecting_", "Loading_" ]
                 }
         }
 
@@ -946,7 +946,7 @@ runWhenAuthenticatedWithLayoutDeclaration =
                               , expression =
                                     wrapInPageLayout
                                         (CodeGen.Expression.multilineTuple
-                                            [ CodeGen.Expression.value "Main.Pages.Model.Loading_ loadingView"
+                                            [ CodeGen.Expression.value "Main.Pages.Model.Loading_"
                                             , CodeGen.Expression.value "Cmd.none"
                                             ]
                                         )
@@ -1128,9 +1128,13 @@ toViewPageCaseExpression pages =
                     , arguments = []
                     , expression = CodeGen.Expression.value "View.none"
                     }
-                  , { name = "Main.Pages.Model.Loading_ loadingView"
+                  , { name = "Main.Pages.Model.Loading_"
                     , arguments = []
-                    , expression = CodeGen.Expression.value "View.map never loadingView"
+                    , expression =
+                        CodeGen.Expression.pipeline
+                            [ CodeGen.Expression.value "Auth.viewLoadingPage model.shared (Route.fromUrl () model.url)"
+                            , CodeGen.Expression.value "View.map never"
+                            ]
                     }
                   ]
                 ]
@@ -1438,7 +1442,7 @@ toSubscriptionPageCaseExpression pages =
                     , arguments = []
                     , expression = CodeGen.Expression.value "Sub.none"
                     }
-                  , { name = "Main.Pages.Model.Loading_ _"
+                  , { name = "Main.Pages.Model.Loading_"
                     , arguments = []
                     , expression = CodeGen.Expression.value "Sub.none"
                     }
@@ -2583,7 +2587,6 @@ decoder =
     Json.Decode.map3 Data
         (Json.Decode.field "pages"
             (Json.Decode.list PageFile.decoder
-                -- |> Json.Decode.map ignoreNotFoundPage
                 |> Json.Decode.map PageFile.sortBySpecificity
             )
         )

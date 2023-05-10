@@ -1,4 +1,4 @@
-module Auth exposing (User, onPageLoad)
+module Auth exposing (User, onPageLoad, viewLoadingPage)
 
 import Auth.Action
 import Dict
@@ -6,6 +6,7 @@ import Route exposing (Route)
 import Route.Path
 import Shared
 import Shared.Model
+import View exposing (View)
 
 
 type alias User =
@@ -29,3 +30,10 @@ onPageLoad shared route =
                         ]
                 , hash = Nothing
                 }
+
+
+{-| Renders whenever `Auth.Action.showLoadingPage` is returned from `onPageLoad`.
+-}
+viewLoadingPage : Shared.Model -> Route () -> View Never
+viewLoadingPage shared route =
+    View.fromString "Loading..."
