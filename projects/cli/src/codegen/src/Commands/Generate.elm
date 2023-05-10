@@ -114,7 +114,7 @@ mainElmModule : Data -> CodeGen.Module
 mainElmModule data =
     CodeGen.Module.new
         { name = [ "Main" ]
-        , exposing_ = [ "main" ]
+        , exposing_ = [ ".." ]
         , imports =
             List.concat
                 [ [ CodeGen.Import.new [ "Auth" ]
