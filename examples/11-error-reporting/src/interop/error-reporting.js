@@ -20,28 +20,66 @@ export const init = ({ env }) => {
 
 // Listen for errors from Elm, and report them to Sentry
 export const handlePorts = (ports) => {
-  ports.sendHttpErrorToSentry_.subscribe(sendHttpError)
-  ports.sendJsonDecodeErrorToSentry_.subscribe(sendJsonDecodeError)
-}
-
-const sendHttpError = (event) => {
-  Sentry.captureEvent({
-    message: 'HTTP_ERROR',
-    extra: {
-      "URL": event.url,
-      "Response": event.response,
-      "Http.Error": event.error
+  ports.outgoing.subscribe(({ tag, data }) => {
+    switch (tag) {
+      case 'SEND_HTTP_ERROR':
+        return sendHttpError(data)
+      case 'SEND_JSON_DECODE_ERROR':
+        return sendJsonDecodeError(data)
+      default:
+        return sendUnexpectedPortError(tag, data)
     }
   })
 }
 
-const sendJsonDecodeError = (event) => {
-  Sentry.captureEvent({
-    message: 'JSON_DECODE_ERROR',
-    extra: {
-      "URL": event.url,
-      "Response": event.response,
-      "Json.Decode.Error": event.error
+const sendHttpError = (event) => {
+  Sentry.withScope((scope) => {
+    if (event.response) {
+      scope.addAttachment({
+        filename: event.url,
+        data: event.response
+      })
     }
+    Sentry.captureEvent({
+      message: `${event.method} ${event.url} – ${event.error}`,
+      tags: {
+        'kind': 'Http.Error',
+        'elm.http.method': event.method,
+        'elm.http.url': event.url,
+      }
+    })
+  })
+}
+
+const sendJsonDecodeError = (event) => {
+  Sentry.withScope((scope) => {
+    scope.addAttachment({
+      filename:
+        (event.url.endsWith('.json'))
+          ? event.url
+          : `${event.url}.json`,
+      data: event.response
+    })
+    Sentry.captureEvent({
+      message: `${event.method} ${event.url} – ${event.title}`,
+      tags: {
+        'kind': 'Json.Decode.Error',
+        'elm.http.method': event.method,
+        'elm.http.url': event.url,
+      },
+      extra: {
+        "Json.Decode.Error": event.error
+      }
+    })
+  })
+}
+
+const sendUnexpectedPortError = (tag, data) => {
+  Sentry.captureEvent({
+    message: `Elm Ports – Unexpected "${tag}" port`,
+    tags: {
+      kind: 'Elm.Ports'
+    },
+    extra: data
   })
 }

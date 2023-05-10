@@ -2,6 +2,9 @@ module Shared.Msg exposing (Msg(..))
 
 {-| -}
 
+import Http
+import Json.Decode
+
 
 {-| Normally, this value would live in "Shared.elm"
 but that would lead to a circular dependency import cycle.
@@ -12,12 +15,14 @@ own file, so they can be imported by `Effect.elm`
 -}
 type Msg
     = SendJsonDecodeErrorToSentry
-        { url : String
+        { method : String
+        , url : String
         , response : String
-        , error : String
+        , error : Json.Decode.Error
         }
     | SendHttpErrorToSentry
-        { url : String
+        { method : String
+        , url : String
         , response : Maybe String
-        , error : String
+        , error : Http.Error
         }
