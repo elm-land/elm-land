@@ -4,6 +4,8 @@ outline: [2,3]
 
 # Effect
 
+## Overview
+
 The `Effect msg` type in Elm Land is an abstraction built on top of Elm's standard `Cmd msg` type. In this guide, we'll learn:
 1. How to __use the default__ `Effect` module
 1. __How to customize__ the `Effect` module

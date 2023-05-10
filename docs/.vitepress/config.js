@@ -24,7 +24,7 @@ const sidebar = [
   {
     text: 'Concepts',
     items: [
-      { text: 'Overview', link: '/concepts/' },
+      { text: 'Introduction', link: '/concepts/' },
       { text: 'The CLI', link: '/concepts/cli' },
       { text: 'elm-land.json', link: '/concepts/elm-land-json' },
       { text: 'Pages', link: '/concepts/pages' },

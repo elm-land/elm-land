@@ -3,6 +3,8 @@ outline: [2,3]
 ---
 # Pages
 
+## Overview
+
 Pages are the basic building blocks of your Elm Land application. When a user visits a URL, Elm Land will use the names of the files in your `src/Pages` folder to decide which page to render.
 
 Later on in this section, you'll learn different kinds of routes and priority. 

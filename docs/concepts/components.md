@@ -4,15 +4,25 @@ outline: [2,3]
 
 # Components
 
-## Comparison with JavaScript
+## Overview
 
-In a JavaScript framework like React or Vue.js, UI components are created in their own `.jsx` or `.vue` files. These components can take in "props", emit events back to their parent elements, store their own internal state, and define how they should render.
 
-In this section, we'll be showing you how to do all the same stuff with `.elm` files. Unlike JS components, the design of Elm prevents us from sending API requests, defining local state, or other fancy stuff in our `view` code. For that reason, there are __three__ kinds of components you might find in any Elm Land project.
+In a JavaScript framework like React or Vue.js, UI components are created in their own `.jsx` or `.vue` files. In general, these components are able to:
+
+1. Take in "props" as initial arguments.
+2. Emit events back to their parents.
+3. Store their own internal state.
+4. Define how they should render on the page.
+
+The core design of Elm prevents us from sending API requests or other fancy stuff from our `view` function. This section will show you how to do all the same great stuff with `.elm` files.
+
+Let's start by learning about the three kinds of components in Elm projects.
 
 ## The "123s" of Elm components
 
-After exploring many different techniques for building Elm components, we've found a simple system that works great! We'll be referring to this system as "the 123s of Elm components", because of the three step system. Each step will build on the last, so we'll tackle them each in order:
+After exploring many different techniques for building Elm components, we've found a simple system that works great! We'll be referring to this system as "the 123s of Elm components", because of the three step system.
+
+Each step will build on the last, so we'll learn them in order:
 
 1. [Simple view functions](#_1-simple-view-functions)
 1. [Configurable components](#_2-configurable-components)
@@ -60,7 +70,7 @@ Our `Components.Notification.view` function takes in a value called `props` with
 
 1. `title` – The string to render in bolded text
 1. `description` – Another string to render below the title
-1. `onDismiss` – The `Msg` provided by the caller, that we should fire when the "X" button is clicked!
+1. `onDismiss` – The `Msg` provided by the caller, that we should send when the "X" button is clicked!
 
 It uses those three values to return some HTML that can be rendered by another page, layout, or component. 
 

@@ -1,7 +1,10 @@
 ---
 outline: [2,3]
 ---
+
 # Layouts
+
+## Overview
 
 Layouts allow your pages to reuse stateful UI. They can save you time wiring things up, and prevent bugs that come from duplication across pages. In many web apps, you might have a common element, like a sidebar, that should available across those pages.
 

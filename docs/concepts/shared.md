@@ -1,6 +1,6 @@
 # Shared
 
-## Sharing data between pages
+## Overview
 
 The `Shared` module is designed to enable us to __share data between pages__. To understand why it exists, it might first be helpful to understand how Elm Land stores information. Under the hood, Elm Land generates a bit of code for making a standard Elm application.
 

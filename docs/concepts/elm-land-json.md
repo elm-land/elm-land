@@ -8,6 +8,8 @@ outline: deep
 The purpose of the `elm-land.json` file is to provide one place to configure your Elm Land application. Elm Land works out-of-the-box with zero-configuration, but more advanced web applications will customize some of the options described below.
 
 
+### The complete file
+
 For reference, here is the default `elm-land.json` file that is created with every new Elm Land project created via the CLI:
 
 ```json
