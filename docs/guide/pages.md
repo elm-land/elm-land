@@ -333,7 +333,7 @@ elm-land routes
 
 ```txt
 
-  🌈  Elm Land (v0.18.1) found 5 pages in your application
+  🌈  Elm Land (v0.18.3) found 5 pages in your application
   ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
   src/Pages/Home_.elm ............... http://localhost:1234/
   src/Pages/SignIn.elm .............. http://localhost:1234/sign-in
