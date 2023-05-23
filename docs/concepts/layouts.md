@@ -421,7 +421,7 @@ Layout.withParentSettings :
 #### Usage example
 
 ```elm{12-14}
-module Layouts.Sidebar.Settings exposing (..)
+module Layouts.Sidebar.Header exposing (..)
 
 -- ...
 
@@ -436,6 +436,75 @@ layout settings shared route =
             { user = settings.user 
             }
 ```
+
+
+### `Layout.withOnUrlChanged`
+
+The `Layout.withOnUrlChanged` function allows a layout to respond to any changes in the URL __that don't involve navigating to another layout__.
+
+For example, let's imagine we have the following 3 pages in our application:
+
+Page | Layout
+:-- | :--
+`Pages.Dashboard` | `Layouts.Sidebar`
+`Pages.Settings` | `Layouts.Sidebar`
+`Pages.SignIn` | _None_
+
+If we navigated from `/dashboard` to `/settings`, then our `UrlChanged` message would be sent to our `Layouts.Sidebar` module. 
+
+If we navigated from `/dashboard` to `/dashboard?code=123`, we would also receive a message. However, if we navigated to the `/sign-in` route, we would __not receive__ a message, because the "Sign in" page doesn't use this layout.
+
+Use the `Layout.withOnUrlChanged` whenever you want to know if the current page, query parameters, or hash has changed within a layout.
+
+
+#### Type definition
+
+```elm
+Layout.withOnUrlChanged :
+    ({ before : Route (), after : Route () } -> Msg)
+    -> Layout () Model Msg
+    -> Layout () Model Msg
+```
+
+#### Usage example
+
+```elm{15,23,29-30}
+module Layouts.Sidebar exposing (Settings, Model, Msg, layout)
+
+import Layout exposing (Layout)
+-- ...
+
+
+layout : Settings -> Shared.Model -> Route () -> Layout () Model Msg
+layout settings shared route =
+    Layout.new
+        { init = init
+        , update = update
+        , view = view
+        , subscriptions = subscriptions
+        }
+        |> Layout.withOnUrlChanged UrlChanged
+
+
+-- ...
+
+
+type Msg
+    = ...
+    | UrlChanged { before : Route (), after : Route () }
+
+
+update : Msg -> Model -> ( Model, Effect Msg )
+update msg model =
+    case msg of
+        OnUrlChanged { before, after } ->
+            ( model, Effect.none )
+
+        ...
+```
+
+__Note:__ In [the Route section](./route), you'll learn about the `Route` type and how it stores URL information.
+
 
 ## Sending messages to pages
 
@@ -470,8 +539,11 @@ Here's a quick example, because you're worth it!
 
 __Updating the layout file__
 
-```elm{7-10,14,22,32,43,45}
-module Layouts.Sidebar.Header exposing (Settings, Model, Msg, layout)
+```elm{3,10-13,16-20,24,32,42,53,55}
+module Layouts.Sidebar.Header exposing
+    ( Settings, Model, Msg, layout
+    , map
+    )
 
 import Layout exposing (Layout)
 -- ...
@@ -480,6 +552,13 @@ import Layout exposing (Layout)
 type alias Settings contentMsg =
     { title : String
     , button : Html contentMsg
+    }
+
+
+map : (msg1 -> msg2) -> Settings msg1 -> Settings msg2
+map fn settings =
+    { title = settings.title
+    , button = Html.map fn settings.button
     }
 
 
@@ -527,6 +606,15 @@ Here are some things to keep in mind:
 
 - You can pass along `settings` value into your `view` function, just like we saw in the pages section (see line 22)
 - Be sure to add the `contentMsg` parameter everywhere you see `Settings` in this file
+
+::: tip What's up with that `map` function?
+
+When you add the `contentMsg` variable to your `Settings` type, Elm Land will ask you to define
+a `map` function to help convert your `Settings` type from one `contentMsg` to another.
+
+This is essential for the generated code to connect this layout to the top-level application!
+
+:::
 
 __Using the layout on a page__
 

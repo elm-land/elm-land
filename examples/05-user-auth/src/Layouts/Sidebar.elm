@@ -18,7 +18,11 @@ type alias Settings =
     }
 
 
-layout : Settings -> Shared.Model -> Route () -> Layout Model Msg contentMsg
+layout :
+    Settings
+    -> Shared.Model
+    -> Route ()
+    -> Layout () Model Msg contentMsg
 layout settings shared route =
     Layout.new
         { init = init
