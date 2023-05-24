@@ -438,7 +438,7 @@ The `Page.withLayout` function allows your page to opt-in to a layout file. In [
 
 ```elm
 Page.withLayout :
-    (Model -> Layouts.Layout)
+    (Model -> Layouts.Layout Msg)
     -> Page Model Msg
     -> Page Model Msg
 ```

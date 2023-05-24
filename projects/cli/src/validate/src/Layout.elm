@@ -109,12 +109,32 @@ type Problem
 
 toProblem : Layout -> Maybe Problem
 toProblem layout =
+    let
+        -- TODO: Don't duplicate these strings in both this file and Worker.elm
+        validAnnotations : List String
+        validAnnotations =
+            let
+                parentSettings : String
+                parentSettings =
+                    case Filepath.toParentLayoutModuleName (filepath layout) of
+                        Just str ->
+                            str
+
+                        Nothing ->
+                            "()"
+            in
+            [ "Settings -> Shared.Model -> Route () -> Layout ${parentSettings} Model Msg contentMsg"
+                |> String.replace "${parentSettings}" parentSettings
+            , "Settings contentMsg -> Shared.Model -> Route () -> Layout ${parentSettings} Model Msg contentMsg"
+                |> String.replace "${parentSettings}" parentSettings
+            ]
+    in
     case toAnnotationForLayoutFunction layout of
         Nothing ->
             Just MissingTypeAnnotation
 
         Just str ->
-            if str == "Settings -> Shared.Model -> Route () -> Layout Model Msg contentMsg" then
+            if List.member str validAnnotations then
                 Nothing
 
             else

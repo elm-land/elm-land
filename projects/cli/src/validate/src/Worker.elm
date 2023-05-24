@@ -449,10 +449,22 @@ unexpectedPageAnnotationError options =
 -- LAYOUT FILE ERRORS
 
 
-validLayoutFunctionAnnotations : List String
-validLayoutFunctionAnnotations =
-    [ "Settings -> Shared.Model -> Route () -> Layout Model Msg contentMsg"
-    , "Settings contentMsg -> Shared.Model -> Route () -> Layout Model Msg contentMsg"
+validLayoutFunctionAnnotations : Filepath -> List String
+validLayoutFunctionAnnotations filepath =
+    let
+        parentSettings : String
+        parentSettings =
+            case Filepath.toParentLayoutModuleName filepath of
+                Just str ->
+                    str
+
+                Nothing ->
+                    "()"
+    in
+    [ "Settings -> Shared.Model -> Route () -> Layout ${parentSettings} Model Msg contentMsg"
+        |> String.replace "${parentSettings}" parentSettings
+    , "Settings contentMsg -> Shared.Model -> Route () -> Layout ${parentSettings} Model Msg contentMsg"
+        |> String.replace "${parentSettings}" parentSettings
     ]
 
 
@@ -460,7 +472,7 @@ missingLayoutAnnotationError : { filepath : Filepath } -> Error
 missingLayoutAnnotationError options =
     missingFunctionAnnotationError
         { functionName = "layout"
-        , validAnnotations = validLayoutFunctionAnnotations
+        , validAnnotations = validLayoutFunctionAnnotations options.filepath
         }
         options
 
@@ -473,7 +485,7 @@ unexpectedLayoutAnnotationError :
 unexpectedLayoutAnnotationError options =
     unexpectedAnnotationError
         { functionName = "layout"
-        , validAnnotations = validLayoutFunctionAnnotations
+        , validAnnotations = validLayoutFunctionAnnotations options.filepath
         }
         options
 

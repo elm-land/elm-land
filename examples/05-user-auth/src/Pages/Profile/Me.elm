@@ -21,7 +21,7 @@ page user shared route =
         |> Page.withLayout (layout user)
 
 
-layout : Auth.User -> Model -> Layouts.Layout
+layout : Auth.User -> Model -> Layouts.Layout Msg
 layout user model =
     Layouts.Sidebar
         { title = "Profile"

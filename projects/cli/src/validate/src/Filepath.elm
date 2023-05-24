@@ -1,7 +1,7 @@
 module Filepath exposing
     ( Filepath, decoder, fromList
     , toRelativeFilepath, toModuleName
-    , toRouteParamsRecordString
+    , toParentLayoutModuleName, toRouteParamsRecordString
     )
 
 {-|
@@ -142,3 +142,31 @@ fromPascalCaseToCamelCase str =
 
         firstChar :: restChars ->
             String.fromList (Char.toLower firstChar :: restChars)
+
+
+{-|
+
+    toParentLayoutModuleName "Layouts.Sidebar" == Nothing
+
+    toParentLayoutModuleName "Layouts.Sidebar.Header" == Just "Layouts.Sidebar"
+
+-}
+toParentLayoutModuleName : Filepath -> Maybe String
+toParentLayoutModuleName filepath =
+    case toModuleName filepath |> String.split "." of
+        [] ->
+            Nothing
+
+        _ :: [] ->
+            Nothing
+
+        _ :: _ :: [] ->
+            Nothing
+
+        segments ->
+            segments
+                |> List.reverse
+                |> List.drop 1
+                |> List.reverse
+                |> String.join "."
+                |> Just

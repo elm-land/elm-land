@@ -66,6 +66,4 @@ subscriptions model =
 
 view : Model -> View Msg
 view model =
-    { title = "404"
-    , body = [ text "Not found" ]
-    }
+    View.fromString "Page not found"

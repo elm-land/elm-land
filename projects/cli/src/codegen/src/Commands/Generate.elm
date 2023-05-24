@@ -283,7 +283,7 @@ mainElmModule data =
                                 , ( "shared", CodeGen.Annotation.type_ "Shared.Model" )
                                 , ( "layout", CodeGen.Annotation.type_ "Maybe Main.Layouts.Model.Model" )
                                 ]
-                            , CodeGen.Annotation.type_ "Layouts.Layout"
+                            , CodeGen.Annotation.type_ "Layouts.Layout Msg"
                             , CodeGen.Annotation.type_ "( Main.Layouts.Model.Model, Cmd Msg )"
                             ]
                     , arguments = [ CodeGen.Argument.new "model", CodeGen.Argument.new "layout" ]
@@ -624,7 +624,7 @@ mainElmModule data =
                               , expression = toSubscriptionPageCaseExpression data.pages
                               }
                             , { argument = CodeGen.Argument.new "maybeLayout"
-                              , annotation = Just (CodeGen.Annotation.type_ "Maybe Layouts.Layout")
+                              , annotation = Just (CodeGen.Annotation.type_ "Maybe (Layouts.Layout Msg)")
                               , expression = CodeGen.Expression.value "toLayoutFromPage model"
                               }
                             , { argument = CodeGen.Argument.new "route"
@@ -791,6 +791,10 @@ toLayoutFromPageDeclaration pages =
                                 CodeGen.Expression.value "Route.fromUrl () model.url"
                             , CodeGen.Expression.value ("toAuthProtectedPage model {{moduleName}}.page" |> String.replace "{{moduleName}}" (PageFile.toModuleName page))
                             , CodeGen.Expression.value "Maybe.andThen (Page.layout pageModel)"
+                            , CodeGen.Expression.value
+                                ("Maybe.map (Layouts.map ({{msgVariant}} >> PageSent))"
+                                    |> String.replace "{{msgVariant}}" ("Main.Pages.Msg." ++ PageFile.toVariantName page)
+                                )
                             ]
 
                     else
@@ -802,6 +806,10 @@ toLayoutFromPageDeclaration pages =
                                 CodeGen.Expression.value "Route.fromUrl () model.url"
                             , CodeGen.Expression.value ("{{moduleName}}.page model.shared" |> String.replace "{{moduleName}}" (PageFile.toModuleName page))
                             , CodeGen.Expression.value "Page.layout pageModel"
+                            , CodeGen.Expression.value
+                                ("Maybe.map (Layouts.map ({{msgVariant}} >> PageSent))"
+                                    |> String.replace "{{msgVariant}}" ("Main.Pages.Msg." ++ PageFile.toVariantName page)
+                                )
                             ]
 
                 else
@@ -817,7 +825,7 @@ toLayoutFromPageDeclaration pages =
     in
     CodeGen.Declaration.function
         { name = "toLayoutFromPage"
-        , annotation = CodeGen.Annotation.type_ "Model -> Maybe Layouts.Layout"
+        , annotation = CodeGen.Annotation.type_ "Model -> Maybe (Layouts.Layout Msg)"
         , arguments = [ CodeGen.Argument.new "model" ]
         , expression =
             CodeGen.Expression.caseExpression
@@ -1019,10 +1027,7 @@ toViewCaseExpression layouts =
                                 [ CodeGen.Expression.function
                                     { name = LayoutFile.toModuleName layout ++ ".layout"
                                     , arguments =
-                                        [ CodeGen.Expression.value
-                                            ("settings.{{lastPartFieldName}} model.shared route"
-                                                |> String.replace "{{lastPartFieldName}}" (LayoutFile.toLastPartFieldName layout)
-                                            )
+                                        [ CodeGen.Expression.value "settings model.shared route"
                                         ]
                                     }
                                 ]
@@ -1378,9 +1383,8 @@ toUpdateLayoutCaseExpression layouts =
 -}
 callLayoutFunction : LayoutFile -> CodeGen.Expression
 callLayoutFunction layout =
-    "{{moduleName}}.layout settings.{{lastPartField}} model.shared route"
+    "{{moduleName}}.layout settings model.shared route"
         |> String.replace "{{moduleName}}" (LayoutFile.toModuleName layout)
-        |> String.replace "{{lastPartField}}" (LayoutFile.toLastPartFieldName layout)
         |> CodeGen.Expression.value
 
 
@@ -1616,15 +1620,13 @@ toInitPageCaseExpression layouts pages =
                     , { argument = CodeGen.Argument.new "( pageModel, pageEffect )"
                       , annotation = Nothing
                       , expression =
-                            CodeGen.Expression.parens
-                                [ CodeGen.Expression.function
-                                    { name = "Page.init"
-                                    , arguments =
-                                        [ CodeGen.Expression.value "page"
-                                        , CodeGen.Expression.value "()"
-                                        ]
-                                    }
-                                ]
+                            CodeGen.Expression.function
+                                { name = "Page.init"
+                                , arguments =
+                                    [ CodeGen.Expression.value "page"
+                                    , CodeGen.Expression.value "()"
+                                    ]
+                                }
                       }
                     ]
                 , in_ =
@@ -1635,7 +1637,14 @@ toInitPageCaseExpression layouts pages =
                                 CodeGen.Expression.value "Nothing"
 
                             else
-                                CodeGen.Expression.value "Page.layout pageModel page |> Maybe.map (initLayout model)"
+                                CodeGen.Expression.pipeline
+                                    [ CodeGen.Expression.value "Page.layout pageModel page"
+                                    , CodeGen.Expression.value
+                                        ("Maybe.map (Layouts.map ({{msgVariant}} >> PageSent))"
+                                            |> String.replace "{{msgVariant}}" ("Main.Pages.Msg." ++ PageFile.toVariantName page)
+                                        )
+                                    , CodeGen.Expression.value "Maybe.map (initLayout model)"
+                                    ]
                           )
                         ]
                 }
@@ -2568,6 +2577,7 @@ layoutsElmModule data =
         , imports = List.map toLayoutImport data.layouts
         , declarations =
             [ LayoutFile.toLayoutTypeDeclaration data.layouts
+            , LayoutFile.toMapFunction data.layouts
             ]
         }
 

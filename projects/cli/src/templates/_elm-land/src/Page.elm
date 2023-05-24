@@ -25,7 +25,7 @@ type Page model msg
         , update : msg -> model -> ( model, Effect msg )
         , subscriptions : model -> Sub msg
         , view : model -> View msg
-        , toLayout : Maybe (model -> Layout)
+        , toLayout : Maybe (model -> Layout msg)
         }
 
 
@@ -46,7 +46,7 @@ new options =
         }
 
 
-withLayout : (model -> Layout) -> Page model msg -> Page model msg
+withLayout : (model -> Layout msg) -> Page model msg -> Page model msg
 withLayout toLayout_ (Page page) =
     Page { page | toLayout = Just toLayout_ }
 
@@ -110,6 +110,6 @@ subscriptions (Page page) =
     page.subscriptions
 
 
-layout : model -> Page model msg -> Maybe Layouts.Layout
+layout : model -> Page model msg -> Maybe (Layouts.Layout msg)
 layout model (Page page) =
     Maybe.map (\fn -> fn model) page.toLayout
