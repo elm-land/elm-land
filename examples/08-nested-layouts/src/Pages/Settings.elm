@@ -72,6 +72,6 @@ subscriptions model =
 
 view : Model -> View Msg
 view model =
-    { title = "Pages.Settings"
+    { title = "Settings"
     , body = [ Html.text "/settings" ]
     }

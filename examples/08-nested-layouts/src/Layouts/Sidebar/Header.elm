@@ -71,13 +71,7 @@ view : Settings -> { toContentMsg : Msg -> contentMsg, content : View contentMsg
 view settings { toContentMsg, model, content } =
     { title = content.title
     , body =
-        [ Html.node "style"
-            []
-            [ Html.text """
-            header { padding: 1.5rem; border-bottom: solid 1px #eee; font-size: 2rem; font-weight: bold }
-            .page { padding: 1rem; }
-            """ ]
-        , Html.header [] [ Html.text settings.title ]
+        [ Html.header [] [ Html.text settings.title ]
         , Html.div [ class "page" ] content.body
         ]
     }

@@ -282,10 +282,11 @@ toLayoutRouteVariant options layoutFile =
                 toNestedLayoutRecordField index pathSegment =
                     ( Extras.String.fromPascalCaseToCamelCase pathSegment
                     , CodeGen.Annotation.type_
-                        ((filepath
-                            |> String.join "."
-                            |> String.append "Layouts."
-                         )
+                        ("Layouts."
+                            ++ (filepath
+                                    |> dropRight (List.length filepath - index - 1)
+                                    |> String.join "."
+                               )
                             ++ "."
                             ++ options.typeName
                         )

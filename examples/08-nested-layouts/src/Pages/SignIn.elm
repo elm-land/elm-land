@@ -2,6 +2,7 @@ module Pages.SignIn exposing (Model, Msg, page)
 
 import Effect exposing (Effect)
 import Html
+import Html.Attributes exposing (class)
 import Page exposing (Page)
 import Route exposing (Route)
 import Route.Path
@@ -66,26 +67,14 @@ subscriptions model =
 
 view : Model -> View Msg
 view model =
-    { title = "Pages.SignIn"
+    { title = "Sign in | MyCoolApp"
     , body =
-        [ Html.node "style"
-            []
-            [ Html.text """
-            html, body { height: 100%; }
-            body {
-              margin: 0;
-              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-              display: flex;
-              justify-content: center;
-              align-items: center;
-            }
-            * { box-sizing: border-box; color: inherit; }
-            a { background: dodgerblue; padding: 0.7rem 1.2rem; color: white; border-radius: 0.5rem; }
-            a:hover { opacity: 0.75; }
-            """ ]
-        , Html.a
-            [ Route.Path.href Route.Path.Home_
+        [ Html.div [ class "page page--sign-in" ]
+            [ Html.a
+                [ class "btn"
+                , Route.Path.href Route.Path.Home_
+                ]
+                [ Html.text "Sign in" ]
             ]
-            [ Html.text "Sign in" ]
         ]
     }

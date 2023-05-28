@@ -2,6 +2,7 @@ module Pages.Home_ exposing (Model, Msg, page)
 
 import Effect exposing (Effect)
 import Html
+import Html.Attributes exposing (class)
 import Layouts
 import Page exposing (Page)
 import Route exposing (Route)
@@ -22,7 +23,7 @@ page shared route =
 
 toLayout : Model -> Layouts.Layout Msg
 toLayout model =
-    Layouts.Sidebar_Header { title = "Homepage" }
+    Layouts.Sidebar {}
 
 
 
@@ -72,6 +73,9 @@ subscriptions model =
 
 view : Model -> View Msg
 view model =
-    { title = "Pages.Home_"
-    , body = [ Html.text "/" ]
+    { title = "Dashboard"
+    , body =
+        [ Html.div [ class "page" ]
+            [ Html.text "/" ]
+        ]
     }

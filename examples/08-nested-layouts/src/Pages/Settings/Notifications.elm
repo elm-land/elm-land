@@ -2,6 +2,7 @@ module Pages.Settings.Notifications exposing (Model, Msg, page)
 
 import Effect exposing (Effect)
 import Html
+import Html.Attributes exposing (class)
 import Layouts
 import Page exposing (Page)
 import Route exposing (Route)
@@ -22,7 +23,7 @@ page shared route =
 
 toLayout : Model -> Layouts.Layout Msg
 toLayout model =
-    Layouts.Sidebar_Header { title = "Notifications" }
+    Layouts.Sidebar_Header { title = "Settings" }
 
 
 
@@ -72,6 +73,8 @@ subscriptions model =
 
 view : Model -> View Msg
 view model =
-    { title = "Pages.Settings.Notifications"
-    , body = [ Html.text "/settings/notifications" ]
+    { title = "Notifications"
+    , body =
+        [ Html.text "/settings/notifications"
+        ]
     }

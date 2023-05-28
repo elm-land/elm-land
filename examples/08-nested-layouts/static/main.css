@@ -1,0 +1,36 @@
+/* RESETS */
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+}
+* { box-sizing: border-box; color: inherit; }
+
+/* SIDEBAR LAYOUT */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  background: #435;
+  color: white;
+  padding: 2rem;
+  width: 280px;
+  justify-content: space-between;
+}
+
+/* HEADER LAYOUT */
+header { padding: 1.5rem; border-bottom: solid 1px #eee; font-size: 2rem; font-weight: bold }
+.page { padding: 1rem; }
+
+/* SIGN IN PAGE */
+.page--sign-in {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+/* BUTTONS */
+.btn { background: #435; padding: 0.7rem 1.2rem; color: white; border-radius: 0.25rem; }
+.btn:hover { opacity: 0.75; }
