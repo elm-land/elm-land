@@ -159,8 +159,12 @@ var header = function (error, problem, cwd_) {
   var PREFIX = '-- ';
   var left = problem.title;
   var cwd = cwd_ || process.cwd();
+
   var absolutePath = error.path;
-  var relativePath = absolutePath.slice(cwd.length + 1);
+  var relativePath = ''
+  if (absolutePath) {
+    relativePath = absolutePath.slice(cwd.length + 1);
+  }
   var dashCount = MAX_WIDTH - left.length - PREFIX.length - SPACING_COUNT - relativePath.length;
   return "".concat(PREFIX).concat(left, " ").concat(SPACER.repeat(dashCount), " ").concat(relativePath);
 };
@@ -170,6 +174,7 @@ var escapeHtml = function (str) {
     .split('>').join('&gt;');
 };
 var toColoredTerminalOutput = function (elmError) {
+  console.log({ elmError })
   // TERMINAL ASCII CODES
   var code = function (num) { return "\u001b[" + num + "m"; };
   var reset = code(0);
