@@ -174,7 +174,6 @@ var escapeHtml = function (str) {
     .split('>').join('&gt;');
 };
 var toColoredTerminalOutput = function (elmError) {
-  console.log({ elmError })
   // TERMINAL ASCII CODES
   var code = function (num) { return "\u001b[" + num + "m"; };
   var reset = code(0);
