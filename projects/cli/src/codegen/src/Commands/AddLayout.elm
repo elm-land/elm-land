@@ -57,7 +57,7 @@ newLayoutModule data =
 
         {- Example:
 
-           layout : Settings -> Shared.Model -> Route () -> Layout Model Msg contentMsg
+           layout : Settings -> Shared.Model -> Route () -> Layout () Model Msg contentMsg
            layout settings shared route =
                Layout.new
                    { init = init
@@ -71,24 +71,55 @@ newLayoutModule data =
         layoutFunction =
             CodeGen.Declaration.function
                 { name = "layout"
-                , annotation = CodeGen.Annotation.type_ "Settings -> Shared.Model -> Route () -> Layout Model Msg contentMsg"
+                , annotation =
+                    CodeGen.Annotation.type_
+                        ("Settings -> Shared.Model -> Route () -> Layout {{parentSettings}} Model Msg contentMsg"
+                            |> String.replace "{{parentSettings}}"
+                                (case parentLayoutModuleName of
+                                    Just moduleName ->
+                                        moduleName ++ ".Settings"
+
+                                    Nothing ->
+                                        "()"
+                                )
+                        )
                 , arguments =
                     [ CodeGen.Argument.new "settings"
                     , CodeGen.Argument.new "shared"
                     , CodeGen.Argument.new "route"
                     ]
                 , expression =
-                    CodeGen.Expression.multilineFunction
-                        { name = "Layout.new"
-                        , arguments =
-                            [ CodeGen.Expression.multilineRecord
-                                [ ( "init", CodeGen.Expression.value "init" )
-                                , ( "update", CodeGen.Expression.value "update" )
-                                , ( "view", CodeGen.Expression.value "view" )
-                                , ( "subscriptions", CodeGen.Expression.value "subscriptions" )
+                    case parentLayoutModuleName of
+                        Nothing ->
+                            newLayoutExpression
+
+                        Just moduleName ->
+                            CodeGen.Expression.pipeline
+                                [ newLayoutExpression
+                                , CodeGen.Expression.function
+                                    { name = "Layout.withParentSettings"
+                                    , arguments =
+                                        [ CodeGen.Expression.parens
+                                            [ "Debug.todo \"TODO: Add {{parentSettings}}\""
+                                                |> String.replace "{{parentSettings}}" (moduleName ++ ".Settings")
+                                                |> CodeGen.Expression.value
+                                            ]
+                                        ]
+                                    }
                                 ]
-                            ]
-                        }
+                }
+
+        newLayoutExpression =
+            CodeGen.Expression.multilineFunction
+                { name = "Layout.new"
+                , arguments =
+                    [ CodeGen.Expression.multilineRecord
+                        [ ( "init", CodeGen.Expression.value "init" )
+                        , ( "update", CodeGen.Expression.value "update" )
+                        , ( "view", CodeGen.Expression.value "view" )
+                        , ( "subscriptions", CodeGen.Expression.value "subscriptions" )
+                        ]
+                    ]
                 }
 
         {- Example:
@@ -223,6 +254,20 @@ newLayoutModule data =
                           )
                         ]
                 }
+
+        parentLayoutModuleName : Maybe String
+        parentLayoutModuleName =
+            if List.length data.moduleSegments > 1 then
+                data.moduleSegments
+                    |> List.reverse
+                    |> List.drop 1
+                    |> List.reverse
+                    |> String.join "."
+                    |> (\str -> "Layouts." ++ str)
+                    |> Just
+
+            else
+                Nothing
     in
     CodeGen.Module.new
         { name = "Layouts" :: data.moduleSegments
@@ -242,6 +287,13 @@ newLayoutModule data =
             , CodeGen.Import.new [ "View" ]
                 |> CodeGen.Import.withExposing [ "View" ]
             ]
+                ++ (case parentLayoutModuleName of
+                        Just moduleName ->
+                            [ CodeGen.Import.new (String.split "." moduleName) ]
+
+                        Nothing ->
+                            []
+                   )
         , declarations =
             [ settingsTypeAlias
             , layoutFunction

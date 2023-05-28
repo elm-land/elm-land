@@ -1,6 +1,8 @@
 module Layout exposing
     ( Layout, new
+    , withParentSettings
     , init, update, view, subscriptions
+    , parentSettings
     )
 
 {-|
@@ -9,6 +11,7 @@ module Layout exposing
 @docs withParentSettings
 
 @docs init, update, view, subscriptions
+@docs parentSettings
 
 -}
 

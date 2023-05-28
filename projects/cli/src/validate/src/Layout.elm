@@ -118,7 +118,7 @@ toProblem layout =
                 parentSettings =
                     case Filepath.toParentLayoutModuleName (filepath layout) of
                         Just str ->
-                            str
+                            str ++ ".Settings"
 
                         Nothing ->
                             "()"

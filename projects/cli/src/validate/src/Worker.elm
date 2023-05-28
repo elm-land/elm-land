@@ -456,7 +456,7 @@ validLayoutFunctionAnnotations filepath =
         parentSettings =
             case Filepath.toParentLayoutModuleName filepath of
                 Just str ->
-                    str
+                    str ++ ".Settings"
 
                 Nothing ->
                     "()"

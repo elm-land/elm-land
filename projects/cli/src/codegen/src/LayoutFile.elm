@@ -6,7 +6,7 @@ module LayoutFile exposing
     , toLayoutTypeDeclaration
     , toLayoutsModelTypeDeclaration, toLayoutsMsgTypeDeclaration
     , toInitBranches
-    , toLastPartFieldName
+    , toLayoutVariableName, toLastPartFieldName
     , toLastPartFieldNameFilepath, toListOfSelfAndParents, toMapFunction, toModuleNameFilepath, toVariantNameFilepath
     )
 
@@ -25,7 +25,7 @@ module LayoutFile exposing
 @docs toLayoutsModelTypeDeclaration, toLayoutsMsgTypeDeclaration
 
 @docs toInitBranches
-@docs toLastPartFieldName
+@docs toLayoutVariableName, toLastPartFieldName
 
 -}
 
@@ -478,21 +478,41 @@ toInitBranches input =
             -> CodeGen.Expression.Expression
         toExpressionNeedingToInitializeSomeLayouts options =
             let
-                toLetExpression : LayoutFile -> CodeGen.Expression.LetDeclaration
-                toLetExpression layoutFile =
-                    let
-                        lastPartFieldName : String
-                        lastPartFieldName =
-                            toLastPartFieldName layoutFile
-                    in
+                toLayoutDefinition : LayoutFile -> Maybe LayoutFile -> CodeGen.Expression.LetDeclaration
+                toLayoutDefinition current parent =
                     { argument =
-                        "( {{lastPartFieldName}}LayoutModel, {{lastPartFieldName}}LayoutEffect )"
-                            |> String.replace "{{lastPartFieldName}}" lastPartFieldName
+                        toLayoutVariableName current
+                            |> withSuffix "Layout"
                             |> CodeGen.Argument.new
                     , annotation = Nothing
                     , expression =
-                        "Layout.init ({{moduleName}}.layout settings model.shared route) ()"
-                            |> String.replace "{{moduleName}}" (toModuleName layoutFile)
+                        "{{layoutName}}.layout {{settings}} model.shared route"
+                            |> String.replace "{{layoutName}}" (toModuleName current)
+                            |> String.replace "{{settings}}"
+                                (case parent of
+                                    Just parentLayout ->
+                                        "(Layout.parentSettings {{parentLayoutName}})"
+                                            |> String.replace "{{parentLayoutName}}"
+                                                (toLayoutVariableName parentLayout
+                                                    |> withSuffix "Layout"
+                                                )
+
+                                    Nothing ->
+                                        "settings"
+                                )
+                            |> CodeGen.Expression.value
+                    }
+
+                toLayoutInitialization : LayoutFile -> CodeGen.Expression.LetDeclaration
+                toLayoutInitialization layoutFile =
+                    { argument =
+                        "( {{lastPartName}}LayoutModel, {{lastPartName}}LayoutEffect )"
+                            |> String.replace "{{lastPartName}}" (toLastPartFieldName layoutFile)
+                            |> CodeGen.Argument.new
+                    , annotation = Nothing
+                    , expression =
+                        "Layout.init {{layoutName}}Layout ()"
+                            |> String.replace "{{layoutName}}" (toLayoutVariableName layoutFile)
                             |> CodeGen.Expression.value
                     }
 
@@ -543,9 +563,9 @@ toInitBranches input =
 
                 toInitialLayoutCmd : LayoutFile -> CodeGen.Expression
                 toInitialLayoutCmd layoutFile =
-                    "fromLayoutEffect model (Effect.map Main.Layouts.Msg.{{variantName}} {{lastPartFieldName}}LayoutEffect)"
+                    "fromLayoutEffect model (Effect.map Main.Layouts.Msg.{{variantName}} {{lastPartName}}LayoutEffect)"
                         |> String.replace "{{variantName}}" (toVariantName layoutFile)
-                        |> String.replace "{{lastPartFieldName}}" (toLastPartFieldName layoutFile)
+                        |> String.replace "{{lastPartName}}" (toLastPartFieldName layoutFile)
                         |> CodeGen.Expression.value
             in
             CodeGen.Expression.letIn
@@ -556,7 +576,17 @@ toInitBranches input =
                             , expression = CodeGen.Expression.value "Route.fromUrl () model.url"
                             }
                           ]
-                        , options.layoutsNeedingInitialization |> List.map toLetExpression
+                        , List.map2 toLayoutDefinition
+                            options.layoutsNeedingInitialization
+                            (Nothing
+                                :: (options.layoutsNeedingInitialization
+                                        |> List.reverse
+                                        |> List.drop 1
+                                        |> List.reverse
+                                        |> List.map Just
+                                   )
+                            )
+                        , options.layoutsNeedingInitialization |> List.map toLayoutInitialization
                         ]
                 , in_ =
                     CodeGen.Expression.multilineTuple
@@ -624,6 +654,45 @@ dropRight amount list =
         |> List.reverse
 
 
+{-|
+
+    toLayoutVariableName Layouts.Sidebar
+        == "sidebar"
+
+    toLayoutVariableName Layouts.Sidebar.Header
+        == "sidebarHeader"
+
+-}
+toLayoutVariableName : LayoutFile -> String
+toLayoutVariableName (LayoutFile { filepath }) =
+    toLayoutName filepath
+
+
+withSuffix : String -> String -> String
+withSuffix suffix base =
+    base ++ suffix
+
+
+toLayoutName : Filepath -> String
+toLayoutName filepath =
+    case filepath of
+        [] ->
+            "unknown"
+
+        first :: rest ->
+            String.join "" (Extras.String.fromPascalCaseToCamelCase first :: rest)
+
+
+{-| Create a camel case variable name (used for layout model record
+fields names).
+
+    toLastPartFieldName Layouts.Sidebar
+        == "sidebar"
+
+    toLastPartFieldName Layouts.Sidebar.Header
+        == "header"
+
+-}
 toLastPartFieldName : LayoutFile -> String
 toLastPartFieldName (LayoutFile { filepath }) =
     toLastPartFieldNameFilepath filepath

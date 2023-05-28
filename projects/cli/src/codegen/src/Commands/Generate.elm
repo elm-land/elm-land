@@ -1010,24 +1010,30 @@ toViewCaseExpression layouts =
                 "( Just (Layouts.{{name}} settings), Just (Main.Layouts.Model.{{name}} layoutModel) )"
                     |> String.replace "{{name}}" (LayoutFile.toVariantName layout)
             , arguments = []
-            , expression = toViewBranchExpression (List.reverse selfAndParentLayouts)
+            , expression = toViewBranchExpression selfAndParentLayouts
             }
 
         toViewBranchExpression : List LayoutFile -> CodeGen.Expression
-        toViewBranchExpression layoutList =
-            case layoutList of
-                [] ->
-                    CodeGen.Expression.value "viewPage model"
-
-                layout :: rest ->
+        toViewBranchExpression selfAndParentLayouts =
+            let
+                toNestedLayoutExpression : LayoutFile -> List LayoutFile -> CodeGen.Expression
+                toNestedLayoutExpression self parents =
                     CodeGen.Expression.multilineFunction
                         { name = "Layout.view"
                         , arguments =
                             [ CodeGen.Expression.parens
                                 [ CodeGen.Expression.function
-                                    { name = LayoutFile.toModuleName layout ++ ".layout"
+                                    { name = LayoutFile.toModuleName self ++ ".layout"
                                     , arguments =
-                                        [ CodeGen.Expression.value "settings model.shared route"
+                                        [ "{{settings}} model.shared route"
+                                            |> String.replace "{{settings}}"
+                                                (if parents == [] then
+                                                    "settings"
+
+                                                 else
+                                                    toLayoutSettingsVariableName self
+                                                )
+                                            |> CodeGen.Expression.value
                                         ]
                                     }
                                 ]
@@ -1035,17 +1041,43 @@ toViewCaseExpression layouts =
                                 [ ( "model"
                                   , CodeGen.Expression.value
                                         ("layoutModel.{{lastPartFieldName}}"
-                                            |> String.replace "{{lastPartFieldName}}" (LayoutFile.toLastPartFieldName layout)
+                                            |> String.replace "{{lastPartFieldName}}" (LayoutFile.toLastPartFieldName self)
                                         )
                                   )
                                 , ( "toContentMsg"
                                   , "Main.Layouts.Msg.{{name}} >> LayoutSent"
-                                        |> String.replace "{{name}}" (LayoutFile.toVariantName layout)
+                                        |> String.replace "{{name}}" (LayoutFile.toVariantName self)
                                         |> CodeGen.Expression.value
                                   )
-                                , ( "content", toViewBranchExpression rest )
+                                , ( "content", toViewBranchExpression parents )
                                 ]
                             ]
+                        }
+            in
+            case selfAndParentLayouts of
+                [] ->
+                    CodeGen.Expression.value "viewPage model"
+
+                self :: parents ->
+                    CodeGen.Expression.letIn
+                        { let_ =
+                            List.map2
+                                (\child parent ->
+                                    toParentLayoutSettings
+                                        { self = self
+                                        , child = child
+                                        , parent = parent
+                                        }
+                                )
+                                (self :: parents)
+                                parents
+                        , in_ =
+                            case List.reverse (self :: parents) of
+                                [] ->
+                                    CodeGen.Expression.value "viewPage model"
+
+                                first :: rest ->
+                                    toNestedLayoutExpression first rest
                         }
     in
     if List.isEmpty layouts then
@@ -1317,50 +1349,104 @@ toUpdateLayoutCaseExpression layouts =
                     ]
             }
 
-        toBranch : { sendingMessage : LayoutFile, currentLayout : LayoutFile } -> CodeGen.Expression.Branch
+        toBranch :
+            { sendingMessage : LayoutFile
+            , selfAndParents : List LayoutFile
+            , maybeParent : Maybe LayoutFile
+            , currentLayout : LayoutFile
+            }
+            -> CodeGen.Expression.Branch
         toBranch layoutOptions =
+            let
+                tupleMapExpression : CodeGen.Expression
+                tupleMapExpression =
+                    CodeGen.Expression.multilineFunction
+                        { name = "Tuple.mapBoth"
+                        , arguments =
+                            [ layoutModelConstructor layoutOptions
+                            , CodeGen.Expression.parens
+                                [ CodeGen.Expression.function
+                                    { name = "Effect.map"
+                                    , arguments =
+                                        [ CodeGen.Expression.value ("Main.Layouts.Msg." ++ LayoutFile.toVariantName layoutOptions.sendingMessage)
+                                        ]
+                                    }
+                                , CodeGen.Expression.operator ">>"
+                                , CodeGen.Expression.value "fromLayoutEffect model"
+                                ]
+                            , CodeGen.Expression.parens
+                                [ CodeGen.Expression.function
+                                    { name = "Layout.update"
+                                    , arguments =
+                                        [ CodeGen.Expression.parens
+                                            [ callLayoutFunction
+                                                layoutOptions.maybeParent
+                                                layoutOptions.sendingMessage
+                                            ]
+                                        , CodeGen.Expression.value "layoutMsg"
+                                        , CodeGen.Expression.value
+                                            ("layoutModel.{{lastPartFieldName}}"
+                                                |> String.replace "{{lastPartFieldName}}" (LayoutFile.toLastPartFieldName layoutOptions.sendingMessage)
+                                            )
+                                        ]
+                                    }
+                                ]
+                            ]
+                        }
+            in
             { name =
                 "( Just (Layouts.{{name}} settings), Just (Main.Layouts.Model.{{name}} layoutModel), Main.Layouts.Msg.{{sendingMsgName}} layoutMsg )"
                     |> String.replace "{{name}}" (LayoutFile.toVariantName layoutOptions.currentLayout)
                     |> String.replace "{{sendingMsgName}}" (LayoutFile.toVariantName layoutOptions.sendingMessage)
             , arguments = []
             , expression =
-                CodeGen.Expression.multilineFunction
-                    { name = "Tuple.mapBoth"
-                    , arguments =
-                        [ layoutModelConstructor layoutOptions
-                        , CodeGen.Expression.parens
-                            [ CodeGen.Expression.function
-                                { name = "Effect.map"
-                                , arguments =
-                                    [ CodeGen.Expression.value ("Main.Layouts.Msg." ++ LayoutFile.toVariantName layoutOptions.sendingMessage)
-                                    ]
-                                }
-                            , CodeGen.Expression.operator ">>"
-                            , CodeGen.Expression.value "fromLayoutEffect model"
-                            ]
-                        , CodeGen.Expression.parens
-                            [ CodeGen.Expression.function
-                                { name = "Layout.update"
-                                , arguments =
-                                    [ CodeGen.Expression.parens [ callLayoutFunction layoutOptions.sendingMessage ]
-                                    , CodeGen.Expression.value "layoutMsg"
-                                    , CodeGen.Expression.value
-                                        ("layoutModel.{{lastPartFieldName}}"
-                                            |> String.replace "{{lastPartFieldName}}" (LayoutFile.toLastPartFieldName layoutOptions.sendingMessage)
+                CodeGen.Expression.letIn
+                    { let_ =
+                        case layoutOptions.selfAndParents of
+                            [] ->
+                                []
+
+                            self :: parentLayouts ->
+                                if self == layoutOptions.sendingMessage then
+                                    []
+
+                                else
+                                    List.map2
+                                        (\child parent ->
+                                            toParentLayoutSettings
+                                                { self = self
+                                                , child = child
+                                                , parent = parent
+                                                }
                                         )
-                                    ]
-                                }
-                            ]
-                        ]
+                                        layoutOptions.selfAndParents
+                                        parentLayouts
+                    , in_ = tupleMapExpression
                     }
             }
 
         toBranches : LayoutFile -> List CodeGen.Expression.Branch
         toBranches currentLayout =
-            LayoutFile.toListOfSelfAndParents currentLayout
+            let
+                selfAndParents =
+                    LayoutFile.toListOfSelfAndParents currentLayout
+
+                toBranchWithParent :
+                    Maybe LayoutFile
+                    -> LayoutFile
+                    -> CodeGen.Expression.Branch
+                toBranchWithParent maybeParent layout =
+                    toBranch
+                        { sendingMessage = layout
+                        , selfAndParents = selfAndParents
+                        , maybeParent = maybeParent
+                        , currentLayout = currentLayout
+                        }
+            in
+            List.map2 toBranchWithParent
+                (toListOfParents (List.reverse selfAndParents))
+                selfAndParents
                 |> List.reverse
-                |> List.map (\layout -> toBranch { sendingMessage = layout, currentLayout = currentLayout })
     in
     CodeGen.Expression.letIn
         { let_ =
@@ -1379,13 +1465,26 @@ toUpdateLayoutCaseExpression layouts =
         }
 
 
-{-| Example: (Layouts.Sidebar.layout settings.sidebar model.shared route
+{-| Example: Layouts.Sidebar.layout settings model.shared route
 -}
-callLayoutFunction : LayoutFile -> CodeGen.Expression
-callLayoutFunction layout =
-    "{{moduleName}}.layout settings model.shared route"
+callLayoutFunction : Maybe LayoutFile -> LayoutFile -> CodeGen.Expression
+callLayoutFunction maybeParent layout =
+    "{{moduleName}}.layout {{settings}} model.shared route"
         |> String.replace "{{moduleName}}" (LayoutFile.toModuleName layout)
+        |> String.replace "{{settings}}"
+            (case maybeParent of
+                Just parent ->
+                    toLayoutSettingsVariableName parent
+
+                Nothing ->
+                    "settings"
+            )
         |> CodeGen.Expression.value
+
+
+toLayoutSettingsVariableName : LayoutFile -> String
+toLayoutSettingsVariableName layout =
+    LayoutFile.toLayoutVariableName layout ++ "Settings"
 
 
 toSubscriptionPageCaseExpression : List PageFile -> CodeGen.Expression.Expression
@@ -1480,22 +1579,54 @@ toSubscriptionLayoutCaseExpression layouts =
                     CodeGen.Expression.value "Sub.none"
 
                 self :: [] ->
-                    toSubscriptionExpression layout
+                    toSubscriptionExpression Nothing layout
 
-                selfAndParentLayouts ->
-                    CodeGen.Expression.multilineFunction
-                        { name = "Sub.batch"
-                        , arguments = [ CodeGen.Expression.multilineList (List.map toSubscriptionExpression (List.reverse selfAndParentLayouts)) ]
+                self :: parentLayouts ->
+                    let
+                        selfAndParentLayouts : List LayoutFile
+                        selfAndParentLayouts =
+                            self :: parentLayouts
+                    in
+                    CodeGen.Expression.letIn
+                        { let_ =
+                            List.map2
+                                (\child parent ->
+                                    toParentLayoutSettings
+                                        { self = self
+                                        , child = child
+                                        , parent = parent
+                                        }
+                                )
+                                selfAndParentLayouts
+                                parentLayouts
+                        , in_ =
+                            CodeGen.Expression.multilineFunction
+                                { name = "Sub.batch"
+                                , arguments =
+                                    [ CodeGen.Expression.multilineList
+                                        (List.map2 toSubscriptionExpression
+                                            (toListOfParents (List.reverse selfAndParentLayouts))
+                                            selfAndParentLayouts
+                                            |> List.reverse
+                                        )
+                                    ]
+                                }
                         }
 
-        toSubscriptionExpression : LayoutFile -> CodeGen.Expression
-        toSubscriptionExpression layout =
+        toSubscriptionExpression : Maybe LayoutFile -> LayoutFile -> CodeGen.Expression
+        toSubscriptionExpression maybeParent layout =
             CodeGen.Expression.pipeline
                 [ CodeGen.Expression.function
                     { name = "Layout.subscriptions"
                     , arguments =
-                        [ CodeGen.Expression.parens [ callLayoutFunction layout ]
-                        , CodeGen.Expression.value ("layoutModel.{{lastPartFieldName}}" |> String.replace "{{lastPartFieldName}}" (LayoutFile.toLastPartFieldName layout))
+                        [ CodeGen.Expression.parens
+                            [ callLayoutFunction maybeParent layout
+                            ]
+                        , CodeGen.Expression.value
+                            ("layoutModel.{{lastPartFieldName}}"
+                                |> String.replace "{{lastPartFieldName}}"
+                                    (LayoutFile.toLastPartFieldName layout)
+                            )
                         ]
                     }
                 , CodeGen.Expression.value ("Sub.map Main.Layouts.Msg." ++ LayoutFile.toVariantName layout)
@@ -1514,6 +1645,57 @@ toSubscriptionLayoutCaseExpression layouts =
                   ]
                 ]
         }
+
+
+toParentLayoutSettings :
+    { self : LayoutFile
+    , child : LayoutFile
+    , parent : LayoutFile
+    }
+    -> CodeGen.Expression.LetDeclaration
+toParentLayoutSettings { self, child, parent } =
+    { argument =
+        toLayoutSettingsVariableName parent
+            |> CodeGen.Argument.new
+    , annotation = Nothing
+    , expression =
+        CodeGen.Expression.pipeline
+            [ "{{moduleName}}.layout {{settings}} model.shared route"
+                |> String.replace "{{moduleName}}" (LayoutFile.toModuleName child)
+                |> String.replace "{{settings}}"
+                    (if self == child then
+                        "settings"
+
+                     else
+                        toLayoutSettingsVariableName child
+                    )
+                |> CodeGen.Expression.value
+            , CodeGen.Expression.value "Layout.parentSettings"
+            ]
+    }
+
+
+{-| Note: This function assumes items come in from parent to child
+
+    ✅ [ Sidebar, Sidebar.Header, Sidebar.Header.Tabs ]
+
+    ❌ [ Sidebar.Header.Tabs, Sidebar.Header, Sidebar ]
+
+-}
+toListOfParents : List LayoutFile -> List (Maybe LayoutFile)
+toListOfParents layoutFiles =
+    Nothing
+        :: (layoutFiles
+                |> dropLastItem
+                |> List.map Just
+           )
+
+
+dropLastItem : List a -> List a
+dropLastItem items =
+    List.reverse items
+        |> List.drop 1
+        |> List.reverse
 
 
 toInitLayoutCaseExpression : List LayoutFile -> CodeGen.Expression.Expression
@@ -1739,7 +1921,7 @@ pageModelConstructor page =
     \newModel -> Just (LayoutModelSidebar { layout | model = newModel })
 
 -}
-layoutModelConstructor : { sendingMessage : LayoutFile, currentLayout : LayoutFile } -> CodeGen.Expression
+layoutModelConstructor : { options | sendingMessage : LayoutFile, currentLayout : LayoutFile } -> CodeGen.Expression
 layoutModelConstructor layoutOptions =
     CodeGen.Expression.lambda
         { arguments = [ CodeGen.Argument.new "newModel" ]
