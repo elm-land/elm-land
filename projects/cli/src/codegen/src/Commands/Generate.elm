@@ -1010,11 +1010,11 @@ toViewCaseExpression layouts =
                 "( Just (Layouts.{{name}} settings), Just (Main.Layouts.Model.{{name}} layoutModel) )"
                     |> String.replace "{{name}}" (LayoutFile.toVariantName layout)
             , arguments = []
-            , expression = toViewBranchExpression layout selfAndParentLayouts
+            , expression = toViewBranchExpression True layout selfAndParentLayouts
             }
 
-        toViewBranchExpression : LayoutFile -> List LayoutFile -> CodeGen.Expression
-        toViewBranchExpression original selfAndParentLayouts =
+        toViewBranchExpression : Bool -> LayoutFile -> List LayoutFile -> CodeGen.Expression
+        toViewBranchExpression isTopLevel original selfAndParentLayouts =
             let
                 toNestedLayoutExpression : LayoutFile -> List LayoutFile -> CodeGen.Expression
                 toNestedLayoutExpression current parents =
@@ -1052,7 +1052,7 @@ toViewCaseExpression layouts =
                                         |> String.replace "{{name}}" (LayoutFile.toVariantName current)
                                         |> CodeGen.Expression.value
                                   )
-                                , ( "content", toViewBranchExpression original parents )
+                                , ( "content", toViewBranchExpression False original parents )
                                 ]
                             ]
                         }
@@ -1064,7 +1064,7 @@ toViewCaseExpression layouts =
                 self :: parents ->
                     CodeGen.Expression.letIn
                         { let_ =
-                            if original == self then
+                            if isTopLevel then
                                 List.map2
                                     (\child parent ->
                                         toParentLayoutSettings
@@ -1079,12 +1079,16 @@ toViewCaseExpression layouts =
                             else
                                 []
                         , in_ =
-                            case List.reverse (self :: parents) of
-                                [] ->
-                                    CodeGen.Expression.value "viewPage model"
+                            if isTopLevel then
+                                case List.reverse parents ++ [ self ] of
+                                    [] ->
+                                        CodeGen.Expression.value "viewPage model"
 
-                                first :: rest ->
-                                    toNestedLayoutExpression first rest
+                                    first :: rest ->
+                                        toNestedLayoutExpression first rest
+
+                            else
+                                toNestedLayoutExpression self parents
                         }
     in
     if List.isEmpty layouts then

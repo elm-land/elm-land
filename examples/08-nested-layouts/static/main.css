@@ -6,6 +6,9 @@ body {
 }
 * { box-sizing: border-box; color: inherit; }
 
+/* LAYOUT BASICS */
+.pad-16 { padding: 1rem; }
+
 /* SIDEBAR LAYOUT */
 .sidebar {
   display: flex;
@@ -18,9 +21,9 @@ body {
   justify-content: space-between;
 }
 
+
 /* HEADER LAYOUT */
 header { padding: 1.5rem; border-bottom: solid 1px #eee; font-size: 2rem; font-weight: bold }
-.page { padding: 1rem; }
 
 /* SIGN IN PAGE */
 .page--sign-in {
@@ -34,3 +37,24 @@ header { padding: 1.5rem; border-bottom: solid 1px #eee; font-size: 2rem; font-w
 /* BUTTONS */
 .btn { background: #435; padding: 0.7rem 1.2rem; color: white; border-radius: 0.25rem; }
 .btn:hover { opacity: 0.75; }
+
+/* TABS */
+.tabs {
+  display: flex;
+  border-bottom: solid 1px #eee;
+}
+.tab {
+  padding: 1rem 1.25rem;
+  padding-bottom: 0.5rem;
+}
+.tab {
+  color: #555;
+  text-decoration: none;
+  border-bottom: solid 3px transparent;
+}
+.tab:hover:not(.tab--active) {
+  border-bottom-color: rgba(30, 143, 255, 0.25);
+}
+.tab--active {
+  border-bottom-color: dodgerblue;
+}

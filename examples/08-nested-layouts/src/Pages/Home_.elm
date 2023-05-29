@@ -23,7 +23,10 @@ page shared route =
 
 toLayout : Model -> Layouts.Layout Msg
 toLayout model =
-    Layouts.Sidebar {}
+    Layouts.Sidebar_Header
+        { title = "Dashboard"
+        , shouldPadContent = True
+        }
 
 
 
@@ -76,6 +79,6 @@ view model =
     { title = "Dashboard"
     , body =
         [ Html.div [ class "page" ]
-            [ Html.text "/" ]
+            [ Html.text "Welcome to the dashboard!" ]
         ]
     }

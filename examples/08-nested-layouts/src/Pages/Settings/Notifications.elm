@@ -23,7 +23,7 @@ page shared route =
 
 toLayout : Model -> Layouts.Layout Msg
 toLayout model =
-    Layouts.Sidebar_Header { title = "Settings" }
+    Layouts.Sidebar_Header_Settings {}
 
 
 
@@ -75,6 +75,6 @@ view : Model -> View Msg
 view model =
     { title = "Notifications"
     , body =
-        [ Html.text "/settings/notifications"
+        [ Html.text "Edit your email notification preferences"
         ]
     }

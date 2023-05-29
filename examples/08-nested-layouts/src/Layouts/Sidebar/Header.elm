@@ -2,7 +2,7 @@ module Layouts.Sidebar.Header exposing (Model, Msg, Settings, layout)
 
 import Effect exposing (Effect)
 import Html exposing (Html)
-import Html.Attributes exposing (class, style)
+import Html.Attributes exposing (..)
 import Layout exposing (Layout)
 import Layouts.Sidebar
 import Route exposing (Route)
@@ -12,6 +12,7 @@ import View exposing (View)
 
 type alias Settings =
     { title : String
+    , shouldPadContent : Bool
     }
 
 
@@ -72,6 +73,10 @@ view settings { toContentMsg, model, content } =
     { title = content.title
     , body =
         [ Html.header [] [ Html.text settings.title ]
-        , Html.div [ class "page" ] content.body
+        , Html.div
+            [ class "page"
+            , classList [ ( "pad-16", settings.shouldPadContent ) ]
+            ]
+            content.body
         ]
     }

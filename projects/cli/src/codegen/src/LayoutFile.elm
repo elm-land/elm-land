@@ -62,6 +62,11 @@ decoder =
         (Json.Decode.list Json.Decode.string)
 
 
+sortByFilepath : List LayoutFile -> List LayoutFile
+sortByFilepath =
+    List.sortBy (\(LayoutFile { filepath }) -> String.join "." filepath)
+
+
 {-| Returns a list of filepath segments.
 
 For example, the layout file at `src/Layouts/Sidebar/Header.elm` would return:
@@ -232,8 +237,7 @@ toLayoutsMsgTypeDeclaration layouts =
 
 
 {-| Layouts are sorted alphabetically when generated, so that nested layouts
-appear near their parents. The order doesn't impact correctness, but it helps folks
-reading the generated code.
+appear near their parents.
 
     List.sortWith sorter [ "Sidebar_WithHeader", "Default", "Sidebar" ]
         == [ "Default"

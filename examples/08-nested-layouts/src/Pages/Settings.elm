@@ -22,7 +22,7 @@ page shared route =
 
 toLayout : Model -> Layouts.Layout Msg
 toLayout model =
-    Layouts.Sidebar_Header { title = "Settings" }
+    Layouts.Sidebar_Header_Settings {}
 
 
 
@@ -73,5 +73,5 @@ subscriptions model =
 view : Model -> View Msg
 view model =
     { title = "Settings"
-    , body = [ Html.text "/settings" ]
+    , body = [ Html.text "Here is a place to change general settings" ]
     }
