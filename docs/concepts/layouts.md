@@ -31,22 +31,22 @@ elm-land add layout Sidebar
 This generates a new file at `src/Layouts/Sidebar.elm`, which looks like this:
 
 ```elm
-module Layouts.Sidebar exposing (Settings, Model, Msg, layout)
+module Layouts.Sidebar exposing (Props, Model, Msg, layout)
 
 import Layout exposing (Layout)
 -- ...
 
 
-type alias Settings =
+type alias Props =
     {}
 
 
 layout : 
-    Settings
+    Props
     -> Shared.Model
     -> Route ()
     -> Layout () Model Msg contentMsg
-layout settings shared route =
+layout props shared route =
     Layout.new
         { init = init
         , update = update
@@ -65,35 +65,35 @@ This file should look somewhat familiar to you after reading [the Pages guide](.
 page : Shared.Model -> Route () -> Page Model Msg
 
 -- LAYOUTS
-layout : Settings -> Shared.Model -> Route () -> Layout () Model Msg contentMsg
+layout : Props -> Shared.Model -> Route () -> Layout () Model Msg contentMsg
 ```
 
 Although some things are the same, there are two new types we haven't seen before:
 
-1. `Settings` 
+1. `Props` 
 1. `Layout () Model Msg contentMsg`
 
 
-#### `Settings`
+#### `Props`
 
-As we'll see in the ["Using layouts" section](#using-layouts) below, it's common for pages to send data or other information to their layout. In Elm Land, the `Settings` type defined in your layout file determines what information can be sent by a page.
+As we'll see in the ["Using layouts" section](#using-layouts) below, it's common for pages to send data or other information to their layout. In Elm Land, the `Props` type defined in your layout file determines what information can be sent by a page.
 
 For our new sidebar layout, let's say our we always expect an `Auth.User` value. This way, we won't have to worry about what the sidebar looks like when a user is not signed in:
 
 ```elm{3,7-9}
-module Layouts.Sidebar exposing (Settings, Model, Msg, layout)
+module Layouts.Sidebar exposing (Props, Model, Msg, layout)
 
 import Auth
 import Layout exposing (Layout)
 -- ...
 
-type alias Settings =
+type alias Props =
     { user : Auth.User
     }
 
 
-layout : Settings -> Shared.Model -> Route () -> Layout () Model Msg contentMsg
-layout settings shared route =
+layout : Props -> Shared.Model -> Route () -> Layout () Model Msg contentMsg
+layout props shared route =
     ...
 
 
@@ -275,7 +275,7 @@ Here are the important things to know when using a layout:
     - __Note:__ Because it is within the `page` function, you'll be able to access values like `user` and pass them along to your `toLayout` function.
 1. __On line 20__, we define a `toLayout` function. This function has access to the `Model`, in case the layout we should use is based on the state of our page.
     - It uses the `Layouts.Sidebar` variant from the `Layouts` module
-    - It passes in the `Layouts.Sidebar.Settings` value, so our layout is provided the `settings` it expects
+    - It passes in the `Layouts.Sidebar.Props` value, so our layout is provided the `settings` it expects
 
 When we go to the `/settings` page, you'll see that Elm Land has embedded the `Page.Settings` page inside the `Layouts.Sidebar` layout. You can repeat this process with as many pages as you want.
 
@@ -291,36 +291,36 @@ One example of a nested layout could be if you're trying to standardize pages th
 elm-land add layout Sidebar.Header
 ```
 
-This command will create a file at `src/Sidebar/Header.elm`. This new layout file will include a way to provide `Layouts.Sidebar.Settings` into the parent component:
+This command will create a file at `src/Sidebar/Header.elm`. This new layout file will include a way to provide `Layouts.Sidebar.Props` into the parent component:
 
 
 ```elm{4,18,26-28}
-module Layouts.Sidebar.Header exposing (Settings, Model, Msg, layout)
+module Layouts.Sidebar.Header exposing (Props, Model, Msg, layout)
 
 import Layout exposing (Layout)
 import Layouts.Sidebar
 -- ...
 
 
-type alias Settings =
+type alias Props =
     { title : String
     , user : Auth.User
     }
 
 
 layout :
-    Settings
+    Props
     -> Shared.Model
     -> Route ()
-    -> Layout Layouts.Sidebar.Settings Model Msg contentMsg
-layout settings shared route =
+    -> Layout Layouts.Sidebar.Props Model Msg contentMsg
+layout props shared route =
     Layout.new
         { init = init
         , update = update
         , view = view
         , subscriptions = subscriptions
         }
-        |> Layout.withParentSettings
+        |> Layout.withParentProps
             { user = settings.user
             }
 ```
@@ -328,8 +328,8 @@ layout settings shared route =
 Here are a few differences between a nested layout and the standard one we saw earlier in this guide:
 
 - __On line 18,__ you'll see the first argument of your `Layout` type holds the parent settings.
-    - In this case, our parent layout settings type is `Layouts.Sidebar.Settings`
-- __On line 26,__ we need to pass those `Layouts.Sidebar.Settings` in. 
+    - In this case, our parent layout settings type is `Layouts.Sidebar.Props`
+- __On line 26,__ we need to pass those `Layouts.Sidebar.Props` in. 
     - Because we are within the `layout` function, we have access to our own `settings`
     - This gives our sidebar layout access to the `user` value it expected.
 
@@ -376,12 +376,12 @@ Every layout file imports a `Layout` module. This module provides the `Layout` t
 This type represents a layout, and contains four parameters. 
 
 ```elm
-type Layout parentSettings model msg contentMsg
+type Layout parentProps model msg contentMsg
 ```
 
 Here's a breakdown of each parameter:
 
-1. `parentSettings` – When working with [Nested layouts](#nested-layouts), this parameter is the parent layout's settings. For top-level layouts that aren't nested, this value is always `()`.
+1. `parentProps` – When working with [Nested layouts](#nested-layouts), this parameter is the parent layout's settings. For top-level layouts that aren't nested, this value is always `()`.
 2. `model` – Represents the state of the layout
 3. `msg` – Represents the messages the layout can send
 4. `contentMsg` – Because layouts can embed other HTML, this common variable allows us to combine that HTML together. We describe this in more detail in [the "Understanding layouts" section](#understanding-layouts) above!
@@ -405,17 +405,17 @@ Layout.new :
     -> Layout () Model Msg contentMsg
 ```
 
-### Layout.withParentSettings
+### Layout.withParentProps
 
 This is required for [nested layouts](#nested-layouts), which are embedded within other parent layouts. Use this function to provide settings that are required by the parent layout.
 
 #### Type definition
 
 ```elm
-Layout.withParentSettings :
-    parentSettings
+Layout.withParentProps :
+    parentProps
     -> Layout () Model Msg contentMsg
-    -> Layout parentSettings Model Msg contentMsg
+    -> Layout parentProps Model Msg contentMsg
 ```
 
 #### Usage example
@@ -426,13 +426,13 @@ module Layouts.Sidebar.Header exposing (..)
 -- ...
 
 layout :
-    Settings
+    Props
     -> Shared.Model
     -> Route ()
-    -> Layout Layouts.Sidebar.Settings Model Msg contentMsg
-layout settings shared route =
+    -> Layout Layouts.Sidebar.Props Model Msg contentMsg
+layout props shared route =
     Layout.new { ... }
-        |> Layout.withParentSettings
+        |> Layout.withParentProps
             { user = settings.user 
             }
 ```
@@ -469,14 +469,14 @@ Layout.withOnUrlChanged :
 #### Usage example
 
 ```elm{15,23,29-30}
-module Layouts.Sidebar exposing (Settings, Model, Msg, layout)
+module Layouts.Sidebar exposing (Props, Model, Msg, layout)
 
 import Layout exposing (Layout)
 -- ...
 
 
-layout : Settings -> Shared.Model -> Route () -> Layout () Model Msg
-layout settings shared route =
+layout : Props -> Shared.Model -> Route () -> Layout () Model Msg
+layout props shared route =
     Layout.new
         { init = init
         , update = update
@@ -541,7 +541,7 @@ __Updating the layout file__
 
 ```elm{3,10-13,16-20,24,32,42,53,55}
 module Layouts.Sidebar.Header exposing
-    ( Settings, Model, Msg, layout
+    ( Props, Model, Msg, layout
     , map
     )
 
@@ -549,52 +549,52 @@ import Layout exposing (Layout)
 -- ...
 
 
-type alias Settings contentMsg =
+type alias Props contentMsg =
     { title : String
     , button : Html contentMsg
     }
 
 
-map : (msg1 -> msg2) -> Settings msg1 -> Settings msg2
-map fn settings =
-    { title = settings.title
-    , button = Html.map fn settings.button
+map : (msg1 -> msg2) -> Props msg1 -> Props msg2
+map fn props =
+    { title = props.title
+    , button = Html.map fn props.button
     }
 
 
 layout :
-    Settings contentMsg
+    Props contentMsg
     -> Shared.Model
     -> Route ()
-    -> Layout Layouts.Sidebar.Settings Model Msg contentMsg
-layout settings shared route =
+    -> Layout Layouts.Sidebar.Props Model Msg contentMsg
+layout props shared route =
     Layout.new
         { init = init
         , update = update
-        , view = view settings
+        , view = view props
         , subscription = subscription
         }
-        |> Layout.withParentSettings { user = settings.user }
+        |> Layout.withParentProps { user = props.user }
 
 
 -- ...
 
 
 view :
-    Settings contentMsg
+    Props contentMsg
     ->
         { model : Model
         , toContentMsg : Msg -> contentMsg
         , content : Html contentMsg
         }
     -> Html contentMsg
-view settings { model, toContentMsg, content } =
+view props { model, toContentMsg, content } =
     { title = content.title
     , body =
         [ header [ class "header" ]
-            [ h1 [ class "title" ] [ text settings.title ]
+            [ h1 [ class "title" ] [ text props.title ]
             , div [ class "right-controls" ]
-                [ settings.button
+                [ props.button
                 ]
             ]
         , div [ class "content" ] content.body
@@ -604,13 +604,13 @@ view settings { model, toContentMsg, content } =
 
 Here are some things to keep in mind:
 
-- You can pass along `settings` value into your `view` function, just like we saw in the pages section (see line 22)
-- Be sure to add the `contentMsg` parameter everywhere you see `Settings` in this file
+- You can pass along `props` value into your `view` function, just like we saw in the pages section (see line 22)
+- Be sure to add the `contentMsg` parameter everywhere you see `Props` in this file
 
 ::: tip What's up with that `map` function?
 
-When you add the `contentMsg` variable to your `Settings` type, Elm Land will ask you to define
-a `map` function to help convert your `Settings` type from one `contentMsg` to another.
+When you add the `contentMsg` variable to your `Props` type, Elm Land will ask you to define
+a `map` function to help convert your `Props` type from one `contentMsg` to another.
 
 This is essential for the generated code to connect this layout to the top-level application!
 
@@ -652,15 +652,15 @@ Under the hood, Elm Land will take care of converting your page's `Html Msg` int
 
 ::: tip "Not just for HTML!" 
 
-Upgrading your `Settings` to `Settings contentMsg` also opens up the possibility of sending messages from a layout to a page:
+Upgrading your `Props` to `Props contentMsg` also opens up the possibility of sending messages from a layout to a page:
 
 ```elm{3}
-type alias Settings contentMsg =
+type alias Props contentMsg =
     { title : String
-    , onPageResized : { width : Int, height: Int } -> contentMsg
+    , onWindowResize : { width : Int, height: Int } -> contentMsg
     }
 ```
 
-You can use this feature to respond to events from your layouts
+You can use this feature to allow pages to respond to events sent from your layouts.
 
 :::

@@ -68,12 +68,12 @@ let addNewLayout = () => async ([name]) => {
     return Promise.reject([
       '',
       Utils.intro.error('can\'t create layouts with repeated names'),
-      '    This lead to issues later on when passing in Settings, because',
+      '    This lead to issues later on when passing in `Props`, because',
       '    the repeated names will be ambiguous.',
       '',
       '    Here are some examples:',
       '',
-      `    elm-land add layout ${Terminal.pink(`Sidebar.WithTabs`)}`,
+      `    elm-land add layout ${Terminal.pink(`Sidebar.Tabs`)}`,
       `    elm-land add layout ${Terminal.pink(`Sidebar.Header`)}`,
       ''
     ].join('\n'))

@@ -1,4 +1,4 @@
-module Layouts.Sidebar exposing (Model, Msg, Settings, layout)
+module Layouts.Sidebar exposing (Model, Msg, Props, layout)
 
 import Effect exposing (Effect)
 import Html exposing (Html)
@@ -11,12 +11,12 @@ import Shared
 import View exposing (View)
 
 
-type alias Settings =
+type alias Props =
     {}
 
 
-layout : Settings -> Shared.Model -> Route () -> Layout () Model Msg contentMsg
-layout settings shared route =
+layout : Props -> Shared.Model -> Route () -> Layout () Model Msg contentMsg
+layout props shared route =
     Layout.new
         { init = init
         , update = update

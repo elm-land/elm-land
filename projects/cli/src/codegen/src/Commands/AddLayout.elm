@@ -44,20 +44,20 @@ newLayoutModule data =
     let
         {- Example:
 
-           type alias Settings =
+           type alias Props =
                {}
 
         -}
         settingsTypeAlias : CodeGen.Declaration
         settingsTypeAlias =
             CodeGen.Declaration.typeAlias
-                { name = "Settings"
+                { name = "Props"
                 , annotation = CodeGen.Annotation.record []
                 }
 
         {- Example:
 
-           layout : Settings -> Shared.Model -> Route () -> Layout () Model Msg contentMsg
+           layout : Props -> Shared.Model -> Route () -> Layout () Model Msg contentMsg
            layout settings shared route =
                Layout.new
                    { init = init
@@ -73,11 +73,11 @@ newLayoutModule data =
                 { name = "layout"
                 , annotation =
                     CodeGen.Annotation.type_
-                        ("Settings -> Shared.Model -> Route () -> Layout {{parentSettings}} Model Msg contentMsg"
-                            |> String.replace "{{parentSettings}}"
+                        ("Props -> Shared.Model -> Route () -> Layout {{parentProps}} Model Msg contentMsg"
+                            |> String.replace "{{parentProps}}"
                                 (case parentLayoutModuleName of
                                     Just moduleName ->
-                                        moduleName ++ ".Settings"
+                                        moduleName ++ ".Props"
 
                                     Nothing ->
                                         "()"
@@ -97,11 +97,11 @@ newLayoutModule data =
                             CodeGen.Expression.pipeline
                                 [ newLayoutExpression
                                 , CodeGen.Expression.function
-                                    { name = "Layout.withParentSettings"
+                                    { name = "Layout.withParentProps"
                                     , arguments =
                                         [ CodeGen.Expression.parens
-                                            [ "Debug.todo \"TODO: Add {{parentSettings}}\""
-                                                |> String.replace "{{parentSettings}}" (moduleName ++ ".Settings")
+                                            [ "Debug.todo \"TODO: Add {{parentProps}}\""
+                                                |> String.replace "{{parentProps}}" (moduleName ++ ".Props")
                                                 |> CodeGen.Expression.value
                                             ]
                                         ]
@@ -271,7 +271,7 @@ newLayoutModule data =
     in
     CodeGen.Module.new
         { name = "Layouts" :: data.moduleSegments
-        , exposing_ = [ "Model", "Msg", "Settings", "layout" ]
+        , exposing_ = [ "Model", "Msg", "Props", "layout" ]
         , imports =
             [ CodeGen.Import.new [ "Effect" ]
                 |> CodeGen.Import.withExposing [ "Effect" ]

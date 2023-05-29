@@ -1,4 +1,4 @@
-module Layouts.Sidebar.Header exposing (Model, Msg, Settings, layout)
+module Layouts.Sidebar.Header exposing (Model, Msg, Props, layout)
 
 import Effect exposing (Effect)
 import Html exposing (Html)
@@ -10,21 +10,21 @@ import Shared
 import View exposing (View)
 
 
-type alias Settings =
+type alias Props =
     { title : String
     , shouldPadContent : Bool
     }
 
 
-layout : Settings -> Shared.Model -> Route () -> Layout Layouts.Sidebar.Settings Model Msg contentMsg
-layout settings shared route =
+layout : Props -> Shared.Model -> Route () -> Layout Layouts.Sidebar.Props Model Msg contentMsg
+layout props shared route =
     Layout.new
         { init = init
         , update = update
-        , view = view settings
+        , view = view props
         , subscriptions = subscriptions
         }
-        |> Layout.withParentSettings {}
+        |> Layout.withParentProps {}
 
 
 
@@ -68,14 +68,14 @@ subscriptions model =
 -- VIEW
 
 
-view : Settings -> { toContentMsg : Msg -> contentMsg, content : View contentMsg, model : Model } -> View contentMsg
-view settings { toContentMsg, model, content } =
+view : Props -> { toContentMsg : Msg -> contentMsg, content : View contentMsg, model : Model } -> View contentMsg
+view props { toContentMsg, model, content } =
     { title = content.title
     , body =
-        [ Html.header [] [ Html.text settings.title ]
+        [ Html.header [] [ Html.text props.title ]
         , Html.div
             [ class "page"
-            , classList [ ( "pad-16", settings.shouldPadContent ) ]
+            , classList [ ( "pad-16", props.shouldPadContent ) ]
             ]
             content.body
         ]

@@ -1,4 +1,4 @@
-module Layouts.Sidebar.Header.Settings exposing (Model, Msg, Settings, layout)
+module Layouts.Sidebar.Header.Settings exposing (Model, Msg, Props, layout)
 
 import Effect exposing (Effect)
 import Html exposing (Html)
@@ -11,7 +11,7 @@ import Shared
 import View exposing (View)
 
 
-type alias Settings =
+type alias Props =
     {}
 
 
@@ -19,15 +19,15 @@ type alias Tab =
     ( String, Route.Path.Path )
 
 
-layout : Settings -> Shared.Model -> Route () -> Layout Layouts.Sidebar.Header.Settings Model Msg contentMsg
-layout settings shared route =
+layout : Props -> Shared.Model -> Route () -> Layout Layouts.Sidebar.Header.Props Model Msg contentMsg
+layout props shared route =
     Layout.new
         { init = init
         , update = update
         , view = view route
         , subscriptions = subscriptions
         }
-        |> Layout.withParentSettings
+        |> Layout.withParentProps
             { title = "Settings"
             , shouldPadContent = False
             }

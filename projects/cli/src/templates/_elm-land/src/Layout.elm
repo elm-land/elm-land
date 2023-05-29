@@ -1,17 +1,17 @@
 module Layout exposing
     ( Layout, new
-    , withParentSettings
+    , withParentProps
     , init, update, view, subscriptions
-    , parentSettings
+    , parentProps
     )
 
 {-|
 
 @docs Layout, new
-@docs withParentSettings
+@docs withParentProps
 
 @docs init, update, view, subscriptions
-@docs parentSettings
+@docs parentProps
 
 -}
 
@@ -19,13 +19,13 @@ import Effect exposing (Effect)
 import View exposing (View)
 
 
-type Layout parentSettings model msg contentMsg
+type Layout parentProps model msg contentMsg
     = Layout
         { init : () -> ( model, Effect msg )
         , update : msg -> model -> ( model, Effect msg )
         , subscriptions : model -> Sub msg
         , view : { model : model, toContentMsg : msg -> contentMsg, content : View contentMsg } -> View contentMsg
-        , parentSettings : parentSettings
+        , parentProps : parentProps
         }
 
 
@@ -42,47 +42,47 @@ new options =
         , update = options.update
         , subscriptions = options.subscriptions
         , view = options.view
-        , parentSettings = ()
+        , parentProps = ()
         }
 
 
-withParentSettings :
-    parentSettings
+withParentProps :
+    parentProps
     -> Layout () model msg contentMsg
-    -> Layout parentSettings model msg contentMsg
-withParentSettings settings (Layout layout) =
+    -> Layout parentProps model msg contentMsg
+withParentProps props (Layout layout) =
     Layout
         { init = layout.init
         , update = layout.update
         , subscriptions = layout.subscriptions
         , view = layout.view
-        , parentSettings = settings
+        , parentProps = props
         }
 
 
-init : Layout parentSettings model msg contentMsg -> () -> ( model, Effect msg )
+init : Layout parentProps model msg contentMsg -> () -> ( model, Effect msg )
 init (Layout layout) =
     layout.init
 
 
-update : Layout parentSettings model msg contentMsg -> msg -> model -> ( model, Effect msg )
+update : Layout parentProps model msg contentMsg -> msg -> model -> ( model, Effect msg )
 update (Layout layout) =
     layout.update
 
 
 view :
-    Layout parentSettings model msg contentMsg
+    Layout parentProps model msg contentMsg
     -> { model : model, toContentMsg : msg -> contentMsg, content : View contentMsg }
     -> View contentMsg
 view (Layout layout) =
     layout.view
 
 
-subscriptions : Layout parentSettings model msg contentMsg -> model -> Sub msg
+subscriptions : Layout parentProps model msg contentMsg -> model -> Sub msg
 subscriptions (Layout layout) =
     layout.subscriptions
 
 
-parentSettings : Layout parentSettings model msg contentMsg -> parentSettings
-parentSettings (Layout layout) =
-    layout.parentSettings
+parentProps : Layout parentProps model msg contentMsg -> parentProps
+parentProps (Layout layout) =
+    layout.parentProps

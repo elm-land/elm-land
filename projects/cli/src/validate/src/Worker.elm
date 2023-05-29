@@ -264,10 +264,10 @@ fromLayoutToError layout =
                 }
             )
 
-    else if Layout.isNotExposingSettingsType layout then
+    else if Layout.isNotExposingPropsType layout then
         Just
             (missingTypeError
-                { name = "Settings"
+                { name = "Props"
                 , kind = "layout"
                 , filepath = Layout.filepath layout
                 }
@@ -452,19 +452,19 @@ unexpectedPageAnnotationError options =
 validLayoutFunctionAnnotations : Filepath -> List String
 validLayoutFunctionAnnotations filepath =
     let
-        parentSettings : String
-        parentSettings =
+        parentProps : String
+        parentProps =
             case Filepath.toParentLayoutModuleName filepath of
                 Just str ->
-                    str ++ ".Settings"
+                    str ++ ".Props"
 
                 Nothing ->
                     "()"
     in
-    [ "Settings -> Shared.Model -> Route () -> Layout ${parentSettings} Model Msg contentMsg"
-        |> String.replace "${parentSettings}" parentSettings
-    , "Settings contentMsg -> Shared.Model -> Route () -> Layout ${parentSettings} Model Msg contentMsg"
-        |> String.replace "${parentSettings}" parentSettings
+    [ "Props -> Shared.Model -> Route () -> Layout ${parentProps} Model Msg contentMsg"
+        |> String.replace "${parentProps}" parentProps
+    , "Props contentMsg -> Shared.Model -> Route () -> Layout ${parentProps} Model Msg contentMsg"
+        |> String.replace "${parentProps}" parentProps
     ]
 
 

@@ -1,4 +1,4 @@
-module Layouts.Sidebar exposing (Model, Msg, Settings, layout)
+module Layouts.Sidebar exposing (Model, Msg, Props, layout)
 
 import Auth
 import Effect exposing (Effect)
@@ -12,22 +12,22 @@ import Shared
 import View exposing (View)
 
 
-type alias Settings =
+type alias Props =
     { title : String
     , user : Auth.User
     }
 
 
 layout :
-    Settings
+    Props
     -> Shared.Model
     -> Route ()
     -> Layout () Model Msg contentMsg
-layout settings shared route =
+layout props shared route =
     Layout.new
         { init = init
         , update = update
-        , view = view settings route
+        , view = view props route
         , subscriptions = subscriptions
         }
 
@@ -74,7 +74,7 @@ subscriptions model =
 
 
 view :
-    Settings
+    Props
     -> Route ()
     ->
         { toContentMsg : Msg -> contentMsg
@@ -82,17 +82,17 @@ view :
         , model : Model
         }
     -> View contentMsg
-view settings route { toContentMsg, model, content } =
+view props route { toContentMsg, model, content } =
     { title = content.title ++ " | My Cool App"
     , body =
         [ Html.div [ class "is-flex", style "height" "100vh" ]
             [ viewSidebar
-                { user = settings.user
+                { user = props.user
                 , route = route
                 }
                 |> Html.map toContentMsg
             , viewMainContent
-                { title = settings.title
+                { title = props.title
                 , content = content
                 }
             ]

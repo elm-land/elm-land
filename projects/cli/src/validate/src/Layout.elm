@@ -2,7 +2,7 @@ module Layout exposing
     ( Layout, decoder
     , filepath
     , isNotExposingLayoutFunction
-    , isNotExposingSettingsType, isNotExposingModelType, isNotExposingMsgType
+    , isNotExposingPropsType, isNotExposingModelType, isNotExposingMsgType
     , Problem(..), toProblem
     , toAnnotationForLayoutFunction
     )
@@ -13,7 +13,7 @@ module Layout exposing
 @docs filepath
 
 @docs isNotExposingLayoutFunction
-@docs isNotExposingSettingsType, isNotExposingModelType, isNotExposingMsgType
+@docs isNotExposingPropsType, isNotExposingModelType, isNotExposingMsgType
 
 @docs Problem, toProblem
 @docs toAnnotationForLayoutFunction
@@ -88,9 +88,9 @@ isNotExposingModelType (Layout layout) =
     Extras.ElmSyntax.isNotExposing "Model" layout.file
 
 
-isNotExposingSettingsType : Layout -> Bool
-isNotExposingSettingsType (Layout layout) =
-    Extras.ElmSyntax.isNotExposing "Settings" layout.file
+isNotExposingPropsType : Layout -> Bool
+isNotExposingPropsType (Layout layout) =
+    Extras.ElmSyntax.isNotExposing "Props" layout.file
 
 
 isNotExposingMsgType : Layout -> Bool
@@ -114,19 +114,19 @@ toProblem layout =
         validAnnotations : List String
         validAnnotations =
             let
-                parentSettings : String
-                parentSettings =
+                parentProps : String
+                parentProps =
                     case Filepath.toParentLayoutModuleName (filepath layout) of
                         Just str ->
-                            str ++ ".Settings"
+                            str ++ ".Props"
 
                         Nothing ->
                             "()"
             in
-            [ "Settings -> Shared.Model -> Route () -> Layout ${parentSettings} Model Msg contentMsg"
-                |> String.replace "${parentSettings}" parentSettings
-            , "Settings contentMsg -> Shared.Model -> Route () -> Layout ${parentSettings} Model Msg contentMsg"
-                |> String.replace "${parentSettings}" parentSettings
+            [ "Props -> Shared.Model -> Route () -> Layout ${parentProps} Model Msg contentMsg"
+                |> String.replace "${parentProps}" parentProps
+            , "Props contentMsg -> Shared.Model -> Route () -> Layout ${parentProps} Model Msg contentMsg"
+                |> String.replace "${parentProps}" parentProps
             ]
     in
     case toAnnotationForLayoutFunction layout of

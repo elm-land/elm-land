@@ -1826,7 +1826,7 @@ elm-land add layout Sidebar
 ::: details Here's the new code in the "src/Layouts/Sidebar.elm" file we just created
 
 ```elm
-module Layouts.Sidebar exposing (Model, Msg, Settings, layout)
+module Layouts.Sidebar exposing (Model, Msg, Props, layout)
 
 import Effect exposing (Effect)
 import Html exposing (Html)
@@ -1837,12 +1837,12 @@ import Shared
 import View exposing (View)
 
 
-type alias Settings =
+type alias Props =
     {}
 
 
-layout : Settings -> Shared.Model -> Route () -> Layout Model Msg contentMsg
-layout settings shared route =
+layout : Props -> Shared.Model -> Route () -> Layout Model Msg contentMsg
+layout props shared route =
     Layout.new
         { init = init
         , update = update
@@ -1916,20 +1916,19 @@ To get this layout looking the way we want, we'll need to take these three steps
 
 #### 1. Allow pages to pass in a title and user
 
-When we use this layout in our pages later, we'll see that _each page_ can
-send in "settings" specific to that page.
+When we use this layout in our pages later, we'll see how _each page_ can send in layout "props".
 
 In this example, our sidebar layout will have a title at the top of each page. It will also need the current user, for display in the sidebar itself.
 
 Let's modify `src/Layouts/Sidebar.elm` to allow each page to pass in those details:
 
 ```elm {3,6-9}
-module Layouts.Sidebar exposing (Settings, Model, Msg, layout)
+module Layouts.Sidebar exposing (Props, Model, Msg, layout)
 
 import Auth
 -- ...
 
-type alias Settings =
+type alias Props =
     { title : String
     , user : Auth.User
     }
@@ -1937,36 +1936,36 @@ type alias Settings =
 -- ...
 ```
 
-By modifying the `Settings` type, our layout will ask each page to provide those two fields before it can be rendered. We'll cover that soon, when we learn about the `Page.withLayout` type.
+By modifying the `Props` type, our layout will ask each page to provide those two fields before it can be rendered. We'll cover that soon, when we learn about the `Page.withLayout` type.
 
-#### 2. Passing `settings` and `route` to `view`
+#### 2. Passing `props` and `route` to `view`
 
-We can provide the `settings`, `shared`, or `route` values to any function we'd like by passing the value in as an input. 
+We can provide the `props`, `shared`, or `route` values to any function we'd like by passing the value in as an input. 
 
-For our sidebar we'll want `settings` and `route` available in our `view` function, so that the `settings.title` and `settings.user` values are available when we render the HTML for the page.
+For our sidebar we'll want `props` and `route` available in our `view` function, so that the `props.title` and `props.user` values are available when we render the HTML for the page.
 
 Having the `route` value will let us highlight the current page so our users know where they are.
 
 Here's how we can pass those values into our `view` function:
 
 ```elm {10,17-19,25}
-module Layouts.Sidebar exposing (Settings, Model, Msg, layout)
+module Layouts.Sidebar exposing (Props, Model, Msg, layout)
 
 -- ...
 
-layout : Settings -> Shared.Model -> Route () -> Layout Model Msg contentMsg
-layout settings shared route =
+layout : Props -> Shared.Model -> Route () -> Layout Model Msg contentMsg
+layout props shared route =
     Layout.new
         { init = init
         , update = update
-        , view = view settings route
+        , view = view props route
         , subscriptions = subscriptions
         }
 
 -- ...
 
 view : 
-    Settings
+    Props
     -> Route ()
     ->
         { toContentMsg : Msg -> contentMsg
@@ -1974,7 +1973,7 @@ view :
         , model : Model
         }
     -> View contentMsg
-view settings route { toContentMsg, model, content } =
+view props route { toContentMsg, model, content } =
     { title = content.title
     , body = 
         [ Html.text "Sidebar"
@@ -1983,7 +1982,7 @@ view settings route { toContentMsg, model, content } =
     }
 ```
 
-In the next step, we'll use this information to render the sidebar layout. Now that we have `Settings` and `Route ()`, we'll have everything we need.
+In the next step, we'll use this information to render the sidebar layout. Now that we have `Props` and `Route ()`, we'll have everything we need.
 
 ::: tip "Need `route` in your `init` function?"
 
@@ -1992,16 +1991,16 @@ We can use this same strategy to pass in data to `init`, `update`, or `subscript
 For example, if you want your `init` function to have access to the current URL, you can do the same trick with `init` and `route`:
 
 ```elm {8}
-module Layouts.Sidebar exposing (Settings, Model, Msg, layout)
+module Layouts.Sidebar exposing (Props, Model, Msg, layout)
 
 -- ...
 
-layout : Settings -> Shared.Model -> Route () -> Layout Model Msg contentMsg
-layout settings shared route =
+layout : Props -> Shared.Model -> Route () -> Layout Model Msg contentMsg
+layout props shared route =
     Layout.new
         { init = init route
         , update = update
-        , view = view settings
+        , view = view props
         , subscriptions = subscriptions
         }
 
@@ -2020,7 +2019,7 @@ This will make `route` available to `init`, and you can access any URL informati
 Here's the code we can add to our `view` function to make things look official:
 
 ```elm {3-4,18,20-30,34-115}
-module Layouts.Sidebar exposing (Settings, Model, Msg, layout)
+module Layouts.Sidebar exposing (Props, Model, Msg, layout)
 
 import Html.Attributes exposing (alt, class, classList, src, style)
 import Route.Path
@@ -2028,7 +2027,7 @@ import Route.Path
 
 
 view :
-    Settings
+    Props
     -> Route ()
     ->
         { toContentMsg : Msg -> contentMsg
@@ -2036,16 +2035,16 @@ view :
         , model : Model
         }
     -> View contentMsg
-view settings route { toContentMsg, model, content } =
+view props route { toContentMsg, model, content } =
     { title = content.title ++ " | My Cool App"
     , body =
         [ Html.div [ class "is-flex", style "height" "100vh" ]
             [ viewSidebar
-                { user = settings.user
+                { user = props.user
                 , route = route
                 }
             , viewMainContent
-                { title = settings.title
+                { title = props.title
                 , content = content
                 }
             ]
@@ -2140,7 +2139,7 @@ viewMainContent { title, content } =
 
 ### Adding layout to our pages
 
-Every page can opt-in to using a layout using the `Page.withLayout` function. This function allows every page to pass in their own settings and define which layout they'd like to use.
+Every page can opt-in to using a layout using the `Page.withLayout` function. This function allows every page to define which layout they'd like to use. Elm Land generates a module named `Layouts` that lets you pick a layout, including any props you need.
 
 Here's an example with `src/Pages/Home_.elm`:
 
@@ -2158,11 +2157,11 @@ page user shared route =
         , subscriptions = subscriptions
         , view = view
         }
-        |> Page.withLayout (layout user)
+        |> Page.withLayout (toLayout user)
 
 
-layout : Auth.User -> Model -> Layouts.Layout
-layout user model =
+toLayout : Auth.User -> Model -> Layouts.Layout
+toLayout user model =
     Layouts.Sidebar
         { title = "Dashboard"
         , user = user
@@ -2193,11 +2192,11 @@ page user shared route =
         , subscriptions = subscriptions
         , view = view
         }
-        |> Page.withLayout (layout user)
+        |> Page.withLayout (toLayout user)
 
 
-layout : Auth.User -> Model -> Layouts.Layout
-layout user model =
+toLayout : Auth.User -> Model -> Layouts.Layout
+toLayout user model =
     Layouts.Sidebar
         { title = "Dashboard"
         , user = user
@@ -2222,11 +2221,11 @@ page user shared route =
         , subscriptions = subscriptions
         , view = view
         }
-        |> Page.withLayout (layout user)
+        |> Page.withLayout (toLayout user)
 
 
-layout : Auth.User -> Model -> Layouts.Layout
-layout user model =
+toLayout : Auth.User -> Model -> Layouts.Layout
+toLayout user model =
     Layouts.Sidebar
         { title = "Profile"
         , user = user
@@ -2256,12 +2255,12 @@ If we want our HTML to send layout messages _and_ page messages, we're going to 
 Here's an example of how we can upgrade `viewSidebar` to return `Html Msg`, and then convert the output to the common `Html contentMsg` type:
 
 ```elm {22,32}
-module Layouts.Sidebar exposing (Settings, Model, Msg, layout)
+module Layouts.Sidebar exposing (Props, Model, Msg, layout)
 
 -- ...
 
 view :
-    Settings
+    Props
     -> Route ()
     ->
         { toContentMsg : Msg -> contentMsg
@@ -2269,17 +2268,17 @@ view :
         , model : Model
         }
     -> View contentMsg
-view settings route { toContentMsg, model, content } =
+view props route { toContentMsg, model, content } =
     { title = content.title ++ " | My Cool App"
     , body =
         [ Html.div [ class "is-flex", style "height" "100vh" ]
             [ viewSidebar
-                { user = settings.user
+                { user = props.user
                 , route = route
                 }
                 |> Html.map toContentMsg
             , viewMainContent
-                { title = settings.title
+                { title = props.title
                 , content = content
                 }
             ]
@@ -2299,7 +2298,7 @@ Now that we've upgraded `viewSidebar` to return `Html Msg` ( rather than the gen
 Let's add in the "Sign out" feature, so it's available for _every page_ that uses our sidebar layout:
 
 ```elm {3,8,14-17,21,25}
-module Layouts.Sidebar exposing (Settings, Model, Msg, layout)
+module Layouts.Sidebar exposing (Props, Model, Msg, layout)
 
 import Html.Events
 -- ...

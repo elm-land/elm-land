@@ -73,5 +73,7 @@ subscriptions model =
 view : Model -> View Msg
 view model =
     { title = "Settings"
-    , body = [ Html.text "Here is a place to change general settings" ]
+    , body =
+        [ Html.text "Here is a place to change general settings"
+        ]
     }

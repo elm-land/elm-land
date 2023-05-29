@@ -104,9 +104,9 @@ toModuleNameFilepath filepath =
 to select the layout for a given page. Here's an example:
 
     type Layout msg
-        = Default Layouts.Default.Settings
-        | Sidebar Layouts.Sidebar.Settings
-        | Sidebar_Header (Layouts.Sidebar.Header.Settings msg)
+        = Default Layouts.Default.Props
+        | Sidebar Layouts.Sidebar.Props
+        | Sidebar_Header (Layouts.Sidebar.Header.Props msg)
 
 -}
 toLayoutTypeDeclaration : List LayoutFile -> CodeGen.Declaration
@@ -124,7 +124,7 @@ toLayoutTypeDeclaration layouts =
             toLayoutVariant : LayoutFile -> ( String, List CodeGen.Annotation )
             toLayoutVariant (LayoutFile { filepath }) =
                 ( String.join "_" filepath
-                , [ CodeGen.Annotation.type_ ("Layouts." ++ String.join "." filepath ++ ".Settings") ]
+                , [ CodeGen.Annotation.type_ ("Layouts." ++ String.join "." filepath ++ ".Props") ]
                 )
         in
         CodeGen.Declaration.customType
@@ -496,7 +496,7 @@ toInitBranches input =
                             |> String.replace "{{settings}}"
                                 (case parent of
                                     Just parentLayout ->
-                                        "(Layout.parentSettings {{parentLayoutName}})"
+                                        "(Layout.parentProps {{parentLayoutName}})"
                                             |> String.replace "{{parentLayoutName}}"
                                                 (toLayoutVariableName parentLayout
                                                     |> withSuffix "Layout"

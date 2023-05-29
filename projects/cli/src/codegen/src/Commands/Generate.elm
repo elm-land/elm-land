@@ -1025,7 +1025,7 @@ toViewCaseExpression layouts =
                                 "settings"
 
                             else
-                                toLayoutSettingsVariableName current
+                                toLayoutPropsVariableName current
                     in
                     CodeGen.Expression.multilineFunction
                         { name = "Layout.view"
@@ -1067,7 +1067,7 @@ toViewCaseExpression layouts =
                             if isTopLevel then
                                 List.map2
                                     (\child parent ->
-                                        toParentLayoutSettings
+                                        toParentLayoutProps
                                             { self = self
                                             , child = child
                                             , parent = parent
@@ -1426,7 +1426,7 @@ toUpdateLayoutCaseExpression layouts =
                                     toParentsBetween layoutOptions
                                         |> List.map
                                             (\data ->
-                                                toParentLayoutSettings
+                                                toParentLayoutProps
                                                     { self = self
                                                     , child = data.child
                                                     , parent = data.parent
@@ -1540,7 +1540,7 @@ callLayoutFunction maybeParent layout =
         |> String.replace "{{settings}}"
             (case maybeParent of
                 Just parent ->
-                    toLayoutSettingsVariableName parent
+                    toLayoutPropsVariableName parent
 
                 Nothing ->
                     "settings"
@@ -1548,9 +1548,9 @@ callLayoutFunction maybeParent layout =
         |> CodeGen.Expression.value
 
 
-toLayoutSettingsVariableName : LayoutFile -> String
-toLayoutSettingsVariableName layout =
-    LayoutFile.toLayoutVariableName layout ++ "Settings"
+toLayoutPropsVariableName : LayoutFile -> String
+toLayoutPropsVariableName layout =
+    LayoutFile.toLayoutVariableName layout ++ "Props"
 
 
 toSubscriptionPageCaseExpression : List PageFile -> CodeGen.Expression.Expression
@@ -1657,7 +1657,7 @@ toSubscriptionLayoutCaseExpression layouts =
                         { let_ =
                             List.map2
                                 (\child parent ->
-                                    toParentLayoutSettings
+                                    toParentLayoutProps
                                         { self = self
                                         , child = child
                                         , parent = parent
@@ -1713,15 +1713,15 @@ toSubscriptionLayoutCaseExpression layouts =
         }
 
 
-toParentLayoutSettings :
+toParentLayoutProps :
     { self : LayoutFile
     , child : LayoutFile
     , parent : LayoutFile
     }
     -> CodeGen.Expression.LetDeclaration
-toParentLayoutSettings { self, child, parent } =
+toParentLayoutProps { self, child, parent } =
     { argument =
-        toLayoutSettingsVariableName parent
+        toLayoutPropsVariableName parent
             |> CodeGen.Argument.new
     , annotation = Nothing
     , expression =
@@ -1733,10 +1733,10 @@ toParentLayoutSettings { self, child, parent } =
                         "settings"
 
                      else
-                        toLayoutSettingsVariableName child
+                        toLayoutPropsVariableName child
                     )
                 |> CodeGen.Expression.value
-            , CodeGen.Expression.value "Layout.parentSettings"
+            , CodeGen.Expression.value "Layout.parentProps"
             ]
     }
 
@@ -2818,8 +2818,8 @@ hashRoutingElmModule =
     import Layouts.Sidebar
 
     type Layout
-        = Default Layouts.Default.Settings
-        | Sidebar Layouts.Sidebar.Settings
+        = Default Layouts.Default.Props
+        | Sidebar Layouts.Sidebar.Props
 
 -}
 layoutsElmModule : Data -> CodeGen.Module
