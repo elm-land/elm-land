@@ -312,9 +312,9 @@ mainElmModule data =
                 , variants =
                     [ ( "UrlRequested", [ CodeGen.Annotation.type_ "Browser.UrlRequest" ] )
                     , ( "UrlChanged", [ CodeGen.Annotation.type_ "Url" ] )
-                    , ( "PageSent", [ CodeGen.Annotation.type_ "Main.Pages.Msg.Msg" ] )
-                    , ( "LayoutSent", [ CodeGen.Annotation.type_ "Main.Layouts.Msg.Msg" ] )
-                    , ( "SharedSent", [ CodeGen.Annotation.type_ "Shared.Msg" ] )
+                    , ( "Page", [ CodeGen.Annotation.type_ "Main.Pages.Msg.Msg" ] )
+                    , ( "Layout", [ CodeGen.Annotation.type_ "Main.Layouts.Msg.Msg" ] )
+                    , ( "Shared", [ CodeGen.Annotation.type_ "Shared.Msg" ] )
                     , ( "Batch", [ CodeGen.Annotation.type_ "(List Msg)" ] )
                     ]
                 }
@@ -379,11 +379,27 @@ mainElmModule data =
                                                     CodeGen.Expression.multilineTuple
                                                         [ CodeGen.Expression.value "newModel"
                                                         , CodeGen.Expression.multilineFunction
-                                                            { name = "toPageUrlMessageCmd newModel"
+                                                            { name = "Cmd.batch"
                                                             , arguments =
-                                                                [ CodeGen.Expression.multilineRecord
-                                                                    [ ( "from", CodeGen.Expression.value "Route.fromUrl () model.url" )
-                                                                    , ( "to", CodeGen.Expression.value "Route.fromUrl () newModel.url" )
+                                                                [ CodeGen.Expression.multilineList
+                                                                    [ CodeGen.Expression.multilineFunction
+                                                                        { name = "toPageUrlHookCmd newModel"
+                                                                        , arguments =
+                                                                            [ CodeGen.Expression.multilineRecord
+                                                                                [ ( "from", CodeGen.Expression.value "Route.fromUrl () model.url" )
+                                                                                , ( "to", CodeGen.Expression.value "Route.fromUrl () newModel.url" )
+                                                                                ]
+                                                                            ]
+                                                                        }
+                                                                    , CodeGen.Expression.multilineFunction
+                                                                        { name = "toLayoutUrlHookCmd model newModel"
+                                                                        , arguments =
+                                                                            [ CodeGen.Expression.multilineRecord
+                                                                                [ ( "from", CodeGen.Expression.value "Route.fromUrl () model.url" )
+                                                                                , ( "to", CodeGen.Expression.value "Route.fromUrl () newModel.url" )
+                                                                                ]
+                                                                            ]
+                                                                        }
                                                                     ]
                                                                 ]
                                                             }
@@ -432,16 +448,38 @@ mainElmModule data =
                                                                     ]
                                                                 }
                                                       }
+                                                    , { argument = CodeGen.Argument.new "newModel"
+                                                      , annotation = Nothing
+                                                      , expression =
+                                                            CodeGen.Expression.value "{ model | url = url, page = pageModel, layout = layoutModel }"
+                                                      }
                                                     ]
                                                 , in_ =
                                                     CodeGen.Expression.multilineTuple
-                                                        [ CodeGen.Expression.value "{ model | url = url, page = pageModel, layout = layoutModel }"
-                                                        , CodeGen.Expression.value "Cmd.batch [ pageCmd, layoutCmd ]"
+                                                        [ CodeGen.Expression.value "newModel"
+                                                        , CodeGen.Expression.multilineFunction
+                                                            { name = "Cmd.batch"
+                                                            , arguments =
+                                                                [ CodeGen.Expression.multilineList
+                                                                    [ CodeGen.Expression.value "pageCmd"
+                                                                    , CodeGen.Expression.value "layoutCmd"
+                                                                    , CodeGen.Expression.multilineFunction
+                                                                        { name = "toLayoutUrlHookCmd model newModel"
+                                                                        , arguments =
+                                                                            [ CodeGen.Expression.multilineRecord
+                                                                                [ ( "from", CodeGen.Expression.value "Route.fromUrl () model.url" )
+                                                                                , ( "to", CodeGen.Expression.value "Route.fromUrl () newModel.url" )
+                                                                                ]
+                                                                            ]
+                                                                        }
+                                                                    ]
+                                                                ]
+                                                            }
                                                         ]
                                                 }
                                         }
                               }
-                            , { name = "PageSent"
+                            , { name = "Page"
                               , arguments = [ CodeGen.Argument.new "pageMsg" ]
                               , expression =
                                     CodeGen.Expression.letIn
@@ -470,7 +508,7 @@ mainElmModule data =
                                                 ]
                                         }
                               }
-                            , { name = "LayoutSent"
+                            , { name = "Layout"
                               , arguments = [ CodeGen.Argument.new "layoutMsg" ]
                               , expression =
                                     CodeGen.Expression.letIn
@@ -499,7 +537,7 @@ mainElmModule data =
                                                 ]
                                         }
                               }
-                            , { name = "SharedSent"
+                            , { name = "Shared"
                               , arguments = [ CodeGen.Argument.new "sharedMsg" ]
                               , expression =
                                     CodeGen.Expression.letIn
@@ -671,7 +709,7 @@ mainElmModule data =
                                                     , CodeGen.Expression.value "model.shared"
                                                     ]
                                                 }
-                                            , CodeGen.Expression.value "Sub.map SharedSent"
+                                            , CodeGen.Expression.value "Sub.map Shared"
                                             ]
                                         , CodeGen.Expression.value "subscriptionsFromPage"
                                         , CodeGen.Expression.value "subscriptionsFromLayout"
@@ -734,31 +772,213 @@ mainElmModule data =
             , fromEffectDeclaration
                 { name = "fromPageEffect"
                 , msgType = "Main.Pages.Msg.Msg"
-                , toContentMsg = "PageSent"
+                , toContentMsg = "Page"
                 }
             , fromEffectDeclaration
                 { name = "fromLayoutEffect"
                 , msgType = "Main.Layouts.Msg.Msg"
-                , toContentMsg = "LayoutSent"
+                , toContentMsg = "Layout"
                 }
             , fromEffectDeclaration
                 { name = "fromSharedEffect"
                 , msgType = "Shared.Msg"
-                , toContentMsg = "SharedSent"
+                , toContentMsg = "Shared"
                 }
             , CodeGen.Declaration.comment [ "URL HOOKS FOR PAGES" ]
             , CodeGen.Declaration.function
-                { name = "toPageUrlMessageCmd"
+                { name = "toPageUrlHookCmd"
                 , annotation = CodeGen.Annotation.type_ "Model -> { from : Route (), to : Route () } -> Cmd Msg"
                 , arguments = List.map CodeGen.Argument.new [ "model", "routes" ]
-                , expression = toPageUrlMessageCmd data.pages
+                , expression = toPageUrlHookCmd data.pages
+                }
+            , CodeGen.Declaration.function
+                { name = "toLayoutUrlHookCmd"
+                , annotation = CodeGen.Annotation.type_ "Model -> Model -> { from : Route (), to : Route () } -> Cmd Msg"
+                , arguments = List.map CodeGen.Argument.new [ "oldModel", "model", "routes" ]
+                , expression = toLayoutUrlHookCmd data.layouts
+                }
+            , CodeGen.Declaration.function
+                { name = "hasNavigatedWithinNewLayout"
+                , annotation = CodeGen.Annotation.type_ "{ from : Maybe (Layouts.Layout msg), to : Maybe (Layouts.Layout msg) } -> Bool"
+                , arguments = [ CodeGen.Argument.new "{ from, to }" ]
+                , expression = hasNavigatedWithinNewLayout data.layouts
                 }
             ]
         }
 
 
-toPageUrlMessageCmd : List PageFile -> CodeGen.Expression.Expression
-toPageUrlMessageCmd pages =
+toLayoutUrlHookCmd : List LayoutFile -> CodeGen.Expression.Expression
+toLayoutUrlHookCmd layouts =
+    let
+        toBranch : LayoutFile -> CodeGen.Expression.Branch
+        toBranch layout =
+            { name =
+                "( Just (Layouts.{{name}} settings), Just (Main.Layouts.Model.{{name}} layoutModel) )"
+                    |> String.replace "{{name}}" (LayoutFile.toVariantName layout)
+            , arguments =
+                []
+            , expression =
+                toBranchExpression layout
+            }
+
+        toBranchExpression : LayoutFile -> CodeGen.Expression
+        toBranchExpression layout =
+            case LayoutFile.toListOfSelfAndParents layout of
+                [] ->
+                    CodeGen.Expression.value "Cmd.none"
+
+                self :: [] ->
+                    toUrlHookExpression Nothing layout
+
+                self :: parentLayouts ->
+                    let
+                        selfAndParentLayouts : List LayoutFile
+                        selfAndParentLayouts =
+                            self :: parentLayouts
+                    in
+                    CodeGen.Expression.letIn
+                        { let_ =
+                            List.map2
+                                (\child parent ->
+                                    toParentLayoutProps
+                                        { self = self
+                                        , child = child
+                                        , parent = parent
+                                        }
+                                )
+                                selfAndParentLayouts
+                                parentLayouts
+                        , in_ =
+                            CodeGen.Expression.multilineFunction
+                                { name = "Cmd.batch"
+                                , arguments =
+                                    [ CodeGen.Expression.multilineList
+                                        (List.map2 toUrlHookExpression
+                                            (toListOfParents (List.reverse selfAndParentLayouts))
+                                            selfAndParentLayouts
+                                            |> List.reverse
+                                        )
+                                    ]
+                                }
+                        }
+
+        toUrlHookExpression : Maybe LayoutFile -> LayoutFile -> CodeGen.Expression
+        toUrlHookExpression maybeParent layout =
+            CodeGen.Expression.pipeline
+                [ CodeGen.Expression.function
+                    { name = "Layout.toUrlMessages routes"
+                    , arguments =
+                        [ CodeGen.Expression.parens
+                            [ callLayoutFunction maybeParent layout
+                            ]
+                        ]
+                    }
+                , CodeGen.Expression.value ("List.map Main.Layouts.Msg." ++ LayoutFile.toVariantName layout)
+                , CodeGen.Expression.value "List.map Layout"
+                , CodeGen.Expression.value "toCommands"
+                ]
+    in
+    CodeGen.Expression.letIn
+        { let_ =
+            [ { argument = CodeGen.Argument.new "toCommands messages"
+              , annotation = Nothing
+              , expression =
+                    CodeGen.Expression.ifElse
+                        { condition = CodeGen.Expression.value "shouldFireUrlChangedEvents"
+                        , ifBranch = toCommandsExpression
+                        , elseBranch = CodeGen.Expression.value "Cmd.none"
+                        }
+              }
+            , { argument = CodeGen.Argument.new "shouldFireUrlChangedEvents"
+              , annotation = Nothing
+              , expression =
+                    CodeGen.Expression.multilineFunction
+                        { name = "hasNavigatedWithinNewLayout"
+                        , arguments =
+                            [ CodeGen.Expression.multilineRecord
+                                [ ( "from", CodeGen.Expression.value "toLayoutFromPage oldModel" )
+                                , ( "to", CodeGen.Expression.value "toLayoutFromPage model" )
+                                ]
+                            ]
+                        }
+              }
+            , { argument = CodeGen.Argument.new "route"
+              , annotation = Nothing
+              , expression = CodeGen.Expression.value "Route.fromUrl () model.url"
+              }
+            ]
+        , in_ =
+            CodeGen.Expression.caseExpression
+                { value = CodeGen.Argument.new "( toLayoutFromPage model, model.layout )"
+                , branches =
+                    List.concat
+                        [ List.map toBranch layouts
+                        , [ { name = "_"
+                            , arguments = []
+                            , expression = CodeGen.Expression.value "Cmd.none"
+                            }
+                          ]
+                        ]
+                }
+        }
+
+
+hasNavigatedWithinNewLayout : List LayoutFile -> CodeGen.Expression
+hasNavigatedWithinNewLayout layouts =
+    CodeGen.Expression.letIn
+        { let_ =
+            [ { argument = CodeGen.Argument.new "isRelated maybePair"
+              , annotation = Nothing
+              , expression =
+                    let
+                        toBranches : LayoutFile -> List CodeGen.Expression.Branch
+                        toBranches self =
+                            LayoutFile.toListOfSelfAndParents self
+                                |> List.map
+                                    (\layout ->
+                                        { name = "Just"
+                                        , arguments =
+                                            [ "( Layouts.${self} _, Layouts.${layout} _ )"
+                                                |> String.replace "${self}"
+                                                    (LayoutFile.toList self |> String.join "_")
+                                                |> String.replace "${layout}"
+                                                    (LayoutFile.toList layout |> String.join "_")
+                                                |> CodeGen.Argument.new
+                                            ]
+                                        , expression = CodeGen.Expression.value "True"
+                                        }
+                                    )
+                    in
+                    CodeGen.Expression.caseExpression
+                        { value = CodeGen.Argument.new "maybePair"
+                        , branches =
+                            List.concat
+                                [ layouts
+                                    |> List.concatMap toBranches
+                                , [ { name = "_"
+                                    , arguments = []
+                                    , expression = CodeGen.Expression.value "False"
+                                    }
+                                  ]
+                                ]
+                        }
+              }
+            ]
+        , in_ =
+            CodeGen.Expression.multilineFunction
+                { name = "List.any isRelated"
+                , arguments =
+                    [ CodeGen.Expression.multilineList
+                        [ CodeGen.Expression.value "Maybe.map2 Tuple.pair from to"
+                        , CodeGen.Expression.value "Maybe.map2 Tuple.pair to from"
+                        ]
+                    ]
+                }
+        }
+
+
+toPageUrlHookCmd : List PageFile -> CodeGen.Expression.Expression
+toPageUrlHookCmd pages =
     let
         toBranchForStaticPage : PageFile -> CodeGen.Expression.Branch
         toBranchForStaticPage page =
@@ -818,12 +1038,7 @@ toPageUrlMessageCmd pages =
         { let_ =
             [ { argument = CodeGen.Argument.new "toCommands messages"
               , annotation = Nothing
-              , expression =
-                    CodeGen.Expression.pipeline
-                        [ CodeGen.Expression.value "messages"
-                        , CodeGen.Expression.value "List.map (Task.succeed >> Task.perform identity)"
-                        , CodeGen.Expression.value "Cmd.batch"
-                        ]
+              , expression = toCommandsExpression
               }
             ]
         , in_ =
@@ -844,6 +1059,15 @@ toPageUrlMessageCmd pages =
                         ]
                 }
         }
+
+
+toCommandsExpression : CodeGen.Expression
+toCommandsExpression =
+    CodeGen.Expression.pipeline
+        [ CodeGen.Expression.value "messages"
+        , CodeGen.Expression.value "List.map (Task.succeed >> Task.perform identity)"
+        , CodeGen.Expression.value "Cmd.batch"
+        ]
 
 
 fromEffectDeclaration :
@@ -873,7 +1097,7 @@ fromEffectDeclaration options =
                         [ ( "key", CodeGen.Expression.value "model.key" )
                         , ( "url", CodeGen.Expression.value "model.url" )
                         , ( "shared", CodeGen.Expression.value "model.shared" )
-                        , ( "fromSharedMsg", CodeGen.Expression.value "SharedSent" )
+                        , ( "fromSharedMsg", CodeGen.Expression.value "Shared" )
                         , ( "batch", CodeGen.Expression.value "Batch" )
                         , ( "toCmd", CodeGen.Expression.value "Task.succeed >> Task.perform identity" )
                         ]
@@ -910,7 +1134,7 @@ toLayoutFromPageDeclaration pages =
                             , CodeGen.Expression.value ("toAuthProtectedPage model {{moduleName}}.page" |> String.replace "{{moduleName}}" (PageFile.toModuleName page))
                             , CodeGen.Expression.value "Maybe.andThen (Page.layout pageModel)"
                             , CodeGen.Expression.value
-                                ("Maybe.map (Layouts.map ({{msgVariant}} >> PageSent))"
+                                ("Maybe.map (Layouts.map ({{msgVariant}} >> Page))"
                                     |> String.replace "{{msgVariant}}" ("Main.Pages.Msg." ++ PageFile.toVariantName page)
                                 )
                             ]
@@ -925,7 +1149,7 @@ toLayoutFromPageDeclaration pages =
                             , CodeGen.Expression.value ("{{moduleName}}.page model.shared" |> String.replace "{{moduleName}}" (PageFile.toModuleName page))
                             , CodeGen.Expression.value "Page.layout pageModel"
                             , CodeGen.Expression.value
-                                ("Maybe.map (Layouts.map ({{msgVariant}} >> PageSent))"
+                                ("Maybe.map (Layouts.map ({{msgVariant}} >> Page))"
                                     |> String.replace "{{msgVariant}}" ("Main.Pages.Msg." ++ PageFile.toVariantName page)
                                 )
                             ]
@@ -1055,7 +1279,7 @@ runWhenAuthenticatedWithLayoutDeclaration =
                                         [ ( "key", CodeGen.Expression.value "model.key" )
                                         , ( "url", CodeGen.Expression.value "model.url" )
                                         , ( "shared", CodeGen.Expression.value "model.shared" )
-                                        , ( "fromSharedMsg", CodeGen.Expression.value "SharedSent" )
+                                        , ( "fromSharedMsg", CodeGen.Expression.value "Shared" )
                                         , ( "batch", CodeGen.Expression.value "Batch" )
                                         , ( "toCmd", CodeGen.Expression.value "Task.succeed >> Task.perform identity" )
                                         ]
@@ -1166,7 +1390,7 @@ toViewCaseExpression layouts =
                                         )
                                   )
                                 , ( "toContentMsg"
-                                  , "Main.Layouts.Msg.{{name}} >> LayoutSent"
+                                  , "Main.Layouts.Msg.{{name}} >> Layout"
                                         |> String.replace "{{name}}" (LayoutFile.toVariantName current)
                                         |> CodeGen.Expression.value
                                   )
@@ -1816,7 +2040,7 @@ toSubscriptionLayoutCaseExpression layouts =
                         ]
                     }
                 , CodeGen.Expression.value ("Sub.map Main.Layouts.Msg." ++ LayoutFile.toVariantName layout)
-                , CodeGen.Expression.value "Sub.map LayoutSent"
+                , CodeGen.Expression.value "Sub.map Layout"
                 ]
     in
     CodeGen.Expression.caseExpression
@@ -2021,7 +2245,7 @@ toInitPageCaseExpression layouts pages =
                                 CodeGen.Expression.pipeline
                                     [ CodeGen.Expression.value "Page.layout pageModel page"
                                     , CodeGen.Expression.value
-                                        ("Maybe.map (Layouts.map ({{msgVariant}} >> PageSent))"
+                                        ("Maybe.map (Layouts.map ({{msgVariant}} >> Page))"
                                             |> String.replace "{{msgVariant}}" ("Main.Pages.Msg." ++ PageFile.toVariantName page)
                                         )
                                     , CodeGen.Expression.value "Maybe.map (initLayout model)"
@@ -2245,7 +2469,7 @@ toPageModelMapper options =
             }
         , CodeGen.Expression.function
             { name = options.mapper
-            , arguments = [ CodeGen.Expression.value "PageSent" ]
+            , arguments = [ CodeGen.Expression.value "Page" ]
             }
         ]
 
