@@ -8,8 +8,8 @@ versions:
 
 | Version    | Supported          |
 | ---------- | ------------------ |
-| 0.18.1     | :white_check_mark: |
-| < 0.18.1   | :x:                |
+| 0.18.3     | :white_check_mark: |
+| < 0.18.3   | :x:                |
 
 ## Reporting a Vulnerability
 
