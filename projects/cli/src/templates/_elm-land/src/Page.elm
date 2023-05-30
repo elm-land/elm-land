@@ -31,9 +31,9 @@ type Page model msg
         , subscriptions : model -> Sub msg
         , view : model -> View msg
         , toLayout : Maybe (model -> Layout msg)
-        , onUrlChanged : Maybe ({ before : Route (), after : Route () } -> msg)
-        , onHashChanged : Maybe ({ before : Maybe String, after : Maybe String } -> msg)
-        , onQueryParameterChangedDict : Dict String ({ before : Maybe String, after : Maybe String } -> msg)
+        , onUrlChanged : Maybe ({ from : Route (), to : Route () } -> msg)
+        , onHashChanged : Maybe ({ from : Maybe String, to : Maybe String } -> msg)
+        , onQueryParameterChangedDict : Dict String ({ from : Maybe String, to : Maybe String } -> msg)
         }
 
 
@@ -116,8 +116,8 @@ withLayout toLayout_ (Page page) =
 
 
 withOnUrlChanged :
-    ({ before : Route ()
-     , after : Route ()
+    ({ from : Route ()
+     , to : Route ()
      }
      -> msg
     )
@@ -128,8 +128,8 @@ withOnUrlChanged onChange (Page page) =
 
 
 withOnHashChanged :
-    ({ before : Maybe String
-     , after : Maybe String
+    ({ from : Maybe String
+     , to : Maybe String
      }
      -> msg
     )
@@ -142,8 +142,8 @@ withOnHashChanged onChange (Page page) =
 withOnQueryParameterChanged :
     { key : String
     , onChange :
-        { before : Maybe String
-        , after : Maybe String
+        { from : Maybe String
+        , to : Maybe String
         }
         -> msg
     }
@@ -182,7 +182,7 @@ layout model (Page page) =
     Maybe.map (\fn -> fn model) page.toLayout
 
 
-toUrlMessages : { before : Route (), after : Route () } -> Page model msg -> List msg
+toUrlMessages : { from : Route (), to : Route () } -> Page model msg -> List msg
 toUrlMessages routes (Page page) =
     List.concat
         [ case page.onUrlChanged of
@@ -193,13 +193,13 @@ toUrlMessages routes (Page page) =
                 []
         , case page.onHashChanged of
             Just onHashChanged ->
-                if routes.before.hash == routes.after.hash then
+                if routes.from.hash == routes.to.hash then
                     []
 
                 else
                     [ onHashChanged
-                        { before = routes.before.hash
-                        , after = routes.after.hash
+                        { from = routes.from.hash
+                        , to = routes.to.hash
                         }
                     ]
 
@@ -208,22 +208,22 @@ toUrlMessages routes (Page page) =
         , let
             toQueryParameterMessage :
                 ( String
-                , { before : Maybe String, after : Maybe String } -> msg
+                , { from : Maybe String, to : Maybe String } -> msg
                 )
                 -> Maybe msg
             toQueryParameterMessage ( key, onChange ) =
                 let
-                    before =
-                        Dict.get key routes.before.query
+                    from =
+                        Dict.get key routes.from.query
 
-                    after =
-                        Dict.get key routes.after.query
+                    to =
+                        Dict.get key routes.to.query
                 in
-                if before == after then
+                if from == to then
                     Nothing
 
                 else
-                    Just (onChange { before = before, after = after })
+                    Just (onChange { from = from, to = to })
           in
           Dict.toList page.onQueryParameterChangedDict
             |> List.filterMap toQueryParameterMessage

@@ -493,7 +493,7 @@ Be sure to check out [Page.withOnQueryParameterChanged](#page-withonqueryparamet
 
 ```elm
 Page.withOnUrlChanged :
-    ({ before : Route (), after : Route () } -> Msg)
+    ({ from : Route (), to : Route () } -> Msg)
     -> Page Model Msg
     -> Page Model Msg
 ```
@@ -523,13 +523,13 @@ page shared route =
 
 type Msg
     = ...
-    | UrlChanged { before : Route (), after : Route () }
+    | UrlChanged { from : Route (), to : Route () }
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        OnUrlChanged { before, after } ->
+        OnUrlChanged { from, to } ->
             ( model, Effect.none )
 
         ...
@@ -548,7 +548,7 @@ This is a more specific version of `Page.onUrlChanged`, often used with filters 
 ```elm
 Page.withOnQueryParameterChanged :
     { name : String
-    , onChange : { before : Maybe String, after : Maybe String } -> Msg
+    , onChange : { from : Maybe String, to : Maybe String } -> Msg
     }
     -> Page Model Msg
     -> Page Model Msg
@@ -583,15 +583,15 @@ page shared route =
 type Msg
     = ...
     | SortParameterChanged
-        { before : Maybe String
-        , after : Maybe String
+        { from : Maybe String
+        , to : Maybe String
         }
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        SortParameterChanged { before, after } ->
+        SortParameterChanged { from, to } ->
             ( model, Effect.none )
 
         ...
@@ -605,20 +605,20 @@ to your `update` function as query parameters change:
 ```elm
 -- When "/people" becomes "/people?sort=name"
 SortParameterChanged
-    { before = Nothing
-    , after = Just "name"
+    { from = Nothing
+    , to = Just "name"
     }
 
 -- When "/people?sort=name" becomes "/people?sort=jobTitle"
 SortParameterChanged
-    { before = Just "name"
-    , after = Just "jobTitle"
+    { from = Just "name"
+    , to = Just "jobTitle"
     }
 
 -- When "/people?sort=jobTitle" becomes "/people"
 SortParameterChanged
-    { before = Just "jobTitle"
-    , after = Nothing
+    { from = Just "jobTitle"
+    , to = Nothing
     }
 ```
 
@@ -633,7 +633,7 @@ This is a more specific version of `Page.onUrlChanged`, often used when jumping 
 
 ```elm
 Page.withOnHashChanged :
-    ({ before : Maybe String, after : Maybe String } -> Msg)
+    ({ from : Maybe String, to : Maybe String } -> Msg)
     -> Page Model Msg
     -> Page Model Msg
 ```
@@ -663,13 +663,13 @@ page shared route =
 
 type Msg
     = ...
-    | UrlHashChanged { before : Maybe String, after : Maybe String }
+    | UrlHashChanged { from : Maybe String, to : Maybe String }
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        UrlHashChanged { before, after } ->
+        UrlHashChanged { from, to } ->
             ( model, Effect.none )
 
         ...
@@ -683,14 +683,14 @@ to your `update` function as query parameters change:
 ```elm
 -- When "/people" becomes "/people#about-us"
 UrlHashChanged
-    { before = Nothing
-    , after = Just "about-us"
+    { from = Nothing
+    , to = Just "about-us"
     }
 
 -- When "/people#about-us" becomes "/people#our-mission"
 UrlHashChanged
-    { before = Just "about-us"
-    , after = Just "our-mission"
+    { from = Just "about-us"
+    , to = Just "our-mission"
     }
 ```
 

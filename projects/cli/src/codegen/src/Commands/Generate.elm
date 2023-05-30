@@ -382,8 +382,8 @@ mainElmModule data =
                                                             { name = "toPageUrlMessageCmd newModel"
                                                             , arguments =
                                                                 [ CodeGen.Expression.multilineRecord
-                                                                    [ ( "before", CodeGen.Expression.value "Route.fromUrl () model.url" )
-                                                                    , ( "after", CodeGen.Expression.value "Route.fromUrl () newModel.url" )
+                                                                    [ ( "from", CodeGen.Expression.value "Route.fromUrl () model.url" )
+                                                                    , ( "to", CodeGen.Expression.value "Route.fromUrl () newModel.url" )
                                                                     ]
                                                                 ]
                                                             }
@@ -749,7 +749,7 @@ mainElmModule data =
             , CodeGen.Declaration.comment [ "URL HOOKS FOR PAGES" ]
             , CodeGen.Declaration.function
                 { name = "toPageUrlMessageCmd"
-                , annotation = CodeGen.Annotation.type_ "Model -> { before : Route (), after : Route () } -> Cmd Msg"
+                , annotation = CodeGen.Annotation.type_ "Model -> { from : Route (), to : Route () } -> Cmd Msg"
                 , arguments = List.map CodeGen.Argument.new [ "model", "routes" ]
                 , expression = toPageUrlMessageCmd data.pages
                 }

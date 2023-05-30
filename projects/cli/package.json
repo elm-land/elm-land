@@ -34,10 +34,11 @@
   },
   "homepage": "https://elm.land",
   "devDependencies": {
-    "bats": "1.7.0"
+    "bats": "1.7.0",
+    "chokidar-cli": "3.0.0"
   },
   "dependencies": {
-    "@lydell/elm": "0.19.1-9",
+    "@lydell/elm": "^0.19.1-12",
     "chokidar": "3.5.3",
     "node-elm-compiler": "5.0.6",
     "terser": "5.15.1",

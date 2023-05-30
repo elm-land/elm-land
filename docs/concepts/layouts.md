@@ -461,7 +461,7 @@ Use the `Layout.withOnUrlChanged` whenever you want to know if the current page,
 
 ```elm
 Layout.withOnUrlChanged :
-    ({ before : Route (), after : Route () } -> Msg)
+    ({ from : Route (), to : Route () } -> Msg)
     -> Layout () Model Msg
     -> Layout () Model Msg
 ```
@@ -491,13 +491,13 @@ layout props shared route =
 
 type Msg
     = ...
-    | UrlChanged { before : Route (), after : Route () }
+    | UrlChanged { from : Route (), to : Route () }
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        OnUrlChanged { before, after } ->
+        OnUrlChanged { from, to } ->
             ( model, Effect.none )
 
         ...
