@@ -364,13 +364,35 @@ mainElmModule data =
                             , { name = "UrlChanged"
                               , arguments = [ CodeGen.Argument.new "url" ]
                               , expression =
+                                    let
+                                        whenOnSamePage : CodeGen.Expression
+                                        whenOnSamePage =
+                                            CodeGen.Expression.letIn
+                                                { let_ =
+                                                    [ { argument = CodeGen.Argument.new "newModel"
+                                                      , annotation = Just (CodeGen.Annotation.type_ "Model")
+                                                      , expression =
+                                                            CodeGen.Expression.value "{ model | url = url }"
+                                                      }
+                                                    ]
+                                                , in_ =
+                                                    CodeGen.Expression.multilineTuple
+                                                        [ CodeGen.Expression.value "newModel"
+                                                        , CodeGen.Expression.multilineFunction
+                                                            { name = "toPageUrlMessageCmd newModel"
+                                                            , arguments =
+                                                                [ CodeGen.Expression.multilineRecord
+                                                                    [ ( "before", CodeGen.Expression.value "Route.fromUrl () model.url" )
+                                                                    , ( "after", CodeGen.Expression.value "Route.fromUrl () newModel.url" )
+                                                                    ]
+                                                                ]
+                                                            }
+                                                        ]
+                                                }
+                                    in
                                     CodeGen.Expression.ifElse
                                         { condition = CodeGen.Expression.value "Route.Path.fromUrl url == Route.Path.fromUrl model.url"
-                                        , ifBranch =
-                                            CodeGen.Expression.multilineTuple
-                                                [ CodeGen.Expression.value "{ model | url = url }"
-                                                , CodeGen.Expression.value "Cmd.none"
-                                                ]
+                                        , ifBranch = whenOnSamePage
                                         , elseBranch =
                                             CodeGen.Expression.letIn
                                                 { let_ =
@@ -724,7 +746,103 @@ mainElmModule data =
                 , msgType = "Shared.Msg"
                 , toContentMsg = "SharedSent"
                 }
+            , CodeGen.Declaration.comment [ "URL HOOKS FOR PAGES" ]
+            , CodeGen.Declaration.function
+                { name = "toPageUrlMessageCmd"
+                , annotation = CodeGen.Annotation.type_ "Model -> { before : Route (), after : Route () } -> Cmd Msg"
+                , arguments = List.map CodeGen.Argument.new [ "model", "routes" ]
+                , expression = toPageUrlMessageCmd data.pages
+                }
             ]
+        }
+
+
+toPageUrlMessageCmd : List PageFile -> CodeGen.Expression.Expression
+toPageUrlMessageCmd pages =
+    let
+        toBranchForStaticPage : PageFile -> CodeGen.Expression.Branch
+        toBranchForStaticPage page =
+            { name = "Main.Pages.Model." ++ PageFile.toVariantName page
+            , arguments = toPageModelArgs page
+            , expression = CodeGen.Expression.value "Cmd.none"
+            }
+
+        toBranchForElmLandPage : Bool -> PageFile -> CodeGen.Expression.Branch
+        toBranchForElmLandPage isAdvancedElmLandPage page =
+            { name = "Main.Pages.Model." ++ PageFile.toVariantName page
+            , arguments = toPageModelArgs page
+            , expression =
+                CodeGen.Expression.pipeline
+                    [ toPageModelMapper
+                        { isAdvancedElmLandPage = isAdvancedElmLandPage
+                        , isAuthProtectedPage = PageFile.isAuthProtectedPage page
+                        , page = page
+                        , function = "toUrlMessages routes"
+                        , hasPageModelArg = False
+                        , mapper = "List.map"
+                        }
+                    , CodeGen.Expression.value "toCommands"
+                    ]
+                    |> conditionallyWrapInAuthAction page
+            }
+
+        conditionallyWrapInAuthAction : PageFile -> CodeGen.Expression -> CodeGen.Expression
+        conditionallyWrapInAuthAction page expression =
+            if PageFile.isAuthProtectedPage page then
+                CodeGen.Expression.multilineFunction
+                    { name = "Auth.Action.command"
+                    , arguments =
+                        [ CodeGen.Expression.multilineLambda
+                            { arguments = [ CodeGen.Argument.new "user" ]
+                            , expression = expression
+                            }
+                        , CodeGen.Expression.value "(Auth.onPageLoad model.shared (Route.fromUrl () model.url))"
+                        ]
+                    }
+
+            else
+                expression
+
+        toBranch : PageFile -> CodeGen.Expression.Branch
+        toBranch page =
+            if PageFile.isSandboxOrElementElmLandPage page then
+                toBranchForElmLandPage False page
+
+            else if PageFile.isAdvancedElmLandPage page then
+                toBranchForElmLandPage True page
+
+            else
+                toBranchForStaticPage page
+    in
+    CodeGen.Expression.letIn
+        { let_ =
+            [ { argument = CodeGen.Argument.new "toCommands messages"
+              , annotation = Nothing
+              , expression =
+                    CodeGen.Expression.pipeline
+                        [ CodeGen.Expression.value "messages"
+                        , CodeGen.Expression.value "List.map (Task.succeed >> Task.perform identity)"
+                        , CodeGen.Expression.value "Cmd.batch"
+                        ]
+              }
+            ]
+        , in_ =
+            CodeGen.Expression.caseExpression
+                { value = CodeGen.Argument.new "model.page"
+                , branches =
+                    List.concat
+                        [ List.map toBranch pages
+                        , [ { name = "Main.Pages.Model.Redirecting_"
+                            , arguments = []
+                            , expression = CodeGen.Expression.value "Cmd.none"
+                            }
+                          , { name = "Main.Pages.Model.Loading_"
+                            , arguments = []
+                            , expression = CodeGen.Expression.value "Cmd.none"
+                            }
+                          ]
+                        ]
+                }
         }
 
 
@@ -1140,6 +1258,7 @@ toViewPageCaseExpression pages =
                     , isAdvancedElmLandPage = isAdvancedElmLandPage
                     , isAuthProtectedPage = PageFile.isAuthProtectedPage page
                     , function = "view"
+                    , hasPageModelArg = True
                     , mapper = "View.map"
                     }
                     |> conditionallyWrapInAuthView page
@@ -1573,6 +1692,7 @@ toSubscriptionPageCaseExpression pages =
                     , isAuthProtectedPage = PageFile.isAuthProtectedPage page
                     , page = page
                     , function = "subscriptions"
+                    , hasPageModelArg = True
                     , mapper = "Sub.map"
                     }
                     |> conditionallyWrapInAuthSubscriptions page
@@ -2062,6 +2182,7 @@ toPageModelMapper :
     , isAuthProtectedPage : Bool
     , page : PageFile
     , function : String
+    , hasPageModelArg : Bool
     , mapper : String
     }
     -> CodeGen.Expression
@@ -2111,7 +2232,11 @@ toPageModelMapper options =
 
                   else
                     CodeGen.Expression.value (pageModuleName ++ ".page")
-                , CodeGen.Expression.value "pageModel"
+                , if options.hasPageModelArg then
+                    CodeGen.Expression.value "pageModel"
+
+                  else
+                    CodeGen.Expression.value ""
                 ]
             }
         , CodeGen.Expression.function

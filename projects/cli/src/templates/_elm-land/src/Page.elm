@@ -2,7 +2,8 @@ module Page exposing
     ( Page, new
     , sandbox, element
     , withLayout
-    , init, update, view, subscriptions, layout
+    , withOnUrlChanged, withOnQueryParameterChanged, withOnHashChanged
+    , init, update, view, subscriptions, layout, toUrlMessages
     )
 
 {-|
@@ -10,12 +11,16 @@ module Page exposing
 @docs Page, new
 @docs sandbox, element
 @docs withLayout
-@docs init, update, view, subscriptions, layout
+@docs withOnUrlChanged, withOnQueryParameterChanged, withOnHashChanged
+
+@docs init, update, view, subscriptions, layout, toUrlMessages
 
 -}
 
+import Dict exposing (Dict)
 import Effect exposing (Effect)
 import Layouts exposing (Layout)
+import Route exposing (Route)
 import View exposing (View)
 
 
@@ -26,6 +31,9 @@ type Page model msg
         , subscriptions : model -> Sub msg
         , view : model -> View msg
         , toLayout : Maybe (model -> Layout msg)
+        , onUrlChanged : Maybe ({ before : Route (), after : Route () } -> msg)
+        , onHashChanged : Maybe ({ before : Maybe String, after : Maybe String } -> msg)
+        , onQueryParameterChangedDict : Dict String ({ before : Maybe String, after : Maybe String } -> msg)
         }
 
 
@@ -43,12 +51,10 @@ new options =
         , subscriptions = options.subscriptions
         , view = options.view
         , toLayout = Nothing
+        , onUrlChanged = Nothing
+        , onHashChanged = Nothing
+        , onQueryParameterChangedDict = Dict.empty
         }
-
-
-withLayout : (model -> Layout msg) -> Page model msg -> Page model msg
-withLayout toLayout_ (Page page) =
-    Page { page | toLayout = Just toLayout_ }
 
 
 sandbox :
@@ -64,6 +70,9 @@ sandbox options =
         , subscriptions = \_ -> Sub.none
         , view = options.view
         , toLayout = Nothing
+        , onUrlChanged = Nothing
+        , onHashChanged = Nothing
+        , onQueryParameterChangedDict = Dict.empty
         }
 
 
@@ -87,7 +96,65 @@ element options =
         , subscriptions = options.subscriptions
         , view = options.view
         , toLayout = Nothing
+        , onUrlChanged = Nothing
+        , onHashChanged = Nothing
+        , onQueryParameterChangedDict = Dict.empty
         }
+
+
+
+-- LAYOUTS
+
+
+withLayout : (model -> Layout msg) -> Page model msg -> Page model msg
+withLayout toLayout_ (Page page) =
+    Page { page | toLayout = Just toLayout_ }
+
+
+
+-- URL CHANGES
+
+
+withOnUrlChanged :
+    ({ before : Route ()
+     , after : Route ()
+     }
+     -> msg
+    )
+    -> Page model msg
+    -> Page model msg
+withOnUrlChanged onChange (Page page) =
+    Page { page | onUrlChanged = Just onChange }
+
+
+withOnHashChanged :
+    ({ before : Maybe String
+     , after : Maybe String
+     }
+     -> msg
+    )
+    -> Page model msg
+    -> Page model msg
+withOnHashChanged onChange (Page page) =
+    Page { page | onHashChanged = Just onChange }
+
+
+withOnQueryParameterChanged :
+    { key : String
+    , onChange :
+        { before : Maybe String
+        , after : Maybe String
+        }
+        -> msg
+    }
+    -> Page model msg
+    -> Page model msg
+withOnQueryParameterChanged { key, onChange } (Page page) =
+    Page { page | onQueryParameterChangedDict = Dict.insert key onChange page.onQueryParameterChangedDict }
+
+
+
+-- USED INTERNALLY BY ELM LAND
 
 
 init : Page model msg -> () -> ( model, Effect msg )
@@ -113,3 +180,51 @@ subscriptions (Page page) =
 layout : model -> Page model msg -> Maybe (Layouts.Layout msg)
 layout model (Page page) =
     Maybe.map (\fn -> fn model) page.toLayout
+
+
+toUrlMessages : { before : Route (), after : Route () } -> Page model msg -> List msg
+toUrlMessages routes (Page page) =
+    List.concat
+        [ case page.onUrlChanged of
+            Just onUrlChanged ->
+                [ onUrlChanged routes ]
+
+            Nothing ->
+                []
+        , case page.onHashChanged of
+            Just onHashChanged ->
+                if routes.before.hash == routes.after.hash then
+                    []
+
+                else
+                    [ onHashChanged
+                        { before = routes.before.hash
+                        , after = routes.after.hash
+                        }
+                    ]
+
+            Nothing ->
+                []
+        , let
+            toQueryParameterMessage :
+                ( String
+                , { before : Maybe String, after : Maybe String } -> msg
+                )
+                -> Maybe msg
+            toQueryParameterMessage ( key, onChange ) =
+                let
+                    before =
+                        Dict.get key routes.before.query
+
+                    after =
+                        Dict.get key routes.after.query
+                in
+                if before == after then
+                    Nothing
+
+                else
+                    Just (onChange { before = before, after = after })
+          in
+          Dict.toList page.onQueryParameterChangedDict
+            |> List.filterMap toQueryParameterMessage
+        ]
