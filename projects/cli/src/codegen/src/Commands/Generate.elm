@@ -564,62 +564,54 @@ mainElmModule data =
                                               }
                                             ]
                                         , in_ =
-                                            CodeGen.Expression.caseExpression
-                                                { value = CodeGen.Argument.new "oldAction /= newAction"
-                                                , branches =
-                                                    [ { name = "True"
-                                                      , arguments = []
-                                                      , expression =
-                                                            CodeGen.Expression.letIn
-                                                                { let_ =
-                                                                    [ { argument = CodeGen.Argument.new "{ layout, page }"
-                                                                      , annotation = Nothing
-                                                                      , expression =
-                                                                            CodeGen.Expression.value "initPageAndLayout { key = model.key, shared = sharedModel, url = model.url, layout = model.layout }"
-                                                                      }
-                                                                    , { argument = CodeGen.Argument.new "( pageModel, pageCmd )"
-                                                                      , annotation = Nothing
-                                                                      , expression = CodeGen.Expression.value "page"
-                                                                      }
-                                                                    , { argument = CodeGen.Argument.new "( layoutModel, layoutCmd )"
-                                                                      , annotation = Nothing
-                                                                      , expression =
-                                                                            CodeGen.Expression.multilineTuple
-                                                                                [ CodeGen.Expression.value "layout |> Maybe.map Tuple.first"
-                                                                                , CodeGen.Expression.value "layout |> Maybe.map Tuple.second |> Maybe.withDefault Cmd.none"
-                                                                                ]
-                                                                      }
-                                                                    ]
-                                                                , in_ =
+                                            CodeGen.Expression.ifElse
+                                                { condition = CodeGen.Expression.value "isAuthProtected (Route.fromUrl () model.url).path && oldAction /= newAction"
+                                                , ifBranch =
+                                                    CodeGen.Expression.letIn
+                                                        { let_ =
+                                                            [ { argument = CodeGen.Argument.new "{ layout, page }"
+                                                              , annotation = Nothing
+                                                              , expression =
+                                                                    CodeGen.Expression.value "initPageAndLayout { key = model.key, shared = sharedModel, url = model.url, layout = model.layout }"
+                                                              }
+                                                            , { argument = CodeGen.Argument.new "( pageModel, pageCmd )"
+                                                              , annotation = Nothing
+                                                              , expression = CodeGen.Expression.value "page"
+                                                              }
+                                                            , { argument = CodeGen.Argument.new "( layoutModel, layoutCmd )"
+                                                              , annotation = Nothing
+                                                              , expression =
                                                                     CodeGen.Expression.multilineTuple
-                                                                        [ CodeGen.Expression.value "{ model | shared = sharedModel, page = pageModel, layout = layoutModel }"
-                                                                        , CodeGen.Expression.multilineFunction
-                                                                            { name = "Cmd.batch"
-                                                                            , arguments =
-                                                                                [ CodeGen.Expression.multilineList
-                                                                                    [ CodeGen.Expression.value "pageCmd"
-                                                                                    , CodeGen.Expression.value "layoutCmd"
-                                                                                    , CodeGen.Expression.value "fromSharedEffect { model | shared = sharedModel } sharedEffect"
-                                                                                    ]
-                                                                                ]
-                                                                            }
+                                                                        [ CodeGen.Expression.value "layout |> Maybe.map Tuple.first"
+                                                                        , CodeGen.Expression.value "layout |> Maybe.map Tuple.second |> Maybe.withDefault Cmd.none"
                                                                         ]
-                                                                }
-                                                      }
-                                                    , { name = "False"
-                                                      , arguments = []
-                                                      , expression =
+                                                              }
+                                                            ]
+                                                        , in_ =
                                                             CodeGen.Expression.multilineTuple
-                                                                [ CodeGen.Expression.recordUpdate
-                                                                    { value = "model"
-                                                                    , fields =
-                                                                        [ ( "shared", CodeGen.Expression.value "sharedModel" )
+                                                                [ CodeGen.Expression.value "{ model | shared = sharedModel, page = pageModel, layout = layoutModel }"
+                                                                , CodeGen.Expression.multilineFunction
+                                                                    { name = "Cmd.batch"
+                                                                    , arguments =
+                                                                        [ CodeGen.Expression.multilineList
+                                                                            [ CodeGen.Expression.value "pageCmd"
+                                                                            , CodeGen.Expression.value "layoutCmd"
+                                                                            , CodeGen.Expression.value "fromSharedEffect { model | shared = sharedModel } sharedEffect"
+                                                                            ]
                                                                         ]
                                                                     }
-                                                                , CodeGen.Expression.value "fromSharedEffect { model | shared = sharedModel } sharedEffect"
                                                                 ]
-                                                      }
-                                                    ]
+                                                        }
+                                                , elseBranch =
+                                                    CodeGen.Expression.multilineTuple
+                                                        [ CodeGen.Expression.recordUpdate
+                                                            { value = "model"
+                                                            , fields =
+                                                                [ ( "shared", CodeGen.Expression.value "sharedModel" )
+                                                                ]
+                                                            }
+                                                        , CodeGen.Expression.value "fromSharedEffect { model | shared = sharedModel } sharedEffect"
+                                                        ]
                                                 }
                                         }
                               }
@@ -803,6 +795,47 @@ mainElmModule data =
                 , arguments = [ CodeGen.Argument.new "{ from, to }" ]
                 , expression = hasNavigatedWithinNewLayout data.layouts
                 }
+            , CodeGen.Declaration.function
+                { name = "isAuthProtected"
+                , annotation = CodeGen.Annotation.type_ "Route.Path.Path -> Bool"
+                , arguments = [ CodeGen.Argument.new "routePath" ]
+                , expression =
+                    let
+                        toAuthProtectedBranch : PageFile -> CodeGen.Expression.Branch
+                        toAuthProtectedBranch pageFile =
+                            let
+                                ( name, args ) =
+                                    PageFile.toRouteVariant pageFile
+                            in
+                            { name = "Route.Path." ++ name
+                            , arguments =
+                                CodeGen.Argument.new "_"
+                                    |> List.repeat (List.length args)
+                            , expression =
+                                if PageFile.isAuthProtectedPage pageFile then
+                                    CodeGen.Expression.value "True"
+
+                                else
+                                    CodeGen.Expression.value "False"
+                            }
+                    in
+                    CodeGen.Expression.caseExpression
+                        { value = CodeGen.Argument.new "routePath"
+                        , branches = List.map toAuthProtectedBranch data.pages
+                        }
+                }
+
+            -- isAuthProtected : Route.Path.Path -> Bool
+            -- isAuthProtected routePath =
+            --     case routePath of
+            --         Route.Path.Home_ ->
+            --             True
+            --         Route.Path.Oauth ->
+            --             False
+            --         Route.Path.SignIn ->
+            --             False
+            --         Route.Path.NotFound_ ->
+            --             False"
             ]
         }
 
