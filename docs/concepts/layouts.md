@@ -328,7 +328,7 @@ layout props shared route =
 Here are a few differences between a nested layout and the standard one we saw earlier in this guide:
 
 - __On line 18,__ you'll see the first argument of your `Layout` type holds the parent settings.
-    - In this case, our parent layout settings type is `Layouts.Sidebar.Props`
+    - In this case, our parent layout props type is `Layouts.Sidebar.Props`
 - __On line 26,__ we need to pass those `Layouts.Sidebar.Props` in. 
     - Because we are within the `layout` function, we have access to our own `settings`
     - This gives our sidebar layout access to the `user` value it expected.

@@ -58,7 +58,7 @@ newLayoutModule data =
         {- Example:
 
            layout : Props -> Shared.Model -> Route () -> Layout () Model Msg contentMsg
-           layout settings shared route =
+           layout props shared route =
                Layout.new
                    { init = init
                    , update = update
@@ -84,7 +84,7 @@ newLayoutModule data =
                                 )
                         )
                 , arguments =
-                    [ CodeGen.Argument.new "settings"
+                    [ CodeGen.Argument.new "props"
                     , CodeGen.Argument.new "shared"
                     , CodeGen.Argument.new "route"
                     ]

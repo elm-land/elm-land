@@ -413,7 +413,7 @@ toInitBranches input =
         toBranch : { ifTheExistingModelHas : LayoutFile, weCanReuse : LayoutFile } -> CodeGen.Expression.Branch
         toBranch options =
             { name =
-                "( Layouts.{{targetVariantName}} settings, Just (Main.Layouts.Model.{{modelVariantName}} existing) )"
+                "( Layouts.{{targetVariantName}} props, Just (Main.Layouts.Model.{{modelVariantName}} existing) )"
                     |> String.replace "{{targetVariantName}}" targetVariantName
                     |> String.replace "{{modelVariantName}}" (toVariantName options.ifTheExistingModelHas)
             , arguments = []
@@ -491,9 +491,9 @@ toInitBranches input =
                             |> CodeGen.Argument.new
                     , annotation = Nothing
                     , expression =
-                        "{{layoutName}}.layout {{settings}} model.shared route"
+                        "{{layoutName}}.layout {{props}} model.shared route"
                             |> String.replace "{{layoutName}}" (toModuleName current)
-                            |> String.replace "{{settings}}"
+                            |> String.replace "{{props}}"
                                 (case parent of
                                     Just parentLayout ->
                                         "(Layout.parentProps {{parentLayoutName}})"
@@ -503,7 +503,7 @@ toInitBranches input =
                                                 )
 
                                     Nothing ->
-                                        "settings"
+                                        "props"
                                 )
                             |> CodeGen.Expression.value
                     }
@@ -608,7 +608,7 @@ toInitBranches input =
         defaultBranch : CodeGen.Expression.Branch
         defaultBranch =
             { name =
-                "( Layouts.{{targetVariantName}} settings, _ )"
+                "( Layouts.{{targetVariantName}} props, _ )"
                     |> String.replace "{{targetVariantName}}" targetVariantName
             , arguments = []
             , expression =

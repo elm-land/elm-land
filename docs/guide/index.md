@@ -1,92 +1,83 @@
+---
+outline: deep
+---
+
 # Getting started
 
-### What we'll learn
+Welcome to Elm Land, a framework designed for building reliable web applications with [Elm](https://elm-lang.org). This guide will show you how to get started, so you can start making your next frontend web application.
 
-- How to __install__ Elm Land
-- How to __create our first project__
-- How to __run the project__ in our browser
+::: tip :seedling: "What if I'm new to Elm?"
 
-<BrowserWindow src="/images/guide/hello-world.jpg" alt="Homepage" url="http://localhost:1234" />
+That's _perfect_! These guides are designed specifically for you. If you are familiar with any other JS framework (like React, Vue.js or Svelte) these guides should fill in the gaps. 
 
+Keep an eye out for ":seedling:" callouts like this one, they'll provide additional context for folks who are learning Elm for the first time.
 
-
-### Prerequisites
-
-1. An installation of [Node.js](https://nodejs.org) (v16 or higher)
-1. A text editor, we recommend [Visual Studio Code](https://code.visualstudio.com/)
-
+:::
 
 ## Installation
 
-To get started, we'll need to install the latest version of _Elm Land_ from NPM. At the time of writing, the latest version of Elm Land is `v0.19.0`. Here's the NPM command that will install `elm-land` on your computer:
+Elm Land is a CLI tool available on NPM. If you have the latest verson of [Node.js](https://nodejs.org) installed, you can install Elm Land with this command:
 
 ```sh
 npm install -g elm-land@latest
 ```
 
-When the install command has finished, you'll be able to run `elm-land` in your terminal. Try it out, to see if it worked:
 
-```txt
-$ elm-land
+::: details Getting unexpected errors from NPM?
 
-🌈  Welcome to Elm Land! (v0.19.0)
-    ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
-    Here are the available commands:
+Sometimes, folks encounter issues with the `-g` flag. If you see an `EACCES` error, check out [this NPM guide](https://docs.npmjs.com/resolving-eacces-permissions-errors-when-installing-packages-globally) on how to fix the problem. 
 
-    ✨ elm-land init <folder-name> ...... create a new project
-    🚀 elm-land server ................ run a local dev server
-    📦 elm-land build .......... build your app for production
-    📄 elm-land add page <url> ................ add a new page
-    🍱 elm-land add layout <name> ........... add a new layout
-    🔧 elm-land customize <name> .. customize a default module
-
-    Want to learn more? Visit https://elm.land/guide
-```
-
-::: warning Getting errors from NPM?
-
-Sometimes, folks have issues with the `-g` flag. If you see an `EACCES` error, check out [this NPM guide](https://docs.npmjs.com/resolving-eacces-permissions-errors-when-installing-packages-globally) on how to fix the problem. 
-
-If you get stuck, swing by the [Elm Land Discord](https://join.elm.land), and we'll figure it out together!
+If you are still stuck, stop by the [Elm Land Discord](https://join.elm.land) and we'll figure it out together!
 
 :::
 
-## Create your first project
+## Creating a new project
 
-Now that you've installed _Elm Land_, you'll have access to a few new commands from your terminal. Let's start by using the `elm-land init` command to create our first project:
+You can use the `elm-land` CLI tool to create new projects. Let's make a new `quickstart` project together:
 
 ```sh
-elm-land init hello-world
+elm-land init quickstart
 ```
 
-```txt
-🌈  Elm Land created a new project in ./hello-world
-    ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
-    Here are some next steps:
+Every new Elm Land project is created with these three files:
 
-    📂 cd hello-world
-    🚀 elm-land server
+```bash
+quickstart/
+  |- elm.json           # 🌐 Elm's `package.json` file
+  |- elm-land.json      # 🌈 Elm Land configuration
+  |- src/
+     |- Pages/
+        |- Home_.elm    # 🏡 The homepage for our app
 ```
 
+## Running the dev server
 
-## Run the development server
-
-_Elm Land_ comes with a built-in dev server, which lets us see our project in a web browser. To run a new server, we'll use the `elm-land server` command:
+The Elm Land CLI comes with a built in development server. Here's how you can run your new project in the browser:
 
 ```sh
 elm-land server
 ```
 
-```txt
-🌈  Elm Land is ready at http://localhost:1234
-```
 
-When you visit `http://localhost:1234` in your browser, here's what you will see:
+## Editor setup
 
-<BrowserWindow src="/images/guide/hello-world.jpg" alt="Homepage" url="http://localhost:1234" />
+Although Elm has [editor support for IntelliK, Vim, Sublime Text, and more](https://github.com/elm/editor-plugins), we recommend using VS Code with [the official Elm Land plugin](https://marketplace.visualstudio.com/items?itemName=elm-land.elm-land) for the best experience.
 
-### You did it! :tada:
+1. Install [VS Code](https://code.visualstudio.com/)
+1. Install the [Elm Land extension](https://marketplace.visualstudio.com/items?itemName=elm-land.elm-land)
 
-Congratulations! Now that you know how to create an Elm Land application, let's add some more pages. In the next section, we'll learn how to creates new pages and style them with CSS. 
+![A screenshot of the Elm Land VS Code extension](./images/vscode-plugin.png)
 
-See you there!
+__Note:__ The editor plugin will let you know if you need to install `elm` or `elm-format` and take care of that for you.
+
+
+<NextSteps />
+
+🌱 __New to Elm?__ We recommend diving right into [the "Tutorial" section](/tutorial/). These are fun mini-projects that gradually introduce you to everything you need to be productive with Elm Land.
+
+🧑‍🎓 __Already familiar with Elm?__ Check out [the "Concepts" section](/concepts/) to learn the core concepts of Elm Land. If you prefer to see examples of real apps, checkout the "Examples" section above.
+
+---
+
+Either way, be sure to join the [Elm Land Discord](https://join.elm.land) to get help if you're stuck or to make new friends. We hope you have an _awesome_ experience with Elm Land, and can't wait to see what you build!
+

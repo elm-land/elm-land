@@ -1,3 +1,7 @@
+---
+outline: false
+---
+
 # News
 
 The latest updates from the Elm Land project, including news about releases and other information for folks who want to learn more about the community and motivation.

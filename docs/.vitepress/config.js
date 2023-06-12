@@ -2,46 +2,54 @@ const version = '0.19.0'
 
 const sidebar = [
   {
-    text: 'Guides',
+    text: 'Getting started',
     items: [
       { text: 'Getting started', link: '/guide/' },
-      { text: 'Pages and routes', link: '/guide/pages-and-routes' },
+    ]
+  },
+  {
+    text: 'Tutorials',
+    items: [
+      { text: 'Pages & Layouts', link: '/guide/pages-and-routes' },
       { text: 'User input', link: '/guide/user-input' },
       { text: 'REST APIs', link: '/guide/rest-apis' },
       { text: 'User authentication', link: '/guide/user-auth' },
-      // { text: 'Components', link: '/guide/components' },
-      // { text: 'Layouts', link: '/guide/layouts' },
-      // { text: 'Query parameters', link: '/guide/query-parameters' },
       { text: 'Working with JavaScript', link: '/guide/working-with-js' },
-      // { text: 'TypeScript', link: '/guide/typescript' },
-      // { text: 'CSS, assets, and static files', link: '/guide/assets-and-static-files' },
-      // { text: 'Elm UI and Elm CSS', link: '/guide/elm-ui-and-views' },
-      // { text: 'Custom 404 pages', link: '/guide/custom-404-pages' },
-      // { text: 'Error reporting', link: '/guide/error-reporting' },
-      { text: 'Deploying to production', link: '/guide/deploying' },
     ]
   },
   {
     text: 'Concepts',
     items: [
       { text: 'Introduction', link: '/concepts/' },
-      { text: 'The CLI', link: '/concepts/cli' },
-      { text: 'elm-land.json', link: '/concepts/elm-land-json' },
-      { text: 'Pages', link: '/concepts/pages' },
+      { text: 'Pages & Routing', link: '/concepts/pages' },
       { text: 'Layouts', link: '/concepts/layouts' },
       { text: 'Components', link: '/concepts/components' },
       { text: 'Shared', link: '/concepts/shared' },
       { text: 'Effect', link: '/concepts/effect' },
       { text: 'View', link: '/concepts/view' },
       { text: 'Auth', link: '/concepts/auth' },
-      { text: 'Custom 404 pages', link: '/concepts/404' },
-      { text: 'Route', link: '/concepts/route' },
+      { text: 'The 404 Page', link: '/concepts/404' },
+      { text: 'Deploying to production', link: '/guide/deploying' },
     ]
   },
   {
-    text: "Other resources"
-    , items: [
-      { text: 'FAQs', link: '/faqs' }
+    text: "Reference",
+    items: [
+      { text: 'elm-land.json', link: '/reference/elm-land-json' },
+      { text: 'Auth.Action', link: '/reference/auth-action' },
+      { text: 'Layout', link: '/reference/layout' },
+      { text: 'Layouts', link: '/reference/layout' },
+      { text: 'Page', link: '/reference/page' },
+      { text: 'Route', link: '/reference/route' },
+      { text: 'Route.Path', link: '/reference/route' },
+
+    ]
+  },
+  {
+    text: "More resources",
+    items: [
+      { text: 'FAQs', link: '/faqs' },
+      { text: 'Problems', link: '/problems' }
     ]
   }
 ]
@@ -61,9 +69,16 @@ export default {
 
   themeConfig: {
     logo: '/images/logo-256.png',
+    search: {
+      provider: 'local',
+      options: {
+        disableDetailedView: true,
+        disableQueryPersistence: true
+      }
+    },
     nav: [
       { text: 'Guide', link: '/guide/' },
-      { text: 'Concepts', link: '/concepts/' },
+      { text: 'Examples', link: '/examples/' },
       { text: 'News', link: '/news/' },
       {
         text: `v${version}`,
@@ -80,9 +95,13 @@ export default {
       { icon: 'discord', link: 'https://join.elm.land' }
     ],
     sidebar: {
+      '/docs': sidebar,
+      '/quickstart': sidebar,
       '/guide/': sidebar,
       '/concepts/': sidebar,
-      '/faqs': sidebar
+      '/reference/': sidebar,
+      '/faqs': sidebar,
+      '/problems': sidebar
     },
     footer: {
       message: 'Made for you with ❤️',

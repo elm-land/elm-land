@@ -528,7 +528,9 @@ const generateHtml = async (config) => {
   let titleTags = attempt(_ => config.app.html.title)
     ? [toHtmlTag('title', {}, config.app.html.title)]
     : []
-  let metaTags = toSelfClosingHtmlTags('meta', attempt(_ => config.app.html.meta))
+  let metaTags = toSelfClosingHtmlTags('meta', [
+    { name: 'elm-land', content: '0.19.0' }
+  ].concat(attempt(_ => config.app.html.meta)))
   let linkTags = toSelfClosingHtmlTags('link', attempt(_ => config.app.html.link))
   let scriptTags = toHtmlTags('script', attempt(_ => config.app.html.script))
 
