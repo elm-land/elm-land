@@ -19,7 +19,7 @@ detailed breakdown of the documentation you'll see in your terminal.
 This command creates a new Elm Land project with only three files:
 
 1. `elm.json` - defines Elm package dependencies
-1. `elm-land.json` - defines the default [Elm Land configuration](./elm-land-json)
+1. `elm-land.json` - defines the default [Elm Land configuration](../reference/elm-land-json)
 1. `src/Pages/Home_.elm` – the homepage for your new app
 
 __Note:__ This command will also create a `.gitignore` file, and an `.elm-land` folder which should _not_
@@ -47,7 +47,7 @@ port `1234` is already taken, the server will automatically find the next availa
 Although Elm Land is using Vite under the hood, we don't allow users to customize it with their own `vite.config.js` file. This may sound like a weird choice, but it
 means that __Elm Land can automatically upgrade your project__ to the latest blazing-fast JS developer tooling.
 
-All configuration can be specified in [the `elm-land.json` file](./elm-land-json), so you can still add `<link>` tags, work with environment variables, and more!
+All configuration can be specified in [the `elm-land.json` file](../reference/elm-land-json), so you can still add `<link>` tags, work with environment variables, and more!
 
 ::: tip The JavaScript ecosystem moves fast!
 

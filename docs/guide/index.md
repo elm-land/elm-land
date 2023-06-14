@@ -59,7 +59,7 @@ The Elm Land CLI comes with a built in development server. Here's how to run you
 elm-land server
 ```
 
-You should see "Hello, world!" when you open http://localhost:1234
+You should see "Hello, world!" when you open `http://localhost:1234`
 
 <BrowserWindow src="/images/guide/hello-world.jpg" alt="Hello, world!" />
 
