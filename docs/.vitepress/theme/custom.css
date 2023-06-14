@@ -241,10 +241,6 @@ img.browser__image {
   animation: none;
 }
 
-.vp-doc strong {
-  color: var(--vp-c-neutral);
-}
-
 .custom-block-title {
   filter: brightness(0.95);
 }

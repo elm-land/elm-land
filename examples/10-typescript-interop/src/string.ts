@@ -1,6 +1,6 @@
 
 
-export const getLengthOfString = (string : string) : number => {
+export const getLengthOfString = (string: string): number => {
   return string.length
 }
 

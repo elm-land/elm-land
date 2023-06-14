@@ -1,3 +1,7 @@
+---
+outline: 2
+---
+
 # Concepts
 
 
@@ -141,7 +145,7 @@ In [the CLI section](./cli), you'll learn how to run `elm-land customize` to wor
 
 ---
 
-#### __That's it for now!__
+<h3>That's it for now!</h3>
 
 You made it through the overview– nice work! If you're ready to learn more Elm Land concepts, the next section will walk through the official Elm Land CLI tool. 
 

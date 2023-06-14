@@ -2,26 +2,22 @@ const version = '0.19.0'
 
 const sidebar = [
   {
-    text: 'Getting started',
+    text: 'Guide',
     items: [
       { text: 'Getting started', link: '/guide/' },
-    ]
-  },
-  {
-    text: 'Tutorials',
-    items: [
-      { text: 'Pages & Layouts', link: '/guide/pages-and-routes' },
+      { text: 'Pages and routes', link: '/guide/pages-and-routes' },
       { text: 'User input', link: '/guide/user-input' },
       { text: 'REST APIs', link: '/guide/rest-apis' },
       { text: 'User authentication', link: '/guide/user-auth' },
       { text: 'Working with JavaScript', link: '/guide/working-with-js' },
+      { text: 'Deploying to production', link: '/guide/deploying' },
     ]
   },
   {
     text: 'Concepts',
     items: [
       { text: 'Introduction', link: '/concepts/' },
-      { text: 'Pages & Routing', link: '/concepts/pages' },
+      { text: 'Pages', link: '/concepts/pages' },
       { text: 'Layouts', link: '/concepts/layouts' },
       { text: 'Components', link: '/concepts/components' },
       { text: 'Shared', link: '/concepts/shared' },
@@ -29,7 +25,6 @@ const sidebar = [
       { text: 'View', link: '/concepts/view' },
       { text: 'Auth', link: '/concepts/auth' },
       { text: 'The 404 Page', link: '/concepts/404' },
-      { text: 'Deploying to production', link: '/guide/deploying' },
     ]
   },
   {
@@ -38,11 +33,10 @@ const sidebar = [
       { text: 'elm-land.json', link: '/reference/elm-land-json' },
       { text: 'Auth.Action', link: '/reference/auth-action' },
       { text: 'Layout', link: '/reference/layout' },
-      { text: 'Layouts', link: '/reference/layout' },
+      { text: 'Layouts', link: '/reference/layouts' },
       { text: 'Page', link: '/reference/page' },
       { text: 'Route', link: '/reference/route' },
-      { text: 'Route.Path', link: '/reference/route' },
-
+      { text: 'Route.Path', link: '/reference/route-path' },
     ]
   },
   {
@@ -69,6 +63,7 @@ export default {
 
   themeConfig: {
     logo: '/images/logo-256.png',
+    outline: 'deep',
     search: {
       provider: 'local',
       options: {

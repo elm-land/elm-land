@@ -1,5 +1,5 @@
 <template>  
-  <h3>Next steps</h3>
+  <h3 v-text="title"></h3>
 </template>
 
 

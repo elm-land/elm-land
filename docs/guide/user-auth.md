@@ -48,7 +48,7 @@ We can use the CLI to create a new page at `/sign-in`:
 elm-land add page /sign-in
 ```
 
-In the last few guides, we used `page:intro`, `page:sandbox`, or `page:element` to create a page. This time, we'll be using the standard `elm add page` command. This will give us a fully featured page that will become useful for sharing our signed-in user across pages. We'll dive into how to do this soon!
+In the last few guides, we used `page:view`, `page:sandbox`, or `page:element` to create a page. This time, we'll be using the standard `elm add page` command. This will give us a fully featured page that will become useful for sharing our signed-in user across pages. We'll dive into how to do this soon!
 
 Opening `http://localhost:1234/sign-in` in a web browser should show us a screen that looks like this:
 

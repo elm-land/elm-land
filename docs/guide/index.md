@@ -4,36 +4,35 @@ outline: deep
 
 # Getting started
 
-Welcome to Elm Land, a framework designed for building reliable web applications with [Elm](https://elm-lang.org). This guide will show you how to get started, so you can start making your next frontend web application.
+<h3>What you'll learn</h3>
 
-::: tip :seedling: "What if I'm new to Elm?"
-
-That's _perfect_! These guides are designed specifically for you. If you are familiar with any other JS framework (like React, Vue.js or Svelte) these guides should fill in the gaps. 
-
-Keep an eye out for ":seedling:" callouts like this one, they'll provide additional context for folks who are learning Elm for the first time.
-
-:::
+1. How to __[install Elm Land](#installation)__
+1. How to __[create a new project](#creating-a-new-project)__
+1. How to __[run the dev server](#running-the-dev-server)__
+1. How to __[set up your editor](#editor-setup)__
 
 ## Installation
 
-Elm Land is a CLI tool available on NPM. If you have the latest verson of [Node.js](https://nodejs.org) installed, you can install Elm Land with this command:
+__Prerequisite:__ [Node.js](https://nodejs.org) (v18.16.0 or higher)
+
+Elm Land comes with a single [CLI tool](https://www.npmjs.com/package/elm-land) to help you create new projects, add features, run your dev server, and more. You can install it with the following command:
 
 ```sh
 npm install -g elm-land@latest
 ```
 
 
-::: details Getting unexpected errors from NPM?
+::: details Getting any unexpected NPM errors?
 
-Sometimes, folks encounter issues with the `-g` flag. If you see an `EACCES` error, check out [this NPM guide](https://docs.npmjs.com/resolving-eacces-permissions-errors-when-installing-packages-globally) on how to fix the problem. 
+Sometimes, folks encounter issues with the `-g` flag. If you see an `EACCES` error, check out [this official NPM guide](https://docs.npmjs.com/resolving-eacces-permissions-errors-when-installing-packages-globally) on how to fix the problem. 
 
-If you are still stuck, stop by the [Elm Land Discord](https://join.elm.land) and we'll figure it out together!
+If you are still stuck, stop by the [Elm Land Discord](https://join.elm.land). Let's figure it out together!
 
 :::
 
 ## Creating a new project
 
-You can use the `elm-land` CLI tool to create new projects. Let's make a new `quickstart` project together:
+You can use the `elm-land` CLI tool to create new projects. Here is how to use it to make new project in the "quickstart" folder:
 
 ```sh
 elm-land init quickstart
@@ -50,34 +49,50 @@ quickstart/
         |- Home_.elm    # 🏡 The homepage for our app
 ```
 
+__Note:__ You'll also see a `README.md` and `.gitignore` file, to help when uploading to GitHub or any other git-based [version-control system](https://en.wikipedia.org/wiki/Version_control).
+
 ## Running the dev server
 
-The Elm Land CLI comes with a built in development server. Here's how you can run your new project in the browser:
+The Elm Land CLI comes with a built in development server. Here's how to run your new project in the web browser:
 
 ```sh
 elm-land server
 ```
 
+You should see "Hello, world!" when you open http://localhost:1234
+
+<BrowserWindow src="/images/guide/hello-world.jpg" alt="Hello, world!" />
+
 
 ## Editor setup
 
-Although Elm has [editor support for IntelliK, Vim, Sublime Text, and more](https://github.com/elm/editor-plugins), we recommend using VS Code with [the official Elm Land plugin](https://marketplace.visualstudio.com/items?itemName=elm-land.elm-land) for the best experience.
+We recommend using VS Code with [__the official Elm Land plugin__](https://marketplace.visualstudio.com/items?itemName=elm-land.elm-land) for the best experience. If you prefer to use another editor, check out these [other editor plugins](https://github.com/elm/editor-plugins).
 
-1. Install [VS Code](https://code.visualstudio.com/)
+1. Install [Visual Studio Code](https://code.visualstudio.com/)
 1. Install the [Elm Land extension](https://marketplace.visualstudio.com/items?itemName=elm-land.elm-land)
 
-![A screenshot of the Elm Land VS Code extension](./images/vscode-plugin.png)
+![A screenshot of the Elm Land VS Code extension](../images/vscode-plugin.png)
 
-__Note:__ The editor plugin will let you know if you need to install `elm` or `elm-format` and take care of that for you.
+__Note:__ The Elm Land plugin will automatically prompt you if you need to install `elm` or `elm-format`, which are the standard ways to build and format your project.
 
 
-<NextSteps />
+<h3>You made it!</h3>
 
-🌱 __New to Elm?__ We recommend diving right into [the "Tutorial" section](/tutorial/). These are fun mini-projects that gradually introduce you to everything you need to be productive with Elm Land.
-
-🧑‍🎓 __Already familiar with Elm?__ Check out [the "Concepts" section](/concepts/) to learn the core concepts of Elm Land. If you prefer to see examples of real apps, checkout the "Examples" section above.
+Congratulations on getting started with Elm Land. Depending on your prior experience, here's what we recommend next:
 
 ---
 
-Either way, be sure to join the [Elm Land Discord](https://join.elm.land) to get help if you're stuck or to make new friends. We hope you have an _awesome_ experience with Elm Land, and can't wait to see what you build!
+🌱 __New to Elm?__ 
+
+Perfect! The rest of the guides were written just for you! These mini-projects will gradually introduce you to everything you need to be productive with Elm Land.
+
+---
+
+🌳 __Already experienced with Elm?__ 
+
+We recommend jumping ahead to [the "Concepts" section](/concepts/). Those pages will teach you the core concepts of Elm Land. There is also a gallery of [examples](/examples/) if you want to see what's possible!
+
+---
+
+__Either way__, be sure to join the [Elm Land Discord](https://join.elm.land) to get help if you're stuck or to make new friends. We hope you have an _awesome_ experience with Elm Land, and can't wait to see what you build!
 

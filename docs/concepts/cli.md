@@ -97,7 +97,7 @@ elm-land add page '/users/*' ..... Creates "src/Pages/Users/ALL_.elm"
 
 ::: tip "Wait, what about the other page types?"
 
-In the start of the guide, you may have seen commands like `page:intro`, `page:sandbox`, and `page:element`. It's possible to add those pages to your app, but they are __intended for learning the basics__ of the Elm Land framework. 
+In the start of the guide, you may have seen commands like `page:view`, `page:sandbox`, and `page:element`. It's possible to add those pages to your app, but they are __intended for learning the basics__ of the Elm Land framework. 
 
 __Because there is no command for upgrading an existing page__, we recommend using the complete `elm-land add page` once you're comfortable with The Elm Architecture!
 

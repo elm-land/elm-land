@@ -6,7 +6,7 @@ load helpers
   run elm-land build
   expectToPass
 
-  expectOutputContains "successfully built"
+  expectOutputContains "success"
 
   rm -r .elm-land elm-stuff dist
   cd ../../projects/cli
@@ -21,7 +21,7 @@ load helpers
   run elm-land build
   expectToPass
 
-  expectOutputContains "successfully built"
+  expectOutputContains "success"
 
   rm -r .elm-land elm-stuff dist src/Effect.elm
   cd ../../projects/cli
@@ -36,7 +36,7 @@ load helpers
   run elm-land build
   expectToPass
 
-  expectOutputContains "successfully built"
+  expectOutputContains "success"
 
   rm -r .elm-land elm-stuff dist src/Pages/ALL_.elm
   cd ../../projects/cli
