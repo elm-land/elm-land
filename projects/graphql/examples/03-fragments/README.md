@@ -61,12 +61,12 @@ fragment Follower on User {
 module Main exposing (..)
 
 import GraphQL.Http
-import GraphQL.Http.Error
+import Http
 import GraphQL.Queries.FetchUsers
 
 
 type Msg
-    = ApiResponded (Result GraphQL.Http.Error GraphQL.Queries.FetchUsers.Data)
+    = ApiResponded (Result Http.Error GraphQL.Queries.FetchUsers.Data)
 
 
 config : GraphQL.Http.Config
