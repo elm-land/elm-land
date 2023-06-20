@@ -9,11 +9,11 @@ The latest updates from the Elm Land project, including news about releases and 
 ## Latest post
 
 <NewsPost
-  emoji="🧠"
-  title="Is Elm hard to learn?"
-  description="What can Elm Land can learn from the React, Vue, and the frontend developer community?"
+  emoji="🇯🇲"
+  title="Elm Land: The Sai Update"
+  description="Can a React developer improve Elm Land, just by trying it out?"
   date="June 19th, 2023"
-  url="./is-elm-hard"
+  url="./the-sai-update"
 />
 
 ### Other posts
