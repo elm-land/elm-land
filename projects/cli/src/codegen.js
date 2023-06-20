@@ -2,7 +2,7 @@ const path = require('path')
 const { Files } = require('./files')
 
 let generateElmLandFiles = async ({ pages, layouts, router }) => {
-  let { Elm } = require('../dist/worker.js')
+  let { Elm } = require('../dist/codegen-worker.js')
 
   let newFiles = await new Promise((resolve, reject) => {
     // Insert not found page if it hasn't been customized yet
@@ -23,7 +23,7 @@ let generateElmLandFiles = async ({ pages, layouts, router }) => {
 }
 
 let addNewPage = async ({ kind, url, filepath }) => {
-  let { Elm } = require('../dist/worker.js')
+  let { Elm } = require('../dist/codegen-worker.js')
 
   let hasViewBeenCustomized = await Files.exists(path.join(process.cwd(), 'src', 'View.elm'))
 
@@ -46,7 +46,7 @@ let addNewPage = async ({ kind, url, filepath }) => {
 }
 
 let addNewLayout = async ({ moduleSegments }) => {
-  let { Elm } = require('../dist/worker.js')
+  let { Elm } = require('../dist/codegen-worker.js')
 
   let newFiles = await new Promise((resolve, reject) => {
     let app = Elm.Worker.init({
@@ -79,13 +79,76 @@ const isMissingNotFoundPage = (pages = []) => {
 
 const hardcodedNotFoundPage = {
   filepath: ['NotFound_'],
-  contents: `module Pages.NotFound_ exposing (page)
+  contents: `module Pages.NotFound_ exposing (Model, Msg, page)
 
+import Effect exposing (Effect)
+import Html exposing (..)
+import Page exposing (Page)
+import Route exposing (Route)
+import Route.Path
+import Shared
 import View exposing (View)
 
 
-page : View msg
-page =
-    View.fromString "Page not found."
+page : Shared.Model -> Route () -> Page Model Msg
+page shared route =
+    Page.new
+        { init = init
+        , update = update
+        , subscriptions = subscriptions
+        , view = view
+        }
+
+
+
+-- INIT
+
+
+type alias Model =
+    {}
+
+
+init : () -> ( Model, Effect Msg )
+init () =
+    ( {}
+    , Effect.none
+    )
+
+
+
+-- UPDATE
+
+
+type Msg
+    = ExampleMsgReplaceMe
+
+
+update : Msg -> Model -> ( Model, Effect Msg )
+update msg model =
+    case msg of
+        ExampleMsgReplaceMe ->
+            ( model
+            , Effect.none
+            )
+
+
+
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.none
+
+
+
+-- VIEW
+
+
+view : Model -> View Msg
+view model =
+    { title = "404"
+    , body = [ text "Not found" ]
+    }
 `
 }

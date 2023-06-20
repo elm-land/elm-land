@@ -15,7 +15,7 @@ let addNewLayout = () => async ([name]) => {
         '    Here are some examples:',
         '',
         `    elm-land add layout ${Terminal.pink(`Default`)}`,
-        `    elm-land add layout ${Terminal.pink(`Sidebar.WithHeader`)}`,
+        `    elm-land add layout ${Terminal.pink(`Sidebar.Header`)}`,
         ''
       ].join('\n'),
       files: [],
@@ -30,7 +30,7 @@ let addNewLayout = () => async ([name]) => {
       '    Here are some examples:',
       '',
       `    elm-land add layout ${Terminal.pink(`Default`)}`,
-      `    elm-land add layout ${Terminal.pink(`Sidebar.WithHeader`)}`,
+      `    elm-land add layout ${Terminal.pink(`Sidebar.Header`)}`,
       ''
     ].join('\n'))
   }
@@ -56,7 +56,7 @@ let addNewLayout = () => async ([name]) => {
       '    Here are some examples:',
       '',
       `    elm-land add layout ${Terminal.pink(`Sidebar`)}`,
-      `    elm-land add layout ${Terminal.pink(`Sidebar.WithHeader`)}`,
+      `    elm-land add layout ${Terminal.pink(`Sidebar.Header`)}`,
       ''
     ].join('\n'))
   }
@@ -68,13 +68,13 @@ let addNewLayout = () => async ([name]) => {
     return Promise.reject([
       '',
       Utils.intro.error('can\'t create layouts with repeated names'),
-      '    This lead to issues later on when passing in Settings, because',
+      '    This lead to issues later on when passing in `Props`, because',
       '    the repeated names will be ambiguous.',
       '',
       '    Here are some examples:',
       '',
-      `    elm-land add layout ${Terminal.pink(`Sidebar.WithTabs`)}`,
-      `    elm-land add layout ${Terminal.pink(`Sidebar.WithHeader`)}`,
+      `    elm-land add layout ${Terminal.pink(`Sidebar.Tabs`)}`,
+      `    elm-land add layout ${Terminal.pink(`Sidebar.Header`)}`,
       ''
     ].join('\n'))
   }
@@ -229,7 +229,7 @@ let subcommandList = [
   `    🌱 If you are following the guide at ${Terminal.cyan('https://elm.land/guide')}`,
   `    here are some other commands for folks learning the framework:`,
   ``,
-  `    elm-land add ${Terminal.pink('page:static <url>')} ...... add a new read-only page`,
+  `    elm-land add ${Terminal.pink('page:view <url>')} ...... add a new read-only page`,
   `    elm-land add ${Terminal.pink('page:sandbox <url>')} ...... add a new stateful page`,
   `    elm-land add ${Terminal.pink('page:element <url>')} ... add a new side-effect page`,
 ]
@@ -254,7 +254,7 @@ let run = async ({ arguments }) => {
   let [subCommand, ...otherArgs] = arguments
   let subCommandHandlers = {
     'page': addNewPage('new'),
-    'page:static': addNewPage('static'),
+    'page:view': addNewPage('static'),
     'page:sandbox': addNewPage('sandbox'),
     'page:element': addNewPage('element'),
     'layout': addNewLayout()

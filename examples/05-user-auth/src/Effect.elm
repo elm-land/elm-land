@@ -27,7 +27,6 @@ import Dict exposing (Dict)
 import Json.Encode
 import Route exposing (Route)
 import Route.Path
-import Route.Query
 import Shared.Model
 import Shared.Msg
 import Task
@@ -222,7 +221,7 @@ toCmd :
     , url : Url
     , shared : Shared.Model.Model
     , fromSharedMsg : Shared.Msg.Msg -> msg
-    , fromCmd : Cmd msg -> msg
+    , batch : List msg -> msg
     , toCmd : msg -> Cmd msg
     }
     -> Effect msg

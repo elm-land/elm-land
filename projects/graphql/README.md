@@ -23,7 +23,7 @@ npm install -g elm-land@latest
 ```txt
 $ elm-land graphql
 
-🌈 Elm Land (v0.18.3) wants to add a plugin!
+🌈 Elm Land (v0.19.0) wants to add a plugin!
    ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
    To use the `@elm-land/graphql` plugin, I'll need
    to install the NPM package and add a bit of JSON
@@ -35,14 +35,14 @@ $ elm-land graphql
 ```txt
 $ elm-land graphql build
 
-🌈  Elm Land (v0.18.3) successfully generated Elm files
+🌈  Elm Land (v0.19.0) successfully generated Elm files
     ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
 ```
 
 ```txt
 $ elm-land graphql watch
 
-🌈  Elm Land (v0.18.3) is watching "./graphql/*" for changes...
+🌈  Elm Land (v0.19.0) is watching "./graphql/*" for changes...
     ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
 ```
 
@@ -55,7 +55,7 @@ Here’s what running the CLI looks like when there’s no schema provided:
 ```
 $ elm-land graphql build
 
-🌈 Elm Land (v0.18.3) needs a GraphQL schema
+🌈 Elm Land (v0.19.0) needs a GraphQL schema
    ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
    You can provide one by customizing the "elm-land.json"
    file to include a "graphql.schema" field.

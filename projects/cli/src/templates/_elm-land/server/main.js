@@ -34,7 +34,10 @@ if (import.meta.hot) {
             color: white;
             font-weight: 400;
             font-family: Consolas, "Andale Mono WT", "Andale Mono", "Lucida Console", "Lucida Sans Typewriter", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", "Liberation Mono", "Nimbus Mono L", Monaco, "Courier New", Courier, monospace;
+            font-size: min(1rem, 1.5vw);
             padding: 2rem;
+            white-space: nowrap;
+            line-height: 1.4;
             border-radius: 0.25rem;
             box-shadow: 0 1rem 1rem rgba(0, 0, 0, 0.125);
             border-top: solid 0.5rem indianred;

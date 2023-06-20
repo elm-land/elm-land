@@ -42,7 +42,7 @@ load helpers
   expectOutputContains "./src/Layouts/Sidebar.elm"
 
   expectFileExists "src/Layouts/Sidebar.elm"
-  expectFileContains "src/Layouts/Sidebar.elm" "module Layouts.Sidebar exposing (Model, Msg, Settings, layout)"
+  expectFileContains "src/Layouts/Sidebar.elm" "module Layouts.Sidebar exposing (Model, Msg, Props, layout)"
   expectFileContains "src/Layouts/Sidebar.elm" "layout :"
 
   cd ../..
@@ -63,7 +63,7 @@ load helpers
   expectOutputContains "./src/Layouts/Sidebar/WithTabs.elm"
 
   expectFileExists "src/Layouts/Sidebar/WithTabs.elm"
-  expectFileContains "src/Layouts/Sidebar/WithTabs.elm" "module Layouts.Sidebar.WithTabs exposing (Model, Msg, Settings, layout)"
+  expectFileContains "src/Layouts/Sidebar/WithTabs.elm" "module Layouts.Sidebar.WithTabs exposing (Model, Msg, Props, layout)"
   expectFileContains "src/Layouts/Sidebar/WithTabs.elm" "layout :"
 
   cd ../..

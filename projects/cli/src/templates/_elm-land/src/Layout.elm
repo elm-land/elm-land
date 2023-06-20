@@ -1,28 +1,38 @@
 module Layout exposing
     ( Layout, new
-    , sandbox, element
+    , withParentProps
+    , withOnUrlChanged, withOnQueryParameterChanged, withOnHashChanged
     , init, update, view, subscriptions
+    , parentProps, toUrlMessages
     )
 
 {-|
 
 @docs Layout, new
-@docs sandbox, element
+@docs withParentProps
+@docs withOnUrlChanged, withOnQueryParameterChanged, withOnHashChanged
 
 @docs init, update, view, subscriptions
+@docs parentProps, toUrlMessages
 
 -}
 
+import Dict exposing (Dict)
 import Effect exposing (Effect)
+import Route exposing (Route)
 import View exposing (View)
 
 
-type Layout model msg mainMsg
+type Layout parentProps model msg contentMsg
     = Layout
         { init : () -> ( model, Effect msg )
         , update : msg -> model -> ( model, Effect msg )
         , subscriptions : model -> Sub msg
-        , view : { model : model, fromMsg : msg -> mainMsg, content : View mainMsg } -> View mainMsg
+        , view : { model : model, toContentMsg : msg -> contentMsg, content : View contentMsg } -> View contentMsg
+        , parentProps : parentProps
+        , onUrlChanged : Maybe ({ from : Route (), to : Route () } -> msg)
+        , onHashChanged : Maybe ({ from : Maybe String, to : Maybe String } -> msg)
+        , onQueryParameterChangedDict : Dict String ({ from : Maybe String, to : Maybe String } -> msg)
         }
 
 
@@ -30,73 +40,155 @@ new :
     { init : () -> ( model, Effect msg )
     , update : msg -> model -> ( model, Effect msg )
     , subscriptions : model -> Sub msg
-    , view : { model : model, fromMsg : msg -> mainMsg, content : View mainMsg } -> View mainMsg
+    , view : { model : model, toContentMsg : msg -> contentMsg, content : View contentMsg } -> View contentMsg
     }
-    -> Layout model msg mainMsg
+    -> Layout () model msg contentMsg
 new options =
     Layout
         { init = options.init
         , update = options.update
         , subscriptions = options.subscriptions
         , view = options.view
+        , parentProps = ()
+        , onUrlChanged = Nothing
+        , onHashChanged = Nothing
+        , onQueryParameterChangedDict = Dict.empty
         }
 
 
-sandbox :
-    { init : model
-    , update : msg -> model -> model
-    , view : { model : model, fromMsg : msg -> mainMsg, content : View mainMsg } -> View mainMsg
-    }
-    -> Layout model msg mainMsg
-sandbox options =
+withParentProps :
+    parentProps
+    -> Layout () model msg contentMsg
+    -> Layout parentProps model msg contentMsg
+withParentProps props (Layout layout) =
     Layout
-        { init = \_ -> ( options.init, Effect.none )
-        , update = \msg model -> ( options.update msg model, Effect.none )
-        , subscriptions = \model -> Sub.none
-        , view = options.view
+        { init = layout.init
+        , update = layout.update
+        , subscriptions = layout.subscriptions
+        , view = layout.view
+        , parentProps = props
+        , onUrlChanged = layout.onUrlChanged
+        , onHashChanged = layout.onHashChanged
+        , onQueryParameterChangedDict = layout.onQueryParameterChangedDict
         }
 
 
-element :
-    { init : ( model, Cmd msg )
-    , update : msg -> model -> ( model, Cmd msg )
-    , subscriptions : model -> Sub msg
-    , view : { model : model, fromMsg : msg -> mainMsg, content : View mainMsg } -> View mainMsg
+
+-- URL CHANGES
+
+
+withOnUrlChanged :
+    ({ from : Route ()
+     , to : Route ()
+     }
+     -> msg
+    )
+    -> Layout parentProps model msg contentMsg
+    -> Layout parentProps model msg contentMsg
+withOnUrlChanged onChange (Layout layout) =
+    Layout { layout | onUrlChanged = Just onChange }
+
+
+withOnHashChanged :
+    ({ from : Maybe String
+     , to : Maybe String
+     }
+     -> msg
+    )
+    -> Layout parentProps model msg contentMsg
+    -> Layout parentProps model msg contentMsg
+withOnHashChanged onChange (Layout layout) =
+    Layout { layout | onHashChanged = Just onChange }
+
+
+withOnQueryParameterChanged :
+    { key : String
+    , onChange :
+        { from : Maybe String
+        , to : Maybe String
+        }
+        -> msg
     }
-    -> Layout model msg mainMsg
-element options =
-    Layout
-        { init =
-            \_ ->
-                options.init
-                    |> Tuple.mapSecond Effect.sendCmd
-        , update =
-            \msg model ->
-                options.update msg model
-                    |> Tuple.mapSecond Effect.sendCmd
-        , subscriptions = options.subscriptions
-        , view = options.view
-        }
+    -> Layout parentProps model msg contentMsg
+    -> Layout parentProps model msg contentMsg
+withOnQueryParameterChanged { key, onChange } (Layout layout) =
+    Layout { layout | onQueryParameterChangedDict = Dict.insert key onChange layout.onQueryParameterChangedDict }
 
 
-init : Layout model msg mainMsg -> () -> ( model, Effect msg )
-init (Layout page) =
-    page.init
+init : Layout parentProps model msg contentMsg -> () -> ( model, Effect msg )
+init (Layout layout) =
+    layout.init
 
 
-update : Layout model msg mainMsg -> msg -> model -> ( model, Effect msg )
-update (Layout page) =
-    page.update
+update : Layout parentProps model msg contentMsg -> msg -> model -> ( model, Effect msg )
+update (Layout layout) =
+    layout.update
 
 
 view :
-    Layout model msg mainMsg
-    -> { model : model, fromMsg : msg -> mainMsg, content : View mainMsg }
-    -> View mainMsg
-view (Layout page) =
-    page.view
+    Layout parentProps model msg contentMsg
+    -> { model : model, toContentMsg : msg -> contentMsg, content : View contentMsg }
+    -> View contentMsg
+view (Layout layout) =
+    layout.view
 
 
-subscriptions : Layout model msg mainMsg -> model -> Sub msg
-subscriptions (Layout page) =
-    page.subscriptions
+subscriptions : Layout parentProps model msg contentMsg -> model -> Sub msg
+subscriptions (Layout layout) =
+    layout.subscriptions
+
+
+parentProps : Layout parentProps model msg contentMsg -> parentProps
+parentProps (Layout layout) =
+    layout.parentProps
+
+
+toUrlMessages :
+    { from : Route (), to : Route () }
+    -> Layout parentProps model msg contentMsg
+    -> List msg
+toUrlMessages routes (Layout layout) =
+    List.concat
+        [ case layout.onUrlChanged of
+            Just onUrlChanged ->
+                [ onUrlChanged routes ]
+
+            Nothing ->
+                []
+        , case layout.onHashChanged of
+            Just onHashChanged ->
+                if routes.from.hash == routes.to.hash then
+                    []
+
+                else
+                    [ onHashChanged
+                        { from = routes.from.hash
+                        , to = routes.to.hash
+                        }
+                    ]
+
+            Nothing ->
+                []
+        , let
+            toQueryParameterMessage :
+                ( String
+                , { from : Maybe String, to : Maybe String } -> msg
+                )
+                -> Maybe msg
+            toQueryParameterMessage ( key, onChange ) =
+                let
+                    from =
+                        Dict.get key routes.from.query
+
+                    to =
+                        Dict.get key routes.to.query
+                in
+                if from == to then
+                    Nothing
+
+                else
+                    Just (onChange { from = from, to = to })
+          in
+          Dict.toList layout.onQueryParameterChangedDict
+            |> List.filterMap toQueryParameterMessage
+        ]

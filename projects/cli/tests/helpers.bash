@@ -41,7 +41,7 @@ function expectElmExampleBuilds {
   run elm-land build
   expectToPass
 
-  expectOutputContains "successfully built"
+  expectOutputContains "build was successful"
 
   rm -r .elm-land elm-stuff dist
   cd ../../projects/cli

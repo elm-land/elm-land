@@ -37,12 +37,6 @@ const parseImportId = (id) => {
   }
 }
 
-const colorOverrides = {
-  GREEN: 'mediumseagreen',
-  RED: 'indianred',
-  BLUE: 'dodgerblue',
-}
-
 const plugin = (opts) => {
   const compilableFiles = new Map()
   const debug = opts ? opts.debug : undefined
@@ -83,7 +77,7 @@ const plugin = (opts) => {
       server.ws.on('elm:client-ready', () => {
         if (lastErrorSent) {
           server.ws.send('elm:error', {
-            error: ElmErrorJson.toColoredHtmlOutput(lastErrorSent, colorOverrides)
+            error: ElmErrorJson.toColoredHtmlOutput(lastErrorSent)
           })
         }
       })
@@ -154,6 +148,7 @@ const plugin = (opts) => {
           dependencies.forEach(this.addWatchFile.bind(this))
         }
 
+        // SUSPICIOUS, this line might make the error overlay clear unexpectedly
         lastErrorSent = null
         if (server) {
           server.ws.send('elm:success', { msg: 'Success!' })
@@ -202,7 +197,7 @@ const plugin = (opts) => {
             let elmError = ElmErrorJson.parse(e.message)
             lastErrorSent = elmError
             server.ws.send('elm:error', {
-              error: ElmErrorJson.toColoredHtmlOutput(elmError, colorOverrides)
+              error: ElmErrorJson.toColoredHtmlOutput(elmError)
             })
 
             return {

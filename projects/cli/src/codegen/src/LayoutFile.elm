@@ -6,8 +6,8 @@ module LayoutFile exposing
     , toLayoutTypeDeclaration
     , toLayoutsModelTypeDeclaration, toLayoutsMsgTypeDeclaration
     , toInitBranches
-    , toLastPartFieldName
-    , toListOfSelfAndParents
+    , toLayoutVariableName, toLastPartFieldName
+    , toLastPartFieldNameFilepath, toListOfSelfAndParents, toMapFunction, toModuleNameFilepath, toVariantNameFilepath
     )
 
 {-|
@@ -25,7 +25,7 @@ module LayoutFile exposing
 @docs toLayoutsModelTypeDeclaration, toLayoutsMsgTypeDeclaration
 
 @docs toInitBranches
-@docs toLastPartFieldName
+@docs toLayoutVariableName, toLastPartFieldName
 
 -}
 
@@ -42,27 +42,41 @@ import Json.Decode
 {-| Represents an item in the "src/Layouts" folder
 -}
 type LayoutFile
-    = LayoutFile (List String)
+    = LayoutFile
+        { filepath : List String
+        , isUsingTypeVariable : Bool
+        }
 
 
 {-| Attempts to convert a raw JSON array of strings into a `LayoutFile`
 -}
 decoder : Json.Decode.Decoder LayoutFile
 decoder =
-    Json.Decode.map LayoutFile
+    Json.Decode.map
+        (\filepath ->
+            LayoutFile
+                { filepath = filepath
+                , isUsingTypeVariable = False --|> Debug.log "TODO: Learn if parent is using type variable"
+                }
+        )
         (Json.Decode.list Json.Decode.string)
+
+
+sortByFilepath : List LayoutFile -> List LayoutFile
+sortByFilepath =
+    List.sortBy (\(LayoutFile { filepath }) -> String.join "." filepath)
 
 
 {-| Returns a list of filepath segments.
 
-For example, the layout file at `src/Layouts/Sidebar/WithHeader.elm` would return:
+For example, the layout file at `src/Layouts/Sidebar/Header.elm` would return:
 
-    [ "Sidebar", "WithHeader" ]
+    [ "Sidebar", "Header" ]
 
 -}
 toList : LayoutFile -> List String
-toList (LayoutFile list) =
-    list
+toList (LayoutFile { filepath }) =
+    filepath
 
 
 {-| Return the Elm module name for this layout:
@@ -71,43 +85,94 @@ toList (LayoutFile list) =
     toModuleName layout
         == "Layouts.Sidebar"
 
-    -- `src/Layouts/Sidebar/WithHeader.elm`
+    -- `src/Layouts/Sidebar/Header.elm`
     toModuleName layout
-        == "Layouts.Sidebar.WithHeader"
+        == "Layouts.Sidebar.Header"
 
 -}
 toModuleName : LayoutFile -> String
-toModuleName (LayoutFile list) =
-    "Layouts." ++ String.join "." list
+toModuleName (LayoutFile { filepath }) =
+    toModuleNameFilepath filepath
+
+
+toModuleNameFilepath : Filepath -> String
+toModuleNameFilepath filepath =
+    "Layouts." ++ String.join "." filepath
 
 
 {-| Generates the type declaration used in `Layouts.elm`, used with `Page.withLayout`
 to select the layout for a given page. Here's an example:
 
-    type Layout
-        = Default Layouts.Default.Settings
-        | Sidebar Layouts.Sidebar.Settings
-        | Sidebar_WithHeader
-            { sidebar : Layouts.Sidebar.Settings
-            , withHeader : Layouts.Sidebar.WithHeader.Settings
-            }
+    type Layout msg
+        = Default Layouts.Default.Props
+        | Sidebar Layouts.Sidebar.Props
+        | Sidebar_Header (Layouts.Sidebar.Header.Props msg)
 
 -}
 toLayoutTypeDeclaration : List LayoutFile -> CodeGen.Declaration
 toLayoutTypeDeclaration layouts =
     if List.isEmpty layouts then
-        CodeGen.Declaration.typeAlias
-            { name = "Layout"
-            , annotation = CodeGen.Annotation.type_ "Never"
+        CodeGen.Declaration.customType
+            { name = "Layout msg"
+            , variants =
+                [ ( "None", [] )
+                ]
             }
 
     else
+        let
+            toLayoutVariant : LayoutFile -> ( String, List CodeGen.Annotation )
+            toLayoutVariant (LayoutFile { filepath }) =
+                ( String.join "_" filepath
+                , [ CodeGen.Annotation.type_ ("Layouts." ++ String.join "." filepath ++ ".Props") ]
+                )
+        in
         CodeGen.Declaration.customType
-            { name = "Layout"
+            { name = "Layout msg"
             , variants =
                 layouts
-                    |> List.map (toLayoutRouteVariant { prefix = Nothing, typeName = "Settings" })
+                    |> List.map toLayoutVariant
             }
+
+
+toMapFunction : List LayoutFile -> CodeGen.Declaration
+toMapFunction layouts =
+    let
+        toBranch :
+            LayoutFile
+            ->
+                { name : String
+                , arguments : List CodeGen.Argument.Argument
+                , expression : CodeGen.Expression
+                }
+        toBranch (LayoutFile { filepath, isUsingTypeVariable }) =
+            if isUsingTypeVariable then
+                { name = String.join "_" filepath
+                , arguments = [ CodeGen.Argument.new "data" ]
+                , expression = CodeGen.Expression.value (String.join "_" filepath ++ " data")
+                }
+
+            else
+                { name = String.join "_" filepath
+                , arguments = [ CodeGen.Argument.new "data" ]
+                , expression = CodeGen.Expression.value (String.join "_" filepath ++ " data")
+                }
+    in
+    CodeGen.Declaration.function
+        { name = "map"
+        , annotation = CodeGen.Annotation.type_ "(msg1 -> msg2) -> Layout msg1 -> Layout msg2"
+        , arguments = [ CodeGen.Argument.new "fn", CodeGen.Argument.new "layout" ]
+        , expression =
+            if List.isEmpty layouts then
+                CodeGen.Expression.value "None"
+
+            else
+                CodeGen.Expression.caseExpression
+                    { value = CodeGen.Argument.new "layout"
+                    , branches =
+                        List.map toBranch layouts
+                    }
+        }
 
 
 {-| Generates the type declaration used in `Main/Layouts/Model.elm` to track the current state of
@@ -118,7 +183,7 @@ the active layout. Here's an example:
         | Sidebar Layouts.Sidebar.Model
         | Sidebar_WithHeader
             { sidebar : Layouts.Sidebar.Model
-            , withHeader : Layouts.Sidebar.WithHeader.Model
+            , header : Layouts.Sidebar.Header.Model
             }
 
 -}
@@ -172,8 +237,7 @@ toLayoutsMsgTypeDeclaration layouts =
 
 
 {-| Layouts are sorted alphabetically when generated, so that nested layouts
-appear near their parents. The order doesn't impact correctness, but it helps folks
-reading the generated code.
+appear near their parents.
 
     List.sortWith sorter [ "Sidebar_WithHeader", "Default", "Sidebar" ]
         == [ "Default"
@@ -183,10 +247,10 @@ reading the generated code.
 
 -}
 sorter : LayoutFile -> LayoutFile -> Basics.Order
-sorter (LayoutFile list1) (LayoutFile list2) =
+sorter (LayoutFile layout1) (LayoutFile layout2) =
     Basics.compare
-        (String.join "_" list1)
-        (String.join "_" list2)
+        (String.join "_" layout1.filepath)
+        (String.join "_" layout2.filepath)
 
 
 
@@ -204,7 +268,7 @@ toLayoutRouteVariant :
     -> ( String, List CodeGen.Annotation )
 toLayoutRouteVariant options layoutFile =
     let
-        (LayoutFile list) =
+        (LayoutFile { filepath }) =
             layoutFile
 
         baseVariantName : String
@@ -221,10 +285,18 @@ toLayoutRouteVariant options layoutFile =
                 toNestedLayoutRecordField : Int -> String -> ( String, CodeGen.Annotation )
                 toNestedLayoutRecordField index pathSegment =
                     ( Extras.String.fromPascalCaseToCamelCase pathSegment
-                    , CodeGen.Annotation.type_ (toModuleName (LayoutFile (List.take (index + 1) list)) ++ "." ++ options.typeName)
+                    , CodeGen.Annotation.type_
+                        ("Layouts."
+                            ++ (filepath
+                                    |> dropRight (List.length filepath - index - 1)
+                                    |> String.join "."
+                               )
+                            ++ "."
+                            ++ options.typeName
+                        )
                     )
             in
-            CodeGen.Annotation.record (List.indexedMap toNestedLayoutRecordField list)
+            CodeGen.Annotation.record (List.indexedMap toNestedLayoutRecordField filepath)
     in
     ( case options.prefix of
         Just prefix ->
@@ -243,19 +315,24 @@ toLayoutRouteVariant options layoutFile =
     toVariantName layout
         == "Sidebar"
 
-    -- `src/Layouts/Sidebar/WithHeader.elm`
+    -- `src/Layouts/Sidebar/Header.elm`
     toVariantName layout
         == "Sidebar_WithHeader"
 
 -}
 toVariantName : LayoutFile -> String
-toVariantName (LayoutFile list) =
-    String.join "_" list
+toVariantName (LayoutFile { filepath }) =
+    toVariantNameFilepath filepath
+
+
+toVariantNameFilepath : Filepath -> String
+toVariantNameFilepath filepath =
+    String.join "_" filepath
 
 
 isNestedLayout : LayoutFile -> Bool
-isNestedLayout (LayoutFile list) =
-    List.length list > 1
+isNestedLayout (LayoutFile { filepath }) =
+    List.length filepath > 1
 
 
 {-| In order to preserve layout state when switching from one layout to another,
@@ -267,17 +344,17 @@ For example, imagine our app has the following layouts:
   - Default
   - Sidebar
   - Sidebar.WithModal
-  - Sidebar.WithHeader
-  - Sidebar.WithHeader.WithTabs
+  - Sidebar.Header
+  - Sidebar.Header.WithTabs
 
 Because layouts can be nested, we want to make sure that we handle each case correctly:
 
-  - `Sidebar.WithHeader -> Sidebar.WithModal`
+  - `Sidebar.Header -> Sidebar.WithModal`
       - Preserve the existing `sidebar` model, but initialize a new `withModal` layout state
-  - `Sidebar.WithHeader -> Sidebar`
+  - `Sidebar.Header -> Sidebar`
       - Preserve the existing `sidebar` model
-  - `Sidebar -> Sidebar.WithHeader`
-      - Preserve the existing `sidebar` model, and initialize a new `withHeader` layout state
+  - `Sidebar -> Sidebar.Header`
+      - Preserve the existing `sidebar` model, and initialize a new `header` layout state
   - `Default -> Sidebar.WithModal`
       - Because these are two completely different layouts, we'll need to initialize `sidebar` and `withModal`
 
@@ -296,8 +373,8 @@ toInitBranches input =
            Example: [ "Sidebar", "Header" ]  -> "Sidebar:Header"
         -}
         toStringForComparison : LayoutFile -> String
-        toStringForComparison (LayoutFile list) =
-            String.join ":" list
+        toStringForComparison (LayoutFile { filepath }) =
+            String.join ":" filepath
 
         targetAndParents : List LayoutFile
         targetAndParents =
@@ -336,7 +413,7 @@ toInitBranches input =
         toBranch : { ifTheExistingModelHas : LayoutFile, weCanReuse : LayoutFile } -> CodeGen.Expression.Branch
         toBranch options =
             { name =
-                "( Layouts.{{targetVariantName}} settings, Just (Main.Layouts.Model.{{modelVariantName}} existing) )"
+                "( Layouts.{{targetVariantName}} props, Just (Main.Layouts.Model.{{modelVariantName}} existing) )"
                     |> String.replace "{{targetVariantName}}" targetVariantName
                     |> String.replace "{{modelVariantName}}" (toVariantName options.ifTheExistingModelHas)
             , arguments = []
@@ -406,22 +483,41 @@ toInitBranches input =
             -> CodeGen.Expression.Expression
         toExpressionNeedingToInitializeSomeLayouts options =
             let
-                toLetExpression : LayoutFile -> CodeGen.Expression.LetDeclaration
-                toLetExpression layoutFile =
-                    let
-                        lastPartFieldName : String
-                        lastPartFieldName =
-                            toLastPartFieldName layoutFile
-                    in
+                toLayoutDefinition : LayoutFile -> Maybe LayoutFile -> CodeGen.Expression.LetDeclaration
+                toLayoutDefinition current parent =
                     { argument =
-                        "( {{lastPartFieldName}}LayoutModel, {{lastPartFieldName}}LayoutEffect )"
-                            |> String.replace "{{lastPartFieldName}}" lastPartFieldName
+                        toLayoutVariableName current
+                            |> withSuffix "Layout"
                             |> CodeGen.Argument.new
                     , annotation = Nothing
                     , expression =
-                        "Layout.init ({{moduleName}}.layout settings.{{lastPartFieldName}} model.shared route) ()"
-                            |> String.replace "{{lastPartFieldName}}" lastPartFieldName
-                            |> String.replace "{{moduleName}}" (toModuleName layoutFile)
+                        "{{layoutName}}.layout {{props}} model.shared route"
+                            |> String.replace "{{layoutName}}" (toModuleName current)
+                            |> String.replace "{{props}}"
+                                (case parent of
+                                    Just parentLayout ->
+                                        "(Layout.parentProps {{parentLayoutName}})"
+                                            |> String.replace "{{parentLayoutName}}"
+                                                (toLayoutVariableName parentLayout
+                                                    |> withSuffix "Layout"
+                                                )
+
+                                    Nothing ->
+                                        "props"
+                                )
+                            |> CodeGen.Expression.value
+                    }
+
+                toLayoutInitialization : LayoutFile -> CodeGen.Expression.LetDeclaration
+                toLayoutInitialization layoutFile =
+                    { argument =
+                        "( {{lastPartName}}LayoutModel, {{lastPartName}}LayoutEffect )"
+                            |> String.replace "{{lastPartName}}" (toLastPartFieldName layoutFile)
+                            |> CodeGen.Argument.new
+                    , annotation = Nothing
+                    , expression =
+                        "Layout.init {{layoutName}}Layout ()"
+                            |> String.replace "{{layoutName}}" (toLayoutVariableName layoutFile)
                             |> CodeGen.Expression.value
                     }
 
@@ -472,9 +568,9 @@ toInitBranches input =
 
                 toInitialLayoutCmd : LayoutFile -> CodeGen.Expression
                 toInitialLayoutCmd layoutFile =
-                    "fromLayoutEffect model (Effect.map Main.Layouts.Msg.{{variantName}} {{lastPartFieldName}}LayoutEffect)"
+                    "fromLayoutEffect model (Effect.map Main.Layouts.Msg.{{variantName}} {{lastPartName}}LayoutEffect)"
                         |> String.replace "{{variantName}}" (toVariantName layoutFile)
-                        |> String.replace "{{lastPartFieldName}}" (toLastPartFieldName layoutFile)
+                        |> String.replace "{{lastPartName}}" (toLastPartFieldName layoutFile)
                         |> CodeGen.Expression.value
             in
             CodeGen.Expression.letIn
@@ -485,7 +581,17 @@ toInitBranches input =
                             , expression = CodeGen.Expression.value "Route.fromUrl () model.url"
                             }
                           ]
-                        , options.layoutsNeedingInitialization |> List.map toLetExpression
+                        , List.map2 toLayoutDefinition
+                            options.layoutsNeedingInitialization
+                            (Nothing
+                                :: (options.layoutsNeedingInitialization
+                                        |> List.reverse
+                                        |> List.drop 1
+                                        |> List.reverse
+                                        |> List.map Just
+                                   )
+                            )
+                        , options.layoutsNeedingInitialization |> List.map toLayoutInitialization
                         ]
                 , in_ =
                     CodeGen.Expression.multilineTuple
@@ -502,7 +608,7 @@ toInitBranches input =
         defaultBranch : CodeGen.Expression.Branch
         defaultBranch =
             { name =
-                "( Layouts.{{targetVariantName}} settings, _ )"
+                "( Layouts.{{targetVariantName}} props, _ )"
                     |> String.replace "{{targetVariantName}}" targetVariantName
             , arguments = []
             , expression =
@@ -520,6 +626,10 @@ toInitBranches input =
         ++ [ defaultBranch ]
 
 
+type alias Filepath =
+    List String
+
+
 {-| Enumerate all subsets of the target layout:
 
     toListOfSelfAndParents (LayoutFile [ "Sidebar", "Header" ])
@@ -529,9 +639,17 @@ toInitBranches input =
 
 -}
 toListOfSelfAndParents : LayoutFile -> List LayoutFile
-toListOfSelfAndParents (LayoutFile list) =
-    List.range 0 (List.length list - 1)
-        |> List.foldr (\offset layoutFiles -> LayoutFile (dropRight offset list) :: layoutFiles) []
+toListOfSelfAndParents (LayoutFile { filepath }) =
+    List.range 0 (List.length filepath - 1)
+        |> List.foldr
+            (\offset layoutFiles ->
+                LayoutFile
+                    { filepath = dropRight offset filepath
+                    , isUsingTypeVariable = False --|> Debug.log "TODO: Learn if parent is using type variable"
+                    }
+                    :: layoutFiles
+            )
+            []
 
 
 dropRight : Int -> List a -> List a
@@ -541,9 +659,53 @@ dropRight amount list =
         |> List.reverse
 
 
+{-|
+
+    toLayoutVariableName Layouts.Sidebar
+        == "sidebar"
+
+    toLayoutVariableName Layouts.Sidebar.Header
+        == "sidebarHeader"
+
+-}
+toLayoutVariableName : LayoutFile -> String
+toLayoutVariableName (LayoutFile { filepath }) =
+    toLayoutName filepath
+
+
+withSuffix : String -> String -> String
+withSuffix suffix base =
+    base ++ suffix
+
+
+toLayoutName : Filepath -> String
+toLayoutName filepath =
+    case filepath of
+        [] ->
+            "unknown"
+
+        first :: rest ->
+            String.join "" (Extras.String.fromPascalCaseToCamelCase first :: rest)
+
+
+{-| Create a camel case variable name (used for layout model record
+fields names).
+
+    toLastPartFieldName Layouts.Sidebar
+        == "sidebar"
+
+    toLastPartFieldName Layouts.Sidebar.Header
+        == "header"
+
+-}
 toLastPartFieldName : LayoutFile -> String
-toLastPartFieldName (LayoutFile list) =
-    case List.reverse list of
+toLastPartFieldName (LayoutFile { filepath }) =
+    toLastPartFieldNameFilepath filepath
+
+
+toLastPartFieldNameFilepath : Filepath -> String
+toLastPartFieldNameFilepath filepath =
+    case List.reverse filepath of
         [] ->
             "unknown"
 

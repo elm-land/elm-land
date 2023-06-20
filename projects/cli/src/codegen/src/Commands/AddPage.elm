@@ -80,8 +80,7 @@ newStaticPageModule { hasViewBeenCustomized, page, url } =
                                         |> List.map
                                             (\piece ->
                                                 if piece == "ALL_" then
-                                                    CodeGen.Expression.value
-                                                        "String.join \"/\" (params.first_ :: params.rest_)"
+                                                    CodeGen.Expression.value "String.join \"/\" params.all_"
 
                                                 else if piece /= "NotFound_" && String.endsWith "_" piece then
                                                     CodeGen.Expression.value

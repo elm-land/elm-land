@@ -1,6 +1,6 @@
 {
   "name": "elm-land",
-  "version": "0.18.3",
+  "version": "0.19.0",
   "description": "Reliable web apps for everyone",
   "main": "index.js",
   "types": "./index.d.ts",
@@ -9,12 +9,13 @@
   },
   "scripts": {
     "start": "npm install && npm run setup && npm run dev",
-    "setup": "npm run setup:elm-worker",
-    "setup:elm-worker": "npm run build:elm-worker",
-    "build": "npm run build:elm-worker",
-    "build:elm-worker": "(cd src/codegen && elm make src/Worker.elm --output=../../dist/worker.js --optimize)",
-    "dev": "npm run dev:elm-worker",
-    "dev:elm-worker": "chokidar src/codegen/src -c \"npm run build:elm-worker\"",
+    "setup": "npm run build",
+    "build": "npm run build:codegen-worker && npm run build:validate-worker",
+    "build:codegen-worker": "(cd src/codegen && elm make src/Worker.elm --optimize --output=../../dist/codegen-worker.js)",
+    "build:validate-worker": "(cd src/validate && elm make src/Worker.elm --optimize --output=../../dist/validate-worker.js)",
+    "dev": "npm run dev:codegen-worker & npm run dev:validate-worker",
+    "dev:codegen-worker": "chokidar src/codegen/src -c \"npm run build:codegen-worker\" --initial",
+    "dev:validate-worker": "chokidar src/validate/src -c \"npm run build:validate-worker\" --initial",
     "test": "bats tests/*.bats"
   },
   "repository": {
@@ -33,14 +34,15 @@
   },
   "homepage": "https://elm.land",
   "devDependencies": {
-    "bats": "1.7.0"
+    "bats": "1.7.0",
+    "chokidar-cli": "3.0.0"
   },
   "dependencies": {
-    "@lydell/elm": "0.19.1-9",
+    "@lydell/elm": "^0.19.1-12",
     "chokidar": "3.5.3",
     "node-elm-compiler": "5.0.6",
     "terser": "5.15.1",
     "typescript": "4.9.3",
-    "vite": "3.2.5"
+    "vite": "4.3.9"
   }
 }

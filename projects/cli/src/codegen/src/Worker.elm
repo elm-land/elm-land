@@ -1,8 +1,8 @@
 port module Worker exposing (main)
 
 import CodeGen
-import Commands.AddPage
 import Commands.AddLayout
+import Commands.AddPage
 import Commands.Generate
 import Json.Decode
 

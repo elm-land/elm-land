@@ -25,7 +25,7 @@ cd user-input
 elm-land server
 ```
 
-We can create a new page that keeps track of our UI's state using the `elm-land add page:sandbox` command. This time around, we'll use `page:sandbox` instead of the `page:static` from previous guides:
+We can create a new page that keeps track of our UI's state using the `elm-land add page:sandbox` command. This time around, we'll use `page:sandbox` instead of the `page:view` from previous guides:
 
 ```sh
 elm-land add page:sandbox /counter

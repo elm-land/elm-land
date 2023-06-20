@@ -24,14 +24,14 @@ load helpers
   expectOutputContains "couldn't find a project"
 }
 
-@test "'elm-land add page:static /sign-in' creates a static SignIn page" {
+@test "'elm-land add page:view /sign-in' creates a static SignIn page" {
   mkdir -p tests/tmp
   cd tests/tmp
   
   run elm-land init hello-world
   cd hello-world
 
-  run elm-land add page:static /sign-in
+  run elm-land add page:view /sign-in
   expectToPass
 
   expectOutputContains "added a new page"
@@ -93,14 +93,14 @@ load helpers
 }
 
 
-@test "'elm-land add page:static /profile/:username' creates a Profile/Username_ page" {
+@test "'elm-land add page:view /profile/:username' creates a Profile/Username_ page" {
   mkdir -p tests/tmp
   cd tests/tmp
   
   run elm-land init hello-world
   cd hello-world
 
-  run elm-land add page:static /profile/:username
+  run elm-land add page:view /profile/:username
   expectToPass
 
   expectOutputContains "added a new page"

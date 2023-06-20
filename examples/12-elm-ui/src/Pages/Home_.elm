@@ -1,6 +1,6 @@
 module Pages.Home_ exposing (page)
 
-import Element
+import Element exposing (..)
 import View exposing (View)
 
 
@@ -9,6 +9,6 @@ page =
     { title = "Homepage"
     , attributes = []
     , element =
-        Element.el [ Element.centerX, Element.centerY ]
-            (Element.text "Hello, Elm UI! ✨")
+        el [ centerX, centerY ]
+            (text "Hello, Elm UI! ✨")
     }

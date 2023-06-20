@@ -7,6 +7,8 @@ const DotPathFixPlugin = require('./vite-plugins/dot-path-fix/index.js')
 const { Codegen } = require('./codegen')
 const { Files } = require('./files')
 const { Utils, Terminal } = require('./commands/_utils')
+const { validate } = require('./validate/index.js')
+const { default: ElmErrorJson } = require('./vite-plugins/elm/elm-error-json.js')
 
 
 let srcPagesFolderFilepath = path.join(process.cwd(), 'src', 'Pages')
@@ -72,7 +74,7 @@ let runServer = async (options) => {
 
         // We'll need a better way to check options that affect codegen eventually
         if (config.app.router.useHashRouting != oldConfig.app.router.useHashRouting) {
-          await generateElmFiles(config)
+          await generateElmFiles(config, server)
         }
 
         handleEnvironmentVariables({ config })
@@ -111,13 +113,22 @@ let runServer = async (options) => {
 
     // Listen for changes to src/Pages and src/Layouts folders, to prevent
     // generated code from getting out of sync
-    let srcPagesAndLayoutsFolderWatcher = chokidar.watch([srcPagesFolderFilepath, srcLayoutsFolderFilepath], {
+    let srcPagesAndLayoutsAndCustomizedFileWatcher = chokidar.watch([
+      srcPagesFolderFilepath,
+      srcLayoutsFolderFilepath,
+      path.join(process.cwd(), 'src', 'Auth.elm'),
+      path.join(process.cwd(), 'src', 'Shared.elm'),
+      path.join(process.cwd(), 'src', 'Shared', 'Model.elm'),
+      path.join(process.cwd(), 'src', 'Shared', 'Msg.elm'),
+      path.join(process.cwd(), 'src', 'Effect.elm'),
+      path.join(process.cwd(), 'src', 'View.elm')
+    ], {
       ignorePermissionErrors: true,
       ignoreInitial: true
     })
 
-    srcPagesAndLayoutsFolderWatcher.on('all', () => { generateElmFiles(config) })
-    await generateElmFiles(config)
+    // srcPagesAndLayoutsFolderWatcher.on('all', () => { generateElmFiles(config, server) })
+    srcPagesAndLayoutsAndCustomizedFileWatcher.on('all', () => { generateElmFiles(config, server) })
 
     // Listen for any changes to customizable files, so defaults are recreated
     // if the customized versions are deleted
@@ -161,6 +172,15 @@ let runServer = async (options) => {
     })
 
     server.ws.on('error', (e) => console.error(e))
+    server.ws.on('elm:client-ready', () => {
+      if (lastErrorSent) {
+        server.ws.send('elm:error', {
+          error: ElmErrorJson.toColoredHtmlOutput(lastErrorSent)
+        })
+      }
+    })
+
+    await generateElmFiles(config, server)
 
     await server.listen()
 
@@ -173,11 +193,13 @@ let runServer = async (options) => {
 
 }
 
-let generateElmFiles = async (config) => {
+let lastErrorSent = undefined
+
+let generateElmFiles = async (config, server = undefined) => {
   try {
     let router = config.app.router
     let pageFilepaths = Files.listElmFilepathsInFolder(srcPagesFolderFilepath)
-    let layouts = Files.listElmFilepathsInFolder(srcLayoutsFolderFilepath).map(filepath => filepath.split('/'))
+    let layoutFilepaths = Files.listElmFilepathsInFolder(srcLayoutsFolderFilepath)
 
     let pages =
       await Promise.all(pageFilepaths.map(async filepath => {
@@ -189,15 +211,64 @@ let generateElmFiles = async (config) => {
         }
       }))
 
-    let newFiles = await Codegen.generateElmLandFiles({ pages, layouts, router })
+    let layouts =
+      await Promise.all(layoutFilepaths.map(async filepath => {
+        let contents = await Files.readFromUserFolder(`src/Layouts/${filepath}.elm`)
 
-    await Files.create(
-      newFiles.map(generatedFile => ({
-        kind: 'file',
-        name: `.elm-land/src/${generatedFile.filepath}`,
-        content: generatedFile.contents
+        return {
+          filepath: filepath.split('/'),
+          contents
+        }
       }))
-    )
+
+    let view = await Files.readFromUserFolder('src/View.elm').catch(_ => null)
+
+    let errors = await validate({
+      pages,
+      layouts,
+      auth: await Files.readFromUserFolder('src/Auth.elm').catch(_ => null),
+      shared: await Files.readFromUserFolder('src/Shared.elm').catch(_ => null),
+      sharedModel: await Files.readFromUserFolder('src/Shared/Model.elm').catch(_ => null),
+      sharedMsg: await Files.readFromUserFolder('src/Shared/Msg.elm').catch(_ => null),
+      effect: await Files.readFromUserFolder('src/Effect.elm').catch(_ => null),
+      view
+    })
+
+    if (errors.length === 0) {
+      if (server) {
+        lastErrorSent = null
+        server.ws.send('elm:success', { msg: 'Success!' })
+      }
+
+      let layoutFilepathSegments =
+        layoutFilepaths.map(filepath => filepath.split('/'))
+
+      let newFiles = await Codegen.generateElmLandFiles({
+        pages,
+        layouts: layoutFilepathSegments,
+        router
+      })
+
+      await Files.create(
+        newFiles.map(generatedFile => ({
+          kind: 'file',
+          name: `.elm-land/src/${generatedFile.filepath}`,
+          content: generatedFile.contents
+        }))
+      )
+    } else if (server) {
+      lastErrorSent = errors[0]
+      server.ws.send('elm:error', {
+        error: ElmErrorJson.toColoredHtmlOutput(errors[0])
+      })
+    } else {
+      return Promise.reject([
+        '',
+        Utils.intro.error('failed to build project'),
+        errors.map(ElmErrorJson.toColoredTerminalOutput).join('\n\n'),
+        ''
+      ].join('\n'))
+    }
 
   } catch (err) {
     console.error(err)
@@ -457,7 +528,9 @@ const generateHtml = async (config) => {
   let titleTags = attempt(_ => config.app.html.title)
     ? [toHtmlTag('title', {}, config.app.html.title)]
     : []
-  let metaTags = toSelfClosingHtmlTags('meta', attempt(_ => config.app.html.meta))
+  let metaTags = toSelfClosingHtmlTags('meta', [
+    { name: 'elm-land', content: '0.19.0' }
+  ].concat(attempt(_ => config.app.html.meta)))
   let linkTags = toSelfClosingHtmlTags('link', attempt(_ => config.app.html.link))
   let scriptTags = toHtmlTags('script', attempt(_ => config.app.html.script))
 

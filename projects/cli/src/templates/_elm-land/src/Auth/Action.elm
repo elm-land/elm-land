@@ -2,7 +2,7 @@ module Auth.Action exposing
     ( Action(..)
     , loadPageWithUser, showLoadingPage
     , replaceRoute, pushRoute, loadExternalUrl
-    , view, subscriptions
+    , view, subscriptions, command
     )
 
 {-|
@@ -11,7 +11,7 @@ module Auth.Action exposing
 @docs loadPageWithUser, showLoadingPage
 @docs replaceRoute, pushRoute, loadExternalUrl
 
-@docs view, subscriptions
+@docs view, subscriptions, command
 
 -}
 
@@ -74,6 +74,10 @@ loadExternalUrl =
     LoadExternalUrl
 
 
+
+-- USED INTERNALLY BY ELM LAND
+
+
 view : (user -> View msg) -> Action user -> View msg
 view toView authAction =
     case authAction of
@@ -94,10 +98,10 @@ view toView authAction =
 
 
 subscriptions : (user -> Sub msg) -> Action user -> Sub msg
-subscriptions toView authAction =
+subscriptions toSub authAction =
     case authAction of
         LoadPageWithUser user ->
-            toView user
+            toSub user
 
         ShowLoadingPage _ ->
             Sub.none
@@ -110,3 +114,22 @@ subscriptions toView authAction =
 
         LoadExternalUrl _ ->
             Sub.none
+
+
+command : (user -> Cmd msg) -> Action user -> Cmd msg
+command toCmd authAction =
+    case authAction of
+        LoadPageWithUser user ->
+            toCmd user
+
+        ShowLoadingPage _ ->
+            Cmd.none
+
+        ReplaceRoute _ ->
+            Cmd.none
+
+        PushRoute _ ->
+            Cmd.none
+
+        LoadExternalUrl _ ->
+            Cmd.none

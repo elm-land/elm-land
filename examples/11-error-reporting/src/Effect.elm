@@ -4,6 +4,7 @@ port module Effect exposing
     , sendCmd, sendMsg
     , pushRoute, replaceRoute, loadExternalUrl
     , sendHttpGet
+    , sendHttpErrorToSentry, sendJsonDecodeErrorToSentry
     , map, toCmd
     )
 
@@ -15,6 +16,7 @@ port module Effect exposing
 @docs pushRoute, replaceRoute, loadExternalUrl
 
 @docs sendHttpGet
+@docs sendHttpErrorToSentry, sendJsonDecodeErrorToSentry
 
 @docs map, toCmd
 
@@ -27,7 +29,6 @@ import Json.Decode
 import Json.Encode
 import Route exposing (Route)
 import Route.Path
-import Route.Query
 import Shared.Model
 import Shared.Msg
 import Task
@@ -38,18 +39,9 @@ import Url exposing (Url)
 -- PORTS
 
 
-port sendHttpErrorToSentry :
-    { url : String
-    , response : Maybe String
-    , error : String
-    }
-    -> Cmd msg
-
-
-port sendJsonDecodeErrorToSentry :
-    { url : String
-    , response : String
-    , error : String
+port outgoing :
+    { tag : String
+    , data : Json.Encode.Value
     }
     -> Cmd msg
 
@@ -71,6 +63,18 @@ type Effect msg
     | SendSharedMsg Shared.Msg.Msg
       -- HTTP
     | HttpRequest (HttpRequestDetails msg)
+    | SendJsonDecodeErrorToSentry
+        { method : String
+        , url : String
+        , response : String
+        , error : Json.Decode.Error
+        }
+    | SendHttpErrorToSentry
+        { method : String
+        , url : String
+        , response : Maybe String
+        , error : Http.Error
+        }
 
 
 type alias HttpRequestDetails msg =
@@ -175,6 +179,32 @@ sendHttpGet options =
 
 
 
+-- ERROR REPORTING
+
+
+sendJsonDecodeErrorToSentry :
+    { method : String
+    , url : String
+    , response : String
+    , error : Json.Decode.Error
+    }
+    -> Effect msg
+sendJsonDecodeErrorToSentry data =
+    SendJsonDecodeErrorToSentry data
+
+
+sendHttpErrorToSentry :
+    { method : String
+    , url : String
+    , response : Maybe String
+    , error : Http.Error
+    }
+    -> Effect msg
+sendHttpErrorToSentry data =
+    SendHttpErrorToSentry data
+
+
+
 -- INTERALS
 
 
@@ -216,6 +246,12 @@ map fn effect =
                 , decoder = Json.Decode.map fn data.decoder
                 }
 
+        SendJsonDecodeErrorToSentry data ->
+            SendJsonDecodeErrorToSentry data
+
+        SendHttpErrorToSentry data ->
+            SendHttpErrorToSentry data
+
 
 {-| Elm Land needs this function to actually perform your Effects
 -}
@@ -224,7 +260,7 @@ toCmd :
     , url : Url
     , shared : Shared.Model.Model
     , fromSharedMsg : Shared.Msg.Msg -> msg
-    , fromCmd : Cmd msg -> msg
+    , batch : List msg -> msg
     , toCmd : msg -> Cmd msg
     }
     -> Effect msg
@@ -256,6 +292,38 @@ toCmd options effect =
         HttpRequest request ->
             sendGetRequestWithErrorReporting options request
 
+        SendJsonDecodeErrorToSentry data ->
+            outgoing
+                { tag = "SEND_JSON_DECODE_ERROR"
+                , data =
+                    Json.Encode.object
+                        [ ( "method", Json.Encode.string data.method )
+                        , ( "url", Json.Encode.string data.url )
+                        , ( "response", Json.Encode.string data.response )
+                        , ( "title", Json.Encode.string (jsonErrorToTitle data.error) )
+                        , ( "error", Json.Encode.string (Json.Decode.errorToString data.error) )
+                        ]
+                }
+
+        SendHttpErrorToSentry data ->
+            outgoing
+                { tag = "SEND_HTTP_ERROR"
+                , data =
+                    Json.Encode.object
+                        [ ( "method", Json.Encode.string data.method )
+                        , ( "url", Json.Encode.string data.url )
+                        , ( "response"
+                          , case data.response of
+                                Just response ->
+                                    Json.Encode.string response
+
+                                Nothing ->
+                                    Json.Encode.null
+                          )
+                        , ( "error", Json.Encode.string (httpErrorToString data.error) )
+                        ]
+                }
+
 
 
 -- AUTOMATIC ERROR REPORTING
@@ -263,8 +331,8 @@ toCmd options effect =
 
 sendGetRequestWithErrorReporting :
     { options
-        | toCmd : msg -> Cmd msg
-        , fromCmd : Cmd msg -> msg
+        | fromSharedMsg : Shared.Msg.Msg -> msg
+        , batch : List msg -> msg
     }
     -> HttpRequestDetails msg
     -> Cmd msg
@@ -273,9 +341,10 @@ sendGetRequestWithErrorReporting options request =
         toMsg : Result CustomError msg -> msg
         toMsg =
             fromCustomResultToMsg
-                { url = request.url
-                , toCmd = options.toCmd
-                , fromCmd = options.fromCmd
+                { method = request.method
+                , url = request.url
+                , fromSharedMsg = options.fromSharedMsg
+                , batch = options.batch
                 , onHttpError = request.onHttpError
                 }
 
@@ -304,59 +373,50 @@ more data about the HTTP request.
 
 -}
 type CustomError
-    = JsonDecodeError { response : String, reason : String }
-    | OtherHttpError { response : Maybe String, reason : Http.Error }
+    = JsonDecodeError
+        { response : String
+        , reason : Json.Decode.Error
+        }
+    | OtherHttpError
+        { response : Maybe String
+        , reason : Http.Error
+        }
 
 
 toHttpError : CustomError -> Http.Error
 toHttpError customError =
     case customError of
         JsonDecodeError { response, reason } ->
-            Http.BadBody reason
+            Http.BadBody (Json.Decode.errorToString reason)
 
         OtherHttpError { reason } ->
             reason
 
 
-httpErrorToJsonString : Http.Error -> String
-httpErrorToJsonString httpError =
-    let
-        httpErrorAsJson : Json.Decode.Value
-        httpErrorAsJson =
-            case httpError of
-                Http.BadBody _ ->
-                    Json.Encode.object
-                        [ ( "tag", Json.Encode.string "BadBody" )
-                        ]
+httpErrorToString : Http.Error -> String
+httpErrorToString httpError =
+    case httpError of
+        Http.BadBody _ ->
+            "BadBody"
 
-                Http.BadUrl url ->
-                    Json.Encode.object
-                        [ ( "tag", Json.Encode.string "BadUrl" )
-                        ]
+        Http.BadUrl url ->
+            "BadUrl: " ++ url
 
-                Http.Timeout ->
-                    Json.Encode.object
-                        [ ( "tag", Json.Encode.string "Timeout" )
-                        ]
+        Http.Timeout ->
+            "Timeout"
 
-                Http.NetworkError ->
-                    Json.Encode.object
-                        [ ( "tag", Json.Encode.string "NetworkError" )
-                        ]
+        Http.NetworkError ->
+            "NetworkError"
 
-                Http.BadStatus code ->
-                    Json.Encode.object
-                        [ ( "tag", Json.Encode.string "BadStatus" )
-                        , ( "code", Json.Encode.int code )
-                        ]
-    in
-    Json.Encode.encode 2 httpErrorAsJson
+        Http.BadStatus code ->
+            "Status " ++ String.fromInt code
 
 
 fromCustomResultToMsg :
-    { url : String
-    , fromCmd : Cmd msg -> msg
-    , toCmd : msg -> Cmd msg
+    { method : String
+    , url : String
+    , batch : List msg -> msg
+    , fromSharedMsg : Shared.Msg.Msg -> msg
     , onHttpError : Http.Error -> msg
     }
     -> Result CustomError msg
@@ -367,46 +427,99 @@ fromCustomResultToMsg options result =
             msg
 
         Err customError ->
-            options.fromCmd
-                (Cmd.batch
-                    [ -- Let the original page handle the error
-                      customError
-                        |> toHttpError
-                        |> options.onHttpError
-                        |> options.toCmd
-                    , -- Report the error to Sentry
-                      case customError of
-                        JsonDecodeError { response, reason } ->
-                            sendJsonDecodeErrorToSentry
-                                { url = options.url
-                                , response = response
-                                , error = reason
-                                }
+            options.batch
+                [ -- Let the original page handle the error
+                  customError
+                    |> toHttpError
+                    |> options.onHttpError
+                , -- Report the error to Sentry
+                  case customError of
+                    JsonDecodeError { response, reason } ->
+                        Shared.Msg.SendJsonDecodeErrorToSentry
+                            { method = options.method
+                            , url = options.url
+                            , response = response
+                            , error = reason
+                            }
+                            |> options.fromSharedMsg
 
-                        OtherHttpError { response, reason } ->
-                            sendHttpErrorToSentry
-                                { url = options.url
-                                , response = response
-                                , error = httpErrorToJsonString reason
-                                }
-                    ]
-                )
+                    OtherHttpError { response, reason } ->
+                        Shared.Msg.SendHttpErrorToSentry
+                            { method = options.method
+                            , url = options.url
+                            , response = response
+                            , error = reason
+                            }
+                            |> options.fromSharedMsg
+                ]
 
 
-fromHttpResponseToCustomResult : { decoder : Json.Decode.Decoder msg } -> Http.Response String -> Result CustomError msg
+jsonErrorToTitle : Json.Decode.Error -> String
+jsonErrorToTitle error =
+    let
+        toInfo : Json.Decode.Error -> List String -> { path : List String, problem : String }
+        toInfo err path =
+            case err of
+                Json.Decode.Field name inner ->
+                    toInfo inner (path ++ [ name ])
+
+                Json.Decode.Index name inner ->
+                    toInfo inner path
+
+                Json.Decode.OneOf [] ->
+                    { path = path, problem = "Empty OneOf provided" }
+
+                Json.Decode.OneOf (first :: _) ->
+                    toInfo first path
+
+                Json.Decode.Failure problem value ->
+                    { path = path, problem = problem }
+
+        info : { path : List String, problem : String }
+        info =
+            toInfo error []
+    in
+    if List.isEmpty info.path then
+        info.problem
+
+    else
+        "Problem at ${path}: ${problem}"
+            |> String.replace "${path}" (String.join "." info.path)
+            |> String.replace "${problem}" info.problem
+
+
+fromHttpResponseToCustomResult :
+    { decoder : Json.Decode.Decoder msg }
+    -> Http.Response String
+    -> Result CustomError msg
 fromHttpResponseToCustomResult options httpResponse =
     case httpResponse of
         Http.BadUrl_ url_ ->
             -- means you did not provide a valid URL.
-            Err (OtherHttpError { response = Nothing, reason = Http.BadUrl url_ })
+            Err
+                (OtherHttpError
+                    { response = Nothing
+                    , reason = Http.BadUrl url_
+                    }
+                )
 
         Http.Timeout_ ->
             -- means it took too long to get a response.
-            Err (OtherHttpError { response = Nothing, reason = Http.Timeout })
+            Err
+                (OtherHttpError
+                    { response = Nothing
+                    , reason = Http.Timeout
+                    }
+                )
 
         Http.NetworkError_ ->
             -- means the user turned off their wifi, went in a cave, etc.
-            Err (OtherHttpError { response = Nothing, reason = Http.NetworkError })
+            Err
+                (OtherHttpError
+                    { response = Nothing
+                    , reason = Http.NetworkError
+                    }
+                )
 
         Http.BadStatus_ metadata response ->
             -- means you got a response back, but the status code indicates failure.
@@ -427,6 +540,6 @@ fromHttpResponseToCustomResult options httpResponse =
                     Err
                         (JsonDecodeError
                             { response = response
-                            , reason = Json.Decode.errorToString jsonDecodeError
+                            , reason = jsonDecodeError
                             }
                         )

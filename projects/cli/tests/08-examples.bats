@@ -36,6 +36,12 @@ load helpers
   expectElmExampleBuilds
 }
 
+@test "'08-nested-layouts' example builds successfully" {
+  cd ../../examples/08-nested-layouts
+  run npm install
+  expectElmExampleBuilds
+}
+
 @test "'10-typescript-interop' example builds successfully" {
   cd ../../examples/10-typescript-interop
   expectElmExampleBuilds
@@ -49,12 +55,12 @@ load helpers
 
 @test "'12-elm-ui' example builds successfully" {
   cd ../../examples/12-elm-ui
-    expectElmExampleBuilds
+  expectElmExampleBuilds
 }
 
 @test "'13-elm-css' example builds successfully" {
   cd ../../examples/13-elm-css
-    expectElmExampleBuilds
+  expectElmExampleBuilds
 }
 
 @test "'14-scss-and-assets' example builds successfully" {

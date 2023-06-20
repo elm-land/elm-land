@@ -704,7 +704,7 @@ export const onReady = ({ app, env }) => {
 }
 ```
 
-By default, for security reasons, __no environment variables__ are available. You'll need to edit your `elm-land.json` file's [app.env](./config/elm-land-json.md#appenv) property to allow your Elm application to access a given variable.
+By default, for security reasons, __no environment variables__ are available. You'll need to edit your `elm-land.json` file's [app.env](../reference/elm-land-json.md#appenv) property to allow your Elm application to access a given variable.
 
 ::: warning Be thoughtful about what you expose!
 
