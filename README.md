@@ -14,15 +14,6 @@ The code for this GitHub project is broken down into smaller projects:
 - __[elm-land](./projects/cli/)__ - The CLI tool, available at [npmjs.org/elm-land](https://npmjs.org/elm-land)
 - __[@elm-land/www](./docs/)__ - The official website, available at [elm.land](https://elm.land)
 
-### Plugins
-
-The Elm Land CLI will eventually come with optional plugins. Each plugin is designed to fit really well together.
-
-Here are the plugins that we plan to build after Elm Land 1.0:
-
-- `@elm-land/graphql` - Converts GraphQL files into Elm code
-- `@elm-land/ui` - Create a design system using Elm
-
 
 ### Tooling
 
