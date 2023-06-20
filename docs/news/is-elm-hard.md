@@ -109,7 +109,7 @@ In addition to the original guide, we've added some new sections:
 
 - __[Concepts](/concepts/)__ - An overview of how Elm Land works, the core concepts, and why you might customize certain modules.
 
-- __[Reference](/reference/)__- API documentation for Elm Land modules like `Route` and `Page` that you'll use day-to-day in your applications.
+- __[Reference](/reference/elm-land-json)__- API documentation for Elm Land modules like `Route` and `Page` that you'll use day-to-day in your applications.
 
 - __[FAQs](/faqs)__ - Common questions about the Elm Land project itself, including links to the official roadmap.
 
