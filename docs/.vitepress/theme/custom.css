@@ -288,6 +288,19 @@ img.browser__image {
   opacity: 0.75;
 }
 
+div[class^="vp-doc _news_"] h1 {
+  margin-top: 4rem;
+  margin-bottom: 1rem;
+}
+
+div[class^="vp-doc _news_"] th strong {
+  font-size: 1.25rem;
+  line-height: 1.2;
+  font-family: var(--vp-font-family-header);
+  display: flex;
+  color: initial;
+}
+
 .vp-doc blockquote p {
   position: relative;
   margin: 2rem 0;

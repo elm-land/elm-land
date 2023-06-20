@@ -1,7 +1,7 @@
 <template>  
   <div class="grid">
     <a class="news-post grid__tile" v-for="tile in tiles" target="_blank" rel="noopener" :href="toUrl(tile.id)">
-      <h3  v-text="tile.title"></h3>
+      <h3 v-text="tile.title"></h3>
       <img :src="tile.src" alt="Screenshot" width="320" height="180" />
     </a>
   </div>

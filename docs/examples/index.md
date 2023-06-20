@@ -1,10 +1,34 @@
 # Examples
 
-Elm Land is all about building cool stuff and sharing it! If you have an open-source project you would like to share with the community, let us know in the `#cool-projects` channel of the [Elm Land Discord](https://join.elm.land).
+Elm Land is all about building cool stuff and sharing it! This section combines official examples from the GitHub repo with other real apps made with the framework.
+
 
 
 ## Official examples
 
-Here is a gallery of the official example projects featured in the Elm Land repo. For a deeper explanation of how they work, check out [the official guide](/guide/).
+This is a gallery of the official example projects featured in the Elm Land repo. For a deeper explanation of how they work, check out [the official guide](/guide/).
 
 <ExampleGallery />
+
+
+## Real world projects
+
+This is a collection of real apps built with the Elm Land framework.
+
+::: tip ✨ Want to feature your project here?
+
+If you have an open-source project you would like to share here, let us know in the `#cool-projects` channel of the [Elm Land Discord](https://join.elm.land).
+
+:::
+
+### 2048
+
+
+A remake of the classic game "2048", inspired by [Elm Town Episode 55](https://elm.town/episodes/elm-town-55-from-algorithms-animation-to-building-a-decentralized-finance-app), where Dwayne Crooks shares how building 2048 from scratch helped him learn the Elm Architecture.
+
+__Created by:__ [Ryan](https://github.com/ryannhg)
+
+[Live demo](https://2048.elm.land/) • [Source code](https://github.com/elm-land/2048)
+
+![Screenshot](https://github.com/elm-land/2048/raw/main/static/screenshot.png)
+
