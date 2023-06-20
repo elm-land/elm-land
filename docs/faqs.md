@@ -2,7 +2,7 @@
 outline: deep
 ---
 
-# Frequently asked questions
+# FAQs
 
 These are a few questions that have come up in the [Elm Land Community Discord](https://join.elm.land). 
 
@@ -23,3 +23,20 @@ It also eliminates complexity during development. Understanding why some parts o
 Because we only support client-side rendering, Elm Land is a great choice for "web applications". For example, if your app is behind a sign-in page, SEO doesn't matter as much. 
 
 If you are creating "websites", like this one, we recommend using a tool that better fits the problem at hand.
+
+## "How does Elm Land compare to elm-pages?"
+
+Elm Land is also a framework like [elm-pages](https://elm-pages.com). When you use Elm Land, you're writing standard Elm code that runs client-side in your web browser. Unlike elm-pages, Elm Land doesn't extend the Elm platform, have build time data fetching, or any features for rendering meta tags or handling SEO. For that reason, Elm Land is not a good fit for making a blog or personal website.
+
+Elm Land is designed for applications that don't have per-page SEO needs. If you are building a web app that is behind a sign-in screen, then Elm Land is focused on that use case! The latest version of elm-pages is more flexible, and can build everything from static websites to SSR web applications that run without JavaScript enabled.
+
+If you're unsure which to use, I recommend trying both out and seeing which framework matches your needs!
+
+## "How does Elm Land compare to elm-spa?"
+
+Elm Land is the successor of [elm-spa](https://elm-spa.dev), and was written by [the same person](https://github.com/ryannhg). Although many of the values are the same, Elm Land was redesigned to be more than scaffolding a new project and handling URL routing. Elm Land cares about the full experience of building a web application.
+
+For that reason, Elm Land has a more powerful dev server, more guides and conventions around building apps, and even it's own VS code plugin to ensure a nice editor experience. In the future, Elm Land will also have plugins that are designed to work well together. 
+
+The goal is to provide web developers with one simple way to build Elm apps that works well!
+
