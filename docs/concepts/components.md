@@ -859,7 +859,7 @@ Now that we're done defining it, let's take a quick look at how we would use it 
 Let's imagine  our homepage needs a dropdown to allow users to select the animal that will become the next president of the United States. For convenience, we've defined the available animals in an `Animal` module, which has its own `toName` function.
 
 ```elm{12,18,29,36-42,57-64}
-module Pages.Home_ expossng (Model, Msg, page)
+module Pages.Home_ exposing (Model, Msg, page)
 
 import Animal exposing (Animal)
 import Components.Dropdown
