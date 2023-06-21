@@ -80,7 +80,7 @@ To prevent that problem from happening again, Elm Land now provides it's own set
 
 ![Screenshot of the Elm Land error message for a missing "page" export](../images/elm-land-error-messages.png)
 
-For example, the error above is letting someone know that removing the exposed `page` function will make this page unable to render. Users can learn more about theses errors in more detail on [the new "Problems" page](/problems).
+For example, the error above is letting someone know that removing the exposed `page` function will make this page unable to render. Users can learn more about these errors in more detail on [the new "Problems" page](/problems).
 
 After upgrading to Elm Land v0.19.0, you should never see an error message for a generated file again. Shout-out to Dillon Kearns, who had previously explored this idea in [elm-pages](https://github.com/dillonkearns/elm-pages)!
 
