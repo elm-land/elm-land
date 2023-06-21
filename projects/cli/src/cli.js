@@ -6,6 +6,8 @@ const { Customize } = require('./commands/customize')
 const { Routes } = require('./commands/routes')
 const { Utils, Terminal } = require('./commands/_utils')
 
+const { GraphQL } = require('../../graphql/src/index.js')
+
 let { version } = require('../package.json')
 
 let subcommandList = [
@@ -17,7 +19,9 @@ let subcommandList = [
   `    📄 elm-land ${Terminal.pink('add page <url>')} ................ add a new page`,
   `    🍱 elm-land ${Terminal.pink('add layout <name>')} ........... add a new layout`,
   `    🔧 elm-land ${Terminal.pink('customize <name>')} .. customize a default module`,
-  `    🔍 elm-land ${Terminal.pink('routes')} ........... list all routes in your app`
+  `    🔍 elm-land ${Terminal.pink('routes')} ........... list all routes in your app`,
+  '',
+  `    📊 elm-land ${Terminal.pink('graphql')} .............. work with a GraphQL API`
 ]
 
 
@@ -88,6 +92,13 @@ let run = async (commandFromCli) => {
         return Routes.printHelpInfo()
       } else {
         return Routes.run({ url })
+      }
+    },
+    'graphql': ([command, ...args] = []) => {
+      if (isHelpFlag(command)) {
+        return GraphQL.printHelpInfo()
+      } else {
+        return GraphQL.run(command, ...args)
       }
     }
   }

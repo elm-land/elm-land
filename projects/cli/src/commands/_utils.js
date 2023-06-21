@@ -5,6 +5,7 @@ const Terminal = {
   dim: (str) => '\033[2m' + str + '\033[0m',
   red: (str) => '\033[31m' + str + '\033[0m',
   green: (str) => '\033[32m' + str + '\033[0m',
+  yellow: (str) => '\033[33m' + str + '\033[0m',
   pink: (str) => '\033[35m' + str + '\033[0m',
   cyan: (str) => '\033[36m' + str + '\033[0m',
 }

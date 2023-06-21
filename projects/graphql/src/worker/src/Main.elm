@@ -1,4 +1,4 @@
-module Main exposing (main)
+port module Main exposing (main)
 
 import Json.Decode
 
@@ -20,10 +20,25 @@ type alias Model =
     {}
 
 
+port outgoing : { message : String } -> Cmd msg
+
+
+type alias Flags =
+    { schema : GraphQL.Introspection.Schema
+    , queries : List GraphQL.Introspection.Document
+    , mutations : List GraphQL.Introspection.Document
+    }
+
+
 init : Json.Decode.Value -> ( Model, Cmd Msg )
 init json =
+    let
+        flags : Flags
+        flags =
+            parseFlags json
+    in
     ( {}
-    , Cmd.none
+    , outgoing { message = "Hello!" }
     )
 
 
@@ -37,7 +52,7 @@ type alias Msg =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    ( model, Cmd.none)
+    ( model, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg

@@ -1,0 +1,3 @@
+query HelloWorld {
+  greet(name: "world")
+}
