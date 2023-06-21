@@ -110,7 +110,7 @@ In addition to the original guide, we've added some new sections:
 
 - __[FAQs](/faqs)__ - Common questions about the Elm Land project itself, including links to the official roadmap.
 
-This update also comes with an [Examples](/examples/)__ gallery. This includes all the [official examples](https://github.com/elm-land/elm-land/tree/main/examples) from the Elm Land repo.
+This update also comes with an __[Examples](/examples/)__ gallery. This includes all the [official examples](https://github.com/elm-land/elm-land/tree/main/examples) from the Elm Land repo.
 
 <BrowserWindow src="/images/news/examples-gallery.jpg" alt="A preview of the examples page" />
 
