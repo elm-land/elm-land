@@ -85,7 +85,7 @@ For example, the error above is letting someone know that removing the exposed `
 After upgrading to Elm Land v0.19.0, you should never see an error message for a generated file again. Shout-out to Dillon Kearns, who had previously explored this idea in [elm-pages](https://github.com/dillonkearns/elm-pages)!
 
 
-## Improvements for everone
+## Improvements for everyone
 
 In addition to learning from Sai's experience, I also added several features inspired by the community members in our Discord. Folks using Elm Land had shared some limitations with the guide and CLI they encountered in v0.18.x in the `#suggest-a-feature` and `#improve-the-docs` channels.
 
