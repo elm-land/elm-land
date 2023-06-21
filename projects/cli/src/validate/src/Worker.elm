@@ -514,8 +514,7 @@ missingFunctionOrTypeError options =
                 |> String.replace "{{name}}" options.name
                 |> String.replace "{{typeOrFunction}}" options.typeOrFunction
         , message =
-            [ "I expected this {{kind}} file to expose a "
-                |> String.replace "{{kind}}" options.kind
+            [ "I expected this module to expose a "
                 |> Error.text
             , "{{name}}"
                 |> String.replace "{{name}}" options.name
