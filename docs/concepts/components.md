@@ -315,7 +315,7 @@ withDisabled isDisabled (Settings settings) =
 view : Button msg -> Html msg
 view (Settings settings) =
     let
-        viewOptionIcon : Maybe Icon -> Html msg
+        viewOptionalIcon : Maybe Icon -> Html msg
         viewOptionalIcon maybeIcon =
             case maybeIcon of
                 Just icon ->
