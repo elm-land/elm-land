@@ -6,7 +6,7 @@ outline: [2,3]
 
 ## Overview
 
-Layouts allow your pages to reuse stateful UI. They can save you time wiring things up, and prevent bugs that come from duplication across pages. In many web apps, you might have a common element, like a sidebar, that should available across those pages.
+Layouts allow your pages to reuse stateful UI. They can save you time wiring things up, and prevent bugs that come from duplication across pages. In many web apps, you might have a common element, like a sidebar, that should be available across multiple pages.
 
 In Elm Land, each page explicitly chooses the layout it wants to use. This design choice means there aren't be any secret or "default" layouts. For example, if you have a sign-in page that you don't want to use your sidebar layout, that's totally fine!
 
