@@ -225,7 +225,7 @@ subscriptions model =
 
 ## Removing layouts
 
-Just like we saw with pages, there's no special command for removing layout files. To remove a layou, you can either delete the file in your file explorer, or from your terminal:
+Just like we saw with pages, there's no special command for removing layout files. To remove a layout, you can either delete the file in your file explorer, or from your terminal:
 
 ```sh
 rm src/Layouts/Sidebar.elm
