@@ -437,6 +437,6 @@ page : Shared.Model -> Route () -> Page Model Msg
 page : Auth.User -> Shared.Model -> Route () -> Page Model Msg
 ```
 
-By adding `Auth.User` as the first argument of your `page` function, you're letting Elm Land know that it this page should only show when a user is signed in.
+By adding `Auth.User` as the first argument of your `page` function, you're letting Elm Land know that this page should only show when a user is signed in.
 
 In [the `Auth` section](./auth.md), we'll learn more about the `User` type, how to define redirect rules, and more.
