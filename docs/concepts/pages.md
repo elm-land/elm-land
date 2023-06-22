@@ -156,7 +156,7 @@ view model = ...
 
 -- AFTER
 view : Shared.Model -> Model -> View Msg
-view route model = ...
+view shared model = ...
 ```
 
 The same concept applies to `init`, `update`, and `subscriptions`. 
@@ -180,7 +180,7 @@ page shared route =
         }
 ```
 
-After we pass in the `shared` argument on line 12, we can update our `view` function to get access to `shared` in our view code:
+After we pass in the `route` argument on line 10, we can update our `init` function to get access to `route` in our view code:
 
 ```elm{6-7}
 -- BEFORE
