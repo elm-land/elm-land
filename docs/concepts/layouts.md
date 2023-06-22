@@ -117,7 +117,7 @@ Our `layout` function returns a `Layout` type. This `Layout` type bundles up all
 
 There are four parameters on the `Layout` type:
 
-1. `()` – This is a placeholder for "parent settings" which, we'll cover in the [Nested layouts](#nested-layouts) section below.
+1. `()` – This is a placeholder for "parent props" which, we'll cover in the [Nested layouts](#nested-layouts) section below.
 1. `Model` – This means our `Layout` will store a `Model` to track it's local state
 1. `Msg` – Says our `Layout` will send these `Msg` values when user events occur.
 1. `contentMsg` – This last parameter allows the layout's `view` function to embed the page's HTML anywhere in our layout.
