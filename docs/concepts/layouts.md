@@ -78,7 +78,7 @@ Although some things are the same, there are two new types we haven't seen befor
 
 As we'll see in the ["Using layouts" section](#using-layouts) below, it's common for pages to send data or other information to their layout. In Elm Land, the `Props` type defined in your layout file determines what information can be sent by a page.
 
-For our new sidebar layout, let's say our we always expect an `Auth.User` value. This way, we won't have to worry about what the sidebar looks like when a user is not signed in:
+For our new sidebar layout, let's say we always expect an `Auth.User` value. This way, we won't have to worry about what the sidebar looks like when a user is not signed in:
 
 ```elm{3,7-9}
 module Layouts.Sidebar exposing (Props, Model, Msg, layout)
