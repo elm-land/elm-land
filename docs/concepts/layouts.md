@@ -375,18 +375,18 @@ Earlier, we saw the `view` function allowed us to embed a page's HTML anywhere w
 
 In the example above, we want to reuse all the layout and logic in our `Layouts.Sidebar.Header`, but we want to customize the button that appears in the top right corner of our header. Additionally, we want the individual page to handle the logic for "Add person" or "Add post".
 
-### Upgrading our `Settings`
+### Upgrading our `Props`
 
-In order to accomplish this, we'll need to update our `Settings` type to support rending HTML with a `contentMsg` type variable:
+In order to accomplish this, we'll need to update our `Props` type to support rendering HTML with a `contentMsg` type variable:
 
 ```elm{7,9}
 -- BEFORE
-type alias Settings =
+type alias Props =
     { title : String
     }
 
 -- AFTER
-type alias Settings contentMsg =
+type alias Props contentMsg =
     { title : String
     , button : Html contentMsg
     }
@@ -465,7 +465,7 @@ view props { model, toContentMsg, content } =
 
 Here are some things to keep in mind:
 
-- You can pass along `props` value into your `view` function, just like we saw in the pages section (see line 22)
+- You can pass along `props` value into your `view` function, just like we saw in the pages section (see line 32)
 - Be sure to add the `contentMsg` parameter everywhere you see `Props` in this file
 
 ::: tip What's up with that `map` function?
