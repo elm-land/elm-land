@@ -128,7 +128,7 @@ There are four parameters on the `Layout` type:
 Layouts are very similar to pages, and even have identical `init/update/subscriptions` functions.
 
 But here's what makes the layout's `view` function is unique:
-1. It allows you to __embed__ other page or layout HTML anywhwere you like.
+1. It allows you to __embed__ other page or layout HTML anywhere you like.
 1. It supports __nesting__ layouts to save you time and prevent bugs.
 
 Here is a closer look at the four functions used in every layout:
