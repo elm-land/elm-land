@@ -107,7 +107,7 @@ Elm Land comes with a system for making user authentication really easy!
 We briefly covered this in the "User authentication" section in the Pages guide. Later on, in the `Auth` section, we'll learn more about how
 the `User` value works.
 
-( For now, here's all you need to know: If any page or layout has access to an `Auth.User` value, that view will only be visible for signed-in users. )
+( For now, here's all you need to know: if any page or layout has access to an `Auth.User` value, that view will only be visible for signed-in users. )
 
 :::
 
