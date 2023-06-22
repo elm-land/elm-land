@@ -74,7 +74,7 @@ Our `Components.Notification.view` function takes in a value called `props` with
 
 It uses those three values to return some HTML that can be rendered by another page, layout, or component. 
 
-The important thing to note is that the `props` passed into a simple function can contain __values to render__ like `String`, but also __messages to emit__ when an event (like `onClock`) comes in. 
+The important thing to note is that the `props` passed into a simple function can contain __values to render__ like `String`, but also __messages to emit__ when an event (like `onClick`) comes in. 
 
 Having the flexible, lowercase `msg` means we can use this component on _any_ page, as we'll see in the next section!
 
