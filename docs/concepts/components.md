@@ -74,7 +74,7 @@ Our `Components.Notification.view` function takes in a value called `props` with
 
 It uses those three values to return some HTML that can be rendered by another page, layout, or component. 
 
-The important thing to note is that the `props` passed into a simple function can contain __values to render__ like `String`, but also __messages to emit__ when an event (like `onClock`) comes in. 
+The important thing to note is that the `props` passed into a simple function can contain __values to render__ like `String`, but also __messages to emit__ when an event (like `onClick`) comes in. 
 
 Having the flexible, lowercase `msg` means we can use this component on _any_ page, as we'll see in the next section!
 
@@ -315,7 +315,7 @@ withDisabled isDisabled (Settings settings) =
 view : Button msg -> Html msg
 view (Settings settings) =
     let
-        viewOptionIcon : Maybe Icon -> Html msg
+        viewOptionalIcon : Maybe Icon -> Html msg
         viewOptionalIcon maybeIcon =
             case maybeIcon of
                 Just icon ->
@@ -399,7 +399,7 @@ In the examples above, we had simple UI components that didn't need all that stu
 
 ### Defining the component
 
-Sometimes, our applications will have a need for a more complex component like an __dropdown__ that needs to:
+Sometimes, our applications will have a need for a more complex component like a __dropdown__ that needs to:
 
 1. Track which item is currently selected
 1. Track whether the results menu is open or closed
