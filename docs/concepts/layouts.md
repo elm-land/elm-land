@@ -238,7 +238,7 @@ Elm Land will clean up the generated `Layouts.Sidebar` custom type variant, and 
 
 Although most of our pages should have a sidebar, there are certain pages that shouldn't. One common example of this is the "Sign in" page. Elm Land allows each pages to opt-in to use a layout.
 
-For that reason, there is no default layout, or other mechanism to hide which layout a page is using. You can use the `Page.withLayout` function, documented in the Pages section, to add a layout to a page:
+For that reason, there is no default layout, or other mechanism to hide which layout a page is using. You can use the `Page.withLayout` function, documented in the "Page" module reference, to add a layout to a page:
 
 ```elm{4,16,19-26}
 module Pages.People exposing (Model, Msg, page)
