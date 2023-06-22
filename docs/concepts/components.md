@@ -399,7 +399,7 @@ In the examples above, we had simple UI components that didn't need all that stu
 
 ### Defining the component
 
-Sometimes, our applications will have a need for a more complex component like an __dropdown__ that needs to:
+Sometimes, our applications will have a need for a more complex component like a __dropdown__ that needs to:
 
 1. Track which item is currently selected
 1. Track whether the results menu is open or closed
