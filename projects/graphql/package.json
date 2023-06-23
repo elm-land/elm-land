@@ -4,7 +4,9 @@
   "description": "Generate Elm code from GraphQL files",
   "main": "src/index.js",  
   "scripts": {
-    "test": "npx bats"
+    "build": "npm run build:elm && npm run build:playground",
+    "build:elm": "(cd src/worker && elm make src/Main.elm --output=dist/elm.worker.js)",
+    "build:playground": "(cd playground && elm-land graphql build)"
   },
   "repository": {
     "type": "git",
