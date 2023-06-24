@@ -63,6 +63,14 @@ const members = [
       { icon: 'github', link: 'https://github.com/alpakaxaxa' }
     ]
   },
+  {
+    avatar: 'https://www.github.com/dennistruemper.png',
+    name: 'Dennis Roch',
+    title: '@dennistruemper',
+    links: [
+      { icon: 'github', link: 'https://github.com/dennistruemper' }
+    ]
+  },
 ]
 </script>
 
