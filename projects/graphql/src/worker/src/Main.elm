@@ -2,6 +2,7 @@ port module Main exposing (main)
 
 import GraphQL.Introspection.Document as Document exposing (Document)
 import GraphQL.Introspection.Schema as Schema exposing (Schema)
+import GraphQL.Query
 import Json.Decode
 
 
@@ -53,7 +54,13 @@ init json =
                     List.concat
                         [ [ graphqlOperationFile ]
                         , flags.queries
-                            |> List.map generateQueryFile
+                            |> List.map
+                                (\query ->
+                                    GraphQL.Query.generate
+                                        { schema = flags.schema
+                                        , document = query
+                                        }
+                                )
                         ]
                 }
             )

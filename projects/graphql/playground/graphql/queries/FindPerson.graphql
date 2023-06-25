@@ -1,7 +1,9 @@
 query {
   person(id: "1") {
-    id
     name
     emailAddress
+    # followers {
+    #   name
+    # }
   }
 }

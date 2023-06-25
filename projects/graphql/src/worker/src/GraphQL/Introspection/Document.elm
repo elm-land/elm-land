@@ -1,6 +1,8 @@
 module GraphQL.Introspection.Document exposing
     ( Document, decoder
     , toName, toContents
+    , Selection(..), toRootSelections
+    , FieldSelection, getNestedFields, toFieldSelection
     )
 
 {-| These decoders were translated from the official `graphql`
@@ -8,12 +10,21 @@ NPM package's `node_modules/graphql/language/ast.d.ts` file.
 
 (It uses `DocumentNode` type)
 
+
+## Document
+
 @docs Document, decoder
 
 @docs toName, toContents
 
+
+## Selection
+
+@docs Selection, toRootSelections
+
 -}
 
+import GraphQL.Introspection.Schema as Schema exposing (Schema)
 import Json.Decode
 
 
@@ -40,6 +51,33 @@ toContents (Document doc) =
 
 
 
+-- OPERATIONS
+
+
+toRootOperation : Document -> Maybe OperationDefinition
+toRootOperation (Document doc) =
+    doc.definitions
+        |> List.filterMap toOperationDefinition
+        -- TODO: Using `List.head` will fail if fragments
+        -- are listed first. Be sure to report an error or
+        -- change this logic before shipping!
+        |> List.head
+
+
+
+-- SELECTIONS
+
+
+{-| Finds the top-level query or mutation's selections
+-}
+toRootSelections : Document -> List Selection
+toRootSelections ((Document doc) as document) =
+    toRootOperation document
+        |> Maybe.map .selections
+        |> Maybe.withDefault []
+
+
+
 -- INTERNALS
 
 
@@ -61,6 +99,16 @@ internalsDecoder =
 type Definition
     = Definition_Operation OperationDefinition
     | Definition_Fragment FragmentDefinition
+
+
+toOperationDefinition : Definition -> Maybe OperationDefinition
+toOperationDefinition def =
+    case def of
+        Definition_Operation opDef ->
+            Just opDef
+
+        _ ->
+            Nothing
 
 
 definitionDecoder : Json.Decode.Decoder Definition
@@ -88,7 +136,7 @@ type alias OperationDefinition =
     { name : Maybe String
     , operation : OperationType
     , variables : List VariableDefinition
-    , selection : List Selection
+    , selections : List Selection
     }
 
 
@@ -109,6 +157,16 @@ type Selection
     = Selection_Field FieldSelection
     | Selection_FragmentSpread FragmentSpreadSelection
     | Selection_InlineFragment InlineFragmentSelection
+
+
+toFieldSelection : Selection -> Maybe FieldSelection
+toFieldSelection selection =
+    case selection of
+        Selection_Field fieldSelection ->
+            Just fieldSelection
+
+        _ ->
+            Nothing
 
 
 selectionDecoder : Json.Decode.Decoder Selection
@@ -143,11 +201,69 @@ type alias FieldSelection =
     }
 
 
+getNestedFields :
+    Schema
+    -> Document
+    ->
+        List
+            { parentTypeName : String
+            , fieldSelection : FieldSelection
+            }
+getNestedFields schema (Document doc) =
+    let
+        topLevelQuerySelections : List Selection
+        topLevelQuerySelections =
+            doc.definitions
+                |> List.head
+                |> Maybe.andThen toOperationDefinition
+                |> Maybe.map .selections
+                |> Maybe.withDefault []
+
+        toFieldSelections :
+            String
+            -> List Selection
+            ->
+                List
+                    { parentTypeName : String
+                    , fieldSelection : FieldSelection
+                    }
+        toFieldSelections parentTypeName selections =
+            selections
+                |> List.filterMap toFieldSelection
+                |> List.filter
+                    (\fieldSelection ->
+                        List.length fieldSelection.selections > 0
+                    )
+                |> List.concatMap
+                    (\self ->
+                        let
+                            selfTypeName : String
+                            selfTypeName =
+                                Schema.findFieldForType
+                                    { typeName = parentTypeName
+                                    , fieldName = self.name
+                                    }
+                                    schema
+                                    |> Maybe.map .type_
+                                    |> Maybe.map Schema.toTypeRefName
+                                    |> Maybe.withDefault "UNEXPECTED_ERROR_IN_toFieldSelections_please_report_this"
+                        in
+                        { parentTypeName = parentTypeName
+                        , fieldSelection = self
+                        }
+                            :: toFieldSelections selfTypeName self.selections
+                    )
+    in
+    toFieldSelections
+        (Schema.toQueryTypeName schema)
+        topLevelQuerySelections
+
+
 fieldSelectionDecoder : Json.Decode.Decoder FieldSelection
 fieldSelectionDecoder =
     Json.Decode.map3 FieldSelection
         (Json.Decode.at [ "name", "value" ] Json.Decode.string)
-        (Json.Decode.maybe (Json.Decode.at [ "name", "value" ] Json.Decode.string))
+        (Json.Decode.maybe (Json.Decode.at [ "alias", "value" ] Json.Decode.string))
         (Json.Decode.maybe
             (Json.Decode.at [ "selectionSet", "selections" ] (Json.Decode.list (Json.Decode.lazy (\_ -> selectionDecoder))))
             |> Json.Decode.map (Maybe.withDefault [])

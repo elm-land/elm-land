@@ -1,10 +1,14 @@
 module GraphQL.Introspection.Schema exposing
     ( Schema, decoder
-    , Type(..), findTypeWithName, toTypeName
+    , toQueryTypeName
+    , Type(..)
+    , findQueryType, findTypeWithName
+    , toTypeName
     , ObjectType, toObjectType
     , ScalarType, EnumType, InputObjectType
     , InterfaceType, UnionType
-    , Field, findFieldWithName
+    , Field, findFieldForType, findFieldWithName
+    , TypeRef(..), toTypeRefName
     )
 
 {-| These decoders were translated from the official `graphql`
@@ -14,11 +18,14 @@ NPM package's `./graphql/utilties/getIntrospectionQuery.d.ts` file.
 ## Schema
 
 @docs Schema, decoder
+@docs toQueryTypeName
 
 
 ## Type
 
-@docs Type, findTypeWithName, toTypeName
+@docs Type
+@docs findQueryType, findTypeWithName
+@docs toTypeName
 
 @docs ObjectType, toObjectType
 @docs ScalarType, EnumType, InputObjectType
@@ -27,7 +34,9 @@ NPM package's `./graphql/utilties/getIntrospectionQuery.d.ts` file.
 
 ## Field
 
-@docs Field, findFieldWithName
+@docs Field, findFieldForType, findFieldWithName
+
+@docs TypeRef, toTypeRefName
 
 -}
 
@@ -44,8 +53,19 @@ decoder =
     Json.Decode.map Schema internalsDecoder
 
 
+toQueryTypeName : Schema -> String
+toQueryTypeName (Schema schema) =
+    schema.queryTypeName
+
+
 
 -- TYPES
+
+
+findQueryType : Schema -> Maybe ObjectType
+findQueryType ((Schema schema) as wrappedSchema) =
+    findTypeWithName schema.queryTypeName wrappedSchema
+        |> Maybe.andThen toObjectType
 
 
 findTypeWithName : String -> Schema -> Maybe Type
@@ -56,6 +76,23 @@ findTypeWithName name (Schema schema) =
             toTypeName type_ == name
     in
     List.Extra.find hasMatchingName schema.types
+
+
+findFieldForType :
+    { typeName : String
+    , fieldName : String
+    }
+    -> Schema
+    -> Maybe Field
+findFieldForType { typeName, fieldName } schema =
+    let
+        parentObjectType : Maybe ObjectType
+        parentObjectType =
+            findTypeWithName typeName schema
+                |> Maybe.andThen toObjectType
+    in
+    parentObjectType
+        |> Maybe.andThen (findFieldWithName fieldName)
 
 
 toTypeName : Type -> String
@@ -114,8 +151,8 @@ findFieldWithName name { fields } =
 
 
 type alias Internals =
-    { queryType : String
-    , mutationType : Maybe String
+    { queryTypeName : String
+    , mutationTypeName : Maybe String
     , types : List Type
     }
 
@@ -360,6 +397,19 @@ type TypeRef
     = Named NamedTypeRef
     | List_ TypeRef
     | NonNull TypeRef
+
+
+toTypeRefName : TypeRef -> String
+toTypeRefName typeRef =
+    case typeRef of
+        Named data ->
+            data.name
+
+        List_ inner ->
+            toTypeRefName inner
+
+        NonNull inner ->
+            toTypeRefName inner
 
 
 typeRefDecoder : Json.Decode.Decoder TypeRef
