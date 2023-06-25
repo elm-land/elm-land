@@ -514,8 +514,7 @@ missingFunctionOrTypeError options =
                 |> String.replace "{{name}}" options.name
                 |> String.replace "{{typeOrFunction}}" options.typeOrFunction
         , message =
-            [ "I expected this {{kind}} file to expose a "
-                |> String.replace "{{kind}}" options.kind
+            [ "I expected this module to expose a "
                 |> Error.text
             , "{{name}}"
                 |> String.replace "{{name}}" options.name
@@ -530,7 +529,7 @@ missingFunctionOrTypeError options =
                 |> Error.text
             , Error.text (String.repeat (22 + String.length moduleName) " ")
             , Error.green (String.repeat (String.length options.name) "^")
-            , Error.text "\nThis value is used internally by Elm Land, so it will need to accessible\nfrom outside the current module.\n\n"
+            , Error.text "\nThis value is used internally by Elm Land, so it will need to be accessible\noutside of the current module.\n\n"
             , Error.underline "Hint:"
             , " Read https://elm.land/problems#missing-exposed-{{typeOrFunction}} to learn more"
                 |> String.replace "{{typeOrFunction}}" (String.toLower options.typeOrFunction)

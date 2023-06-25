@@ -20,6 +20,7 @@ export default {
       { kind: "official", title: "📊 Query Parameters", id: "06-query-parameters", src: "/images/guide/query-parameters.gif" },
       { kind: "official", title: "🧱 Working with JS", id: "07-working-with-js", src: "/images/examples/working-with-js.gif" },
       { kind: "official", title: "🪆 Nested Layouts", id: "08-nested-layouts", src: "/images/examples/nested-layouts.gif" },
+      { kind: "official", title: "🪄 Catch-all Routes", id: "09-catch-all-routes", src: "/images/examples/catch-all-routes.jpg" },
       { kind: "official", title: "🧩 TypeScript Interop", id: "10-typescript-interop", src: "/images/examples/typescript.gif" },
       { kind: "official", title: "🚨 Error Reporting", id: "11-error-reporting", src: "/images/examples/sentry.gif" },
       { kind: "official", title: "🎨 Using Elm UI", id: "12-elm-ui", src: "/images/examples/elm-ui.jpg" },

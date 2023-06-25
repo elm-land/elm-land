@@ -2832,13 +2832,17 @@ routePathFromStringExpression { pages } =
             CodeGen.Expression.caseExpression
                 { value = CodeGen.Argument.new "urlPathSegments"
                 , branches =
+                    let
+                        pageBranches =
+                            pages
+                                |> List.filter (\page -> not (PageFile.isNotFoundPage page))
+                                |> List.map toBranch
+                    in
                     if List.any PageFile.isTopLevelCatchAllPage pages then
-                        pages
-                            |> List.filter (\page -> not (PageFile.isNotFoundPage page))
-                            |> List.map toBranch
+                        pageBranches
 
                     else
-                        List.map toBranch pages ++ [ nothingBranch ]
+                        pageBranches ++ [ nothingBranch ]
                 }
         }
 

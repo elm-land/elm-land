@@ -6,7 +6,7 @@ outline: [2,3]
 
 ## Overview
 
-Layouts allow your pages to reuse stateful UI. They can save you time wiring things up, and prevent bugs that come from duplication across pages. In many web apps, you might have a common element, like a sidebar, that should available across those pages.
+Layouts allow your pages to reuse stateful UI. They can save you time wiring things up, and prevent bugs that come from duplication across pages. In many web apps, you might have a common element, like a sidebar, that should be available across multiple pages.
 
 In Elm Land, each page explicitly chooses the layout it wants to use. This design choice means there aren't be any secret or "default" layouts. For example, if you have a sign-in page that you don't want to use your sidebar layout, that's totally fine!
 
@@ -78,7 +78,7 @@ Although some things are the same, there are two new types we haven't seen befor
 
 As we'll see in the ["Using layouts" section](#using-layouts) below, it's common for pages to send data or other information to their layout. In Elm Land, the `Props` type defined in your layout file determines what information can be sent by a page.
 
-For our new sidebar layout, let's say our we always expect an `Auth.User` value. This way, we won't have to worry about what the sidebar looks like when a user is not signed in:
+For our new sidebar layout, let's say we always expect an `Auth.User` value. This way, we won't have to worry about what the sidebar looks like when a user is not signed in:
 
 ```elm{3,7-9}
 module Layouts.Sidebar exposing (Props, Model, Msg, layout)
@@ -107,7 +107,7 @@ Elm Land comes with a system for making user authentication really easy!
 We briefly covered this in the "User authentication" section in the Pages guide. Later on, in the `Auth` section, we'll learn more about how
 the `User` value works.
 
-( For now, here's all you need to know: If any page or layout has access to an `Auth.User` value, that view will only be visible for signed-in users. )
+( For now, here's all you need to know: if any page or layout has access to an `Auth.User` value, that view will only be visible for signed-in users. )
 
 :::
 
@@ -117,7 +117,7 @@ Our `layout` function returns a `Layout` type. This `Layout` type bundles up all
 
 There are four parameters on the `Layout` type:
 
-1. `()` – This is a placeholder for "parent settings" which, we'll cover in the [Nested layouts](#nested-layouts) section below.
+1. `()` – This is a placeholder for "parent props" which, we'll cover in the [Nested layouts](#nested-layouts) section below.
 1. `Model` – This means our `Layout` will store a `Model` to track it's local state
 1. `Msg` – Says our `Layout` will send these `Msg` values when user events occur.
 1. `contentMsg` – This last parameter allows the layout's `view` function to embed the page's HTML anywhere in our layout.
@@ -127,8 +127,8 @@ There are four parameters on the `Layout` type:
 
 Layouts are very similar to pages, and even have identical `init/update/subscriptions` functions.
 
-But here's what makes the layout's `view` function is unique:
-1. It allows you to __embed__ other page or layout HTML anywhwere you like.
+But here's what makes the layout's `view` function unique:
+1. It allows you to __embed__ other page or layout HTML anywhere you like.
 1. It supports __nesting__ layouts to save you time and prevent bugs.
 
 Here is a closer look at the four functions used in every layout:
@@ -225,7 +225,7 @@ subscriptions model =
 
 ## Removing layouts
 
-Just like we saw with pages, there's no special command for removing layout files. To remove a layou, you can either delete the file in your file explorer, or from your terminal:
+Just like we saw with pages, there's no special command for removing layout files. To remove a layout, you can either delete the file in your file explorer, or from your terminal:
 
 ```sh
 rm src/Layouts/Sidebar.elm
@@ -238,7 +238,7 @@ Elm Land will clean up the generated `Layouts.Sidebar` custom type variant, and 
 
 Although most of our pages should have a sidebar, there are certain pages that shouldn't. One common example of this is the "Sign in" page. Elm Land allows each pages to opt-in to use a layout.
 
-For that reason, there is no default layout, or other mechanism to hide which layout a page is using. You can use the `Page.withLayout` function, documented in the Pages section, to add a layout to a page:
+For that reason, there is no default layout, or other mechanism to hide which layout a page is using. You can use the `Page.withLayout` function, documented in the "Page" module reference, to add a layout to a page:
 
 ```elm{4,16,19-26}
 module Pages.People exposing (Model, Msg, page)
@@ -321,16 +321,16 @@ layout props shared route =
         , subscriptions = subscriptions
         }
         |> Layout.withParentProps
-            { user = settings.user
+            { user = props.user
             }
 ```
 
 Here are a few differences between a nested layout and the standard one we saw earlier in this guide:
 
-- __On line 18,__ you'll see the first argument of your `Layout` type holds the parent settings.
+- __On line 18,__ you'll see the first argument of your `Layout` type holds the parent props.
     - In this case, our parent layout props type is `Layouts.Sidebar.Props`
 - __On line 26,__ we need to pass those `Layouts.Sidebar.Props` in. 
-    - Because we are within the `layout` function, we have access to our own `settings`
+    - Because we are within the `layout` function, we have access to our own `props`
     - This gives our sidebar layout access to the `user` value it expected.
 
 
@@ -375,18 +375,18 @@ Earlier, we saw the `view` function allowed us to embed a page's HTML anywhere w
 
 In the example above, we want to reuse all the layout and logic in our `Layouts.Sidebar.Header`, but we want to customize the button that appears in the top right corner of our header. Additionally, we want the individual page to handle the logic for "Add person" or "Add post".
 
-### Upgrading our `Settings`
+### Upgrading our `Props`
 
-In order to accomplish this, we'll need to update our `Settings` type to support rending HTML with a `contentMsg` type variable:
+In order to accomplish this, we'll need to update our `Props` type to support rendering HTML with a `contentMsg` type variable:
 
 ```elm{7,9}
 -- BEFORE
-type alias Settings =
+type alias Props =
     { title : String
     }
 
 -- AFTER
-type alias Settings contentMsg =
+type alias Props contentMsg =
     { title : String
     , button : Html contentMsg
     }
@@ -465,7 +465,7 @@ view props { model, toContentMsg, content } =
 
 Here are some things to keep in mind:
 
-- You can pass along `props` value into your `view` function, just like we saw in the pages section (see line 22)
+- You can pass along `props` value into your `view` function, just like we saw in the pages section (see line 32)
 - Be sure to add the `contentMsg` parameter everywhere you see `Props` in this file
 
 ::: tip What's up with that `map` function?
