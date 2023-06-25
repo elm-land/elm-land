@@ -8,7 +8,7 @@ module GraphQL.Introspection.Schema exposing
     , ScalarType, EnumType, InputObjectType
     , InterfaceType, UnionType
     , Field, findFieldForType, findFieldWithName
-    , TypeRef(..), toTypeRefName
+    , TypeRef, toTypeRefName, toTypeRefAnnotation
     )
 
 {-| These decoders were translated from the official `graphql`
@@ -36,7 +36,7 @@ NPM package's `./graphql/utilties/getIntrospectionQuery.d.ts` file.
 
 @docs Field, findFieldForType, findFieldWithName
 
-@docs TypeRef, toTypeRefName
+@docs TypeRef, toTypeRefName, toTypeRefAnnotation
 
 -}
 
@@ -410,6 +410,74 @@ toTypeRefName typeRef =
 
         NonNull inner ->
             toTypeRefName inner
+
+
+{-| Because required is the default, this function helps flip non-null into a `Maybe`.
+
+This data type makes it easier to generate Elm code.
+
+See usage with `toTypeRefAnnotation` below.
+
+-}
+type ElmTypeRef
+    = NameOf NamedTypeRef
+    | ListOf ElmTypeRef
+    | MaybeOf ElmTypeRef
+
+
+toElmTypeRef : TypeRef -> ElmTypeRef
+toElmTypeRef typeRef =
+    toElmTypeRefHelp { isMaybe = True } typeRef
+
+
+toElmTypeRefHelp : { isMaybe : Bool } -> TypeRef -> ElmTypeRef
+toElmTypeRefHelp options typeRef =
+    let
+        applyMaybe : ElmTypeRef -> ElmTypeRef
+        applyMaybe inner =
+            if options.isMaybe then
+                MaybeOf inner
+
+            else
+                inner
+    in
+    case typeRef of
+        NonNull innerTypeRef ->
+            toElmTypeRefHelp
+                { options | isMaybe = False }
+                innerTypeRef
+
+        List_ innerTypeRef ->
+            ListOf (toElmTypeRefHelp { options | isMaybe = True } innerTypeRef)
+                |> applyMaybe
+
+        Named value ->
+            NameOf value
+                |> applyMaybe
+
+
+toTypeRefAnnotation : TypeRef -> String
+toTypeRefAnnotation typeRef =
+    toElmTypeRefAnnotation (toElmTypeRef typeRef)
+
+
+toElmTypeRefAnnotation : ElmTypeRef -> String
+toElmTypeRefAnnotation elmTypeRef =
+    case elmTypeRef of
+        NameOf { name } ->
+            name
+
+        ListOf (NameOf value) ->
+            "List " ++ toElmTypeRefAnnotation (NameOf value)
+
+        ListOf innerElmTypeRef ->
+            "List (" ++ toElmTypeRefAnnotation innerElmTypeRef ++ ")"
+
+        MaybeOf (NameOf value) ->
+            "Maybe " ++ toElmTypeRefAnnotation (NameOf value)
+
+        MaybeOf innerElmTypeRef ->
+            "Maybe (" ++ toElmTypeRefAnnotation innerElmTypeRef ++ ")"
 
 
 typeRefDecoder : Json.Decode.Decoder TypeRef

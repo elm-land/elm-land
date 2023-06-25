@@ -323,55 +323,5 @@ toRecordField schema objectType selection =
 
 toTypeRefAnnotation : Schema.Field -> CodeGen.Annotation
 toTypeRefAnnotation field =
-    toTypeRefAnnotationHelp
-        { isMaybe = True
-        , isRoot = True
-        }
-        field.type_
-
-
-toTypeRefAnnotationHelp :
-    { isMaybe : Bool, isRoot : Bool }
-    -> Schema.TypeRef
-    -> CodeGen.Annotation
-toTypeRefAnnotationHelp options outerTypeRef =
-    let
-        applyMaybe : CodeGen.Annotation -> CodeGen.Annotation
-        applyMaybe inner =
-            if options.isMaybe then
-                CodeGen.Annotation.genericType "Maybe" [ inner ]
-                    |> applyParensIf (not options.isRoot)
-
-            else
-                inner
-    in
-    case outerTypeRef of
-        Schema.NonNull typeRef ->
-            toTypeRefAnnotationHelp
-                { options | isMaybe = False }
-                typeRef
-
-        Schema.List_ typeRef ->
-            CodeGen.Annotation.genericType "List"
-                [ toTypeRefAnnotationHelp
-                    { options | isRoot = False }
-                    typeRef
-                ]
-                |> applyParensIf (not options.isRoot || options.isMaybe)
-                |> applyMaybe
-
-        Schema.Named { name } ->
-            CodeGen.Annotation.type_ name
-                |> applyMaybe
-
-
-applyParensIf :
-    Bool
-    -> CodeGen.Annotation
-    -> CodeGen.Annotation
-applyParensIf cond anno =
-    if cond then
-        CodeGen.Annotation.parens anno
-
-    else
-        anno
+    Schema.toTypeRefAnnotation field.type_
+        |> CodeGen.Annotation.type_
