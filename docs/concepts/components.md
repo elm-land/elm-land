@@ -974,4 +974,4 @@ Components are designed to be written once and used in multiple places, so try t
 
 Nice work, that guide was a long one! I hope these patterns help you scale your Elm Land applications, and provide a nice foundation for designs that work for you and your team. 
 
-I hope to see you in the next guide, where we explain the `Shared` modules and how they can help you share data across your pages!
+I hope to see you in the next guide, where we explain the `Shared` module and how it can help you share data across your pages!
