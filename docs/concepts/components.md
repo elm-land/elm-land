@@ -641,7 +641,7 @@ For now, just letting the caller specify an initial selected value seems like a 
 
 ### Part 4: Defining `Msg` and `update`
 
-We'll want our dropdown component be able to internally handle events coming from user events. For example, when the user clicks the dropdown, we want to open the menu and reveal the possible choices. Clicking outside the menu, or selecting an option should dismiss the menu. When a value changes, we'll also want to emit the `onChange` event.
+We'll want our dropdown component to be able to internally handle events triggered by user interactions. For example, when the user clicks the dropdown, we want to open the menu and reveal the possible choices. Clicking outside the menu, or selecting an option should dismiss the menu. When a value changes, we'll also want to emit the `onChange` event.
 
 Here's our definition of `Msg` and `update` to support all that important stuff:
 
