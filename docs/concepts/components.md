@@ -680,26 +680,27 @@ update props =
     toParentModel <|
         case props.msg of
             FocusedDropdown ->
-                ( { model | isMenuOpen = True }
+                ( Model { model | isMenuOpen = True }
                 , Effect.none
                 )
 
             BlurredDropdown ->
-                ( { model | search = "", isMenuOpen = False }
+                ( Model { model | search = "", isMenuOpen = False }
                 , Effect.none
                 )
 
             UpdatedSearchInput value ->
-                ( { model | search = value }
+                ( Model { model | search = value }
                 , Effect.none
                 )
 
             SelectedItem data ->
-                ( { model
-                    | search = ""
-                    , isMenuOpen = False
-                    , selected = Just data.item
-                  }
+                ( Model 
+                    { model
+                        | search = ""
+                        , isMenuOpen = False
+                        , selected = Just data.item
+                    }
                 , case data.onChange of
                     Just onChange ->
                         Effect.sendMsg onChange
