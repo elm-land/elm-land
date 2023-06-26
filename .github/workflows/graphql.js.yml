@@ -6,7 +6,13 @@ name: "@elm-land/graphql"
 on:
   push:
     branches: [ main ]
+    paths:
+      - projects/cli/**
+      - projects/graphql/**
   pull_request:
+    paths:
+      - projects/cli/**
+      - projects/graphql/**
 
 jobs:
   build:

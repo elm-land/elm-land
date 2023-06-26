@@ -6,7 +6,11 @@ name: "@elm-land/cli"
 on:
   push:
     branches: [ main ]
+    paths:
+      - projects/cli/**
   pull_request:
+    paths:
+      - projects/cli/**
 
 jobs:
   build:
