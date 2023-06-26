@@ -637,7 +637,7 @@ init props =
 
 For our `init` function, we want new dropdowns to always have their menus closed and the search query set to an empty string. If we decided that those were useful for the parent to initialize, we would add them to our `props`.
 
-For now, just letting the caller specify an initial selected value seems like a good idea. This will make our `dropdown` useful in contexts where we already have a selected value come back from our API server.
+For now, just letting the caller specify an initial selected value seems like a good idea. This will make our `dropdown` useful in contexts where we receive a selected value from our API server.
 
 ### Part 4: Defining `Msg` and `update`
 
