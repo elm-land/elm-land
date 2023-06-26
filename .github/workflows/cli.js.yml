@@ -7,10 +7,10 @@ on:
   push:
     branches: [ main ]
     paths:
-      - projects/cli/**
+      - 'projects/cli/**'
   pull_request:
     paths:
-      - projects/cli/**
+      - 'projects/cli/**'
 
 jobs:
   build:
