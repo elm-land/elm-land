@@ -931,10 +931,10 @@ view model =
 
 
 
-::: details Here's that example `Animals` module
+::: details Here's that example `Animal` module
 
 ```elm
-module Animals exposing (Animal, list, toName)
+module Animal exposing (Animal, list, toName)
 
 
 type Animal
