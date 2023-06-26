@@ -987,7 +987,7 @@ That endpoint will have a _huge_ JSON response, but I've highlighted the four fi
 {
     // ...
     "name": "bulbasaur",
-    "order": 1,
+    "id": 1,
     // ...
     "sprites": {
         // ...
@@ -1061,10 +1061,10 @@ Just like with our `PokemonList` decoder, we'll start with by getting our Pokemo
 ```elm
 pokedexIdFieldDecoder : Json.Decode.Decoder Int
 pokedexIdFieldDecoder =
-    Json.Decode.field "order" Json.Decode.int
+    Json.Decode.field "id" Json.Decode.int
 ```
 
-Just like our "name" decoder, the "pokedexId" decoder will use `Json.Decode.field` to look for an object field by its name. This time, we'll look for a field named `"order"` and expect an `Int` value there.
+Just like our "name" decoder, the "pokedexId" decoder will use `Json.Decode.field` to look for an object field by its name. This time, we'll look for a field named `"id"` and expect an `Int` value there.
 
 ### Decoding the `spriteUrl` field
 
@@ -1163,7 +1163,7 @@ nameFieldDecoder =
 
 pokedexIdFieldDecoder : Json.Decode.Decoder Int
 pokedexIdFieldDecoder =
-    Json.Decode.field "order" Json.Decode.int
+    Json.Decode.field "id" Json.Decode.int
 
 
 spriteUrlFieldDecoder : Json.Decode.Decoder String
