@@ -8,7 +8,7 @@ module GraphQL.Introspection.Document exposing
 {-| These decoders were translated from the official `graphql`
 NPM package's `node_modules/graphql/language/ast.d.ts` file.
 
-(It uses `DocumentNode` type)
+(It uses the `DocumentNode` type)
 
 
 ## Document
@@ -26,6 +26,8 @@ NPM package's `node_modules/graphql/language/ast.d.ts` file.
 
 import GraphQL.Introspection.Schema as Schema exposing (Schema)
 import Json.Decode
+import List.Extra
+import String.Extra
 
 
 type Document
@@ -58,10 +60,12 @@ toRootOperation : Document -> Maybe OperationDefinition
 toRootOperation (Document doc) =
     doc.definitions
         |> List.filterMap toOperationDefinition
-        -- TODO: Using `List.head` will fail if fragments
-        -- are listed first. Be sure to report an error or
-        -- change this logic before shipping!
-        |> List.head
+        -- TODO: Report an Elm Land problem if there is no operation
+        -- with a matching name.
+        |> List.Extra.find
+            (\def ->
+                def.name == Just (String.Extra.leftOf "." doc.filename)
+            )
 
 
 
