@@ -695,11 +695,12 @@ update props =
                 )
 
             SelectedItem data ->
-                ( Model { model
-                    | search = ""
-                    , isMenuOpen = False
-                    , selected = Just data.item
-                  }
+                ( Model 
+                    { model
+                        | search = ""
+                        , isMenuOpen = False
+                        , selected = Just data.item
+                    }
                 , case data.onChange of
                     Just onChange ->
                         Effect.sendMsg onChange
