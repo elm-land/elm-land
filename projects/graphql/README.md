@@ -4,7 +4,7 @@
 
 [![Elm Land: Reliable web apps for everyone](https://github.com/elm-land/elm-land/raw/main/elm-land-banner.jpg)](https://elm.land)
 
-### Alpha release 🌱
+### Alpha release! 🌱
 
 Although Elm Land is still a work-in-progress, please feel free to tinker around until the big `v1.0.0` release!
 
