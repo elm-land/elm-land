@@ -29,6 +29,6 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - name: "Setup test dependencies"
-        run: npm run setup
+        run: npm run test:setup
       - name: "Run test suite"
         run: npm test
