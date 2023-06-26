@@ -14,7 +14,7 @@ jobs:
       run:
         working-directory: projects/graphql
 
-    name: "@elm-land/graphql"
+    name: "Tests"
     runs-on: macos-12
 
     strategy:
