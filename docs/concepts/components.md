@@ -871,13 +871,13 @@ import Components.Dropdown
 -- MODEL
 
 type alias Model =
-    { dropdown : Ui.Dropdown.Model Animal
+    { dropdown : Components.Dropdown.Model Animal
     }
 
 
 init : () -> ( Model, Effect Msg )
 init _ =
-    ( { dropdown = Ui.Dropdown.init { selected = Nothing }
+    ( { dropdown = Components.Dropdown.init { selected = Nothing }
       }
     , Effect.none
     )
@@ -888,7 +888,7 @@ init _ =
 
 
 type Msg
-    = DropdownSent (Ui.Dropdown.Msg Animal Msg)
+    = DropdownSent (Components.Dropdown.Msg Animal Msg)
     | ChangedSelection Animal
 
 
@@ -896,7 +896,7 @@ update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
         DropdownSent innerMsg ->
-            Ui.Dropdown.update
+            Components.Dropdown.update
                 { msg = innerMsg
                 , model = model.dropdown
                 , toModel = \dropdown -> { model | dropdown = dropdown }
