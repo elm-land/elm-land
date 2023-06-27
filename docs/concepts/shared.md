@@ -56,7 +56,7 @@ model.page ==
     }
 ```
 
-The important thing to understand is that as the user changes the URL, the entire `model.page` field is replaced with a new one. This behavior help makes Elm Land pages easier to understand, but introduces a new challenge: "How do we share information like a signed-in user across pages?"
+The important thing to understand is that as the user changes the URL, the entire `model.page` field is replaced with a new one. This behavior helps make Elm Land pages easier to understand, but introduces a new challenge: "How do we share information like a signed-in user across pages?"
 
 ## Customizing the `Shared` modules
 
