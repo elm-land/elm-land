@@ -254,7 +254,7 @@ update msg model =
 #### Example messages
 
 These examples are here to help you visualize what values will be passed
-to your `update` function as query parameters change:
+to your `update` function as the hash or URL fragment changes:
 
 ```elm
 -- When "/people" becomes "/people#about-us"
