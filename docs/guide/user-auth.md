@@ -526,7 +526,7 @@ If you try using the sign-in form again in your browser, you'll be able to fill 
 
 In the bottom right corner, click on the Elm debugger– you should see that the API is receiving the secret token from the backend:
 
-![The Elm debugger, showing the latest message `SignInApiReponded (Ok "ryans-secret-token")`](./user-auth/03-debugger-token.png)
+![The Elm debugger, showing the latest message `SignInApiResponded (Ok "ryans-secret-token")`](./user-auth/03-debugger-token.png)
 
 This is great, but let's have our UI correctly handle the HTTP response for both cases: when sign-in works and when it doesn't!
 
