@@ -523,7 +523,7 @@ view =
     ...
 ```
 
-Just like before, we'll use [the "Configurable Component" pattern](#2-configurable-components) to make supporting optional arguments easy. But this time around, our required arguments for `new` will include the internal `model` of our dropdown and a way to convert its internal `Msg` type to the `msg` type of the parent.
+Just like before, we'll use [the "Configurable Component" pattern](#_2-configurable-components) to make supporting optional arguments easy. But this time around, our required arguments for `new` will include the internal `model` of our dropdown and a way to convert its internal `Msg` type to the `msg` type of the parent.
 
 Let's walk through the implementation of each section:
 
