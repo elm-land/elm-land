@@ -57,7 +57,7 @@ Dict.get "archived" route.query == Nothing
 
 ### route.hash
 
-It's common to use `#section-name` when making applications that have jump links (like this documentation site). The `route.hash` value will give you back the current value of the hash fragment in the URL (if it exists)
+It's common to use `#section-name` when making applications that have jump links (like this documentation site). The `route.hash` value will give you back the current value of the hash or URL fragment (if it exists).
 
 
 ### route.url
