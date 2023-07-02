@@ -24,6 +24,7 @@ NPM package's `node_modules/graphql/language/ast.d.ts` file.
 
 -}
 
+import GraphQL.CliError exposing (CliError(..))
 import GraphQL.Introspection.Schema as Schema exposing (Schema)
 import Json.Decode
 import List.Extra
@@ -56,16 +57,27 @@ toContents (Document doc) =
 -- OPERATIONS
 
 
-toRootOperation : Document -> Maybe OperationDefinition
+toRootOperation : Document -> Result CliError OperationDefinition
 toRootOperation (Document doc) =
-    doc.definitions
-        |> List.filterMap toOperationDefinition
-        -- TODO: Report an Elm Land problem if there is no operation
-        -- with a matching name.
-        |> List.Extra.find
-            (\def ->
-                def.name == Just (String.Extra.leftOf "." doc.filename)
-            )
+    let
+        operationsDefinedInDocument : List OperationDefinition
+        operationsDefinedInDocument =
+            doc.definitions
+                |> List.filterMap toOperationDefinition
+    in
+    case operationsDefinedInDocument of
+        theOnlyOne :: [] ->
+            -- If there's only one operation defined in this document,
+            -- assume we're talking about that one!
+            Ok theOnlyOne
+
+        _ ->
+            operationsDefinedInDocument
+                |> List.Extra.find
+                    (\def ->
+                        def.name == Just (String.Extra.leftOf "." doc.filename)
+                    )
+                |> Result.fromMaybe GraphQL.CliError.NoOperationMatchingFilename
 
 
 
@@ -74,11 +86,10 @@ toRootOperation (Document doc) =
 
 {-| Finds the top-level query or mutation's selections
 -}
-toRootSelections : Document -> List Selection
+toRootSelections : Document -> Result CliError (List Selection)
 toRootSelections ((Document doc) as document) =
     toRootOperation document
-        |> Maybe.map .selections
-        |> Maybe.withDefault []
+        |> Result.map .selections
 
 
 

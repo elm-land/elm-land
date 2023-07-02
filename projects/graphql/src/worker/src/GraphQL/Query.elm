@@ -6,6 +6,7 @@ import CodeGen.Declaration
 import CodeGen.Expression
 import CodeGen.Import
 import CodeGen.Module
+import GraphQL.CliError exposing (CliError)
 import GraphQL.Introspection.Document as Document exposing (Document)
 import GraphQL.Introspection.Schema as Schema exposing (Schema)
 import Set exposing (Set)
@@ -18,16 +19,20 @@ type alias File =
     }
 
 
-generate : { schema : Schema, document : Document } -> File
+generate : { schema : Schema, document : Document } -> Result CliError File
 generate ({ schema, document } as options) =
-    { filepath =
-        [ "GraphQL"
-        , "Queries"
-        , Document.toName document ++ ".elm"
-        ]
-    , contents =
-        CodeGen.Module.toString (toModule options)
-    }
+    toModule options
+        |> Result.map
+            (\module_ ->
+                { filepath =
+                    [ "GraphQL"
+                    , "Queries"
+                    , Document.toName document ++ ".elm"
+                    ]
+                , contents =
+                    CodeGen.Module.toString module_
+                }
+            )
 
 
 type alias Options =
@@ -36,15 +41,19 @@ type alias Options =
     }
 
 
-toModule : Options -> CodeGen.Module
+toModule : Options -> Result CliError CodeGen.Module
 toModule ({ schema, document } as options) =
     let
-        dataTypeAlias : CodeGen.Declaration
-        dataTypeAlias =
-            CodeGen.Declaration.typeAlias
-                { name = "Data"
-                , annotation = toDataAnnotation options
-                }
+        dataTypeAliasResult : Result CliError CodeGen.Declaration
+        dataTypeAliasResult =
+            toDataAnnotation options
+                |> Result.map
+                    (\anno ->
+                        CodeGen.Declaration.typeAlias
+                            { name = "Data"
+                            , annotation = anno
+                            }
+                    )
 
         nestedTypeAliases : List CodeGen.Declaration
         nestedTypeAliases =
@@ -196,31 +205,35 @@ toModule ({ schema, document } as options) =
                 , expression = expression
                 }
     in
-    CodeGen.Module.new
-        { name =
-            [ "GraphQL"
-            , "Queries"
-            , Document.toName document
-            ]
-        , exposing_ =
-            [ "Data"
-            , "new"
-            ]
-        , imports =
-            [ CodeGen.Import.new [ "GraphQL", "Decode" ]
-            , CodeGen.Import.new [ "GraphQL", "Operation" ]
-            ]
-        , declarations =
-            List.concat
-                [ [ CodeGen.Declaration.comment [ "DATA" ]
-                  , dataTypeAlias
-                  ]
-                , nestedTypeAliases
-                , [ newFunction
-                  , decoderFunction
-                  ]
-                ]
-        }
+    Result.map
+        (\dataTypeAlias ->
+            CodeGen.Module.new
+                { name =
+                    [ "GraphQL"
+                    , "Queries"
+                    , Document.toName document
+                    ]
+                , exposing_ =
+                    [ "Data"
+                    , "new"
+                    ]
+                , imports =
+                    [ CodeGen.Import.new [ "GraphQL", "Decode" ]
+                    , CodeGen.Import.new [ "GraphQL", "Operation" ]
+                    ]
+                , declarations =
+                    List.concat
+                        [ [ CodeGen.Declaration.comment [ "DATA" ]
+                          , dataTypeAlias
+                          ]
+                        , nestedTypeAliases
+                        , [ newFunction
+                          , decoderFunction
+                          ]
+                        ]
+                }
+        )
+        dataTypeAliasResult
 
 
 type NameAttempt
@@ -276,10 +289,10 @@ toNameThatWontClash ({ field, existingNames } as options) nameAttempt =
                 name
 
 
-toDataAnnotation : Options -> CodeGen.Annotation
+toDataAnnotation : Options -> Result CliError CodeGen.Annotation
 toDataAnnotation ({ schema, document } as options) =
     let
-        firstQuerySelectionSet : List Document.Selection
+        firstQuerySelectionSet : Result CliError (List Document.Selection)
         firstQuerySelectionSet =
             Document.toRootSelections document
 
@@ -287,14 +300,14 @@ toDataAnnotation ({ schema, document } as options) =
         maybeQueryType =
             Schema.findQueryType schema
     in
-    CodeGen.Annotation.multilineRecord
+    Result.map CodeGen.Annotation.multilineRecord
         (case maybeQueryType of
             Just queryType ->
                 firstQuerySelectionSet
-                    |> List.filterMap (toRecordField schema queryType)
+                    |> Result.map (List.filterMap (toRecordField schema queryType))
 
             Nothing ->
-                []
+                Err GraphQL.CliError.CouldNotFindQueryType
         )
 
 

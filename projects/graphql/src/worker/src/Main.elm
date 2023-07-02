@@ -1,9 +1,11 @@
 port module Main exposing (main)
 
+import GraphQL.CliError
 import GraphQL.Introspection.Document as Document exposing (Document)
 import GraphQL.Introspection.Schema as Schema exposing (Schema)
 import GraphQL.Query
 import Json.Decode
+import Result.Extra
 
 
 main : Platform.Program Json.Decode.Value Model Msg
@@ -49,20 +51,28 @@ init json =
     case Json.Decode.decodeValue decoder json of
         Ok flags ->
             ( {}
-            , success
-                { files =
-                    List.concat
-                        [ [ graphqlOperationFile ]
-                        , flags.queries
-                            |> List.map
-                                (\query ->
-                                    GraphQL.Query.generate
-                                        { schema = flags.schema
-                                        , document = query
-                                        }
-                                )
-                        ]
-                }
+            , case
+                flags.queries
+                    |> List.map
+                        (\query ->
+                            GraphQL.Query.generate
+                                { schema = flags.schema
+                                , document = query
+                                }
+                        )
+                    |> Result.Extra.combine
+              of
+                Ok generatedFilesFromQuery ->
+                    success
+                        { files =
+                            List.concat
+                                [ [ graphqlOperationFile ]
+                                , generatedFilesFromQuery
+                                ]
+                        }
+
+                Err cliError ->
+                    failure { reason = GraphQL.CliError.toString cliError }
             )
 
         Err jsonDecodeError ->

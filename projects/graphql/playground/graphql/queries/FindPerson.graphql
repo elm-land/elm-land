@@ -1,4 +1,4 @@
-query {
+query FindPerson {
   person(id: "1") {
     name
     emailAddress
