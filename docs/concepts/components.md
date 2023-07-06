@@ -755,7 +755,7 @@ Without the `props.toMsg`, this page would return `( model, Effect (Msg item msg
 
 Now it's up to our `view` to look at the dropdown's settings to determine what to render, and which events to emit as the user interacts with our component. 
 
-This is mostly just the stuff we saw before, but note how we use `props.toMsg` to make sure we're returning `Html msg` instead of `Html (Msg item msg)`.
+This is mostly just the stuff we saw before, but note how we use `settings.toMsg` to make sure we're returning `Html msg` instead of `Html (Msg item msg)`.
 
 This is an important part of making this component easier to plug in!
 
@@ -771,20 +771,20 @@ view (Setting settings) =
 
         onSearchInput : String -> msg
         onSearchInput value =
-            props.toMsg (UpdatedSearchInput value)
+            settings.toMsg (UpdatedSearchInput value)
 
         -- View the input of the dropdown, that opens the 
         -- menu when focused, and displays the search query
         viewDropdownInput : Html msg
         viewDropdownInput =
-            div [ style "dropdown__toggle" ]
+            div [ class "dropdown__toggle" ]
                 [ input
                     [ class "dropdown__input"
                     , type_ "search"
                     , disabled settings.isDisabled
                     , onInput onSearchInput
-                    , onFocus (props.toMsg FocusedDropdown)
-                    , onBlur (props.toMsg BlurredDropdown)
+                    , onFocus (settings.toMsg FocusedDropdown)
+                    , onBlur (settings.toMsg BlurredDropdown)
                     ]
                     []
                 , viewSelectedValueOverlay
@@ -828,7 +828,7 @@ view (Setting settings) =
 
         onMenuItemClick : item -> msg
         onMenuItemClick item =
-            props.toMsg  <|
+            settings.toMsg  <|
                 case settings.onChange of
                     Just onChange ->
                         SelectedItem
