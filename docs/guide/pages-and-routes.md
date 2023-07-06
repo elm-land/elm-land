@@ -277,7 +277,7 @@ page params =
 
 ```
 
-The `ALL_.elm` filename is a special filename to handle a "catch-all route". Try opening any of these URLs in your werb browser, all of them will match the new page we created!
+The `ALL_.elm` filename is a special filename to handle a "catch-all route". Try opening any of these URLs in your web browser, all of them will match the new page we created!
 
 - `http://localhost:1234/elm/compiler/tree/master/README.md`
 - `http://localhost:1234/elm-land/elm-land/tree/main/docs/README.md`
