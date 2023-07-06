@@ -130,7 +130,7 @@ And returns the initial value of `Shared.Model` and any effects that need to run
 
 ## `Shared.Flags`
 
-The `Shared.Flags` type represents the initial data (if any) you expect to be passed in from JavaScript on startup. If you add a new `src/interop.js` file, you can define `flags` function that returns the initial data.
+The `Shared.Flags` type represents the initial data (if any) you expect to be passed in from JavaScript on startup. If you add a new `src/interop.js` file, you can define a `flags` function that returns the initial data.
 
 ### Defining flags
 
