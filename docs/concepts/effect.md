@@ -216,7 +216,7 @@ init _ =
 ```
 
 Effects let us talk about our side-effects at a higher level. They allow us to:
-1. Prevent needing to pass `shared` to every `init` or `update` functions that sends an API request
+1. Prevent the need to pass `shared` to every `init` or `update` functions that sends an API request
 1. Prevent bugs and other surprises that come from forgetting to correctly wire up values like `headers` or `timeout`
 1. Create end-to-end tests for our application, using [elm-program-test](https://elm-program-test.netlify.app/#guidebooks)
 
