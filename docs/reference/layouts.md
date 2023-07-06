@@ -16,4 +16,4 @@ type Layout msg
 -- ...
 ```
 
-To create a `Layouts.Layout` value, you'll what to use a custom type variant like `Layouts.Sidebar`, and provide the correct props. That will return a valid layout that can be used with the `Page.withLayout` function.
+To create a `Layouts.Layout` value, you'll want to use a custom type variant like `Layouts.Sidebar`, and provide the correct props. That will return a valid layout that can be used with the `Page.withLayout` function.
