@@ -89,7 +89,7 @@ Effect.pushRoute :
 
 ### `Effect.replaceRoute`
 
-Push a new URL onto the browser history. This is just like [Browser.Navigation.replaceUrl](https://package.elm-lang.org/packages/elm/browser/latest/Browser-Navigation#replaceUrl), except it doesn't require a `Key` argument.
+Replace the current browser history entry with a new URL. This is just like [Browser.Navigation.replaceUrl](https://package.elm-lang.org/packages/elm/browser/latest/Browser-Navigation#replaceUrl), except it doesn't require a `Key` argument.
 
 #### __Definition__
 
