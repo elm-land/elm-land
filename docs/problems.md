@@ -12,7 +12,7 @@ Elm Land uses code generation to save you time during application development. T
 
 For example, Elm Land expects every page to expose these two types:
 
-1. `Model` – Allows Elm Land to connect to automatically initialize your page when the URL changes
+1. `Model` – Allows Elm Land to automatically initialize your page when the URL changes
 2. `Msg` - Allows Elm Land to connect your page's messages to the overall application
 
 

@@ -71,6 +71,14 @@ const members = [
       { icon: 'github', link: 'https://github.com/dennistruemper' }
     ]
   },
+  {
+    avatar: 'https://www.github.com/nathanbraun.png',
+    name: 'Nathan Braun',
+    title: '@nathanbraun',
+    links: [
+      { icon: 'github', link: 'https://github.com/nathanbraun' }
+    ]
+  },
 ]
 </script>
 
