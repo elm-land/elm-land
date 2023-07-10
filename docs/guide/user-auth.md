@@ -2343,4 +2343,4 @@ viewSignOutButton user =
 ### That's it!
 
 We just added user authentication to an app, introduced
-The complete source code for this example is [available here on GitHub]().
+The complete source code for this example is [available here on GitHub](https://github.com/elm-land/elm-land/tree/main/examples/05-user-auth).
