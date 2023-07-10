@@ -17,7 +17,7 @@ import Effect exposing (Effect)
 import Json.Decode
 import Route exposing (Route)
 import Route.Path
-import Shared.Model exposing (WindowSize)
+import Shared.Model
 import Shared.Msg exposing (Msg(..))
 
 
@@ -26,12 +26,12 @@ import Shared.Msg exposing (Msg(..))
 
 
 type alias Flags =
-    WindowSize
+    Model
 
 
 decoder : Json.Decode.Decoder Flags
 decoder =
-    Json.Decode.map2 WindowSize
+    Json.Decode.map2 Shared.Model.Model
         (Json.Decode.field "width" Json.Decode.int)
         (Json.Decode.field "height" Json.Decode.int)
 
@@ -54,11 +54,9 @@ init flagsResult route =
                     size
 
                 Err _ ->
-                    { width = 0, height = 0 }
+                    { windowWidth = 0, windowHeight = 0 }
     in
-    ( { windowSize = flags }
-    , Effect.none
-    )
+    ( flags, Effect.none )
 
 
 
@@ -73,7 +71,7 @@ update : Route () -> Msg -> Model -> ( Model, Effect Msg )
 update route msg model =
     case msg of
         WindowResized w h ->
-            ( { model | windowSize = WindowSize w h }
+            ( Shared.Model.Model w h
             , Effect.none
             )
 

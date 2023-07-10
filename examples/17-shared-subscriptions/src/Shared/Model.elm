@@ -1,4 +1,4 @@
-module Shared.Model exposing (Model, WindowSize)
+module Shared.Model exposing (Model)
 
 {-| -}
 
@@ -11,10 +11,4 @@ own file, so they can be imported by `Effect.elm`
 
 -}
 type alias Model =
-    { windowSize : WindowSize }
-
-
-type alias WindowSize =
-    { width : Int
-    , height : Int
-    }
+    { windowWidth : Int, windowHeight : Int }

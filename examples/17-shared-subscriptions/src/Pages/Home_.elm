@@ -67,14 +67,14 @@ view : Shared.Model -> Model -> View Msg
 view shared model =
     let
         toStr field =
-            field shared.windowSize |> String.fromInt
+            field shared |> String.fromInt
     in
     { title = "Pages.Home_"
     , body =
         [ "Window Size: "
-            ++ toStr .width
+            ++ toStr .windowWidth
             ++ " × "
-            ++ toStr .height
+            ++ toStr .windowHeight
             |> Html.text
         ]
     }
