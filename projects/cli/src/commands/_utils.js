@@ -96,6 +96,14 @@ let customizableFiles = {
     filepaths: ['Auth.elm'],
     description: '................... handle user authentication'
   },
+  'js': {
+    filepaths: ['interop.js'],
+    description: '......... work with JavaScript, flags, and ports'
+  },
+  'ts': {
+    filepaths: ['interop.ts'],
+    description: '......... work with TypeScript, flags, and ports'
+  },
 }
 
 module.exports = {
