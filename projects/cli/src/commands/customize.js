@@ -32,7 +32,14 @@ let run = async ({ moduleName } = {}) => {
     return Promise.reject(Utils.notInElmLandProject)
   }
 
-  let obj = Utils.customizableFiles[moduleName]
+  let aliases = {
+    'interop': 'js',
+    'javascript': 'js',
+    'typescript': 'ts',
+    '404': 'not-found'
+  }
+
+  let obj = Utils.customizableFiles[aliases[moduleName] || moduleName]
 
 
   if (!obj) {

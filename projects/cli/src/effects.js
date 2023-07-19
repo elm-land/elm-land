@@ -14,6 +14,25 @@ const { default: ElmErrorJson } = require('./vite-plugins/elm/elm-error-json.js'
 let srcPagesFolderFilepath = path.join(process.cwd(), 'src', 'Pages')
 let srcLayoutsFolderFilepath = path.join(process.cwd(), 'src', 'Layouts')
 
+process.on('uncaughtException', function (err) {
+  if (err.code === 'EPERM') {
+    console.error([
+      '',
+      Utils.intro.error('could not start the server...'),
+      `    This problem can be fixed by running the ${Terminal.pink('npm init -y')} command`,
+      `    from your terminal.`,
+      ``,
+      `    If the issue persists after running that command, please let us`,
+      `    know in the Elm Land Discord (${Terminal.dim('https://join.elm.land')})`,
+      ''
+    ].join('\n'))
+    process.exit(1)
+  } else {
+    throw err
+  }
+});
+
+
 const mode = () =>
   (process.env.NODE_ENV === 'production')
     ? 'production'
@@ -146,8 +165,6 @@ let runServer = async (options) => {
     try { debug = config.app.elm[mode()].debugger }
     catch (_) { }
 
-    const hasTsConfigJson = await Files.exists(path.join(process.cwd(), 'tsconfig.json'))
-
     // Run the vite server on options.port
     server = await Vite.createServer({
       configFile: false,
@@ -190,7 +207,6 @@ let runServer = async (options) => {
     console.log('')
     return { problem: `❗️ Had trouble starting the server...` }
   }
-
 }
 
 let lastErrorSent = undefined
@@ -529,7 +545,7 @@ const generateHtml = async (config) => {
     ? [toHtmlTag('title', {}, config.app.html.title)]
     : []
   let metaTags = toSelfClosingHtmlTags('meta', [
-    { name: 'elm-land', content: '0.19.1' }
+    { name: 'elm-land', content: '0.19.2' }
   ].concat(attempt(_ => config.app.html.meta)))
   let linkTags = toSelfClosingHtmlTags('link', attempt(_ => config.app.html.link))
   let scriptTags = toHtmlTags('script', attempt(_ => config.app.html.script))
