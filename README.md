@@ -13,7 +13,7 @@
 The code for this GitHub project is broken down into smaller projects:
 
 - __[elm-land](./projects/cli/)__ - The CLI tool, available at [npmjs.org/elm-land](https://npmjs.org/elm-land)
-- __[@elm-land/www](./docs/)__ - The official website, available at [elm.land](https://elm.land)
+- __[@elm-land/docs](./docs/)__ - The official website, available at [elm.land](https://elm.land)
 
 
 ### Tooling
