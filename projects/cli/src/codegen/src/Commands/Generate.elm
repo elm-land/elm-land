@@ -846,7 +846,7 @@ toLayoutUrlHookCmd layouts =
         toBranch : LayoutFile -> CodeGen.Expression.Branch
         toBranch layout =
             { name =
-                "( Just (Layouts.{{name}} settings), Just (Main.Layouts.Model.{{name}} layoutModel) )"
+                "( Just (Layouts.{{name}} props), Just (Main.Layouts.Model.{{name}} layoutModel) )"
                     |> String.replace "{{name}}" (LayoutFile.toVariantName layout)
             , arguments =
                 []
@@ -1382,7 +1382,7 @@ toViewCaseExpression layouts =
                     LayoutFile.toListOfSelfAndParents layout
             in
             { name =
-                "( Just (Layouts.{{name}} settings), Just (Main.Layouts.Model.{{name}} layoutModel) )"
+                "( Just (Layouts.{{name}} props), Just (Main.Layouts.Model.{{name}} layoutModel) )"
                     |> String.replace "{{name}}" (LayoutFile.toVariantName layout)
             , arguments = []
             , expression = toViewBranchExpression True layout selfAndParentLayouts
@@ -1394,10 +1394,10 @@ toViewCaseExpression layouts =
                 toNestedLayoutExpression : LayoutFile -> List LayoutFile -> CodeGen.Expression
                 toNestedLayoutExpression current parents =
                     let
-                        settings : String
-                        settings =
+                        props : String
+                        props =
                             if original == current || isTopLevel == False then
-                                "settings"
+                                "props"
 
                             else
                                 toLayoutPropsVariableName current
@@ -1409,8 +1409,8 @@ toViewCaseExpression layouts =
                                 [ CodeGen.Expression.function
                                     { name = LayoutFile.toModuleName current ++ ".layout"
                                     , arguments =
-                                        [ "{{settings}} model.shared route"
-                                            |> String.replace "{{settings}}" settings
+                                        [ "{{props}} model.shared route"
+                                            |> String.replace "{{props}}" props
                                             |> CodeGen.Expression.value
                                         ]
                                     }
@@ -1783,7 +1783,7 @@ toUpdateLayoutCaseExpression layouts =
                         }
             in
             { name =
-                "( Just (Layouts.{{name}} settings), Just (Main.Layouts.Model.{{name}} layoutModel), Main.Layouts.Msg.{{layoutSendingMsg}} layoutMsg )"
+                "( Just (Layouts.{{name}} props), Just (Main.Layouts.Model.{{name}} layoutModel), Main.Layouts.Msg.{{layoutSendingMsg}} layoutMsg )"
                     |> String.replace "{{name}}" (LayoutFile.toVariantName layoutOptions.currentLayout)
                     |> String.replace "{{layoutSendingMsg}}" (LayoutFile.toVariantName layoutOptions.layoutSendingMsg)
             , arguments = []
@@ -1877,7 +1877,7 @@ a child layout of the layout sending a message:
         == [ { parent = Sidebar, child = Sidebar.Header }
            ]
 
-Used with `let` expressions to define the settings for a layout within an update function
+Used with `let` expressions to define the props for a layout within an update function
 
 -}
 toParentsBetween :
@@ -1907,19 +1907,19 @@ toParentsBetween options =
         )
 
 
-{-| Example: Layouts.Sidebar.layout settings model.shared route
+{-| Example: Layouts.Sidebar.layout props model.shared route
 -}
 callLayoutFunction : Maybe LayoutFile -> LayoutFile -> CodeGen.Expression
 callLayoutFunction maybeParent layout =
-    "{{moduleName}}.layout {{settings}} model.shared route"
+    "{{moduleName}}.layout {{props}} model.shared route"
         |> String.replace "{{moduleName}}" (LayoutFile.toModuleName layout)
-        |> String.replace "{{settings}}"
+        |> String.replace "{{props}}"
             (case maybeParent of
                 Just parent ->
                     toLayoutPropsVariableName parent
 
                 Nothing ->
-                    "settings"
+                    "props"
             )
         |> CodeGen.Expression.value
 
@@ -2007,7 +2007,7 @@ toSubscriptionLayoutCaseExpression layouts =
         toBranch : LayoutFile -> CodeGen.Expression.Branch
         toBranch layout =
             { name =
-                "( Just (Layouts.{{name}} settings), Just (Main.Layouts.Model.{{name}} layoutModel) )"
+                "( Just (Layouts.{{name}} props), Just (Main.Layouts.Model.{{name}} layoutModel) )"
                     |> String.replace "{{name}}" (LayoutFile.toVariantName layout)
             , arguments =
                 []
@@ -2103,11 +2103,11 @@ toParentLayoutProps { self, child, parent } =
     , annotation = Nothing
     , expression =
         CodeGen.Expression.pipeline
-            [ "{{moduleName}}.layout {{settings}} model.shared route"
+            [ "{{moduleName}}.layout {{props}} model.shared route"
                 |> String.replace "{{moduleName}}" (LayoutFile.toModuleName child)
-                |> String.replace "{{settings}}"
+                |> String.replace "{{props}}"
                     (if self == child then
-                        "settings"
+                        "props"
 
                      else
                         toLayoutPropsVariableName child
