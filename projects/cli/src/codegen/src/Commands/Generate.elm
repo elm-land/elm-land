@@ -1396,7 +1396,7 @@ toViewCaseExpression layouts =
                     let
                         settings : String
                         settings =
-                            if original == current then
+                            if original == current || isTopLevel == False then
                                 "settings"
 
                             else

@@ -240,12 +240,19 @@ let generateElmFiles = async (config, server = undefined) => {
         server.ws.send('elm:success', { msg: 'Success!' })
       }
 
-      let layoutFilepathSegments =
-        layoutFilepaths.map(filepath => filepath.split('/'))
+      let layoutsData = layouts.map(({ filepath, contents}) => {
+        const typeVariablePattern = 'type alias Props contentMsg';
+        const isUsingTypeVariable = contents.includes(typeVariablePattern);
+
+        return {
+          segments: filepath,
+          isUsingTypeVariable
+        }
+      })
 
       let newFiles = await Codegen.generateElmLandFiles({
         pages,
-        layouts: layoutFilepathSegments,
+        layouts: layoutsData,
         router
       })
 
