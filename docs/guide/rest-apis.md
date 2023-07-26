@@ -31,7 +31,7 @@ Running those 3 commands will run our new Elm Land project at `http://localhost:
 
 ## Commands and subscriptions
 
-In previous guides, we used the `elm add` command to create new pages. Let's use that command again to replace our initial homepage, but this time with `page:element`. 
+In previous guides, we used the `elm-land add` command to create new pages. Let's use that command again to replace our initial homepage, but this time with `page:element`. 
 
 This new "element" page will allow us to return HTTP requests from our `init` and `update` functions via `Cmd Msg`.
 
