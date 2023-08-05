@@ -12,6 +12,9 @@ import View exposing (View)
 port outgoing : String -> Cmd msg
 
 
+port incoming : (String -> msg) -> Sub msg
+
+
 page : Shared.Model -> Route () -> Page Model Msg
 page shared route =
     Page.new
@@ -27,12 +30,12 @@ page shared route =
 
 
 type alias Model =
-    {}
+    String
 
 
 init : () -> ( Model, Effect Msg )
 init () =
-    ( {}
+    ( ""
     , Effect.none
     )
 
@@ -43,6 +46,7 @@ init () =
 
 type Msg
     = UserClickedAskQuestion
+    | GotData String
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
@@ -53,6 +57,11 @@ update msg model =
             , Effect.sendCmd (outgoing "Ask me a question!")
             )
 
+        GotData str ->
+            ( str
+            , Effect.none
+            )
+
 
 
 -- SUBSCRIPTIONS
@@ -60,7 +69,7 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
+    incoming GotData
 
 
 
@@ -75,5 +84,7 @@ view model =
             [ Html.Events.onClick UserClickedAskQuestion
             ]
             [ Html.text "Ask me a question!" ]
+        , Html.br [] []
+        , Html.text model
         ]
     }

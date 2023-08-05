@@ -12,6 +12,9 @@ export const onReady = ({ app, env }: ElmLand.OnReadyArgs) => {
     console.log(message)
     askTheUserAQuestion()
   })
+  if (ElmLand.app === null) {
+    ElmLand.app = app
+  }
 }
 
 const askTheUserAQuestion = () => {
@@ -24,6 +27,8 @@ const askTheUserAQuestion = () => {
       `Did you know that "${answer}" is ${length} ${units} long?`
 
     window.alert(response)
+
+    ElmLand.app?.ports?.incoming?.send?.(response)
   }
 }
 
@@ -40,4 +45,5 @@ namespace ElmLand {
     send?: (data: unknown) => void
     subscribe?: (callback: (data: unknown) => unknown) => void
   }
+  export let app: OnReadyArgs['app'] | null = null
 }
