@@ -48,6 +48,37 @@ const members = [
       { icon: 'github', link: 'https://github.com/dbj' }
     ]
   },
+  {
+    avatar: 'https://www.github.com/ianmackenzie.png',
+    name: 'Ian Mackenzie',
+    title: '@ianmackenzie',
+    links: [
+      { icon: 'github', link: 'https://github.com/ianmackenzie' }
+    ]
+  },
+  {
+    avatar: 'https://www.github.com/alpakaxaxa.png',
+    name: '@alpakaxaxa',
+    links: [
+      { icon: 'github', link: 'https://github.com/alpakaxaxa' }
+    ]
+  },
+  {
+    avatar: 'https://www.github.com/dennistruemper.png',
+    name: 'Dennis Roch',
+    title: '@dennistruemper',
+    links: [
+      { icon: 'github', link: 'https://github.com/dennistruemper' }
+    ]
+  },
+  {
+    avatar: 'https://www.github.com/nathanbraun.png',
+    name: 'Nathan Braun',
+    title: '@nathanbraun',
+    links: [
+      { icon: 'github', link: 'https://github.com/nathanbraun' }
+    ]
+  },
 ]
 </script>
 

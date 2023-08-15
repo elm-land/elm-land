@@ -20,6 +20,7 @@
 - [SCSS and assets](./14-scss-and-assets/)
 - [Custom 404 pages](./15-custom-404-pages/)
 - [Hash-bashed routing](./16-hash-based-routing/)
+- [Shared subscriptions](./17-shared-subscriptions/)
 
 ## 1. Hello world!
 

@@ -74,7 +74,7 @@ Our `Components.Notification.view` function takes in a value called `props` with
 
 It uses those three values to return some HTML that can be rendered by another page, layout, or component. 
 
-The important thing to note is that the `props` passed into a simple function can contain __values to render__ like `String`, but also __messages to emit__ when an event (like `onClock`) comes in. 
+The important thing to note is that the `props` passed into a simple function can contain __values to render__ like `String`, but also __messages to emit__ when an event (like `onClick`) comes in. 
 
 Having the flexible, lowercase `msg` means we can use this component on _any_ page, as we'll see in the next section!
 
@@ -315,7 +315,7 @@ withDisabled isDisabled (Settings settings) =
 view : Button msg -> Html msg
 view (Settings settings) =
     let
-        viewOptionIcon : Maybe Icon -> Html msg
+        viewOptionalIcon : Maybe Icon -> Html msg
         viewOptionalIcon maybeIcon =
             case maybeIcon of
                 Just icon ->
@@ -399,7 +399,7 @@ In the examples above, we had simple UI components that didn't need all that stu
 
 ### Defining the component
 
-Sometimes, our applications will have a need for a more complex component like an __dropdown__ that needs to:
+Sometimes, our applications will have a need for a more complex component like a __dropdown__ that needs to:
 
 1. Track which item is currently selected
 1. Track whether the results menu is open or closed
@@ -523,7 +523,7 @@ view =
     ...
 ```
 
-Just like before, we'll use [the "Configurable Component" pattern](#2-configurable-components) to make supporting optional arguments easy. But this time around, our required arguments for `new` will include the internal `model` of our dropdown and a way to convert its internal `Msg` type to the `msg` type of the parent.
+Just like before, we'll use [the "Configurable Component" pattern](#_2-configurable-components) to make supporting optional arguments easy. But this time around, our required arguments for `new` will include the internal `model` of our dropdown and a way to convert its internal `Msg` type to the `msg` type of the parent.
 
 Let's walk through the implementation of each section:
 
@@ -637,11 +637,11 @@ init props =
 
 For our `init` function, we want new dropdowns to always have their menus closed and the search query set to an empty string. If we decided that those were useful for the parent to initialize, we would add them to our `props`.
 
-For now, just letting the caller specify an initial selected value seems like a good idea. This will make our `dropdown` useful in contexts where we already have a selected value come back from our API server.
+For now, just letting the caller specify an initial selected value seems like a good idea. This will make our `dropdown` useful in contexts where we receive a selected value from our API server.
 
 ### Part 4: Defining `Msg` and `update`
 
-We'll want our dropdown component be able to internally handle events coming from user events. For example, when the user clicks the dropdown, we want to open the menu and reveal the possible choices. Clicking outside the menu, or selecting an option should dismiss the menu. When a value changes, we'll also want to emit the `onChange` event.
+We'll want our dropdown component to be able to internally handle events triggered by user interactions. For example, when the user clicks the dropdown, we want to open the menu and reveal the possible choices. Clicking outside the menu, or selecting an option should dismiss the menu. When a value changes, we'll also want to emit the `onChange` event.
 
 Here's our definition of `Msg` and `update` to support all that important stuff:
 
@@ -680,26 +680,27 @@ update props =
     toParentModel <|
         case props.msg of
             FocusedDropdown ->
-                ( { model | isMenuOpen = True }
+                ( Model { model | isMenuOpen = True }
                 , Effect.none
                 )
 
             BlurredDropdown ->
-                ( { model | search = "", isMenuOpen = False }
+                ( Model { model | search = "", isMenuOpen = False }
                 , Effect.none
                 )
 
             UpdatedSearchInput value ->
-                ( { model | search = value }
+                ( Model { model | search = value }
                 , Effect.none
                 )
 
             SelectedItem data ->
-                ( { model
-                    | search = ""
-                    , isMenuOpen = False
-                    , selected = Just data.item
-                  }
+                ( Model 
+                    { model
+                        | search = ""
+                        , isMenuOpen = False
+                        , selected = Just data.item
+                    }
                 , case data.onChange of
                     Just onChange ->
                         Effect.sendMsg onChange
@@ -754,7 +755,7 @@ Without the `props.toMsg`, this page would return `( model, Effect (Msg item msg
 
 Now it's up to our `view` to look at the dropdown's settings to determine what to render, and which events to emit as the user interacts with our component. 
 
-This is mostly just the stuff we saw before, but note how we use `props.toMsg` to make sure we're returning `Html msg` instead of `Html (Msg item msg)`.
+This is mostly just the stuff we saw before, but note how we use `settings.toMsg` to make sure we're returning `Html msg` instead of `Html (Msg item msg)`.
 
 This is an important part of making this component easier to plug in!
 
@@ -770,20 +771,20 @@ view (Setting settings) =
 
         onSearchInput : String -> msg
         onSearchInput value =
-            props.toMsg (UpdatedSearchInput value)
+            settings.toMsg (UpdatedSearchInput value)
 
         -- View the input of the dropdown, that opens the 
         -- menu when focused, and displays the search query
         viewDropdownInput : Html msg
         viewDropdownInput =
-            div [ style "dropdown__toggle" ]
+            div [ class "dropdown__toggle" ]
                 [ input
                     [ class "dropdown__input"
                     , type_ "search"
                     , disabled settings.isDisabled
                     , onInput onSearchInput
-                    , onFocus (props.toMsg FocusedDropdown)
-                    , onBlur (props.toMsg BlurredDropdown)
+                    , onFocus (settings.toMsg FocusedDropdown)
+                    , onBlur (settings.toMsg BlurredDropdown)
                     ]
                     []
                 , viewSelectedValueOverlay
@@ -827,7 +828,7 @@ view (Setting settings) =
 
         onMenuItemClick : item -> msg
         onMenuItemClick item =
-            props.toMsg  <|
+            settings.toMsg  <|
                 case settings.onChange of
                     Just onChange ->
                         SelectedItem
@@ -859,7 +860,7 @@ Now that we're done defining it, let's take a quick look at how we would use it 
 Let's imagine  our homepage needs a dropdown to allow users to select the animal that will become the next president of the United States. For convenience, we've defined the available animals in an `Animal` module, which has its own `toName` function.
 
 ```elm{12,18,29,36-42,57-64}
-module Pages.Home_ expossng (Model, Msg, page)
+module Pages.Home_ exposing (Model, Msg, page)
 
 import Animal exposing (Animal)
 import Components.Dropdown
@@ -870,13 +871,13 @@ import Components.Dropdown
 -- MODEL
 
 type alias Model =
-    { dropdown : Ui.Dropdown.Model Animal
+    { dropdown : Components.Dropdown.Model Animal
     }
 
 
 init : () -> ( Model, Effect Msg )
 init _ =
-    ( { dropdown = Ui.Dropdown.init { selected = Nothing }
+    ( { dropdown = Components.Dropdown.init { selected = Nothing }
       }
     , Effect.none
     )
@@ -887,7 +888,7 @@ init _ =
 
 
 type Msg
-    = DropdownSent (Ui.Dropdown.Msg Animal Msg)
+    = DropdownSent (Components.Dropdown.Msg Animal Msg)
     | ChangedSelection Animal
 
 
@@ -895,7 +896,7 @@ update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
         DropdownSent innerMsg ->
-            Ui.Dropdown.update
+            Components.Dropdown.update
                 { msg = innerMsg
                 , model = model.dropdown
                 , toModel = \dropdown -> { model | dropdown = dropdown }
@@ -930,10 +931,10 @@ view model =
 
 
 
-::: details Here's that example `Animals` module
+::: details Here's that example `Animal` module
 
 ```elm
-module Animals exposing (Animal, list, toName)
+module Animal exposing (Animal, list, toName)
 
 
 type Animal

@@ -199,7 +199,7 @@ Some web hosting environments have constraints that make hosting apps with multi
 
 ### Support for &lt;script&gt; tags
 
-Community member `@thomasin` opened [his first Elm Land PR](https://github.com/elm-land/elm-land/pull/55) which made it possible to easily drop in `<script>` tags to the `elm-land.json` file. This allows folks to add CDN links to JavaScript just as easily as we can add CSS tags.
+Community member `@thomasin` opened [their first Elm Land PR](https://github.com/elm-land/elm-land/pull/55) which made it possible to easily drop in `<script>` tags to the `elm-land.json` file. This allows folks to add CDN links to JavaScript just as easily as we can add CSS tags.
 
 This was another great example of a conversation that started in Discord and became a real feature in the framework!
 

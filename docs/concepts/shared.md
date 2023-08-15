@@ -56,7 +56,7 @@ model.page ==
     }
 ```
 
-The important thing to understand is that as the user changes the URL, the entire `model.page` field is replaced with a new one. This behavior help makes Elm Land pages easier to understand, but introduces a new challenge: "How do we share information like a signed-in user across pages?"
+The important thing to understand is that as the user changes the URL, the entire `model.page` field is replaced with a new one. This behavior helps make Elm Land pages easier to understand, but introduces a new challenge: "How do we share information like a signed-in user across pages?"
 
 ## Customizing the `Shared` modules
 
@@ -130,6 +130,25 @@ And returns the initial value of `Shared.Model` and any effects that need to run
 
 ## `Shared.Flags`
 
+The `Shared.Flags` type represents the initial data (if any) you expect to be passed in from JavaScript on startup. If you add a new `src/interop.js` file, you can define a `flags` function that returns the initial data.
+
+### Defining flags
+
+For example, you might want to pass in the initial `window` dimensions when your application loads. This would involve editing these two files:
+
+__`src/interop.js`__
+
+```js{1-6}
+export const flags = ({ env }) => {
+  return {
+    width: window.innerWidth,
+    height: window.innerHeight,
+  }
+}
+```
+
+__`src/Shared.elm`__
+
 ```elm{6-8,13-15}
 module Shared exposing (..)
 
@@ -150,28 +169,9 @@ decoder =
 -- ...
 ```
 
-The `Shared.Flags` type represents the initial data (if any) you expect to be passed in from JavaScript on startup. If you add a new `src/interop.js` file, you can define `flags` function that returns the initial data.
-
-### Defining flags
-
-For example, you might want to pass in the initial `window` dimensions when your application loads. This would involve editing these two files:
-
-__`src/interop.js`__
-
-```js{1-6}
-export const flags = ({ env }) => {
-  return {
-    width: window.innerWidth,
-    height: window.innerHeight,
-  }
-}
-```
-
-__`src/Shared.elm`__
-
 ### Using flags
 
-After changing these three lines of code, your `init` function will receive the safely decoded JSON data in the first argument, `flagsResult`:
+After these changes, your `init` function will receive the safely decoded JSON data in the first argument, `flagsResult`:
 
 __`src/Shared.elm`__
 

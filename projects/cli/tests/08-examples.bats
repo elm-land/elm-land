@@ -42,6 +42,12 @@ load helpers
   expectElmExampleBuilds
 }
 
+@test "'09-catch-all-routes' example builds successfully" {
+  cd ../../examples/09-catch-all-routes
+  run npm install
+  expectElmExampleBuilds
+}
+
 @test "'10-typescript-interop' example builds successfully" {
   cd ../../examples/10-typescript-interop
   expectElmExampleBuilds

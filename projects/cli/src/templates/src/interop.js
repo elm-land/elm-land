@@ -1,5 +1,5 @@
 // These are the flags passed into your Elm application
-export const flags = ({ env }) => {
+export const flags = async ({ env }) => {
   return {}
 }
 

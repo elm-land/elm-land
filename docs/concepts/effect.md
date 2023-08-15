@@ -89,7 +89,7 @@ Effect.pushRoute :
 
 ### `Effect.replaceRoute`
 
-Push a new URL onto the browser history. This is just like [Browser.Navigation.replaceUrl](https://package.elm-lang.org/packages/elm/browser/latest/Browser-Navigation#replaceUrl), except it doesn't require a `Key` argument.
+Replace the current browser history entry with a new URL. This is just like [Browser.Navigation.replaceUrl](https://package.elm-lang.org/packages/elm/browser/latest/Browser-Navigation#replaceUrl), except it doesn't require a `Key` argument.
 
 #### __Definition__
 
@@ -216,7 +216,7 @@ init _ =
 ```
 
 Effects let us talk about our side-effects at a higher level. They allow us to:
-1. Prevent needing to pass `shared` to every `init` or `update` functions that sends an API request
+1. Prevent the need to pass `shared` to every `init` or `update` functions that sends an API request
 1. Prevent bugs and other surprises that come from forgetting to correctly wire up values like `headers` or `timeout`
 1. Create end-to-end tests for our application, using [elm-program-test](https://elm-program-test.netlify.app/#guidebooks)
 

@@ -80,12 +80,12 @@ To prevent that problem from happening again, Elm Land now provides it's own set
 
 ![Screenshot of the Elm Land error message for a missing "page" export](../images/elm-land-error-messages.png)
 
-For example, the error above is letting someone know that removing the exposed `page` function will make this page unable to render. Users can learn more about theses errors in more detail on [the new "Problems" page](/problems).
+For example, the error above is letting someone know that removing the exposed `page` function will make this page unable to render. Users can learn more about these errors in more detail on [the new "Problems" page](/problems).
 
 After upgrading to Elm Land v0.19.0, you should never see an error message for a generated file again. Shout-out to Dillon Kearns, who had previously explored this idea in [elm-pages](https://github.com/dillonkearns/elm-pages)!
 
 
-## Improvements for everone
+## Improvements for everyone
 
 In addition to learning from Sai's experience, I also added several features inspired by the community members in our Discord. Folks using Elm Land had shared some limitations with the guide and CLI they encountered in v0.18.x in the `#suggest-a-feature` and `#improve-the-docs` channels.
 
@@ -106,11 +106,11 @@ In addition to the original guide, we've added some new sections:
 
 - __[Concepts](/concepts/)__ - An overview of how Elm Land works, the core concepts, and why you might customize certain modules.
 
-- __[Reference](/reference/elm-land-json)__- API documentation for Elm Land modules like `Route` and `Page` that you'll use day-to-day in your applications.
+- __[Reference](/reference/elm-land-json)__ - API documentation for Elm Land modules like `Route` and `Page` that you'll use day-to-day in your applications.
 
 - __[FAQs](/faqs)__ - Common questions about the Elm Land project itself, including links to the official roadmap.
 
-This update also comes with an [Examples](/examples/)__ gallery. This includes all the [official examples](https://github.com/elm-land/elm-land/tree/main/examples) from the Elm Land repo.
+This update also comes with an __[Examples](/examples/)__ gallery. This includes all the [official examples](https://github.com/elm-land/elm-land/tree/main/examples) from the Elm Land repo.
 
 <BrowserWindow src="/images/news/examples-gallery.jpg" alt="A preview of the examples page" />
 

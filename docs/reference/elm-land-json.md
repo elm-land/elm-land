@@ -205,7 +205,7 @@ If you'd like to use Elm, but for a website that needs HTML tags to be specified
 ```
 :::
 
-This section allows users to specify HTML attributes on the generated `<html>`, `<head>`, and `<body>` tags. Each set of attributes can be represented with a JSON object, where the object's key is the HTML attribute's name, and the `value` is the attribute's value. 
+This section allows users to specify HTML attributes on the generated `<html>` and `<head>` tags. Each set of attributes can be represented with a JSON object, where the object's key is the HTML attribute's name, and the `value` is the attribute's value. 
 
 
 #### app.html.attributes.html
