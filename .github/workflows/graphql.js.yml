@@ -1,20 +1,26 @@
 # This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
 
-name: "elm-land"
+name: "@elm-land/graphql"
 
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'projects/cli/**'
+      - 'projects/graphql/**'
   pull_request:
+    paths:
+      - 'projects/cli/**'
+      - 'projects/graphql/**'
 
 jobs:
   build:
     defaults:
       run:
-        working-directory: projects/cli
+        working-directory: projects/graphql
 
-    name: "Node.js"
+    name: "Tests"
     runs-on: macos-12
 
     strategy:
@@ -28,11 +34,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-      - name: "Install NPM dependencies"
-        run: npm ci
-      - name: "Build Elm code generator"
-        run: npm run setup
-      - name: "Make elm-land available in terminal"
-        run: npm link
+      - name: "Setup test dependencies"
+        run: npm run test:setup
       - name: "Run test suite"
         run: npm test

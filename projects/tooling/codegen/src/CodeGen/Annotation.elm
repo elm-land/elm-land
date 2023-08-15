@@ -3,6 +3,7 @@ module CodeGen.Annotation exposing
     , string
     , record, multilineRecord, extensibleRecord
     , function, type_, genericType
+    , parens
     , toString
     )
 
@@ -12,6 +13,7 @@ module CodeGen.Annotation exposing
 @docs string
 @docs record, multilineRecord, extensibleRecord
 @docs function, type_, genericType
+@docs parens
 
 @docs toString
 
@@ -29,6 +31,7 @@ type Annotation
     | RecordAnnotation (List ( String, Annotation ))
     | MultilineRecordAnnotation (List ( String, Annotation ))
     | ExtensibleRecordAnnotation String (List ( String, Annotation ))
+    | Parens Annotation
 
 
 {-| A type alias, custom type, or a type from another module.
@@ -69,6 +72,13 @@ type_ str =
 genericType : String -> List Annotation -> Annotation
 genericType str annotations =
     GenericTypeAnnotation str annotations
+
+
+{-| Wraps an annotation in parentheses
+-}
+parens : Annotation -> Annotation
+parens annotation =
+    Parens annotation
 
 
 {-| A function annotation, where each piece is joined together by the `->` symbol
@@ -209,6 +219,9 @@ toString annotation =
                     (List.map fieldToString items
                         |> String.join ", "
                     )
+
+        Parens anno ->
+            Util.String.wrapInParentheses (toString anno)
 
 
 fieldToString : ( String, Annotation ) -> String

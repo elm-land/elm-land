@@ -1,10 +1,47 @@
-module GraphQL.Introspection.Schema exposing (Schema, decoder)
+module GraphQL.Introspection.Schema exposing
+    ( Schema, decoder
+    , toQueryTypeName
+    , Type(..)
+    , findQueryType, findTypeWithName
+    , toTypeName
+    , ObjectType, toObjectType
+    , ScalarType, EnumType, InputObjectType
+    , InterfaceType, UnionType
+    , Field, findFieldForType, findFieldWithName
+    , TypeRef, toTypeRefName, toTypeRefAnnotation
+    )
 
 {-| These decoders were translated from the official `graphql`
 NPM package's `./graphql/utilties/getIntrospectionQuery.d.ts` file.
+
+
+## Schema
+
+@docs Schema, decoder
+@docs toQueryTypeName
+
+
+## Type
+
+@docs Type
+@docs findQueryType, findTypeWithName
+@docs toTypeName
+
+@docs ObjectType, toObjectType
+@docs ScalarType, EnumType, InputObjectType
+@docs InterfaceType, UnionType
+
+
+## Field
+
+@docs Field, findFieldForType, findFieldWithName
+
+@docs TypeRef, toTypeRefName, toTypeRefAnnotation
+
 -}
 
 import Json.Decode
+import List.Extra
 
 
 type Schema
@@ -16,13 +53,106 @@ decoder =
     Json.Decode.map Schema internalsDecoder
 
 
+toQueryTypeName : Schema -> String
+toQueryTypeName (Schema schema) =
+    schema.queryTypeName
+
+
+
+-- TYPES
+
+
+findQueryType : Schema -> Maybe ObjectType
+findQueryType ((Schema schema) as wrappedSchema) =
+    findTypeWithName schema.queryTypeName wrappedSchema
+        |> Maybe.andThen toObjectType
+
+
+findTypeWithName : String -> Schema -> Maybe Type
+findTypeWithName name (Schema schema) =
+    let
+        hasMatchingName : Type -> Bool
+        hasMatchingName type_ =
+            toTypeName type_ == name
+    in
+    List.Extra.find hasMatchingName schema.types
+
+
+findFieldForType :
+    { typeName : String
+    , fieldName : String
+    }
+    -> Schema
+    -> Maybe Field
+findFieldForType { typeName, fieldName } schema =
+    let
+        parentObjectType : Maybe ObjectType
+        parentObjectType =
+            findTypeWithName typeName schema
+                |> Maybe.andThen toObjectType
+    in
+    parentObjectType
+        |> Maybe.andThen (findFieldWithName fieldName)
+
+
+toTypeName : Type -> String
+toTypeName type_ =
+    case type_ of
+        Type_Scalar data ->
+            data.name
+
+        Type_Object data ->
+            data.name
+
+        Type_Interface data ->
+            data.name
+
+        Type_Union data ->
+            data.name
+
+        Type_Enum data ->
+            data.name
+
+        Type_InputObject data ->
+            data.name
+
+
+toObjectType : Type -> Maybe ObjectType
+toObjectType type_ =
+    case type_ of
+        Type_Object data ->
+            Just data
+
+        _ ->
+            Nothing
+
+
+
+-- FIELDS
+
+
+{-| Find details for a field on an `ObjectType` or `Interface`
+-}
+findFieldWithName :
+    String
+    -> { type_ | fields : List Field }
+    -> Maybe Field
+findFieldWithName name { fields } =
+    let
+        hasMatchingName : Field -> Bool
+        hasMatchingName field =
+            field.name == name
+    in
+    List.Extra.find hasMatchingName fields
+
+
 
 -- INTERNALS
 
 
 type alias Internals =
-    { queryType : String
-    , mutationType : Maybe String
+    { queryTypeName : String
+    , mutationTypeName : Maybe String
     , types : List Type
     }
 
@@ -30,11 +160,9 @@ type alias Internals =
 internalsDecoder : Json.Decode.Decoder Internals
 internalsDecoder =
     Json.Decode.map3 Internals
-        (Json.Decode.field "queryType" namedTypeRefDecoder)
-        (Json.Decode.maybe
-            (Json.Decode.field "mutationType" namedTypeRefDecoder)
-        )
-        (Json.Decode.list typeDecoder)
+        (Json.Decode.at [ "queryType", "name" ] Json.Decode.string)
+        (Json.Decode.maybe (Json.Decode.at [ "mutationType", "name" ] Json.Decode.string))
+        (Json.Decode.field "types" (Json.Decode.list typeDecoder))
 
 
 type Type
@@ -126,12 +254,28 @@ type alias ScalarType =
     }
 
 
+scalarTypeDecoder : Json.Decode.Decoder ScalarType
+scalarTypeDecoder =
+    Json.Decode.map2 ScalarType
+        (Json.Decode.field "name" Json.Decode.string)
+        (Json.Decode.maybe (Json.Decode.field "description" Json.Decode.string))
+
+
 type alias ObjectType =
     { name : String
     , description : Maybe String
     , fields : List Field
     , interfaces : List NamedTypeRef
     }
+
+
+objectTypeDecoder : Json.Decode.Decoder ObjectType
+objectTypeDecoder =
+    Json.Decode.map4 ObjectType
+        (Json.Decode.field "name" Json.Decode.string)
+        (Json.Decode.maybe (Json.Decode.field "description" Json.Decode.string))
+        (Json.Decode.field "fields" (Json.Decode.list fieldDecoder))
+        (Json.Decode.field "interfaces" (Json.Decode.list namedTypeRefDecoder))
 
 
 type alias InterfaceType =
@@ -142,11 +286,28 @@ type alias InterfaceType =
     }
 
 
+interfaceTypeDecoder : Json.Decode.Decoder InterfaceType
+interfaceTypeDecoder =
+    Json.Decode.map4 InterfaceType
+        (Json.Decode.field "name" Json.Decode.string)
+        (Json.Decode.maybe (Json.Decode.field "description" Json.Decode.string))
+        (Json.Decode.field "fields" (Json.Decode.list fieldDecoder))
+        (Json.Decode.field "interfaces" (Json.Decode.list namedTypeRefDecoder))
+
+
 type alias UnionType =
     { name : String
     , description : Maybe String
     , possibleTypes : List NamedTypeRef
     }
+
+
+unionTypeDecoder : Json.Decode.Decoder UnionType
+unionTypeDecoder =
+    Json.Decode.map3 UnionType
+        (Json.Decode.field "name" Json.Decode.string)
+        (Json.Decode.maybe (Json.Decode.field "description" Json.Decode.string))
+        (Json.Decode.field "possibleTypes" (Json.Decode.list namedTypeRefDecoder))
 
 
 type alias EnumType =
@@ -156,11 +317,27 @@ type alias EnumType =
     }
 
 
+enumTypeDecoder : Json.Decode.Decoder EnumType
+enumTypeDecoder =
+    Json.Decode.map3 EnumType
+        (Json.Decode.field "name" Json.Decode.string)
+        (Json.Decode.maybe (Json.Decode.field "description" Json.Decode.string))
+        (Json.Decode.field "enumValues" (Json.Decode.list enumValueDecoder))
+
+
 type alias InputObjectType =
     { name : String
     , description : Maybe String
     , inputFields : List InputValue
     }
+
+
+inputObjectTypeDecoder : Json.Decode.Decoder InputObjectType
+inputObjectTypeDecoder =
+    Json.Decode.map3 InputObjectType
+        (Json.Decode.field "name" Json.Decode.string)
+        (Json.Decode.maybe (Json.Decode.field "description" Json.Decode.string))
+        (Json.Decode.field "inputFields" (Json.Decode.list inputValueDecoder))
 
 
 type alias EnumValue =
@@ -170,22 +347,159 @@ type alias EnumValue =
     }
 
 
+enumValueDecoder : Json.Decode.Decoder EnumValue
+enumValueDecoder =
+    Json.Decode.map3 EnumValue
+        (Json.Decode.field "name" Json.Decode.string)
+        (Json.Decode.maybe (Json.Decode.field "description" Json.Decode.string))
+        (Json.Decode.maybe (Json.Decode.field "deprecationReason" Json.Decode.string))
+
+
 type alias Field =
     { name : String
     , description : Maybe String
     , args : List InputValue
-    , type_ : NamedTypeRef
+    , type_ : TypeRef
     , deprecationReason : Maybe String
     }
+
+
+fieldDecoder : Json.Decode.Decoder Field
+fieldDecoder =
+    Json.Decode.map5 Field
+        (Json.Decode.field "name" Json.Decode.string)
+        (Json.Decode.maybe (Json.Decode.field "description" Json.Decode.string))
+        (Json.Decode.field "args" (Json.Decode.list inputValueDecoder))
+        (Json.Decode.field "type" typeRefDecoder)
+        (Json.Decode.maybe (Json.Decode.field "deprecationReason" Json.Decode.string))
 
 
 type alias InputValue =
     { name : String
-    , type_ : NamedTypeRef
     , description : Maybe String
+    , type_ : TypeRef
     , defaultValue : Maybe String
     , deprecationReason : Maybe String
     }
+
+
+inputValueDecoder : Json.Decode.Decoder InputValue
+inputValueDecoder =
+    Json.Decode.map5 InputValue
+        (Json.Decode.field "name" Json.Decode.string)
+        (Json.Decode.maybe (Json.Decode.field "description" Json.Decode.string))
+        (Json.Decode.field "type" typeRefDecoder)
+        (Json.Decode.field "defaultValue" (Json.Decode.maybe Json.Decode.string))
+        (Json.Decode.maybe (Json.Decode.field "deprecationReason" Json.Decode.string))
+
+
+type TypeRef
+    = Named NamedTypeRef
+    | List_ TypeRef
+    | NonNull TypeRef
+
+
+toTypeRefName : TypeRef -> String
+toTypeRefName typeRef =
+    case typeRef of
+        Named data ->
+            data.name
+
+        List_ inner ->
+            toTypeRefName inner
+
+        NonNull inner ->
+            toTypeRefName inner
+
+
+{-| Because required is the default, this function helps flip non-null into a `Maybe`.
+
+This data type makes it easier to generate Elm code.
+
+See usage with `toTypeRefAnnotation` below.
+
+-}
+type ElmTypeRef
+    = NameOf NamedTypeRef
+    | ListOf ElmTypeRef
+    | MaybeOf ElmTypeRef
+
+
+toElmTypeRef : TypeRef -> ElmTypeRef
+toElmTypeRef typeRef =
+    toElmTypeRefHelp { isMaybe = True } typeRef
+
+
+toElmTypeRefHelp : { isMaybe : Bool } -> TypeRef -> ElmTypeRef
+toElmTypeRefHelp options typeRef =
+    let
+        applyMaybe : ElmTypeRef -> ElmTypeRef
+        applyMaybe inner =
+            if options.isMaybe then
+                MaybeOf inner
+
+            else
+                inner
+    in
+    case typeRef of
+        NonNull innerTypeRef ->
+            toElmTypeRefHelp
+                { options | isMaybe = False }
+                innerTypeRef
+
+        List_ innerTypeRef ->
+            ListOf (toElmTypeRefHelp { options | isMaybe = True } innerTypeRef)
+                |> applyMaybe
+
+        Named value ->
+            NameOf value
+                |> applyMaybe
+
+
+toTypeRefAnnotation : TypeRef -> String
+toTypeRefAnnotation typeRef =
+    toElmTypeRefAnnotation (toElmTypeRef typeRef)
+
+
+toElmTypeRefAnnotation : ElmTypeRef -> String
+toElmTypeRefAnnotation elmTypeRef =
+    case elmTypeRef of
+        NameOf { name } ->
+            name
+
+        ListOf (NameOf value) ->
+            "List " ++ toElmTypeRefAnnotation (NameOf value)
+
+        ListOf innerElmTypeRef ->
+            "List (" ++ toElmTypeRefAnnotation innerElmTypeRef ++ ")"
+
+        MaybeOf (NameOf value) ->
+            "Maybe " ++ toElmTypeRefAnnotation (NameOf value)
+
+        MaybeOf innerElmTypeRef ->
+            "Maybe (" ++ toElmTypeRefAnnotation innerElmTypeRef ++ ")"
+
+
+typeRefDecoder : Json.Decode.Decoder TypeRef
+typeRefDecoder =
+    let
+        fromKindToTypeRefDecoder : String -> Json.Decode.Decoder TypeRef
+        fromKindToTypeRefDecoder str =
+            case str of
+                "LIST" ->
+                    Json.Decode.field "ofType" typeRefDecoder
+                        |> Json.Decode.map List_
+
+                "NON_NULL" ->
+                    Json.Decode.field "ofType" typeRefDecoder
+                        |> Json.Decode.map NonNull
+
+                _ ->
+                    namedTypeRefDecoder
+                        |> Json.Decode.map Named
+    in
+    Json.Decode.field "kind" Json.Decode.string
+        |> Json.Decode.andThen fromKindToTypeRefDecoder
 
 
 type alias NamedTypeRef =
@@ -198,3 +512,4 @@ namedTypeRefDecoder : Json.Decode.Decoder NamedTypeRef
 namedTypeRefDecoder =
     Json.Decode.map2 NamedTypeRef
         (Json.Decode.field "kind" kindDecoder)
+        (Json.Decode.field "name" Json.Decode.string)

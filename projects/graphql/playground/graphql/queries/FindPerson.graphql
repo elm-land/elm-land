@@ -1,0 +1,9 @@
+query FindPerson {
+  person(id: "1") {
+    name
+    emailAddress
+    # followers {
+    #   name
+    # }
+  }
+}

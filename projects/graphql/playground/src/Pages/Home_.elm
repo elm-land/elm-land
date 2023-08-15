@@ -1,9 +1,9 @@
 module Pages.Home_ exposing (Model, Msg, page)
 
 import Effect exposing (Effect)
-import Route exposing (Route)
 import Html
 import Page exposing (Page)
+import Route exposing (Route)
 import Shared
 import View exposing (View)
 

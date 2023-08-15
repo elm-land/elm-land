@@ -2,9 +2,13 @@
   "name": "@elm-land/graphql",
   "version": "0.20.0",
   "description": "Generate Elm code from GraphQL files",
-  "main": "src/index.js",  
+  "main": "src/index.js",
   "scripts": {
-    "test": "npx bats"
+    "build": "(cd src/worker && elm make src/Main.elm --output=dist/elm.worker.js)",
+    "build:playground": "npm run build && (cd playground && elm-land graphql build)",
+    "test:setup": "npm install && npm run build && npm run cli:setup",
+    "cli:setup": "(cd ../cli && npm i && npm run setup && npm link)",
+    "test": "bats tests/*.bats"
   },
   "repository": {
     "type": "git",
@@ -23,5 +27,9 @@
   "homepage": "https://github.com/elm-land/elm-land#readme",
   "dependencies": {
     "graphql": "16.6.0"
+  },
+  "devDependencies": {
+    "bats": "1.9.0",
+    "elm": "0.19.1-5"
   }
 }

@@ -5,6 +5,7 @@ const graphql = require('graphql')
 const path = require('path')
 const { Utils, Terminal } = require('../../cli/src/commands/_utils')
 
+
 const Problem = {
   create: (lines) => Promise.reject(lines.join('\n'))
 }
@@ -39,17 +40,46 @@ const commands = {
   },
   build: async () => {
     const config = await attemptToReadElmJson()
-    const schema = await attemptToFetchIntrospectionJson(config)
-    const { queries, mutations, fragments } = await attemptToLoadLocalGraphQLFiles()
-    const flags = { schema, queries, mutations, fragments }
+    const introspection = await attemptToFetchIntrospectionJson(config)
+    const schema = graphql.buildClientSchema(introspection.data)
+    const { queries, mutations } = await attemptToLoadLocalGraphQLFiles(schema)
+    const flags = { introspection, queries, mutations }
 
-    console.dir(flags.queries[0])
+    // Run Elm codegen worker
+    const { files } = await attemptToGenerateElmFiles(flags).catch(reason => {
+      console.error(reason)
+      process.exit(1)
+    })
 
+    // Save generated Elm files
+    try {
+      await fs.promises.rm(path.join(process.cwd(), '.elm-land', 'src', 'GraphQL'), { recursive: true })
+    } catch (_) {}
+    try {
+      await fs.promises.mkdir(path.join(process.cwd(), '.elm-land', 'src', 'GraphQL', 'Queries'), { recursive: true })
+      await fs.promises.mkdir(path.join(process.cwd(), '.elm-land', 'src', 'GraphQL', 'Mutations'), { recursive: true })
+    } catch (_) {}
+    await Promise.all(files.map(saveFileInElmLandSrcFolder))
+
+    console.info(`    ${Terminal.green('✔')} Successfully generated ${printCount(files, 'file', 'files')}`)
     return ''
   },
   watch: async () => {
 
   },
+}
+
+/**
+ * 
+ * @param {ElmFile} file 
+ * @returns {Promise<void>}
+ */
+const saveFileInElmLandSrcFolder = async (file) => {
+  await fs.promises.writeFile(
+    path.join(process.cwd(), '.elm-land', 'src', ...file.filepath), 
+    file.contents,
+    { encoding: 'utf-8' }
+  )
 }
 
 const run = async (command, ...args) => {
@@ -100,7 +130,7 @@ const attemptToFetchIntrospectionJson = async (config) => {
 
   console.info([
     '',
-    Utils.intro.success(`is building your ${Terminal.green('GraphQL')} files...`),
+    Utils.intro.success(`${Terminal.cyan('GraphQL')} build started...`),
   ].join('\n'))
 
   // 1️⃣ Attempt to read schema from local file
@@ -111,7 +141,7 @@ const attemptToFetchIntrospectionJson = async (config) => {
       const localFileContents = await fs.promises.readFile(localFilepath, { encoding: 'utf-8' })
 
       let schema = graphql.buildSchema(localFileContents)
-      console.info(`    ${Terminal.green('✔')} Read local ${Terminal.pink(filename)} file`)
+      console.info(`    ${Terminal.green('✔')} Found ${Terminal.pink(filename)} file`)
 
       let result = await graphql.graphql({ schema, source: graphql.getIntrospectionQuery() })
       introspectionJsonString = JSON.stringify(result, null, 2)
@@ -215,8 +245,6 @@ const attemptToFetchIntrospectionJson = async (config) => {
       { encoding: 'utf8' }
     )
 
-    console.info(`    ${Terminal.green('✔')} Saved ${Terminal.pink('introspection.json')} file`)
-
     return JSON.parse(introspectionJsonString)
   } else {
     return Promise.reject(Problem.create([
@@ -229,33 +257,40 @@ const attemptToFetchIntrospectionJson = async (config) => {
 
 /**
  * @typedef {{ filename: string, contents: string, ast: graphql.DocumentNode }} File
- * 
- * @returns {Promise<{ queries: File[], mutations: File[], fragments: File[] }}
+ * @param {graphql.GraphQLSchema} schema
+ * @returns {Promise<{ queries: File[], mutations: File[] }}
  */
-const attemptToLoadLocalGraphQLFiles = async () => {
-  let [queries, mutations, fragments] = await Promise.all([
-    loadGraphQLFilesFrom({ folder: 'queries' }),
-    loadGraphQLFilesFrom({ folder: 'mutations' }),
-    loadGraphQLFilesFrom({ folder: 'fragments' }),
+const attemptToLoadLocalGraphQLFiles = async (schema) => {
+  let [queries, mutations] = await Promise.all([
+    loadGraphQLFilesFrom({ schema, folder: 'queries' }),
+    loadGraphQLFilesFrom({ schema, folder: 'mutations' }),
   ])
-  const printCount = (array, singular, plural) => {
-    if (array.length === 1) {
-      return `${Terminal.pink(array.length)} ${singular}`
-    } else {
-      return `${Terminal.pink(array.length)} ${plural}`
-    }
-  }
-  console.info(`    ${Terminal.green('✔')} Found ${printCount(queries, 'query', 'queries')}, ${printCount(mutations, 'mutation', 'mutations')}, and ${printCount(fragments, 'fragment', 'fragments')}`)
+  console.info(`    ${Terminal.green('✔')} Validated ${printCount(queries, 'query', 'queries')} and ${printCount(mutations, 'mutation', 'mutations')}`)
 
-  return { queries, mutations, fragments }
+  return { queries, mutations }
 }
 
 /**
  * 
- * @param {{ folder: string }} args
+ * @param {unknown[]} array 
+ * @param {string} singular 
+ * @param {string} plural 
+ * @returns {string}
+ */
+const printCount = (array, singular, plural) => {
+  if (array.length === 1) {
+    return Terminal.pink(`${array.length} ${singular}`)
+  } else {
+    return Terminal.pink(`${array.length} ${plural}`)
+  }
+}
+
+/**
+ * 
+ * @param {{ schema: graphql.GraphQLSchema, folder: string }} args
  * @returns {Promise<File>}
  */
-const loadGraphQLFilesFrom = ({ folder }) =>
+const loadGraphQLFilesFrom = ({ schema, folder }) =>
   fs.promises.readdir(path.join(process.cwd(), 'graphql', folder))
     .then(filenames => Promise.all(
       filenames.map(async filename => {
@@ -263,7 +298,28 @@ const loadGraphQLFilesFrom = ({ folder }) =>
         try {
           if (filename.endsWith('.graphql') || filename.endsWith('.gql')) {
             const contents = await fs.promises.readFile(filepath, { encoding: 'utf-8' })
-            return { filename, contents, ast: graphql.parse(contents) }
+            const ast = graphql.parse(contents)
+            const errors = graphql.validate(schema, ast)
+            
+            if (errors.length === 0) {
+              return { filename, contents, ast }
+            } else {
+              const relativeFilepath = './' + filepath.split('/').slice(-3).join('/')
+              console.error('')
+              console.error(`    ${Terminal.red('!')} Ran into a problem with ${Terminal.pink(relativeFilepath)}:`)
+              console.error([
+                '',
+                '',
+                ...errors,
+                ''
+              ].join('\n').split('\n').map(Terminal.yellow).join(`\n    ${Terminal.dim('>')}  `))
+              console.error('')
+
+              console.error(`    Once that problem is fixed, please run this command again.`)
+              console.error('')
+
+              process.exit(1)
+            }
           }
         } catch (parsingError) {
           const relativeFilepath = './' + filepath.split('/').slice(-3).join('/')
@@ -284,6 +340,36 @@ const loadGraphQLFilesFrom = ({ folder }) =>
       }).filter(a => a)
     ))
     .catch(_ => [])
+
+
+/**
+ * @typedef {{ filename: string, contents: string, ast: graphql.DocumentNode }} ClientOperation
+ * @typedef {{ filepath: string[], contents: string }} ElmFile
+ * @param {{ introspection: graphql.IntrospectionSchema, queries:  ClientOperation[], mutations: ClientOperation[] }} flags 
+ * @returns {Promise<ElmFile[]>}
+ */
+const attemptToGenerateElmFiles = async (flags) => {
+  return new Promise((resolve, reject) => {
+    try {
+      // Load worker, ignore Debug mode errors
+      let warn = console.warn
+      console.warn = () => null
+      const { Elm } = require('./worker/dist/elm.worker.js')
+      const app = Elm.Main.init({ flags })
+      console.warn = warn
+
+      app.ports.success.subscribe(resolve)
+      app.ports.failure.subscribe(reject)
+    } catch (reason) {
+      console.error('')
+      console.error(`    ${Terminal.red('!')} Failed to run the ${Terminal.pink('code generation')} program...`)
+      console.error('')
+      console.error(`      ${reason}`)
+      console.error('')
+      process.exit(1)
+    }
+  })
+}
 
 const helpText = [
   '',

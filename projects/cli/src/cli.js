@@ -6,8 +6,6 @@ const { Customize } = require('./commands/customize')
 const { Routes } = require('./commands/routes')
 const { Utils, Terminal } = require('./commands/_utils')
 
-const { GraphQL } = require('../../graphql/src/index.js')
-
 let { version } = require('../package.json')
 
 let subcommandList = [
@@ -95,10 +93,15 @@ let run = async (commandFromCli) => {
       }
     },
     'graphql': ([command, ...args] = []) => {
-      if (isHelpFlag(command)) {
-        return GraphQL.printHelpInfo()
-      } else {
-        return GraphQL.run(command, ...args)
+      try {
+        const { GraphQL } = require('../../graphql/src/index.js')
+        if (isHelpFlag(command)) {
+          return GraphQL.printHelpInfo()
+        } else {
+          return GraphQL.run(command, ...args)
+        }
+      } catch (_) {
+        console.error('TODO', 'Prompt user to install @elm-land/graphql plugin')
       }
     }
   }
