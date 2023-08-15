@@ -54,11 +54,11 @@ const commands = {
     // Save generated Elm files
     try {
       await fs.promises.rm(path.join(process.cwd(), '.elm-land', 'src', 'GraphQL'), { recursive: true })
-    } catch (_) {}
+    } catch (_) { }
     try {
       await fs.promises.mkdir(path.join(process.cwd(), '.elm-land', 'src', 'GraphQL', 'Queries'), { recursive: true })
       await fs.promises.mkdir(path.join(process.cwd(), '.elm-land', 'src', 'GraphQL', 'Mutations'), { recursive: true })
-    } catch (_) {}
+    } catch (_) { }
     await Promise.all(files.map(saveFileInElmLandSrcFolder))
 
     console.info(`    ${Terminal.green('✔')} Successfully generated ${printCount(files, 'file', 'files')}`)
@@ -76,7 +76,7 @@ const commands = {
  */
 const saveFileInElmLandSrcFolder = async (file) => {
   await fs.promises.writeFile(
-    path.join(process.cwd(), '.elm-land', 'src', ...file.filepath), 
+    path.join(process.cwd(), '.elm-land', 'src', ...file.filepath),
     file.contents,
     { encoding: 'utf-8' }
   )
@@ -151,7 +151,6 @@ const attemptToFetchIntrospectionJson = async (config) => {
   }
   // 2️⃣ Attempt to read schema from GraphQL API endpoint
   else {
-
     let url = undefined
     try {
       url = config.graphql.schema.url
@@ -300,7 +299,7 @@ const loadGraphQLFilesFrom = ({ schema, folder }) =>
             const contents = await fs.promises.readFile(filepath, { encoding: 'utf-8' })
             const ast = graphql.parse(contents)
             const errors = graphql.validate(schema, ast)
-            
+
             if (errors.length === 0) {
               return { filename, contents, ast }
             } else {

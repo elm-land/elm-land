@@ -180,30 +180,136 @@ toModule ({ schema, document } as options) =
                 , expression = expression
                 }
 
+        toObjectDecoder :
+            { typeRefName : String
+            , parentType : Maybe Schema.ObjectType
+            , selections : List Document.Selection
+            }
+            -> CodeGen.Expression
+        toObjectDecoder props =
+            CodeGen.Expression.pipeline
+                (List.concat
+                    [ [ CodeGen.Expression.value
+                            ("GraphQL.Decode.object " ++ props.typeRefName)
+                      ]
+                    , case props.parentType of
+                        Nothing ->
+                            []
+
+                        Just parentType ->
+                            List.map (toFieldDecoder parentType) props.selections
+                    ]
+                )
+
         decoderFunction : CodeGen.Declaration
         decoderFunction =
-            let
-                expression : CodeGen.Expression
-                expression =
-                    CodeGen.Expression.pipeline
-                        [ CodeGen.Expression.value "GraphQL.Decode.object Data"
-                        , CodeGen.Expression.multilineFunction
-                            { name = "GraphQL.Decode.field"
-                            , arguments =
-                                [ CodeGen.Expression.multilineRecord
-                                    [ ( "name", CodeGen.Expression.string "hello" )
-                                    , ( "decoder", CodeGen.Expression.value "GraphQL.Decode.string" )
-                                    ]
-                                ]
-                            }
-                        ]
-            in
             CodeGen.Declaration.function
                 { name = "decoder"
                 , annotation = CodeGen.Annotation.type_ "GraphQL.Decode.Decoder Data"
                 , arguments = []
-                , expression = expression
+                , expression =
+                    toObjectDecoder
+                        { typeRefName = "Data"
+                        , parentType = Schema.findQueryType schema
+                        , selections =
+                            Document.toRootSelections document
+                                |> Result.withDefault []
+                        }
                 }
+
+        toTypeRefDecoder :
+            Schema.TypeRef
+            -> CodeGen.Expression
+            -> CodeGen.Expression
+        toTypeRefDecoder typeRef innerExpression =
+            let
+                toElmTypeRefExpression : Schema.ElmTypeRef -> CodeGen.Expression
+                toElmTypeRefExpression elmTypeRef =
+                    case elmTypeRef of
+                        Schema.ElmTypeRef_Named _ ->
+                            innerExpression
+
+                        Schema.ElmTypeRef_List innerElmTypeRef ->
+                            CodeGen.Expression.pipeline
+                                [ toElmTypeRefExpression innerElmTypeRef
+                                , CodeGen.Expression.value "GraphQL.Decode.list"
+                                ]
+
+                        Schema.ElmTypeRef_Maybe innerElmTypeRef ->
+                            CodeGen.Expression.pipeline
+                                [ toElmTypeRefExpression innerElmTypeRef
+                                , CodeGen.Expression.value "GraphQL.Decode.maybe"
+                                ]
+            in
+            toElmTypeRefExpression (Schema.toElmTypeRef typeRef)
+
+        toFieldDecoder : Schema.ObjectType -> Document.Selection -> CodeGen.Expression
+        toFieldDecoder parentObjectType selection =
+            case selection of
+                Document.Selection_Field field ->
+                    let
+                        decoder : CodeGen.Expression
+                        decoder =
+                            case
+                                Schema.findFieldWithName
+                                    field.name
+                                    parentObjectType
+                            of
+                                Just fieldSchema ->
+                                    let
+                                        typeRefName : String
+                                        typeRefName =
+                                            Schema.toTypeRefName fieldSchema.type_
+                                    in
+                                    if Schema.isBuiltInScalarType fieldSchema.type_ then
+                                        CodeGen.Expression.value
+                                            ("GraphQL.Decode.${typeRefName}"
+                                                |> String.replace "${typeRefName}" (String.toLower typeRefName)
+                                            )
+                                            |> toTypeRefDecoder fieldSchema.type_
+
+                                    else if Schema.isScalarType fieldSchema.type_ schema then
+                                        CodeGen.Expression.value
+                                            ("GraphQL.Scalars.${typeRefName}.decoder"
+                                                |> String.replace "${typeRefName}" (String.Extra.toSentenceCase typeRefName)
+                                            )
+                                            |> toTypeRefDecoder fieldSchema.type_
+
+                                    else
+                                        toObjectDecoder
+                                            { typeRefName = String.Extra.toSentenceCase typeRefName
+                                            , parentType =
+                                                Schema.findTypeWithName typeRefName schema
+                                                    |> Maybe.andThen Schema.toObjectType
+                                            , selections = field.selections
+                                            }
+                                            |> toTypeRefDecoder fieldSchema.type_
+
+                                Nothing ->
+                                    CodeGen.Expression.value "Debug.todo \"Handle Nothing branch for Schema.findFieldWithName\""
+                    in
+                    CodeGen.Expression.multilineFunction
+                        { name = "GraphQL.Decode.field"
+                        , arguments =
+                            [ CodeGen.Expression.multilineRecord
+                                [ ( "name"
+                                  , CodeGen.Expression.string
+                                        (field.alias
+                                            |> Maybe.withDefault field.name
+                                        )
+                                  )
+                                , ( "decoder"
+                                  , decoder
+                                  )
+                                ]
+                            ]
+                        }
+
+                Document.Selection_FragmentSpread fragment ->
+                    CodeGen.Expression.value "Debug.todo \"Selection_FragmentSpread\""
+
+                Document.Selection_InlineFragment fragment ->
+                    CodeGen.Expression.value "Debug.todo \"Selection_InlineFragment\""
     in
     Result.map
         (\dataTypeAlias ->
