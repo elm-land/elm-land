@@ -101,12 +101,17 @@ toModule ({ schema, document } as options) =
                         typeAliasName : String
                         typeAliasName =
                             toNameThatWontClash
-                                { field = field
+                                { alias_ = fieldSelection.alias
+                                , field = field
                                 , existingNames = existingNames
                                 }
                                 NameBasedOffOfSchemaType
+
+                        newExistingNames : Set String
+                        newExistingNames =
+                            Set.insert typeAliasName existingNames
                     in
-                    { existingNames = Set.insert typeAliasName existingNames
+                    { existingNames = newExistingNames
                     , declarations =
                         declarations
                             ++ [ CodeGen.Declaration.typeAlias
@@ -114,18 +119,24 @@ toModule ({ schema, document } as options) =
                                     , annotation =
                                         fieldSelection.selections
                                             |> List.filterMap Document.toFieldSelection
-                                            |> List.map
+                                            |> List.filterMap
                                                 (\innerField ->
-                                                    ( innerField.alias
-                                                        |> Maybe.withDefault innerField.name
-                                                    , Schema.findFieldForType
+                                                    Schema.findFieldForType
                                                         { typeName = Schema.toTypeRefName field.type_
                                                         , fieldName = innerField.name
                                                         }
                                                         schema
-                                                        |> Maybe.map toTypeRefAnnotation
-                                                        |> Maybe.withDefault (CodeGen.Annotation.type_ "HALP")
-                                                    )
+                                                        |> Maybe.map
+                                                            (toTypeRefAnnotation
+                                                                innerField
+                                                                newExistingNames
+                                                            )
+                                                        |> Maybe.map
+                                                            (Tuple.pair
+                                                                (innerField.alias
+                                                                    |> Maybe.withDefault innerField.name
+                                                                )
+                                                            )
                                                 )
                                             |> CodeGen.Annotation.multilineRecord
                                     }
@@ -348,8 +359,14 @@ type NameAttempt
     | NameBasedOffOfFieldPlusSchemaTypePlus Int
 
 
-toNameThatWontClash : { field : Schema.Field, existingNames : Set String } -> NameAttempt -> String
-toNameThatWontClash ({ field, existingNames } as options) nameAttempt =
+toNameThatWontClash :
+    { alias_ : Maybe String
+    , field : Schema.Field
+    , existingNames : Set String
+    }
+    -> NameAttempt
+    -> String
+toNameThatWontClash ({ alias_, field, existingNames } as options) nameAttempt =
     case nameAttempt of
         NameBasedOffOfSchemaType ->
             let
@@ -368,7 +385,7 @@ toNameThatWontClash ({ field, existingNames } as options) nameAttempt =
                 name : String
                 name =
                     String.join "_"
-                        [ String.Extra.toSentenceCase field.name
+                        [ String.Extra.toSentenceCase (alias_ |> Maybe.withDefault field.name)
                         , Schema.toTypeRefName field.type_
                         ]
             in
@@ -383,7 +400,7 @@ toNameThatWontClash ({ field, existingNames } as options) nameAttempt =
                 name : String
                 name =
                     String.join "_"
-                        [ String.Extra.toSentenceCase field.name
+                        [ String.Extra.toSentenceCase (alias_ |> Maybe.withDefault field.name)
                         , Schema.toTypeRefName field.type_
                         , String.fromInt num
                         ]
@@ -410,7 +427,14 @@ toDataAnnotation ({ schema, document } as options) =
         (case maybeQueryType of
             Just queryType ->
                 firstQuerySelectionSet
-                    |> Result.map (List.filterMap (toRecordField schema queryType))
+                    |> Result.map
+                        (List.filterMap
+                            (toRecordField
+                                Set.empty
+                                schema
+                                queryType
+                            )
+                        )
 
             Nothing ->
                 Err GraphQL.CliError.CouldNotFindQueryType
@@ -418,11 +442,12 @@ toDataAnnotation ({ schema, document } as options) =
 
 
 toRecordField :
-    Schema
+    Set String
+    -> Schema
     -> Schema.ObjectType
     -> Document.Selection
     -> Maybe ( String, CodeGen.Annotation )
-toRecordField schema objectType selection =
+toRecordField existingTypeAliasNames schema objectType selection =
     case selection of
         Document.Selection_Field fieldSelection ->
             case Schema.findFieldWithName fieldSelection.name objectType of
@@ -430,7 +455,10 @@ toRecordField schema objectType selection =
                     Just
                         ( fieldSelection.alias
                             |> Maybe.withDefault fieldSelection.name
-                        , toTypeRefAnnotation fieldSchema
+                        , toTypeRefAnnotation
+                            fieldSelection
+                            existingTypeAliasNames
+                            fieldSchema
                         )
 
                 Nothing ->
@@ -440,7 +468,38 @@ toRecordField schema objectType selection =
             Nothing
 
 
-toTypeRefAnnotation : Schema.Field -> CodeGen.Annotation
-toTypeRefAnnotation field =
-    Schema.toTypeRefAnnotation field.type_
-        |> CodeGen.Annotation.type_
+toTypeRefAnnotation :
+    Document.FieldSelection
+    -> Set String
+    -> Schema.Field
+    -> CodeGen.Annotation
+toTypeRefAnnotation documentFieldSelection existingNames field =
+    let
+        -- TODO: This won't work when there are two selections
+        -- on the same object type within one selection (Ex. "coworkers" and "manager")
+        originalName : String
+        originalName =
+            toNameThatWontClash
+                { alias_ = documentFieldSelection.alias
+                , field = field
+                , existingNames = existingNames
+                }
+                NameBasedOffOfSchemaType
+
+        typeAliasName =
+            case Schema.toTypeRefName field.type_ of
+                "ID" ->
+                    "GraphQL.Scalar.Id.Id"
+
+                _ ->
+                    if Schema.isBuiltInScalarType field.type_ then
+                        originalName
+
+                    else
+                        originalName
+    in
+    CodeGen.Annotation.type_
+        (Schema.toTypeRefAnnotation
+            typeAliasName
+            field.type_
+        )

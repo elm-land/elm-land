@@ -496,8 +496,27 @@ isBuiltInScalarType typeRef =
         [ "ID", "String", "Float", "Int", "Boolean" ]
 
 
-toTypeRefAnnotation : TypeRef -> String
-toTypeRefAnnotation typeRef =
+toTypeRefAnnotation : String -> TypeRef -> String
+toTypeRefAnnotation collisionFreeName typeRef =
+    let
+        toElmTypeRefAnnotation : ElmTypeRef -> String
+        toElmTypeRefAnnotation elmTypeRef =
+            case elmTypeRef of
+                ElmTypeRef_Named { name } ->
+                    collisionFreeName
+
+                ElmTypeRef_List (ElmTypeRef_Named value) ->
+                    "List " ++ toElmTypeRefAnnotation (ElmTypeRef_Named value)
+
+                ElmTypeRef_List innerElmTypeRef ->
+                    "List (" ++ toElmTypeRefAnnotation innerElmTypeRef ++ ")"
+
+                ElmTypeRef_Maybe (ElmTypeRef_Named value) ->
+                    "Maybe " ++ toElmTypeRefAnnotation (ElmTypeRef_Named value)
+
+                ElmTypeRef_Maybe innerElmTypeRef ->
+                    "Maybe (" ++ toElmTypeRefAnnotation innerElmTypeRef ++ ")"
+    in
     toElmTypeRefAnnotation (toElmTypeRef typeRef)
 
 
@@ -586,22 +605,3 @@ toElmTypeRefHelp options typeRef =
         Named value ->
             ElmTypeRef_Named value
                 |> applyMaybe
-
-
-toElmTypeRefAnnotation : ElmTypeRef -> String
-toElmTypeRefAnnotation elmTypeRef =
-    case elmTypeRef of
-        ElmTypeRef_Named { name } ->
-            name
-
-        ElmTypeRef_List (ElmTypeRef_Named value) ->
-            "List " ++ toElmTypeRefAnnotation (ElmTypeRef_Named value)
-
-        ElmTypeRef_List innerElmTypeRef ->
-            "List (" ++ toElmTypeRefAnnotation innerElmTypeRef ++ ")"
-
-        ElmTypeRef_Maybe (ElmTypeRef_Named value) ->
-            "Maybe " ++ toElmTypeRefAnnotation (ElmTypeRef_Named value)
-
-        ElmTypeRef_Maybe innerElmTypeRef ->
-            "Maybe (" ++ toElmTypeRefAnnotation innerElmTypeRef ++ ")"
