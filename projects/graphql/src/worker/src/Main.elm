@@ -67,7 +67,7 @@ init json =
                         { files =
                             List.concat
                                 [ [ graphqlOperationFile ]
-                                , generatedFilesFromQuery
+                                , List.concat generatedFilesFromQuery
                                 ]
                         }
 

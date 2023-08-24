@@ -75,8 +75,11 @@ const commands = {
  * @returns {Promise<void>}
  */
 const saveFileInElmLandSrcFolder = async (file) => {
+  let absoluteFilepath = path.join(process.cwd(), '.elm-land', 'src', ...file.filepath)
+  let absoluteFolderPath = [...absoluteFilepath.split(path.sep)].slice(0, -1).join(path.sep)
+  try { await fs.promises.mkdir(absoluteFolderPath, { recursive: true }) } catch (_) { }
   await fs.promises.writeFile(
-    path.join(process.cwd(), '.elm-land', 'src', ...file.filepath),
+    absoluteFilepath,
     file.contents,
     { encoding: 'utf-8' }
   )

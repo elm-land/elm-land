@@ -482,17 +482,17 @@ toScalarTypeNames (Schema schema) =
             )
 
 
-isScalarType : TypeRef -> Schema -> Bool
-isScalarType typeRef schema =
+isScalarType : String -> Schema -> Bool
+isScalarType typeName schema =
     Set.member
-        (toTypeRefName typeRef)
+        typeName
         (Set.fromList (toScalarTypeNames schema))
 
 
-isBuiltInScalarType : TypeRef -> Bool
-isBuiltInScalarType typeRef =
+isBuiltInScalarType : String -> Bool
+isBuiltInScalarType typeName =
     List.member
-        (toTypeRefName typeRef)
+        typeName
         [ "ID", "String", "Float", "Int", "Boolean" ]
 
 

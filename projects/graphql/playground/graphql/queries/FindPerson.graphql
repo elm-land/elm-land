@@ -1,5 +1,5 @@
-query FindPerson {
-  person(id: "1") {
+query FindPerson($id: ID!) {
+  person(id: $id) {
     name
     emailAddress
     followers {

@@ -1,6 +1,8 @@
 module GraphQL.Introspection.Document exposing
     ( Document, decoder
     , toName, toContents
+    , toVariables, hasVariables
+    , VariableDefinition
     , Selection(..), toRootSelections
     , FieldSelection, getNestedFields, toFieldSelection
     )
@@ -16,15 +18,18 @@ NPM package's `node_modules/graphql/language/ast.d.ts` file.
 @docs Document, decoder
 
 @docs toName, toContents
+@docs toVariables, hasVariables
 
 
 ## Selection
 
+@docs VariableDefinition
 @docs Selection, toRootSelections
 
 -}
 
 import GraphQL.CliError exposing (CliError(..))
+import GraphQL.Introspection.Document.VariableDefinition
 import GraphQL.Introspection.Schema as Schema exposing (Schema)
 import Json.Decode
 import List.Extra
@@ -90,6 +95,18 @@ toRootSelections : Document -> Result CliError (List Selection)
 toRootSelections ((Document doc) as document) =
     toRootOperation document
         |> Result.map .selections
+
+
+toVariables : Document -> List VariableDefinition
+toVariables document =
+    toRootOperation document
+        |> Result.map .variables
+        |> Result.withDefault []
+
+
+hasVariables : Document -> Bool
+hasVariables document =
+    List.length (toVariables document) > 0
 
 
 
@@ -160,8 +177,8 @@ operationDefinitionDecoder =
     Json.Decode.map4 OperationDefinition
         (Json.Decode.maybe (Json.Decode.at [ "name", "value" ] Json.Decode.string))
         (Json.Decode.field "operation" operationTypeDecoder)
-        (Json.Decode.maybe (Json.Decode.list variableDefinitionDecoder)
-            |> Json.Decode.map (Maybe.withDefault [])
+        (Json.Decode.field "variableDefinitions"
+            (Json.Decode.list GraphQL.Introspection.Document.VariableDefinition.decoder)
         )
         (Json.Decode.at [ "selectionSet", "selections" ]
             (Json.Decode.list selectionDecoder)
@@ -310,55 +327,7 @@ inlineFragmentSelectionDecoder =
 
 
 type alias VariableDefinition =
-    { name : String
-    , type_ : Type
-    }
-
-
-variableDefinitionDecoder : Json.Decode.Decoder VariableDefinition
-variableDefinitionDecoder =
-    Json.Decode.map2 VariableDefinition
-        (Json.Decode.at [ "variable", "name" ] Json.Decode.string)
-        (Json.Decode.at [ "type" ] typeDecoder)
-
-
-type Type
-    = Named NamedType
-    | List_ Type
-    | NonNull Type
-
-
-typeDecoder : Json.Decode.Decoder Type
-typeDecoder =
-    let
-        fromKindToTypeDecoder : String -> Json.Decode.Decoder Type
-        fromKindToTypeDecoder str =
-            case str of
-                "LIST" ->
-                    Json.Decode.field "ofType" typeDecoder
-                        |> Json.Decode.map List_
-
-                "NON_NULL" ->
-                    Json.Decode.field "ofType" typeDecoder
-                        |> Json.Decode.map NonNull
-
-                _ ->
-                    namedTypeDecoder
-                        |> Json.Decode.map Named
-    in
-    Json.Decode.field "kind" Json.Decode.string
-        |> Json.Decode.andThen fromKindToTypeDecoder
-
-
-type alias NamedType =
-    { name : String
-    }
-
-
-namedTypeDecoder : Json.Decode.Decoder NamedType
-namedTypeDecoder =
-    Json.Decode.map NamedType
-        (Json.Decode.field "name" Json.Decode.string)
+    GraphQL.Introspection.Document.VariableDefinition.VariableDefinition
 
 
 type OperationType

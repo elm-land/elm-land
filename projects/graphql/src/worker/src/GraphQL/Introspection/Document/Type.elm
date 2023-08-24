@@ -1,0 +1,230 @@
+module GraphQL.Introspection.Document.Type exposing
+    ( NamedType
+    , Type(..)
+    , inputTypeDecoder
+    , toEncoderString
+    , toImport
+    , toString
+    )
+
+import CodeGen.Import
+import GraphQL.Introspection.Schema as Schema exposing (Schema)
+import Json.Decode
+import String.Extra
+
+
+type Type
+    = Named NamedType
+    | List_ Type
+    | NonNull Type
+
+
+inputTypeDecoder : Json.Decode.Decoder Type
+inputTypeDecoder =
+    let
+        namedInputTypeDecoder : Json.Decode.Decoder NamedType
+        namedInputTypeDecoder =
+            Json.Decode.map NamedType
+                (Json.Decode.at [ "name", "value" ] Json.Decode.string)
+
+        fromKindToTypeDecoder : String -> Json.Decode.Decoder Type
+        fromKindToTypeDecoder str =
+            case str of
+                "ListType" ->
+                    Json.Decode.field "type" inputTypeDecoder
+                        |> Json.Decode.map List_
+
+                "NonNullType" ->
+                    Json.Decode.field "type" inputTypeDecoder
+                        |> Json.Decode.map NonNull
+
+                _ ->
+                    namedInputTypeDecoder
+                        |> Json.Decode.map Named
+    in
+    Json.Decode.field "kind" Json.Decode.string
+        |> Json.Decode.andThen fromKindToTypeDecoder
+
+
+type alias NamedType =
+    { name : String
+    }
+
+
+namedTypeDecoder : Json.Decode.Decoder NamedType
+namedTypeDecoder =
+    Json.Decode.map NamedType
+        (Json.Decode.field "name" Json.Decode.string)
+
+
+toString : Schema -> Type -> String
+toString schema type_ =
+    toElmTypeRefString schema
+        (toElmTypeRef type_)
+
+
+toEncoderString : Schema -> Type -> String
+toEncoderString schema type_ =
+    toElmTypeEncoderString schema
+        (toElmTypeRef type_)
+
+
+toImport : Schema -> Type -> Maybe CodeGen.Import.Import
+toImport schema type_ =
+    let
+        { name } =
+            toNamedType type_
+    in
+    if name == "ID" then
+        Just (CodeGen.Import.new [ "GraphQL", "Scalar", "Id" ])
+
+    else if Schema.isBuiltInScalarType (Debug.log "name" name) then
+        Nothing
+
+    else if Schema.isScalarType name schema then
+        Just (CodeGen.Import.new [ "GraphQL", "Scalars", name ])
+
+    else
+        Just (CodeGen.Import.new [ "GraphQL", "InputType", name ])
+
+
+
+-- ELM TYPE REF STUFF
+
+
+type ElmTypeRef
+    = ElmTypeRef_Named { name : String }
+    | ElmTypeRef_List ElmTypeRef
+    | ElmTypeRef_Maybe ElmTypeRef
+
+
+toElmTypeRefString : Schema -> ElmTypeRef -> String
+toElmTypeRefString schema outerElmTypeRef =
+    let
+        toStringHelper : ElmTypeRef -> String
+        toStringHelper elmTypeRef =
+            case elmTypeRef of
+                ElmTypeRef_Named { name } ->
+                    case name of
+                        "String" ->
+                            "String"
+
+                        "Int" ->
+                            "Int"
+
+                        "Float" ->
+                            "Float"
+
+                        "Boolean" ->
+                            "Bool"
+
+                        "ID" ->
+                            "GraphQL.Scalar.Id.Id"
+
+                        _ ->
+                            if Schema.isScalarType name schema then
+                                "GraphQL.Scalars." ++ String.Extra.decapitalize name
+
+                            else
+                                name
+
+                ElmTypeRef_List (ElmTypeRef_Named value) ->
+                    "List " ++ toStringHelper (ElmTypeRef_Named value)
+
+                ElmTypeRef_List innerElmTypeRef ->
+                    "List (" ++ toStringHelper innerElmTypeRef ++ ")"
+
+                ElmTypeRef_Maybe (ElmTypeRef_Named value) ->
+                    "Maybe " ++ toStringHelper (ElmTypeRef_Named value)
+
+                ElmTypeRef_Maybe innerElmTypeRef ->
+                    "Maybe (" ++ toStringHelper innerElmTypeRef ++ ")"
+    in
+    toStringHelper outerElmTypeRef
+
+
+toElmTypeEncoderString : Schema -> ElmTypeRef -> String
+toElmTypeEncoderString schema outerElmTypeRef =
+    let
+        toStringHelper : ElmTypeRef -> String
+        toStringHelper elmTypeRef =
+            case elmTypeRef of
+                ElmTypeRef_Named { name } ->
+                    case name of
+                        "String" ->
+                            "GraphQL.Encode.string"
+
+                        "Int" ->
+                            "GraphQL.Encode.int"
+
+                        "Float" ->
+                            "GraphQL.Encode.float"
+
+                        "Boolean" ->
+                            "GraphQL.Encode.bool"
+
+                        "ID" ->
+                            "GraphQL.Encode.id"
+
+                        _ ->
+                            if Schema.isScalarType name schema then
+                                "GraphQL.Scalars.${name}.encode"
+                                    |> String.replace "${name}" name
+
+                            else
+                                name
+
+                ElmTypeRef_List innerElmTypeRef ->
+                    "GraphQL.Encode.list << " ++ toStringHelper innerElmTypeRef
+
+                ElmTypeRef_Maybe innerElmTypeRef ->
+                    "GraphQL.Encode.maybe << " ++ toStringHelper innerElmTypeRef
+    in
+    "(" ++ toStringHelper outerElmTypeRef ++ ")"
+
+
+toElmTypeRef : Type -> ElmTypeRef
+toElmTypeRef typeRef =
+    toElmTypeRefHelp { isMaybe = True } typeRef
+
+
+toElmTypeRefHelp :
+    { isMaybe : Bool }
+    -> Type
+    -> ElmTypeRef
+toElmTypeRefHelp options typeRef =
+    let
+        applyMaybe : ElmTypeRef -> ElmTypeRef
+        applyMaybe inner =
+            if options.isMaybe then
+                ElmTypeRef_Maybe inner
+
+            else
+                inner
+    in
+    case typeRef of
+        NonNull innerTypeRef ->
+            toElmTypeRefHelp
+                { options | isMaybe = False }
+                innerTypeRef
+
+        List_ innerTypeRef ->
+            ElmTypeRef_List (toElmTypeRefHelp { options | isMaybe = True } innerTypeRef)
+                |> applyMaybe
+
+        Named value ->
+            ElmTypeRef_Named value
+                |> applyMaybe
+
+
+toNamedType : Type -> NamedType
+toNamedType type_ =
+    case type_ of
+        Named x ->
+            x
+
+        List_ inner ->
+            toNamedType inner
+
+        NonNull inner ->
+            toNamedType inner
