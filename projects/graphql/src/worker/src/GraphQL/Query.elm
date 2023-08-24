@@ -41,6 +41,13 @@ type alias Options =
     }
 
 
+type alias ModuleInfo =
+    { existingNames : Set String
+    , imports : Set String
+    , declarations : List CodeGen.Declaration
+    }
+
+
 toModule : Options -> Result CliError CodeGen.Module
 toModule ({ schema, document } as options) =
     let
@@ -55,21 +62,31 @@ toModule ({ schema, document } as options) =
                             }
                     )
 
-        nestedTypeAliases : List CodeGen.Declaration
-        nestedTypeAliases =
+        moduleInfo : ModuleInfo
+        moduleInfo =
             Document.getNestedFields schema document
                 |> List.foldl toNestedTypeAlias
                     { existingNames = Set.singleton "Data"
+                    , imports = Set.empty
                     , declarations = []
                     }
-                |> .declarations
+
+        nestedTypeAliases : List CodeGen.Declaration
+        nestedTypeAliases =
+            moduleInfo.declarations
+
+        extraImports : List CodeGen.Import
+        extraImports =
+            moduleInfo.imports
+                |> Set.toList
+                |> List.map (String.split "." >> CodeGen.Import.new)
 
         toNestedTypeAlias :
             { parentTypeName : String
             , fieldSelection : Document.FieldSelection
             }
-            -> { existingNames : Set String, declarations : List CodeGen.Declaration }
-            -> { existingNames : Set String, declarations : List CodeGen.Declaration }
+            -> ModuleInfo
+            -> ModuleInfo
         toNestedTypeAlias { parentTypeName, fieldSelection } ({ existingNames, declarations } as data) =
             let
                 parentObjectType : Maybe Schema.ObjectType
@@ -110,34 +127,81 @@ toModule ({ schema, document } as options) =
                         newExistingNames : Set String
                         newExistingNames =
                             Set.insert typeAliasName existingNames
+
+                        toTypeAliasRecordPair :
+                            Document.FieldSelection
+                            ->
+                                Maybe
+                                    { field : ( String, CodeGen.Annotation )
+                                    , imports : Set String
+                                    }
+                        toTypeAliasRecordPair innerField =
+                            let
+                                toTuple :
+                                    Schema.Field
+                                    ->
+                                        { field : ( String, CodeGen.Annotation )
+                                        , imports : Set String
+                                        }
+                                toTuple schemaField =
+                                    let
+                                        { annotation, imports } =
+                                            toTypeRefAnnotation
+                                                innerField
+                                                newExistingNames
+                                                schemaField
+                                    in
+                                    { field =
+                                        ( innerField.alias
+                                            |> Maybe.withDefault innerField.name
+                                        , annotation
+                                        )
+                                    , imports = imports
+                                    }
+                            in
+                            Schema.findFieldForType
+                                { typeName = Schema.toTypeRefName field.type_
+                                , fieldName = innerField.name
+                                }
+                                schema
+                                |> Maybe.map toTuple
+
+                        flattenImportsAndFields :
+                            List
+                                { field : ( String, CodeGen.Annotation )
+                                , imports : Set String
+                                }
+                            ->
+                                { fields : List ( String, CodeGen.Annotation )
+                                , imports : Set String
+                                }
+                        flattenImportsAndFields list =
+                            { fields = List.map .field list
+                            , imports =
+                                List.foldl
+                                    (\item set -> Set.union item.imports set)
+                                    data.imports
+                                    list
+                            }
+
+                        foo :
+                            { fields : List ( String, CodeGen.Annotation )
+                            , imports : Set String
+                            }
+                        foo =
+                            fieldSelection.selections
+                                |> List.filterMap Document.toFieldSelection
+                                |> List.filterMap toTypeAliasRecordPair
+                                |> flattenImportsAndFields
                     in
                     { existingNames = newExistingNames
+                    , imports = foo.imports
                     , declarations =
                         declarations
                             ++ [ CodeGen.Declaration.typeAlias
                                     { name = typeAliasName
                                     , annotation =
-                                        fieldSelection.selections
-                                            |> List.filterMap Document.toFieldSelection
-                                            |> List.filterMap
-                                                (\innerField ->
-                                                    Schema.findFieldForType
-                                                        { typeName = Schema.toTypeRefName field.type_
-                                                        , fieldName = innerField.name
-                                                        }
-                                                        schema
-                                                        |> Maybe.map
-                                                            (toTypeRefAnnotation
-                                                                innerField
-                                                                newExistingNames
-                                                            )
-                                                        |> Maybe.map
-                                                            (Tuple.pair
-                                                                (innerField.alias
-                                                                    |> Maybe.withDefault innerField.name
-                                                                )
-                                                            )
-                                                )
+                                        foo.fields
                                             |> CodeGen.Annotation.multilineRecord
                                     }
                                ]
@@ -357,6 +421,7 @@ toModule ({ schema, document } as options) =
                     [ CodeGen.Import.new [ "GraphQL", "Decode" ]
                     , CodeGen.Import.new [ "GraphQL", "Operation" ]
                     ]
+                        ++ extraImports
                 , declarations =
                     List.concat
                         [ [ CodeGen.Declaration.comment [ "DATA" ]
@@ -472,12 +537,17 @@ toRecordField existingTypeAliasNames schema objectType selection =
             case Schema.findFieldWithName fieldSelection.name objectType of
                 Just fieldSchema ->
                     Just
-                        ( fieldSelection.alias
+                        (let
+                            { annotation } =
+                                toTypeRefAnnotation
+                                    fieldSelection
+                                    existingTypeAliasNames
+                                    fieldSchema
+                         in
+                         ( fieldSelection.alias
                             |> Maybe.withDefault fieldSelection.name
-                        , toTypeRefAnnotation
-                            fieldSelection
-                            existingTypeAliasNames
-                            fieldSchema
+                         , annotation
+                         )
                         )
 
                 Nothing ->
@@ -491,7 +561,7 @@ toTypeRefAnnotation :
     Document.FieldSelection
     -> Set String
     -> Schema.Field
-    -> CodeGen.Annotation
+    -> { annotation : CodeGen.Annotation, imports : Set String }
 toTypeRefAnnotation documentFieldSelection existingNames field =
     let
         -- TODO: This won't work when there are two selections
@@ -505,20 +575,25 @@ toTypeRefAnnotation documentFieldSelection existingNames field =
                 }
                 NameBasedOffOfSchemaType
 
-        typeAliasName =
+        ( typeAliasName, imports ) =
             case Schema.toTypeRefName field.type_ of
                 "ID" ->
-                    "GraphQL.Scalar.Id.Id"
+                    ( "GraphQL.Scalar.Id.Id"
+                    , Set.singleton "GraphQL.Scalar.Id"
+                    )
 
                 _ ->
                     if Schema.isBuiltInScalarType field.type_ then
-                        originalName
+                        ( originalName, Set.empty )
 
                     else
-                        originalName
+                        ( originalName, Set.empty )
     in
-    CodeGen.Annotation.type_
-        (Schema.toTypeRefAnnotation
-            typeAliasName
-            field.type_
-        )
+    { annotation =
+        CodeGen.Annotation.type_
+            (Schema.toTypeRefAnnotation
+                typeAliasName
+                field.type_
+            )
+    , imports = imports
+    }
