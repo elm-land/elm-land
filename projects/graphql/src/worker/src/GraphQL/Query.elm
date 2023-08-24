@@ -59,7 +59,7 @@ toModule ({ schema, document } as options) =
         nestedTypeAliases =
             Document.getNestedFields schema document
                 |> List.foldl toNestedTypeAlias
-                    { existingNames = Set.empty
+                    { existingNames = Set.singleton "Data"
                     , declarations = []
                     }
                 |> .declarations
@@ -192,7 +192,8 @@ toModule ({ schema, document } as options) =
                 }
 
         toObjectDecoder :
-            { typeRefName : String
+            { constructor : String
+            , existingNames : Set String
             , parentType : Maybe Schema.ObjectType
             , selections : List Document.Selection
             }
@@ -201,14 +202,14 @@ toModule ({ schema, document } as options) =
             CodeGen.Expression.pipeline
                 (List.concat
                     [ [ CodeGen.Expression.value
-                            ("GraphQL.Decode.object " ++ props.typeRefName)
+                            ("GraphQL.Decode.object " ++ props.constructor)
                       ]
                     , case props.parentType of
                         Nothing ->
                             []
 
                         Just parentType ->
-                            List.map (toFieldDecoder parentType) props.selections
+                            List.map (toFieldDecoder props.existingNames parentType) props.selections
                     ]
                 )
 
@@ -220,7 +221,8 @@ toModule ({ schema, document } as options) =
                 , arguments = []
                 , expression =
                     toObjectDecoder
-                        { typeRefName = "Data"
+                        { constructor = "Data"
+                        , existingNames = Set.singleton "Data"
                         , parentType = Schema.findQueryType schema
                         , selections =
                             Document.toRootSelections document
@@ -254,8 +256,12 @@ toModule ({ schema, document } as options) =
             in
             toElmTypeRefExpression (Schema.toElmTypeRef typeRef)
 
-        toFieldDecoder : Schema.ObjectType -> Document.Selection -> CodeGen.Expression
-        toFieldDecoder parentObjectType selection =
+        toFieldDecoder :
+            Set String
+            -> Schema.ObjectType
+            -> Document.Selection
+            -> CodeGen.Expression
+        toFieldDecoder existingNames parentObjectType selection =
             case selection of
                 Document.Selection_Field field ->
                     let
@@ -287,8 +293,21 @@ toModule ({ schema, document } as options) =
                                             |> toTypeRefDecoder fieldSchema.type_
 
                                     else
+                                        let
+                                            constructor : String
+                                            constructor =
+                                                toNameThatWontClash
+                                                    { alias_ = field.alias
+                                                    , field = fieldSchema
+                                                    , existingNames = existingNames
+                                                    }
+                                                    NameBasedOffOfSchemaType
+                                        in
                                         toObjectDecoder
-                                            { typeRefName = String.Extra.toSentenceCase typeRefName
+                                            { existingNames =
+                                                existingNames
+                                                    |> Set.insert constructor
+                                            , constructor = constructor
                                             , parentType =
                                                 Schema.findTypeWithName typeRefName schema
                                                     |> Maybe.andThen Schema.toObjectType

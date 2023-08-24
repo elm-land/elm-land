@@ -1,6 +1,9 @@
 query FindPerson {
   person(id: "1") {
     name
-    email: emailAddress
+    emailAddress
+    followers {
+      name
+    }
   }
 }
