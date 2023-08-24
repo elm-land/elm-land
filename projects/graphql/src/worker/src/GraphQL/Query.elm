@@ -75,6 +75,12 @@ toModule ({ schema, document } as options) =
         nestedTypeAliases =
             moduleInfo.declarations
 
+        exposedTypeAliases : List String
+        exposedTypeAliases =
+            moduleInfo.existingNames
+                |> Set.remove "Data"
+                |> Set.toList
+
         extraImports : List CodeGen.Import
         extraImports =
             moduleInfo.imports
@@ -414,9 +420,8 @@ toModule ({ schema, document } as options) =
                     , Document.toName document
                     ]
                 , exposing_ =
-                    [ "Data"
-                    , "new"
-                    ]
+                    [ "Data", "new" ]
+                        ++ exposedTypeAliases
                 , imports =
                     [ CodeGen.Import.new [ "GraphQL", "Decode" ]
                     , CodeGen.Import.new [ "GraphQL", "Operation" ]
