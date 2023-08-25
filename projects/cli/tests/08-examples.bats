@@ -84,3 +84,8 @@ load helpers
   cd ../../examples/16-hash-based-routing
   expectElmExampleBuilds
 }
+
+@test "'17-layout-props-types' example builds successfully" {
+  cd ../../examples/17-layout-props-types
+  expectElmExampleBuilds
+}

@@ -1396,7 +1396,7 @@ toViewCaseExpression layouts =
                     let
                         props : String
                         props =
-                            if original == current || isTopLevel == False then
+                            if LayoutFile.toList original == LayoutFile.toList current then
                                 "props"
 
                             else
