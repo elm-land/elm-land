@@ -2,9 +2,9 @@ module GraphQL.Introspection.Document.Type exposing
     ( NamedType
     , Type(..)
     , inputTypeDecoder
-    , toEncoderString
+    , toEncoderStringUnwrappingFirstMaybe
     , toImport
-    , toString
+    , toStringUnwrappingFirstMaybe
     )
 
 import CodeGen.Import
@@ -57,16 +57,16 @@ namedTypeDecoder =
         (Json.Decode.field "name" Json.Decode.string)
 
 
-toString : Schema -> Type -> String
-toString schema type_ =
+toStringUnwrappingFirstMaybe : Schema -> Type -> String
+toStringUnwrappingFirstMaybe schema type_ =
     toElmTypeRefString schema
-        (toElmTypeRef type_)
+        (unwrapFirstMaybe (toElmTypeRef type_))
 
 
-toEncoderString : Schema -> Type -> String
-toEncoderString schema type_ =
+toEncoderStringUnwrappingFirstMaybe : Schema -> Type -> String
+toEncoderStringUnwrappingFirstMaybe schema type_ =
     toElmTypeEncoderString schema
-        (toElmTypeRef type_)
+        (unwrapFirstMaybe (toElmTypeRef type_))
 
 
 toImport : Schema -> Type -> Maybe CodeGen.Import.Import
@@ -78,7 +78,7 @@ toImport schema type_ =
     if name == "ID" then
         Just (CodeGen.Import.new [ "GraphQL", "Scalar", "Id" ])
 
-    else if Schema.isBuiltInScalarType (Debug.log "name" name) then
+    else if Schema.isBuiltInScalarType name then
         Nothing
 
     else if Schema.isScalarType name schema then
@@ -96,6 +96,16 @@ type ElmTypeRef
     = ElmTypeRef_Named { name : String }
     | ElmTypeRef_List ElmTypeRef
     | ElmTypeRef_Maybe ElmTypeRef
+
+
+unwrapFirstMaybe : ElmTypeRef -> ElmTypeRef
+unwrapFirstMaybe typeRef =
+    case typeRef of
+        ElmTypeRef_Maybe inner ->
+            inner
+
+        _ ->
+            typeRef
 
 
 toElmTypeRefString : Schema -> ElmTypeRef -> String
@@ -174,13 +184,19 @@ toElmTypeEncoderString schema outerElmTypeRef =
                             else
                                 name
 
+                ElmTypeRef_List (ElmTypeRef_Named value) ->
+                    "GraphQL.Encode.list " ++ toStringHelper (ElmTypeRef_Named value)
+
                 ElmTypeRef_List innerElmTypeRef ->
-                    "GraphQL.Encode.list << " ++ toStringHelper innerElmTypeRef
+                    "GraphQL.Encode.list (" ++ toStringHelper innerElmTypeRef ++ ")"
+
+                ElmTypeRef_Maybe (ElmTypeRef_Named value) ->
+                    "GraphQL.Encode.maybe " ++ toStringHelper (ElmTypeRef_Named value)
 
                 ElmTypeRef_Maybe innerElmTypeRef ->
-                    "GraphQL.Encode.maybe << " ++ toStringHelper innerElmTypeRef
+                    "GraphQL.Encode.maybe (" ++ toStringHelper innerElmTypeRef ++ ")"
     in
-    "(" ++ toStringHelper outerElmTypeRef ++ ")"
+    toStringHelper outerElmTypeRef
 
 
 toElmTypeRef : Type -> ElmTypeRef

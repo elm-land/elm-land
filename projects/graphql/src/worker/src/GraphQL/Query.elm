@@ -465,9 +465,7 @@ toModules ({ schema, document } as options) =
                     , "Queries"
                     , Document.toName document
                     ]
-                , exposing_ =
-                    [ "Data", "new" ]
-                        ++ exposedTypeAliases
+                , exposing_ = []
                 , imports =
                     [ CodeGen.Import.new [ "GraphQL", "Decode" ]
                     , CodeGen.Import.new [ "GraphQL", "Operation" ]
@@ -493,6 +491,14 @@ toModules ({ schema, document } as options) =
                           ]
                         ]
                 }
+                |> CodeGen.Module.withOrderedExposingList
+                    [ if Document.hasVariables document then
+                        [ "Input", "Data", "new" ]
+
+                      else
+                        [ "Data", "new" ]
+                    , exposedTypeAliases
+                    ]
     in
     Result.map
         (\dataTypeAlias ->
@@ -561,7 +567,7 @@ toInputModule document schema =
         toRecordAnnotation : Document.VariableDefinition -> ( String, String )
         toRecordAnnotation var =
             ( var.name
-            , DocumentType.toString schema var.type_
+            , DocumentType.toStringUnwrappingFirstMaybe schema var.type_
             )
 
         joinWithColon : ( String, String ) -> String
@@ -584,7 +590,7 @@ toInputModule document schema =
                 , annotation =
                     annotationTemplate
                         |> String.replace "${name}" var.name
-                        |> String.replace "${type}" (DocumentType.toString schema var.type_)
+                        |> String.replace "${type}" (DocumentType.toStringUnwrappingFirstMaybe schema var.type_)
                         |> CodeGen.Annotation.type_
                 , arguments =
                     [ CodeGen.Argument.new "value_"
@@ -593,7 +599,7 @@ toInputModule document schema =
                 , expression =
                     """Input (Dict.insert "${name}" (${encoder} value_) dict_)"""
                         |> String.replace "${name}" var.name
-                        |> String.replace "${encoder}" (DocumentType.toEncoderString schema var.type_)
+                        |> String.replace "${encoder}" (DocumentType.toEncoderStringUnwrappingFirstMaybe schema var.type_)
                         |> CodeGen.Expression.value
                 }
     in
@@ -604,16 +610,7 @@ toInputModule document schema =
             , Document.toName document
             , "Input"
             ]
-        , exposing_ =
-            [ "Input", "new" ]
-                ++ List.map .name variables
-                ++ (if List.isEmpty optionalVariables then
-                        []
-
-                    else
-                        [ "null" ]
-                   )
-                ++ [ "toInternalValue" ]
+        , exposing_ = []
         , imports =
             [ CodeGen.Import.new [ "Dict" ]
                 |> CodeGen.Import.withExposing [ "Dict" ]
@@ -663,6 +660,16 @@ toInputModule document schema =
                   ]
                 ]
         }
+        |> CodeGen.Module.withOrderedExposingList
+            [ [ "Input", "new" ]
+            , List.map .name variables
+            , if List.isEmpty optionalVariables then
+                []
+
+              else
+                [ "null" ]
+            , [ "toInternalValue" ]
+            ]
 
 
 toInternalValueFunction : CodeGen.Declaration
