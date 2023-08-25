@@ -64,11 +64,7 @@ init json =
               of
                 Ok generatedFilesFromQuery ->
                     success
-                        { files =
-                            List.concat
-                                [ [ graphqlOperationFile ]
-                                , List.concat generatedFilesFromQuery
-                                ]
+                        { files = List.concat generatedFilesFromQuery
                         }
 
                 Err cliError ->
@@ -106,111 +102,6 @@ subscriptions model =
 type alias File =
     { filepath : List String
     , contents : String
-    }
-
-
-graphqlOperationFile : File
-graphqlOperationFile =
-    { filepath = [ "GraphQL", "Operation.elm" ]
-    , contents = String.trim """
-module GraphQL.Operation exposing
-    ( Operation, new
-    , map
-    , toHttpCmd
-    )
-
-{-|
-
-@docs Operation, new
-@docs map
-
-@docs toHttpCmd
-
--}
-
-import GraphQL.Decode
-import GraphQL.Encode
-import GraphQL.Http
-import Http
-import Json.Decode
-
-
-type Operation data
-    = Operation
-        { name : String
-        , query : String
-        , variables : List ( String, GraphQL.Encode.Value )
-        , decoder : GraphQL.Decode.Decoder data
-        }
-
-
-new :
-    { name : String
-    , query : String
-    , variables : List ( String, GraphQL.Encode.Value )
-    , decoder : GraphQL.Decode.Decoder data
-    }
-    -> Operation data
-new options =
-    Operation options
-
-
-
--- MAP
-
-
-map : (a -> b) -> Operation a -> Operation b
-map fn (Operation operation) =
-    Operation
-        { name = operation.name
-        , query = operation.query
-        , variables = operation.variables
-        , decoder =
-            operation.decoder
-                |> GraphQL.Decode.toJsonDecoder
-                |> Json.Decode.map fn
-                |> GraphQL.Decode.scalar
-        }
-
-
-
--- CMD
-
-
-toHttpCmd :
-    { method : String
-    , url : String
-    , headers : List Http.Header
-    , timeout : Maybe Float
-    , tracker : Maybe String
-    , operation : Operation data
-    , onResponse : Result Http.Error data -> msg
-    }
-    -> Cmd msg
-toHttpCmd options =
-    let
-        (Operation operation) =
-            options.operation
-    in
-    Http.request
-        { method = options.method
-        , url = options.url
-        , headers = options.headers
-        , body =
-            GraphQL.Http.body
-                { operationName = Just operation.name
-                , query = operation.query
-                , variables = operation.variables
-                }
-        , expect =
-            GraphQL.Http.expect
-                options.onResponse
-                operation.decoder
-        , timeout = options.timeout
-        , tracker = options.tracker
-        }
-
-"""
     }
 
 

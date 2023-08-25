@@ -117,10 +117,12 @@ toString (Module options) =
                     String.join ""
                         [ "\n    ( "
                         , listOfLists
+                            |> List.filter (List.length >> (<) 0)
                             |> List.map (String.join ", ")
                             |> String.join "\n    , "
                         , "\n    )\n\n{-|\n\n"
                         , listOfLists
+                            |> List.filter (List.length >> (<) 0)
                             |> List.map (String.join ", ")
                             |> List.map (String.append "@docs ")
                             |> String.join "\n"
