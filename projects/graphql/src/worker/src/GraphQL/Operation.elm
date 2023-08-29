@@ -1,4 +1,16 @@
-module GraphQL.Query exposing (generate)
+module GraphQL.Operation exposing
+    ( Kind(..)
+    , generate
+    )
+
+{-| In GraphQL, an "operation" is either a query or a mutation.
+
+This module allows you to generate either from a server-side "Schema" and a client-side "Document".
+
+@docs Kind
+@docs generate
+
+-}
 
 import CodeGen
 import CodeGen.Annotation
@@ -22,8 +34,47 @@ type alias File =
     }
 
 
+type Kind
+    = Query
+    | Mutation
+
+
+fromKindToFolderName : Kind -> String
+fromKindToFolderName kind =
+    case kind of
+        Query ->
+            "Queries"
+
+        Mutation ->
+            "Mutations"
+
+
+fromKindToOperationType : Kind -> Schema -> Maybe Schema.ObjectType
+fromKindToOperationType kind schema =
+    case kind of
+        Mutation ->
+            Schema.findMutationType schema
+
+        Query ->
+            Schema.findQueryType schema
+
+
+fromKindToOperationTypeName : Kind -> Schema -> String
+fromKindToOperationTypeName kind schema =
+    case kind of
+        Mutation ->
+            Schema.toMutationTypeName schema
+
+        Query ->
+            Schema.toQueryTypeName schema
+
+
 generate :
-    { schema : Schema, document : Document }
+    { namespace : String
+    , kind : Kind
+    , schema : Schema
+    , document : Document
+    }
     -> Result CliError (List File)
 generate ({ schema, document } as options) =
     toModules options
@@ -41,7 +92,9 @@ generate ({ schema, document } as options) =
 
 
 type alias Options =
-    { schema : Schema
+    { namespace : String
+    , kind : Kind
+    , schema : Schema
     , document : Document
     }
 
@@ -69,7 +122,10 @@ toModules ({ schema, document } as options) =
 
         moduleInfo : ModuleInfo
         moduleInfo =
-            Document.getNestedFields schema document
+            Document.getNestedFields
+                (fromKindToOperationTypeName options.kind schema)
+                schema
+                document
                 |> List.foldl toNestedTypeAlias
                     { existingNames = Set.singleton "Data"
                     , imports = Set.empty
@@ -96,8 +152,8 @@ toModules ({ schema, document } as options) =
         inputTypeImports =
             if Document.hasVariables document then
                 [ CodeGen.Import.new
-                    [ "GraphQL"
-                    , "Queries"
+                    [ options.namespace
+                    , fromKindToFolderName options.kind
                     , Document.toName document
                     , "Input"
                     ]
@@ -269,7 +325,9 @@ toModules ({ schema, document } as options) =
                                   )
                                 , ( "variables"
                                   , if Document.hasVariables document then
-                                        "GraphQL.Queries.${name}.Input.toInternalValue input"
+                                        "${namespace}.${folderName}.${name}.Input.toInternalValue input"
+                                            |> String.replace "${namespace}" options.namespace
+                                            |> String.replace "${folderName}" (fromKindToFolderName options.kind)
                                             |> String.replace "${name}" (Document.toName document)
                                             |> CodeGen.Expression.value
 
@@ -330,7 +388,7 @@ toModules ({ schema, document } as options) =
                     toObjectDecoder
                         { constructor = "Data"
                         , existingNames = Set.singleton "Data"
-                        , parentType = Schema.findQueryType schema
+                        , parentType = fromKindToOperationType options.kind schema
                         , selections =
                             Document.toRootSelections document
                                 |> Result.withDefault []
@@ -394,7 +452,8 @@ toModules ({ schema, document } as options) =
 
                                     else if Schema.isScalarType typeRefName schema then
                                         CodeGen.Expression.value
-                                            ("GraphQL.Scalars.${typeRefName}.decoder"
+                                            ("${namespace}.Scalars.${typeRefName}.decoder"
+                                                |> String.replace "${namespace}" options.namespace
                                                 |> String.replace "${typeRefName}" (String.Extra.toSentenceCase typeRefName)
                                             )
                                             |> toTypeRefDecoder fieldSchema.type_
@@ -453,16 +512,19 @@ toModules ({ schema, document } as options) =
             CodeGen.Declaration.typeAlias
                 { name = "Input"
                 , annotation =
-                    "GraphQL.Queries.${name}.Input.Input {}"
+                    "${namespace}.${folderName}.${name}.Input.Input {}"
+                        |> String.replace "${namespace}" options.namespace
+                        |> String.replace "${folderName}" (fromKindToFolderName options.kind)
                         |> String.replace "${name}" (Document.toName document)
                         |> CodeGen.Annotation.type_
                 }
 
+        toOperationModule : CodeGen.Declaration -> CodeGen.Module
         toOperationModule dataTypeAlias =
             CodeGen.Module.new
                 { name =
-                    [ "GraphQL"
-                    , "Queries"
+                    [ options.namespace
+                    , fromKindToFolderName options.kind
                     , Document.toName document
                     ]
                 , exposing_ = []
@@ -505,7 +567,7 @@ toModules ({ schema, document } as options) =
             List.concat
                 [ [ toOperationModule dataTypeAlias ]
                 , if Document.hasVariables document then
-                    [ toInputModule document schema ]
+                    [ toInputModule options ]
 
                   else
                     []
@@ -514,8 +576,8 @@ toModules ({ schema, document } as options) =
         dataTypeAliasResult
 
 
-toInputModule : Document -> Schema -> CodeGen.Module
-toInputModule document schema =
+toInputModule : Options -> CodeGen.Module
+toInputModule ({ document, schema } as options) =
     let
         variables : List Document.VariableDefinition
         variables =
@@ -605,8 +667,8 @@ toInputModule document schema =
     in
     CodeGen.Module.new
         { name =
-            [ "GraphQL"
-            , "Queries"
+            [ options.namespace
+            , fromKindToFolderName options.kind
             , Document.toName document
             , "Input"
             ]
@@ -744,29 +806,29 @@ toNameThatWontClash ({ alias_, field, existingNames } as options) nameAttempt =
 toDataAnnotation : Options -> Result CliError CodeGen.Annotation
 toDataAnnotation ({ schema, document } as options) =
     let
-        firstQuerySelectionSet : Result CliError (List Document.Selection)
-        firstQuerySelectionSet =
+        rootSelectionSet : Result CliError (List Document.Selection)
+        rootSelectionSet =
             Document.toRootSelections document
 
-        maybeQueryType : Maybe Schema.ObjectType
-        maybeQueryType =
-            Schema.findQueryType schema
+        maybeOperationType : Maybe Schema.ObjectType
+        maybeOperationType =
+            fromKindToOperationType options.kind schema
     in
     Result.map CodeGen.Annotation.multilineRecord
-        (case maybeQueryType of
-            Just queryType ->
-                firstQuerySelectionSet
+        (case maybeOperationType of
+            Just operationType ->
+                rootSelectionSet
                     |> Result.map
                         (List.filterMap
                             (toRecordField
                                 Set.empty
                                 schema
-                                queryType
+                                operationType
                             )
                         )
 
             Nothing ->
-                Err GraphQL.CliError.CouldNotFindQueryType
+                Err GraphQL.CliError.CouldNotFindOperationType
         )
 
 

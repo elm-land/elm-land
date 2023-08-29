@@ -10,7 +10,7 @@ when generating Elm code with @elm-land/graphql
 -}
 type CliError
     = NoOperationMatchingFilename
-    | CouldNotFindQueryType
+    | CouldNotFindOperationType
 
 
 toString : CliError -> String
@@ -27,5 +27,5 @@ toString cliError =
             -}
             "NoOperationMatchingFilename"
 
-        CouldNotFindQueryType ->
-            "CouldNotFindQueryType"
+        CouldNotFindOperationType ->
+            "CouldNotFindOperationType"

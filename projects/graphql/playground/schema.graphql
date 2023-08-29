@@ -3,6 +3,17 @@ type Query {
   person(id: ID): Person
 }
 
+type Mutation {
+  person: PersonMutation!
+}
+
+type PersonMutation {
+  create(
+    name: String!
+    email: String
+  ): Person
+}
+
 type Person {
   id: ID!
   name: String!

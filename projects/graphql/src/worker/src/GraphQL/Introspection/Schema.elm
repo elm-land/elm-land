@@ -1,8 +1,9 @@
 module GraphQL.Introspection.Schema exposing
     ( Schema, decoder
-    , toQueryTypeName
+    , toQueryTypeName, toMutationTypeName
     , Type(..)
-    , findQueryType, findTypeWithName
+    , findQueryType, findMutationType
+    , findTypeWithName
     , toTypeName
     , ObjectType, toObjectType
     , ScalarType, EnumType, InputObjectType
@@ -20,13 +21,14 @@ NPM package's `./graphql/utilties/getIntrospectionQuery.d.ts` file.
 ## Schema
 
 @docs Schema, decoder
-@docs toQueryTypeName
+@docs toQueryTypeName, toMutationTypeName
 
 
 ## Type
 
 @docs Type
-@docs findQueryType, findTypeWithName
+@docs findQueryType, findMutationType
+@docs findTypeWithName
 @docs toTypeName
 
 @docs ObjectType, toObjectType
@@ -66,6 +68,11 @@ toQueryTypeName (Schema schema) =
     schema.queryTypeName
 
 
+toMutationTypeName : Schema -> String
+toMutationTypeName (Schema schema) =
+    schema.mutationTypeName
+
+
 
 -- TYPES
 
@@ -73,6 +80,12 @@ toQueryTypeName (Schema schema) =
 findQueryType : Schema -> Maybe ObjectType
 findQueryType ((Schema schema) as wrappedSchema) =
     findTypeWithName schema.queryTypeName wrappedSchema
+        |> Maybe.andThen toObjectType
+
+
+findMutationType : Schema -> Maybe ObjectType
+findMutationType ((Schema schema) as wrappedSchema) =
+    findTypeWithName schema.mutationTypeName wrappedSchema
         |> Maybe.andThen toObjectType
 
 
@@ -160,7 +173,7 @@ findFieldWithName name { fields } =
 
 type alias Internals =
     { queryTypeName : String
-    , mutationTypeName : Maybe String
+    , mutationTypeName : String
     , types : List Type
     }
 
@@ -169,7 +182,9 @@ internalsDecoder : Json.Decode.Decoder Internals
 internalsDecoder =
     Json.Decode.map3 Internals
         (Json.Decode.at [ "queryType", "name" ] Json.Decode.string)
-        (Json.Decode.maybe (Json.Decode.at [ "mutationType", "name" ] Json.Decode.string))
+        (Json.Decode.maybe (Json.Decode.at [ "mutationType", "name" ] Json.Decode.string)
+            |> Json.Decode.map (Maybe.withDefault "Mutation")
+        )
         (Json.Decode.field "types" (Json.Decode.list typeDecoder))
 
 

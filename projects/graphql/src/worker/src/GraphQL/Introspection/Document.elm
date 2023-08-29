@@ -73,7 +73,7 @@ toRootOperation (Document doc) =
     case operationsDefinedInDocument of
         theOnlyOne :: [] ->
             -- If there's only one operation defined in this document,
-            -- assume we're talking about that one!
+            -- assume we're talking about that one
             Ok theOnlyOne
 
         _ ->
@@ -234,17 +234,18 @@ type alias FieldSelection =
 
 
 getNestedFields :
-    Schema
+    String
+    -> Schema
     -> Document
     ->
         List
             { parentTypeName : String
             , fieldSelection : FieldSelection
             }
-getNestedFields schema (Document doc) =
+getNestedFields operationTypeName schema (Document doc) =
     let
-        topLevelQuerySelections : List Selection
-        topLevelQuerySelections =
+        topLevelOperationSelections : List Selection
+        topLevelOperationSelections =
             doc.definitions
                 |> List.head
                 |> Maybe.andThen toOperationDefinition
@@ -287,8 +288,8 @@ getNestedFields schema (Document doc) =
                     )
     in
     toFieldSelections
-        (Schema.toQueryTypeName schema)
-        topLevelQuerySelections
+        operationTypeName
+        topLevelOperationSelections
 
 
 fieldSelectionDecoder : Json.Decode.Decoder FieldSelection

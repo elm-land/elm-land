@@ -1,9 +1,9 @@
 port module Main exposing (main)
 
-import GraphQL.CliError
+import GraphQL.CliError exposing (CliError)
 import GraphQL.Introspection.Document as Document exposing (Document)
 import GraphQL.Introspection.Schema as Schema exposing (Schema)
-import GraphQL.Query
+import GraphQL.Operation
 import Json.Decode
 import Result.Extra
 
@@ -32,7 +32,8 @@ port failure : { reason : String } -> Cmd msg
 
 
 type alias Flags =
-    { schema : Schema
+    { namespace : String
+    , schema : Schema
     , queries : List Document
     , mutations : List Document
     }
@@ -40,7 +41,12 @@ type alias Flags =
 
 decoder : Json.Decode.Decoder Flags
 decoder =
-    Json.Decode.map3 Flags
+    Json.Decode.map4 Flags
+        (Json.Decode.oneOf
+            [ Json.Decode.field "namespace" Json.Decode.string
+            , Json.Decode.succeed "Api"
+            ]
+        )
         (Json.Decode.at [ "introspection", "data", "__schema" ] Schema.decoder)
         (Json.Decode.at [ "queries" ] (Json.Decode.list Document.decoder))
         (Json.Decode.at [ "mutations" ] (Json.Decode.list Document.decoder))
@@ -51,24 +57,53 @@ init json =
     case Json.Decode.decodeValue decoder json of
         Ok flags ->
             ( {}
-            , case
-                flags.queries
-                    |> List.map
-                        (\query ->
-                            GraphQL.Query.generate
-                                { schema = flags.schema
-                                , document = query
-                                }
-                        )
-                    |> Result.Extra.combine
-              of
-                Ok generatedFilesFromQuery ->
+            , let
+                generatedFilesFromQueries : Result CliError (List File)
+                generatedFilesFromQueries =
+                    flags.queries
+                        |> List.map
+                            (\document ->
+                                GraphQL.Operation.generate
+                                    { kind = GraphQL.Operation.Query
+                                    , namespace = flags.namespace
+                                    , schema = flags.schema
+                                    , document = document
+                                    }
+                            )
+                        |> Result.Extra.combine
+                        |> Result.map List.concat
+
+                generatedFilesFromMutations : Result CliError (List File)
+                generatedFilesFromMutations =
+                    flags.mutations
+                        |> List.map
+                            (\document ->
+                                GraphQL.Operation.generate
+                                    { kind = GraphQL.Operation.Mutation
+                                    , namespace = flags.namespace
+                                    , schema = flags.schema
+                                    , document = document
+                                    }
+                            )
+                        |> Result.Extra.combine
+                        |> Result.map List.concat
+
+                generatedFilesResult : Result CliError (List File)
+                generatedFilesResult =
+                    Result.map2 (++)
+                        generatedFilesFromQueries
+                        generatedFilesFromMutations
+              in
+              case generatedFilesResult of
+                Ok files ->
                     success
-                        { files = List.concat generatedFilesFromQuery
+                        { files = files
                         }
 
                 Err cliError ->
-                    failure { reason = GraphQL.CliError.toString cliError }
+                    failure
+                        { reason = GraphQL.CliError.toString cliError
+                        }
             )
 
         Err jsonDecodeError ->
@@ -102,61 +137,4 @@ subscriptions model =
 type alias File =
     { filepath : List String
     , contents : String
-    }
-
-
-generateQueryFile : Document -> File
-generateQueryFile doc =
-    { filepath =
-        [ "GraphQL"
-        , "Queries"
-        , Document.toName doc ++ ".elm"
-        ]
-    , contents =
-        String.trim """
-module GraphQL.Queries.${name} exposing (Data, new)
-
-{-|
-
-@docs Data, new
-
--}
-
-import GraphQL.Decode
-import GraphQL.Operation
-
-
-type alias Data =
-    { hello : String
-    }
-
-
-new : GraphQL.Operation.Operation Data
-new =
-    GraphQL.Operation.new
-        { name = "${name}"
-        , query = \"\"\"
-${contents}
-          \"\"\"
-        , variables = []
-        , decoder = decoder
-        }
-
-
-decoder : GraphQL.Decode.Decoder Data
-decoder =
-    GraphQL.Decode.object Data
-        |> GraphQL.Decode.field
-            { name = "hello"
-            , decoder = GraphQL.Decode.string
-            }
-"""
-            |> String.replace "${name}" (Document.toName doc)
-            |> String.replace "${contents}"
-                (Document.toContents doc
-                    |> String.replace "\"\"\"" "\\\"\\\"\\\""
-                    |> String.split "\n"
-                    |> String.join "\n            "
-                    |> String.append "            "
-                )
     }

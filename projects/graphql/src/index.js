@@ -43,7 +43,22 @@ const commands = {
     const introspection = await attemptToFetchIntrospectionJson(config)
     const schema = graphql.buildClientSchema(introspection.data)
     const { queries, mutations } = await attemptToLoadLocalGraphQLFiles(schema)
-    const flags = { introspection, queries, mutations }
+
+    // Attempt to get namespace from config file
+    let namespace = 'Api'
+    try {
+      namespace =
+        (typeof config.graphql.namespace === 'string')
+          ? config.graphql.namespace
+          : namespace
+    } catch (_) { }
+
+    const flags = {
+      namespace,
+      introspection,
+      queries,
+      mutations,
+    }
 
     // Run Elm codegen worker
     const { files } = await attemptToGenerateElmFiles(flags).catch(reason => {
@@ -52,13 +67,6 @@ const commands = {
     })
 
     // Save generated Elm files
-    try {
-      await fs.promises.rm(path.join(process.cwd(), '.elm-land', 'src', 'GraphQL'), { recursive: true })
-    } catch (_) { }
-    try {
-      await fs.promises.mkdir(path.join(process.cwd(), '.elm-land', 'src', 'GraphQL', 'Queries'), { recursive: true })
-      await fs.promises.mkdir(path.join(process.cwd(), '.elm-land', 'src', 'GraphQL', 'Mutations'), { recursive: true })
-    } catch (_) { }
     await Promise.all(files.map(saveFileInElmLandSrcFolder))
 
     console.info(`    ${Terminal.green('✔')} Successfully generated ${printCount(files, 'file', 'files')}`)
