@@ -196,6 +196,11 @@ toModules ({ schema, document } as options) =
             case ( maybeField, maybeObjectType ) of
                 ( Just field, _ ) ->
                     let
+                        matchingFragmentName : Maybe String
+                        matchingFragmentName =
+                            -- TODO: This part
+                            Nothing
+
                         typeAliasName : String
                         typeAliasName =
                             toNameThatWontClash
@@ -203,7 +208,10 @@ toModules ({ schema, document } as options) =
                                 , field = field
                                 , existingNames = existingNames
                                 }
-                                NameBasedOffOfSchemaType
+                                (matchingFragmentName
+                                    |> Maybe.map NameBasedOffOfFragment
+                                    |> Maybe.withDefault NameBasedOffOfSchemaType
+                                )
 
                         newExistingNames : Set String
                         newExistingNames =
@@ -421,6 +429,89 @@ toModules ({ schema, document } as options) =
             in
             toElmTypeRefExpression (Schema.toElmTypeRef typeRef)
 
+        toFieldDecoderForSelection :
+            { existingNames : Set String
+            , parentObjectType : Schema.ObjectType
+            , field : Document.FieldSelection
+            , matchingFragmentName : Maybe String
+            }
+            -> CodeGen.Expression
+        toFieldDecoderForSelection { matchingFragmentName, existingNames, parentObjectType, field } =
+            let
+                decoder : CodeGen.Expression
+                decoder =
+                    case
+                        Schema.findFieldWithName
+                            field.name
+                            parentObjectType
+                    of
+                        Just fieldSchema ->
+                            let
+                                typeRefName : String
+                                typeRefName =
+                                    Schema.toTypeRefName fieldSchema.type_
+                            in
+                            if Schema.isBuiltInScalarType typeRefName then
+                                CodeGen.Expression.value
+                                    ("GraphQL.Decode.${typeRefName}"
+                                        |> String.replace "${typeRefName}" (String.toLower typeRefName)
+                                    )
+                                    |> toTypeRefDecoder fieldSchema.type_
+
+                            else if Schema.isScalarType typeRefName schema then
+                                CodeGen.Expression.value
+                                    ("${namespace}.Scalars.${typeRefName}.decoder"
+                                        |> String.replace "${namespace}" options.namespace
+                                        |> String.replace "${typeRefName}" (String.Extra.toSentenceCase typeRefName)
+                                    )
+                                    |> toTypeRefDecoder fieldSchema.type_
+
+                            else
+                                let
+                                    constructor : String
+                                    constructor =
+                                        toNameThatWontClash
+                                            { alias_ = field.alias
+                                            , field = fieldSchema
+                                            , existingNames = existingNames
+                                            }
+                                            (matchingFragmentName
+                                                |> Maybe.map NameBasedOffOfFragment
+                                                |> Maybe.withDefault NameBasedOffOfSchemaType
+                                            )
+                                in
+                                toObjectDecoder
+                                    { existingNames =
+                                        existingNames
+                                            |> Set.insert constructor
+                                    , constructor = constructor
+                                    , parentType =
+                                        Schema.findTypeWithName typeRefName schema
+                                            |> Maybe.andThen Schema.toObjectType
+                                    , selections = field.selections
+                                    }
+                                    |> toTypeRefDecoder fieldSchema.type_
+
+                        Nothing ->
+                            CodeGen.Expression.value "Debug.todo \"Handle Nothing branch for Schema.findFieldWithName\""
+            in
+            CodeGen.Expression.multilineFunction
+                { name = "GraphQL.Decode.field"
+                , arguments =
+                    [ CodeGen.Expression.multilineRecord
+                        [ ( "name"
+                          , CodeGen.Expression.string
+                                (field.alias
+                                    |> Maybe.withDefault field.name
+                                )
+                          )
+                        , ( "decoder"
+                          , decoder
+                          )
+                        ]
+                    ]
+                }
+
         toFieldDecoder :
             Set String
             -> Schema.ObjectType
@@ -429,80 +520,34 @@ toModules ({ schema, document } as options) =
         toFieldDecoder existingNames parentObjectType selection =
             case selection of
                 Document.Selection_Field field ->
-                    let
-                        decoder : CodeGen.Expression
-                        decoder =
-                            case
-                                Schema.findFieldWithName
-                                    field.name
-                                    parentObjectType
-                            of
-                                Just fieldSchema ->
-                                    let
-                                        typeRefName : String
-                                        typeRefName =
-                                            Schema.toTypeRefName fieldSchema.type_
-                                    in
-                                    if Schema.isBuiltInScalarType typeRefName then
-                                        CodeGen.Expression.value
-                                            ("GraphQL.Decode.${typeRefName}"
-                                                |> String.replace "${typeRefName}" (String.toLower typeRefName)
-                                            )
-                                            |> toTypeRefDecoder fieldSchema.type_
+                    toFieldDecoderForSelection
+                        { existingNames = existingNames
+                        , parentObjectType = parentObjectType
+                        , field = field
+                        , matchingFragmentName =
+                            case field.selections of
+                                (Document.Selection_FragmentSpread frag) :: [] ->
+                                    Just frag.name
 
-                                    else if Schema.isScalarType typeRefName schema then
-                                        CodeGen.Expression.value
-                                            ("${namespace}.Scalars.${typeRefName}.decoder"
-                                                |> String.replace "${namespace}" options.namespace
-                                                |> String.replace "${typeRefName}" (String.Extra.toSentenceCase typeRefName)
-                                            )
-                                            |> toTypeRefDecoder fieldSchema.type_
-
-                                    else
-                                        let
-                                            constructor : String
-                                            constructor =
-                                                toNameThatWontClash
-                                                    { alias_ = field.alias
-                                                    , field = fieldSchema
-                                                    , existingNames = existingNames
-                                                    }
-                                                    NameBasedOffOfSchemaType
-                                        in
-                                        toObjectDecoder
-                                            { existingNames =
-                                                existingNames
-                                                    |> Set.insert constructor
-                                            , constructor = constructor
-                                            , parentType =
-                                                Schema.findTypeWithName typeRefName schema
-                                                    |> Maybe.andThen Schema.toObjectType
-                                            , selections = field.selections
-                                            }
-                                            |> toTypeRefDecoder fieldSchema.type_
-
-                                Nothing ->
-                                    CodeGen.Expression.value "Debug.todo \"Handle Nothing branch for Schema.findFieldWithName\""
-                    in
-                    CodeGen.Expression.multilineFunction
-                        { name = "GraphQL.Decode.field"
-                        , arguments =
-                            [ CodeGen.Expression.multilineRecord
-                                [ ( "name"
-                                  , CodeGen.Expression.string
-                                        (field.alias
-                                            |> Maybe.withDefault field.name
-                                        )
-                                  )
-                                , ( "decoder"
-                                  , decoder
-                                  )
-                                ]
-                            ]
+                                _ ->
+                                    Nothing
                         }
 
-                Document.Selection_FragmentSpread fragment ->
-                    CodeGen.Expression.value "Debug.todo \"Selection_FragmentSpread\""
+                Document.Selection_FragmentSpread { name } ->
+                    case Document.findFragmentDefinitionWithName name document of
+                        Just fragment ->
+                            Schema.findTypeWithName fragment.typeName schema
+                                |> Maybe.andThen Schema.toObjectType
+                                |> Maybe.map
+                                    (\objectType ->
+                                        fragment.selections
+                                            |> List.map (toFieldDecoder existingNames objectType)
+                                    )
+                                |> Maybe.map CodeGen.Expression.pipeline
+                                |> Maybe.withDefault (CodeGen.Expression.pipeline [])
+
+                        Nothing ->
+                            CodeGen.Expression.value "Debug.todo \"Selection_FragmentSpread\""
 
                 Document.Selection_InlineFragment fragment ->
                     CodeGen.Expression.value "Debug.todo \"Selection_InlineFragment\""
@@ -746,8 +791,9 @@ toInternalValueFunction =
 
 type NameAttempt
     = NameBasedOffOfSchemaType
-    | NameBasedOffOfFieldPlusSchemaType
-    | NameBasedOffOfFieldPlusSchemaTypePlus Int
+    | NameBasedOffOfFragment String
+    | NameBasedOffOfFieldPlus String
+    | NameBasedOffOfFieldPlusNumber Int String
 
 
 toNameThatWontClash :
@@ -766,38 +812,45 @@ toNameThatWontClash ({ alias_, field, existingNames } as options) nameAttempt =
                     Schema.toTypeRefName field.type_
             in
             if Set.member name existingNames then
-                toNameThatWontClash options NameBasedOffOfFieldPlusSchemaType
+                toNameThatWontClash options (NameBasedOffOfFieldPlus name)
 
             else
                 name
 
-        NameBasedOffOfFieldPlusSchemaType ->
+        NameBasedOffOfFragment fragmentName ->
+            if Set.member fragmentName existingNames then
+                toNameThatWontClash options (NameBasedOffOfFieldPlus fragmentName)
+
+            else
+                fragmentName
+
+        NameBasedOffOfFieldPlus baseName ->
             let
                 name : String
                 name =
                     String.join "_"
                         [ String.Extra.toSentenceCase (alias_ |> Maybe.withDefault field.name)
-                        , Schema.toTypeRefName field.type_
+                        , baseName
                         ]
             in
             if Set.member name existingNames then
-                toNameThatWontClash options (NameBasedOffOfFieldPlusSchemaTypePlus 2)
+                toNameThatWontClash options (NameBasedOffOfFieldPlusNumber 2 baseName)
 
             else
                 name
 
-        NameBasedOffOfFieldPlusSchemaTypePlus num ->
+        NameBasedOffOfFieldPlusNumber num baseName ->
             let
                 name : String
                 name =
                     String.join "_"
                         [ String.Extra.toSentenceCase (alias_ |> Maybe.withDefault field.name)
-                        , Schema.toTypeRefName field.type_
+                        , baseName
                         , String.fromInt num
                         ]
             in
             if Set.member name existingNames then
-                toNameThatWontClash options (NameBasedOffOfFieldPlusSchemaTypePlus (num + 1))
+                toNameThatWontClash options (NameBasedOffOfFieldPlusNumber (num + 1) baseName)
 
             else
                 name
@@ -871,6 +924,10 @@ toTypeRefAnnotation :
     -> { annotation : CodeGen.Annotation, imports : Set String }
 toTypeRefAnnotation documentFieldSelection existingNames field =
     let
+        matchingFragmentName : Maybe String
+        matchingFragmentName =
+            Nothing
+
         -- TODO: This won't work when there are two selections
         -- on the same object type within one selection (Ex. "coworkers" and "manager")
         originalName : String
@@ -880,7 +937,10 @@ toTypeRefAnnotation documentFieldSelection existingNames field =
                 , field = field
                 , existingNames = existingNames
                 }
-                NameBasedOffOfSchemaType
+                (matchingFragmentName
+                    |> Maybe.map NameBasedOffOfFragment
+                    |> Maybe.withDefault NameBasedOffOfSchemaType
+                )
 
         ( typeAliasName, imports ) =
             case Schema.toTypeRefName field.type_ of

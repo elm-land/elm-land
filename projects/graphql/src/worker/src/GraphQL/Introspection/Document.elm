@@ -2,6 +2,7 @@ module GraphQL.Introspection.Document exposing
     ( Document, decoder
     , toName, toContents
     , toVariables, hasVariables
+    , FragmentDefinition, findFragmentDefinitionWithName
     , VariableDefinition
     , Selection(..), toRootSelections
     , FieldSelection, getNestedFields, toFieldSelection
@@ -19,6 +20,11 @@ NPM package's `node_modules/graphql/language/ast.d.ts` file.
 
 @docs toName, toContents
 @docs toVariables, hasVariables
+
+
+## Fragments
+
+@docs FragmentDefinition, findFragmentDefinitionWithName
 
 
 ## Selection
@@ -97,6 +103,13 @@ toRootSelections ((Document doc) as document) =
         |> Result.map .selections
 
 
+findFragmentDefinitionWithName : String -> Document -> Maybe FragmentDefinition
+findFragmentDefinitionWithName name (Document doc) =
+    doc.definitions
+        |> List.filterMap toFragmentDefinition
+        |> List.Extra.find (\fragment -> fragment.name == name)
+
+
 toVariables : Document -> List VariableDefinition
 toVariables document =
     toRootOperation document
@@ -136,8 +149,18 @@ type Definition
 toOperationDefinition : Definition -> Maybe OperationDefinition
 toOperationDefinition def =
     case def of
-        Definition_Operation opDef ->
-            Just opDef
+        Definition_Operation innerDef ->
+            Just innerDef
+
+        _ ->
+            Nothing
+
+
+toFragmentDefinition : Definition -> Maybe FragmentDefinition
+toFragmentDefinition def =
+    case def of
+        Definition_Fragment innerDef ->
+            Just innerDef
 
         _ ->
             Nothing
@@ -360,9 +383,21 @@ operationTypeDecoder =
 
 
 type alias FragmentDefinition =
-    {}
+    { name : String
+    , typeName : String
+    , selections : List Selection
+    }
 
 
 fragmentDefinitionDecoder : Json.Decode.Decoder FragmentDefinition
 fragmentDefinitionDecoder =
-    Json.Decode.succeed FragmentDefinition
+    Json.Decode.map3 FragmentDefinition
+        (Json.Decode.at [ "name", "value" ]
+            Json.Decode.string
+        )
+        (Json.Decode.at [ "typeCondition", "name", "value" ]
+            Json.Decode.string
+        )
+        (Json.Decode.at [ "selectionSet", "selections" ]
+            (Json.Decode.list selectionDecoder)
+        )

@@ -3,8 +3,12 @@ query FindPerson($id: ID!) {
     name
     emailAddress
     followers {
-      id
-      name
+      ...Follower
     }
   }
+}
+
+fragment Follower on Person {
+  id
+  name
 }
