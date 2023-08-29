@@ -1,0 +1,4 @@
+projects:
+  api:
+    schema: './schema.graphql'
+    documents: './graphql/**/*.graphql'
