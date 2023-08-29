@@ -44,3 +44,16 @@ __Created by:__ [Ryan](https://github.com/ryannhg)
 
 ![Screenshot](https://realworld.elm.land/screenshot.png)
 
+
+### Movies
+
+On another Twitch stream ([@ryan_the_rhg](https://twitch.tv/ryan_the_rhg)), we created an implementation for the [Taste.js Movies App](https://tastejs.com/movies/index.html) for Elm Land. This features environment variables, REST API calls, JSON decoding, and more:
+
+__Created by:__ [Ryan](https://github.com/ryannhg)
+
+[Live demo](https://movies.elm.land/) • [Source code](https://github.com/elm-land/movies)
+
+![Screenshot](https://movies.elm.land/screenshot.png)
+
+
+
