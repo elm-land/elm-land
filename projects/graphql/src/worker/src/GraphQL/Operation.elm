@@ -172,9 +172,7 @@ toModules ({ schema, document } as options) =
             let
                 parentObjectType : Maybe Schema.ObjectType
                 parentObjectType =
-                    Schema.findTypeWithName
-                        parentTypeName
-                        schema
+                    Schema.findTypeWithName parentTypeName schema
                         |> Maybe.andThen Schema.toObjectType
 
                 maybeField : Maybe Schema.Field
@@ -196,22 +194,24 @@ toModules ({ schema, document } as options) =
             case ( maybeField, maybeObjectType ) of
                 ( Just field, _ ) ->
                     let
-                        matchingFragmentName : Maybe String
-                        matchingFragmentName =
-                            -- TODO: This part
-                            Nothing
-
                         typeAliasName : String
                         typeAliasName =
-                            toNameThatWontClash
-                                { alias_ = fieldSelection.alias
-                                , field = field
-                                , existingNames = existingNames
-                                }
-                                (matchingFragmentName
-                                    |> Maybe.map NameBasedOffOfFragment
-                                    |> Maybe.withDefault NameBasedOffOfSchemaType
-                                )
+                            case toOnlyMatchingFragmentName fieldSelection of
+                                Just fragName ->
+                                    toNameThatWontClash
+                                        { alias_ = fieldSelection.alias
+                                        , field = field
+                                        , existingNames = existingNames
+                                        }
+                                        (NameBasedOffOfFragment fragName)
+
+                                Nothing ->
+                                    toNameThatWontClash
+                                        { alias_ = fieldSelection.alias
+                                        , field = field
+                                        , existingNames = existingNames
+                                        }
+                                        NameBasedOffOfSchemaType
 
                         newExistingNames : Set String
                         newExistingNames =
@@ -236,9 +236,11 @@ toModules ({ schema, document } as options) =
                                     let
                                         { annotation, imports } =
                                             toTypeRefAnnotation
-                                                innerField
-                                                newExistingNames
-                                                schemaField
+                                                { documentFieldSelection = innerField
+                                                , existingNames = newExistingNames
+                                                , field = schemaField
+                                                , matchingFragmentName = toOnlyMatchingFragmentName innerField
+                                                }
                                     in
                                     { field =
                                         ( innerField.alias
@@ -273,24 +275,24 @@ toModules ({ schema, document } as options) =
                                     list
                             }
 
-                        foo :
+                        fieldInfo :
                             { fields : List ( String, CodeGen.Annotation )
                             , imports : Set String
                             }
-                        foo =
+                        fieldInfo =
                             fieldSelection.selections
-                                |> List.filterMap Document.toFieldSelection
+                                |> List.concatMap (Document.toFieldSelections document)
                                 |> List.filterMap toTypeAliasRecordPair
                                 |> flattenImportsAndFields
                     in
                     { existingNames = newExistingNames
-                    , imports = foo.imports
+                    , imports = fieldInfo.imports
                     , declarations =
                         declarations
                             ++ [ CodeGen.Declaration.typeAlias
                                     { name = typeAliasName
                                     , annotation =
-                                        foo.fields
+                                        fieldInfo.fields
                                             |> CodeGen.Annotation.multilineRecord
                                     }
                                ]
@@ -524,13 +526,7 @@ toModules ({ schema, document } as options) =
                         { existingNames = existingNames
                         , parentObjectType = parentObjectType
                         , field = field
-                        , matchingFragmentName =
-                            case field.selections of
-                                (Document.Selection_FragmentSpread frag) :: [] ->
-                                    Just frag.name
-
-                                _ ->
-                                    Nothing
+                        , matchingFragmentName = toOnlyMatchingFragmentName field
                         }
 
                 Document.Selection_FragmentSpread { name } ->
@@ -619,6 +615,18 @@ toModules ({ schema, document } as options) =
                 ]
         )
         dataTypeAliasResult
+
+
+toOnlyMatchingFragmentName :
+    Document.FieldSelection
+    -> Maybe String
+toOnlyMatchingFragmentName field_ =
+    case field_.selections of
+        (Document.Selection_FragmentSpread frag) :: [] ->
+            Just frag.name
+
+        _ ->
+            Nothing
 
 
 toInputModule : Options -> CodeGen.Module
@@ -893,19 +901,21 @@ toRecordField :
     -> Maybe ( String, CodeGen.Annotation )
 toRecordField existingTypeAliasNames schema objectType selection =
     case selection of
-        Document.Selection_Field fieldSelection ->
-            case Schema.findFieldWithName fieldSelection.name objectType of
+        Document.Selection_Field field ->
+            case Schema.findFieldWithName field.name objectType of
                 Just fieldSchema ->
                     Just
                         (let
                             { annotation } =
                                 toTypeRefAnnotation
-                                    fieldSelection
-                                    existingTypeAliasNames
-                                    fieldSchema
+                                    { documentFieldSelection = field
+                                    , existingNames = existingTypeAliasNames
+                                    , field = fieldSchema
+                                    , matchingFragmentName = toOnlyMatchingFragmentName field
+                                    }
                          in
-                         ( fieldSelection.alias
-                            |> Maybe.withDefault fieldSelection.name
+                         ( field.alias
+                            |> Maybe.withDefault field.name
                          , annotation
                          )
                         )
@@ -918,16 +928,17 @@ toRecordField existingTypeAliasNames schema objectType selection =
 
 
 toTypeRefAnnotation :
-    Document.FieldSelection
-    -> Set String
-    -> Schema.Field
-    -> { annotation : CodeGen.Annotation, imports : Set String }
-toTypeRefAnnotation documentFieldSelection existingNames field =
+    { documentFieldSelection : Document.FieldSelection
+    , existingNames : Set String
+    , field : Schema.Field
+    , matchingFragmentName : Maybe String
+    }
+    ->
+        { annotation : CodeGen.Annotation
+        , imports : Set String
+        }
+toTypeRefAnnotation { documentFieldSelection, existingNames, field, matchingFragmentName } =
     let
-        matchingFragmentName : Maybe String
-        matchingFragmentName =
-            Nothing
-
         -- TODO: This won't work when there are two selections
         -- on the same object type within one selection (Ex. "coworkers" and "manager")
         originalName : String

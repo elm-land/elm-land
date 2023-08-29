@@ -3,9 +3,10 @@ module GraphQL.Introspection.Document exposing
     , toName, toContents
     , toVariables, hasVariables
     , FragmentDefinition, findFragmentDefinitionWithName
+    , FragmentSpreadSelection
     , VariableDefinition
     , Selection(..), toRootSelections
-    , FieldSelection, getNestedFields, toFieldSelection
+    , FieldSelection, getNestedFields, toFieldSelections
     )
 
 {-| These decoders were translated from the official `graphql`
@@ -25,6 +26,7 @@ NPM package's `node_modules/graphql/language/ast.d.ts` file.
 ## Fragments
 
 @docs FragmentDefinition, findFragmentDefinitionWithName
+@docs FragmentSpreadSelection
 
 
 ## Selection
@@ -214,14 +216,23 @@ type Selection
     | Selection_InlineFragment InlineFragmentSelection
 
 
-toFieldSelection : Selection -> Maybe FieldSelection
-toFieldSelection selection =
+toFieldSelections : Document -> Selection -> List FieldSelection
+toFieldSelections ((Document doc) as document) selection =
     case selection of
         Selection_Field fieldSelection ->
-            Just fieldSelection
+            [ fieldSelection ]
+
+        Selection_FragmentSpread frag ->
+            case findFragmentDefinitionWithName frag.name document of
+                Nothing ->
+                    []
+
+                Just fragment ->
+                    fragment.selections
+                        |> List.concatMap (toFieldSelections document)
 
         _ ->
-            Nothing
+            []
 
 
 selectionDecoder : Json.Decode.Decoder Selection
@@ -265,7 +276,7 @@ getNestedFields :
             { parentTypeName : String
             , fieldSelection : FieldSelection
             }
-getNestedFields operationTypeName schema (Document doc) =
+getNestedFields operationTypeName schema ((Document doc) as document) =
     let
         topLevelOperationSelections : List Selection
         topLevelOperationSelections =
@@ -275,7 +286,7 @@ getNestedFields operationTypeName schema (Document doc) =
                 |> Maybe.map .selections
                 |> Maybe.withDefault []
 
-        toFieldSelections :
+        toFieldSelectionInfo :
             String
             -> List Selection
             ->
@@ -283,9 +294,9 @@ getNestedFields operationTypeName schema (Document doc) =
                     { parentTypeName : String
                     , fieldSelection : FieldSelection
                     }
-        toFieldSelections parentTypeName selections =
+        toFieldSelectionInfo parentTypeName selections =
             selections
-                |> List.filterMap toFieldSelection
+                |> List.concatMap (toFieldSelections document)
                 |> List.filter
                     (\fieldSelection ->
                         List.length fieldSelection.selections > 0
@@ -307,10 +318,10 @@ getNestedFields operationTypeName schema (Document doc) =
                         { parentTypeName = parentTypeName
                         , fieldSelection = self
                         }
-                            :: toFieldSelections selfTypeName self.selections
+                            :: toFieldSelectionInfo selfTypeName self.selections
                     )
     in
-    toFieldSelections
+    toFieldSelectionInfo
         operationTypeName
         topLevelOperationSelections
 
