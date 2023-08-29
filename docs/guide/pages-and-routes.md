@@ -326,7 +326,7 @@ elm-land routes
 
 ```txt
 
-  🌈  Elm Land (v0.19.1) found 6 pages in your application
+  🌈  Elm Land (v0.19.2) found 6 pages in your application
     ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
   src/Pages/Home_.elm ........................... /
   src/Pages/SignIn.elm .......................... /sign-in

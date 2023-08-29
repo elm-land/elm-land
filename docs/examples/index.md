@@ -32,3 +32,28 @@ __Created by:__ [Ryan](https://github.com/ryannhg)
 
 ![Screenshot](https://github.com/elm-land/2048/raw/main/static/screenshot.png)
 
+
+### Realworld App
+
+
+On a Twitch stream ([@ryan_the_rhg](https://twitch.tv/ryan_the_rhg)), we upgraded the Conduit RealWorld app from elm-spa to Elm Land. This app is a Medium-like clone, and features REST API calls, user login, and more:
+
+__Created by:__ [Ryan](https://github.com/ryannhg)
+
+[Live demo](https://realworld.elm.land/) • [Source code](https://github.com/elm-land/realworld-app)
+
+![Screenshot](https://realworld.elm.land/screenshot.png)
+
+
+### Movies
+
+On another Twitch stream ([@ryan_the_rhg](https://twitch.tv/ryan_the_rhg)), we created an implementation for the [Taste.js Movies App](https://tastejs.com/movies/index.html) for Elm Land. This features environment variables, REST API calls, JSON decoding, and more:
+
+__Created by:__ [Ryan](https://github.com/ryannhg)
+
+[Live demo](https://movies.elm.land/) • [Source code](https://github.com/elm-land/movies)
+
+![Screenshot](https://movies.elm.land/screenshot.png)
+
+
+

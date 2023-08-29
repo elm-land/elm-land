@@ -1,7 +1,7 @@
 # Elm Land
 
 
-[![Npm package version](https://badgen.net/npm/v/elm-land)](https://npmjs.com/package/elm-land) [![elm-land](https://github.com/elm-land/elm-land/actions/workflows/node.js.yml/badge.svg?)](https://github.com/elm-land/elm-land/actions/workflows/node.js.yml) [![BSD-3 Clause](https://img.shields.io/github/license/elm-land/elm-land)](https://github.com/elm-land/elm-land/blob/main/LICENSE)
+[![Npm package version](https://badgen.net/npm/v/elm-land/latest)](https://npmjs.com/package/elm-land) [![elm-land](https://github.com/elm-land/elm-land/actions/workflows/node.js.yml/badge.svg?)](https://github.com/elm-land/elm-land/actions/workflows/node.js.yml) [![BSD-3 Clause](https://img.shields.io/github/license/elm-land/elm-land)](https://github.com/elm-land/elm-land/blob/main/LICENSE)
 
 [![Discord](https://badgen.net/discord/members/vnmYFfySbH?icon=discord&label)](https://join.elm.land) [![Twitter](https://badgen.net/badge/icon/twitter?icon=twitter&label&color=00acee)](https://twitter.com/elmland_) [![GitHub](https://badgen.net/badge/icon/github?icon=github&label&color=4078c0)](https://www.github.com/elm-land/elm-land) 
 
@@ -13,7 +13,7 @@
 The code for this GitHub project is broken down into smaller projects:
 
 - __[elm-land](./projects/cli/)__ - The CLI tool, available at [npmjs.org/elm-land](https://npmjs.org/elm-land)
-- __[@elm-land/www](./docs/)__ - The official website, available at [elm.land](https://elm.land)
+- __[@elm-land/docs](./docs/)__ - The official website, available at [elm.land](https://elm.land)
 
 
 ### Tooling
