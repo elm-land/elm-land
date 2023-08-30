@@ -39,13 +39,13 @@ init () =
 
 
 type Msg
-    = ExampleMsgReplaceMe
+    = NoOp
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        ExampleMsgReplaceMe ->
+        NoOp ->
             ( model
             , Effect.none
             )

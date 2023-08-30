@@ -42,6 +42,18 @@ load helpers
   cd ../../projects/cli
 }
 
+
+@test "'elm-land generate' works with hello world example" {
+  cd ../../examples/01-hello-world
+  run elm-land generate
+  expectToPass
+
+  expectOutputContains "success"
+
+  rm -r .elm-land
+  cd ../../projects/cli
+}
+
 @test "cleanup" {
   cleanupTmpFolder
 }

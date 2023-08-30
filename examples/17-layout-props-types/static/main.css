@@ -1,0 +1,30 @@
+/* RESETS */
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+}
+* { box-sizing: border-box; color: inherit; }
+
+/* LAYOUT BASICS */
+.pad-16 { padding: 1rem; }
+
+/* SIDEBAR LAYOUT */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  background: #435;
+  color: white;
+  padding: 2rem;
+  width: 280px;
+  justify-content: space-between;
+}
+
+
+/* HEADER LAYOUT */
+header { display: flex; flex-direction: row; align-items: center; padding: 1.5rem; border-bottom: solid 1px #eee; font-size: 2rem; font-weight: bold; }
+
+/* BUTTONS */
+.btn { background: #435; margin-left: 1rem; padding: 0.7rem 1.2rem; color: white; border-radius: 0.25rem; }
+.btn:hover { opacity: 0.75; }

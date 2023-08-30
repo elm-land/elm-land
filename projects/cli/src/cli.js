@@ -1,6 +1,7 @@
 const { Init } = require('./commands/init')
 const { Add } = require('./commands/add')
 const { Server } = require('./commands/server')
+const { Generate } = require('./commands/generate')
 const { Build } = require('./commands/build')
 const { Customize } = require('./commands/customize')
 const { Routes } = require('./commands/routes')
@@ -14,10 +15,11 @@ let subcommandList = [
   `    ✨ elm-land ${Terminal.pink('init <folder-name>')} ...... create a new project`,
   `    🚀 elm-land ${Terminal.pink('server')} ................ run a local dev server`,
   `    📦 elm-land ${Terminal.pink('build')} .......... build your app for production`,
+  `    🪄 elm-land ${Terminal.pink('generate')} ............. generate Elm Land files`,
   `    📄 elm-land ${Terminal.pink('add page <url>')} ................ add a new page`,
   `    🍱 elm-land ${Terminal.pink('add layout <name>')} ........... add a new layout`,
   `    🔧 elm-land ${Terminal.pink('customize <name>')} .. customize a default module`,
-  `    🔍 elm-land ${Terminal.pink('routes')} ........... list all routes in your app`
+  `    🔍 elm-land ${Terminal.pink('routes')} ........... list all routes in your app`,
 ]
 
 
@@ -67,6 +69,13 @@ let run = async (commandFromCli) => {
         return Server.printHelpInfo()
       } else {
         return Server.run({})
+      }
+    },
+    'generate': (args = []) => {
+      if (isHelpFlag(args[0])) {
+        return Generate.printHelpInfo()
+      } else {
+        return Generate.run({})
       }
     },
     'build': (args = []) => {

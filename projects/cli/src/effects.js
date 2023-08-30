@@ -256,12 +256,19 @@ let generateElmFiles = async (config, server = undefined) => {
         server.ws.send('elm:success', { msg: 'Success!' })
       }
 
-      let layoutFilepathSegments =
-        layoutFilepaths.map(filepath => filepath.split('/'))
+      let layoutsData = layouts.map(({ filepath, contents }) => {
+        const typeVariablePattern = 'type alias Props contentMsg';
+        const isUsingTypeVariable = contents.includes(typeVariablePattern);
+
+        return {
+          segments: filepath,
+          isUsingTypeVariable
+        }
+      })
 
       let newFiles = await Codegen.generateElmLandFiles({
         pages,
-        layouts: layoutFilepathSegments,
+        layouts: layoutsData,
         router
       })
 
@@ -392,16 +399,23 @@ const handleElmLandFiles = async () => {
   })
 }
 
-const build = async (config) => {
+const generate = async (config) => {
   // Create default files in `.elm-land/src` if they aren't already 
   // defined by the user in the `src` folder
   await handleElmLandFiles()
 
-  // Ensure environment variables work as expected
-  handleEnvironmentVariables({ config })
-
   // Generate Elm files
   await generateElmFiles(config)
+
+  return { problem: null }
+}
+
+const build = async (config) => {
+  // Generates remaining Elm files in .elm-land/src
+  await generate(config)
+
+  // Ensure environment variables work as expected
+  handleEnvironmentVariables({ config })
 
   // Typecheck any TypeScript interop
   await TypeScriptPlugin.verifyTypescriptCompiles()
@@ -545,7 +559,7 @@ const generateHtml = async (config) => {
     ? [toHtmlTag('title', {}, config.app.html.title)]
     : []
   let metaTags = toSelfClosingHtmlTags('meta', [
-    { name: 'elm-land', content: '0.19.2' }
+    { name: 'elm-land', content: '0.19.3' }
   ].concat(attempt(_ => config.app.html.meta)))
   let linkTags = toSelfClosingHtmlTags('link', attempt(_ => config.app.html.link))
   let scriptTags = toHtmlTags('script', attempt(_ => config.app.html.script))
@@ -596,6 +610,9 @@ let run = async (effects) => {
         break
       case 'build':
         results.push(await build(effect.config))
+        break
+      case 'generate':
+        results.push(await generate(effect.config))
         break
       case 'customize':
         results.push(await customize(effect.filepaths))
