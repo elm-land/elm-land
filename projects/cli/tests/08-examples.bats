@@ -89,3 +89,8 @@ load helpers
   cd ../../examples/17-layout-props-types
   expectElmExampleBuilds
 }
+
+@test "'18-shared-subscriptions' example builds successfully" {
+  cd ../../examples/18-shared-subscriptions
+  expectElmExampleBuilds
+}

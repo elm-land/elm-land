@@ -256,7 +256,7 @@ let generateElmFiles = async (config, server = undefined) => {
         server.ws.send('elm:success', { msg: 'Success!' })
       }
 
-      let layoutsData = layouts.map(({ filepath, contents}) => {
+      let layoutsData = layouts.map(({ filepath, contents }) => {
         const typeVariablePattern = 'type alias Props contentMsg';
         const isUsingTypeVariable = contents.includes(typeVariablePattern);
 
@@ -552,7 +552,7 @@ const generateHtml = async (config) => {
     ? [toHtmlTag('title', {}, config.app.html.title)]
     : []
   let metaTags = toSelfClosingHtmlTags('meta', [
-    { name: 'elm-land', content: '0.19.2' }
+    { name: 'elm-land', content: '0.19.3' }
   ].concat(attempt(_ => config.app.html.meta)))
   let linkTags = toSelfClosingHtmlTags('link', attempt(_ => config.app.html.link))
   let scriptTags = toHtmlTags('script', attempt(_ => config.app.html.script))

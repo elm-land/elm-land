@@ -73,6 +73,11 @@ let run = async (options = {}) => {
       files: [
         {
           kind: 'file',
+          name: `${name}/README.md`,
+          content: toReadmeFileWithName({ name })
+        },
+        {
+          kind: 'file',
           name: `${name}/elm.json`,
           content: await Files.readFromCliFolder('src/templates/elm.json')
         },
@@ -147,6 +152,25 @@ let run = async (options = {}) => {
     ].join('\n'))
   }
 }
+
+const toReadmeFileWithName = ({ name }) => `
+# ${name}
+> Built with [Elm Land](https://elm.land) 🌈
+
+## Local development
+
+\`\`\`bash
+# Requires Node.js v18+ (https://nodejs.org)
+npx elm-land server
+\`\`\`
+
+## Deploying to production
+
+Elm Land projects are most commonly deployed as static websites. 
+
+Please visit [the "Deployment" guide](https://elm.land/guide/deploying) to learn more
+about deploying your app for free using Netlify or Vercel.
+`.trim()
 
 module.exports = {
   Init: { run, printHelpInfo }

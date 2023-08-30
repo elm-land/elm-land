@@ -20,7 +20,8 @@
 - [SCSS and assets](./14-scss-and-assets/)
 - [Custom 404 pages](./15-custom-404-pages/)
 - [Hash-bashed routing](./16-hash-based-routing/)
-- [Shared subscriptions](./17-shared-subscriptions/)
+- [Layouts with props](./17-layout-props-types/)
+- [Shared subscriptions](./18-shared-subscriptions/)
 
 ## 1. Hello world!
 
@@ -75,7 +76,7 @@ Learn how to work with URL parameters to build an interactive table with filteri
 
 ## 7. Working with JS
 
-Learn how to work with existing NPM packages, run JavaScript from Elm, and 
+Learn how to work with existing NPM packages, run JavaScript from Elm, and web components.
 
 [Example code](./07-working-with-js/) • [The guide](https://elm.land/guide/working-with-js)
 
