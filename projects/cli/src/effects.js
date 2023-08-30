@@ -399,16 +399,23 @@ const handleElmLandFiles = async () => {
   })
 }
 
-const build = async (config) => {
+const generate = async (config) => {
   // Create default files in `.elm-land/src` if they aren't already 
   // defined by the user in the `src` folder
   await handleElmLandFiles()
 
-  // Ensure environment variables work as expected
-  handleEnvironmentVariables({ config })
-
   // Generate Elm files
   await generateElmFiles(config)
+
+  return { problem: null }
+}
+
+const build = async (config) => {
+  // Generates remaining Elm files in .elm-land/src
+  await generate(config)
+
+  // Ensure environment variables work as expected
+  handleEnvironmentVariables({ config })
 
   // Typecheck any TypeScript interop
   await TypeScriptPlugin.verifyTypescriptCompiles()
@@ -603,6 +610,9 @@ let run = async (effects) => {
         break
       case 'build':
         results.push(await build(effect.config))
+        break
+      case 'generate':
+        results.push(await generate(effect.config))
         break
       case 'customize':
         results.push(await customize(effect.filepaths))
