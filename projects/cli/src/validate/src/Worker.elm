@@ -653,7 +653,7 @@ unexpectedAnnotationError { functionName, validAnnotations } options =
 
 
 type Msg
-    = DoNothing
+    = NoOp
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )

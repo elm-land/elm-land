@@ -179,7 +179,7 @@ newSandboxPageModule { hasViewBeenCustomized, page, url } =
             CodeGen.Declaration.customType
                 { name = "Msg"
                 , variants =
-                    [ ( "ExampleMsgReplaceMe", [] )
+                    [ ( "NoOp", [] )
                     ]
                 }
 
@@ -200,7 +200,7 @@ newSandboxPageModule { hasViewBeenCustomized, page, url } =
                     CodeGen.Expression.caseExpression
                         { value = CodeGen.Argument.new "msg"
                         , branches =
-                            [ { name = "ExampleMsgReplaceMe"
+                            [ { name = "NoOp"
                               , arguments = []
                               , expression = CodeGen.Expression.value "model"
                               }
@@ -311,7 +311,7 @@ newElementPageModule { hasViewBeenCustomized, page, url } =
             CodeGen.Declaration.customType
                 { name = "Msg"
                 , variants =
-                    [ ( "ExampleMsgReplaceMe", [] )
+                    [ ( "NoOp", [] )
                     ]
                 }
 
@@ -332,7 +332,7 @@ newElementPageModule { hasViewBeenCustomized, page, url } =
                     CodeGen.Expression.caseExpression
                         { value = CodeGen.Argument.new "msg"
                         , branches =
-                            [ { name = "ExampleMsgReplaceMe"
+                            [ { name = "NoOp"
                               , arguments = []
                               , expression =
                                     CodeGen.Expression.multilineTuple
@@ -461,7 +461,7 @@ newAdvancedPageModule { hasViewBeenCustomized, page, url } =
             CodeGen.Declaration.customType
                 { name = "Msg"
                 , variants =
-                    [ ( "ExampleMsgReplaceMe", [] )
+                    [ ( "NoOp", [] )
                     ]
                 }
 
@@ -482,7 +482,7 @@ newAdvancedPageModule { hasViewBeenCustomized, page, url } =
                     CodeGen.Expression.caseExpression
                         { value = CodeGen.Argument.new "msg"
                         , branches =
-                            [ { name = "ExampleMsgReplaceMe"
+                            [ { name = "NoOp"
                               , arguments = []
                               , expression =
                                     CodeGen.Expression.multilineTuple
