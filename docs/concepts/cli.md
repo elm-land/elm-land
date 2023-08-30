@@ -57,6 +57,12 @@ Next, we're looking to add `elm-watch` to our existing Vite setup. That will com
 
 :::
 
+::: tip Proxy APIs
+
+Did you know you can proxy external servers in the development like they are on the same domain? By adding a `vite.config.js` file to the root of your project you can configure paths that will be proxied to other servers. Refer to the [Vite proxy docs](https://vitejs.dev/config/server-options.html#server-proxy) on how to do that.
+
+:::
+
 
 ## elm-land build
 
@@ -67,6 +73,8 @@ Next, we're looking to add `elm-watch` to our existing Vite setup. That will com
 #### Description
 
 This command builds your Elm Land app in production-mode. This includes running the Elm compiler with `--optimize` flag, and even JS minification with [terser](https://terser.org/). The result is a static site that is ready to be hosted from the `./dist` folder.
+
+If you have a special use case, you can create `vite.config.js` file in the root of your project to customize the build. For options see the [Vite config](https://vitejs.dev/config/) docs.
 
 Visit the [Deploying to production](../guide/deploying) guide to learn how to correctly set up SPA redirects to the single `dist/index.html` file.
 

@@ -38,6 +38,13 @@ const mode = () =>
     ? 'production'
     : 'development'
 
+const maybeViteConfig = async () => {
+  const maybeViteConfig = path.join(process.cwd(), 'vite.configs.js')
+
+  return await Files.exists(maybeViteConfig) ? maybeViteConfig : false
+}
+
+
 let runServer = async (options) => {
   let server
 
@@ -167,7 +174,7 @@ let runServer = async (options) => {
 
     // Run the vite server on options.port
     server = await Vite.createServer({
-      configFile: false,
+      configFile: await maybeViteConfig(),
       root: path.join(process.cwd(), '.elm-land', 'server'),
       publicDir: path.join(process.cwd(), 'static'),
       envDir: process.cwd(),
@@ -393,7 +400,7 @@ const handleElmLandFiles = async () => {
 }
 
 const build = async (config) => {
-  // Create default files in `.elm-land/src` if they aren't already 
+  // Create default files in `.elm-land/src` if they aren't already
   // defined by the user in the `src` folder
   await handleElmLandFiles()
 
@@ -406,10 +413,10 @@ const build = async (config) => {
   // Typecheck any TypeScript interop
   await TypeScriptPlugin.verifyTypescriptCompiles()
 
-  // Build app in dist folder 
+  // Build app in dist folder
   try {
     await Vite.build({
-      configFile: false,
+      configFile: await maybeViteConfig(),
       root: path.join(process.cwd(), '.elm-land', 'server'),
       publicDir: path.join(process.cwd(), 'static'),
       build: {
