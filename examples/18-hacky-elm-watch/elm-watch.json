@@ -1,0 +1,10 @@
+{
+    "targets": {
+        "My target name": {
+            "inputs": [
+                ".elm-land/src/Main.elm"
+            ],
+            "output": "./static/elm.js"
+        }
+    }
+}
