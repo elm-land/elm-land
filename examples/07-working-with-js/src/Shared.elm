@@ -61,7 +61,7 @@ type alias Msg =
 update : Route () -> Msg -> Model -> ( Model, Effect Msg )
 update route msg model =
     case msg of
-        Shared.Msg.ExampleMsgReplaceMe ->
+        Shared.Msg.NoOp ->
             ( model
             , Effect.none
             )

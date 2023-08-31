@@ -1,8 +1,7 @@
 # 11-error-reporting
+> Built with [Elm Land](https://elm.land) 🌈
 
-An example of how to report all HTTP errors to an error reporting service, like Sentry!
-
-## Trying it out
+## Local development
 
 ### 1. Create a free Sentry project
 
@@ -39,3 +38,12 @@ When you visit the homepage in this example, an HTTP API call will fail and that
 Click into the error message to see the "Additional data" section, including the URL, JSON Response, and Json.Decode.Error message sent from Elm!
 
 ![A screenshot of Sentry's "Additional data" section, showing that the JSON payload and specific error have been reported successfully.](./sentry-error-details.jpg)
+
+## Deploying to production
+
+Elm Land projects are most commonly deployed as static websites. 
+
+Please visit [the "Deployment" guide](https://elm.land/guide/deploying) to learn more
+about deploying your app for free using Netlify or Vercel.
+
+An example of how to report all HTTP errors to an error reporting service, like Sentry!

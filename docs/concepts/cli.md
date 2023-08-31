@@ -71,6 +71,21 @@ This command builds your Elm Land app in production-mode. This includes running 
 Visit the [Deploying to production](../guide/deploying) guide to learn how to correctly set up SPA redirects to the single `dist/index.html` file.
 
 
+
+
+## elm-land generate
+
+```txt
+🪄 elm-land generate ............. generate Elm Land files
+```
+
+#### Description
+
+The first step of the `elm-land build` command generates some `.elm` files in the `.elm-land/src` folder. Some projects don't need a full build step (generating a JS file, HTML file, etc),
+and want to manually run `elm make` on the generated code.
+
+For those advanced use cases, we've added a specific `generate` command that doesn't involve the unnecessary build steps.
+
 ## elm-land add page
 
 ```txt
@@ -172,7 +187,7 @@ Here's example output of what you'd see if you ran this command in the ["Pages a
 
 ```txt
 
-  🌈  Elm Land (v0.20.0) found 5 pages in your application
+  🌈  Elm Land (v0.19.3) found 5 pages in your application
   ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
   src/Pages/Home_.elm ............... http://localhost:1234/
   src/Pages/SignIn.elm .............. http://localhost:1234/sign-in

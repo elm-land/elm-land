@@ -42,24 +42,23 @@ import Json.Decode
 {-| Represents an item in the "src/Layouts" folder
 -}
 type LayoutFile
-    = LayoutFile
-        { filepath : List String
-        , isUsingTypeVariable : Bool
-        }
+    = LayoutFile LayoutFileData
+
+
+type alias LayoutFileData =
+    { filepath : List String
+    , isUsingTypeVariable : Bool
+    }
 
 
 {-| Attempts to convert a raw JSON array of strings into a `LayoutFile`
 -}
 decoder : Json.Decode.Decoder LayoutFile
 decoder =
-    Json.Decode.map
-        (\filepath ->
-            LayoutFile
-                { filepath = filepath
-                , isUsingTypeVariable = False --|> Debug.log "TODO: Learn if parent is using type variable"
-                }
-        )
-        (Json.Decode.list Json.Decode.string)
+    Json.Decode.map LayoutFile <|
+        Json.Decode.map2 LayoutFileData
+            (Json.Decode.field "segments" <| Json.Decode.list Json.Decode.string)
+            (Json.Decode.field "isUsingTypeVariable" Json.Decode.bool)
 
 
 sortByFilepath : List LayoutFile -> List LayoutFile
@@ -122,10 +121,16 @@ toLayoutTypeDeclaration layouts =
     else
         let
             toLayoutVariant : LayoutFile -> ( String, List CodeGen.Annotation )
-            toLayoutVariant (LayoutFile { filepath }) =
-                ( String.join "_" filepath
-                , [ CodeGen.Annotation.type_ ("Layouts." ++ String.join "." filepath ++ ".Props") ]
-                )
+            toLayoutVariant (LayoutFile { filepath, isUsingTypeVariable }) =
+                if isUsingTypeVariable then
+                    ( String.join "_" filepath
+                    , [ CodeGen.Annotation.type_ ("(Layouts." ++ String.join "." filepath ++ ".Props msg)") ]
+                    )
+
+                else
+                    ( String.join "_" filepath
+                    , [ CodeGen.Annotation.type_ ("Layouts." ++ String.join "." filepath ++ ".Props") ]
+                    )
         in
         CodeGen.Declaration.customType
             { name = "Layout msg"
@@ -149,7 +154,9 @@ toMapFunction layouts =
             if isUsingTypeVariable then
                 { name = String.join "_" filepath
                 , arguments = [ CodeGen.Argument.new "data" ]
-                , expression = CodeGen.Expression.value (String.join "_" filepath ++ " data")
+                , expression =
+                    CodeGen.Expression.value
+                        (String.join "_" filepath ++ " (Layouts." ++ String.join "." filepath ++ ".map" ++ " fn " ++ " data)")
                 }
 
             else

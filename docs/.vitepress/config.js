@@ -1,4 +1,4 @@
-const version = '0.20.0'
+const version = '0.19.3'
 
 const sidebar = [
   {

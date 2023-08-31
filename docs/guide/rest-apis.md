@@ -83,13 +83,13 @@ init =
 
 
 type Msg
-    = ExampleMsgReplaceMe
+    = NoOp
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        ExampleMsgReplaceMe ->
+        NoOp ->
             ( model
             , Cmd.none
             )
@@ -135,7 +135,7 @@ init =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        ExampleMsgReplaceMe ->
+        NoOp ->
             ( model
             , Cmd.none
             )
@@ -847,13 +847,13 @@ init =
 
 
 type Msg
-    = ExampleMsgReplaceMe
+    = NoOp
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        ExampleMsgReplaceMe ->
+        NoOp ->
             ( model
             , Cmd.none
             )
