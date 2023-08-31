@@ -38,67 +38,38 @@ mutation SignIn($form: UserSignInForm!) {
 }
 ```
 
-### Output
-
-- [src/GraphQL/Mutations/SignIn.elm](src/GraphQL/Mutations/SignIn.elm)
-- [src/GraphQL/Mutations/SignIn/Input.elm](src/GraphQL/Mutations/SignIn/Input.elm)
-- [src/GraphQL/Input.elm](src/GraphQL/Input.elm)
-- [src/GraphQL/Input/UserSignInForm.elm](src/GraphQL/Input/UserSignInForm.elm)
-- [src/GraphQL/Scalar.elm](src/GraphQL/Scalar.elm)
-- [src/GraphQL/Scalar/ID.elm](src/GraphQL/Scalar/ID.elm)
-
 ### Usage
 
 ```elm
-module Main exposing (..)
-
-import GraphQL.Http
-import GraphQL.Input
-import GraphQL.Input.UserSignInForm
-import GraphQL.Mutations.SignIn
-import GraphQL.Mutations.SignIn.Input
-
-
-type Msg
-    = ApiResponded (Result GraphQL.Http.Error GraphQL.Mutations.SignIn.Data)
-
-
-config : GraphQL.Http.Config
-config =
-    GraphQL.Http.get
-        { url = "http://localhost:1234/graphql"
-        }
-
-
-sendSignInMutation : Cmd Msg
-sendSignInMutation =
+signInMutation : Operation Data
+signInMutation =
     let
-        input : GraphQL.Mutations.SignIn.Input
+        input : Api.Mutations.SignIn.Input
         input =
-            GraphQL.Mutations.SignIn.Input.new
-                |> GraphQL.Mutations.SignIn.Input.form userSignInForm
+            Api.Mutations.SignIn.Input.new
+                |> Api.Mutations.SignIn.Input.form userSignInForm
 
-        userSignInForm : GraphQL.Input.UserSignInForm
+        userSignInForm : Api.Input.UserSignInForm
         userSignInForm =
-            GraphQL.Input.UserSignInForm.new
-                |> GraphQL.Input.UserSignInForm.email "ryan@elm.land"
-                |> GraphQL.Input.UserSignInForm.password "supersecret123"
+            Api.Input.UserSignInForm.new
+                |> Api.Input.UserSignInForm.email "ryan@elm.land"
+                |> Api.Input.UserSignInForm.password "supersecret123"
     in
-    GraphQL.Http.run config
-        { operation = GraphQL.Mutations.SignIn.new input
-        , onResponse = ApiResponded
-        }
+    Api.Mutations.SignIn.new input
 ```
 
-```bash
-# Run this to see it compile!
-elm make src/Main.elm --output=/dev/null
-```
+### Generated modules
+
+- [Api.Mutations.SignIn](.elm-land/src/Api/Mutations/SignIn.elm)
+- [Api.Mutations.SignIn.Input](.elm-land/src/Api/Mutations/SignIn/Input.elm)
+- [Api.Input](.elm-land/src/Api/Input.elm)
+- [Api.Input.UserSignInForm](.elm-land/src/Api/Input/UserSignInForm.elm)
+
 
 ## Design notes
 
 Because GraphQL input types can reference one another, the generated Elm code needs to do some weird stuff to prevent circular dependency errors. 
 
-It creates a single `GraphQL.Internals.Input` module that each individual `GraphQL.Input.*` function uses under-the-hood.
+It creates a single `GraphQL.Internals.Input` module that each individual `Api.Input.*` function uses under-the-hood.
 
 This allows them to reference each other without issues!

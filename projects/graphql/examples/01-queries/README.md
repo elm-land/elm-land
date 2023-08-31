@@ -1,75 +1,55 @@
 # 1️⃣ Queries
 
-## Context
+## Introduction
 
 GraphQL provides "[queries](https://graphql.org/learn/queries/)" that allow users to fetch data from their API.
 
+With `@elm-land/graphql`, you write those queries in a standard `.graphql` file. From there, you can run `elm-land graphql build` to generate Elm code that can be used in your program.
 
 ## Example
 
-### Schema
+### 1️⃣ What you write
 
-```graphql
-type Query {
-  me: User 
-} 
+- [./graphql/Api/Queries/FetchUser.graphql](./graphql/Api/Queries/FetchUser.graphql)
 
-type User {
-  id: ID!
-  email: String!
-  avatarUrl: String
-}
-```
+    ```graphql
+    query FetchUser {
+      me {
+        id 
+        email 
+        avatarUrl 
+      }
+    }
+    ```
 
-### Input
 
-```graphql
-query Me {
-  me {
-    id 
-    email 
-    avatarUrl 
-  }
-}
-```
+### 2️⃣ The files Elm Land generates
 
-### Output
+- [Api.Queries.FetchUser](.elm-land/src/Api/Queries/FetchUser.elm)
 
-- [src/GraphQL/Queries/Me.elm](src/GraphQL/Queries/Me.elm)
-- [src/GraphQL/Scalar.elm](src/GraphQL/Scalar.elm)
-- [src/GraphQL/Scalar/ID.elm](src/GraphQL/Scalar/ID.elm)
+    ```elm
+    module Api.Queries.FetchUser exposing
+        ( Data, new
+        , User
+        )
 
-### Usage
+    -- ...
+    ```
+
+
+### 3️⃣ How you use it
+
 
 ```elm
 module Main exposing (..)
 
-import GraphQL.Http
-import GraphQL.Http.Error
-import GraphQL.Queries.FetchCurrentUser
+import GraphQL.Operation exposing (Operation)
+import Api.Queries.FetchUser exposing (Data)
 
 
-type Msg
-    = ApiResponded (Result GraphQL.Http.Error GraphQL.Queries.FetchCurrentUser.Data)
-
-
-config : GraphQL.Http.Config
-config =
-    GraphQL.Http.get
-        { url = "http://localhost:3000/graphql"
-        }
-
-
-sendCurrentUserQuery : Cmd Msg
-sendCurrentUserQuery =
-    GraphQL.Http.run config
-        { operation = GraphQL.Queries.FetchCurrentUser.new
-        , onResponse = ApiResponded
-        }
-
+fetchUser : Operation Data
+fetchUser =
+    Api.Queries.FetchUser.new
 ```
 
-```bash
-# Run this to see it compile!
-elm make src/Main.elm --output=/dev/null
-```
+[View full source](./src/Main.elm)

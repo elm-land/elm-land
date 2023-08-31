@@ -32,7 +32,7 @@ type NotSignedIn {
 ### Input
 
 ```graphql
-query FetchCurrentUser {
+query FetchUser {
   currentUser {
     ...on User {
       id
@@ -48,8 +48,8 @@ query FetchCurrentUser {
 
 ### Output
 
-- [src/GraphQL/Queries/FetchCurrentUser.elm](src/GraphQL/Queries/FetchCurrentUser.elm)
-- [src/GraphQL/Queries/FetchCurrentUser/UserResult.elm](src/GraphQL/Queries/FetchCurrentUser/UserResult.elm)
+- [src/GraphQL/Queries/FetchUser.elm](src/GraphQL/Queries/FetchUser.elm)
+- [src/GraphQL/Queries/FetchUser/UserResult.elm](src/GraphQL/Queries/FetchUser/UserResult.elm)
 - [src/GraphQL/Scalar.elm](src/GraphQL/Scalar.elm)
 - [src/GraphQL/Scalar/ID.elm](src/GraphQL/Scalar/ID.elm)
 
@@ -60,11 +60,11 @@ module Main exposing (..)
 
 import GraphQL.Http
 import GraphQL.Http.Error
-import GraphQL.Queries.FetchCurrentUser
+import Api.Queries.FetchUser
 
 
 type Msg
-    = ApiResponded (Result GraphQL.Http.Error GraphQL.Queries.FetchCurrentUser.Data)
+    = ApiResponded (Result GraphQL.Http.Error Api.Queries.FetchUser.Data)
 
 
 config : GraphQL.Http.Config
@@ -77,7 +77,7 @@ config =
 sendMeQuery : Cmd Msg
 sendMeQuery =
     GraphQL.Http.run config
-        { operation = GraphQL.Queries.FetchCurrentUser.new
+        { operation = Api.Queries.FetchUser.new
         , onResponse = ApiResponded
         }
 

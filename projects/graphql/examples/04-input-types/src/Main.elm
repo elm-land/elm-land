@@ -1,38 +1,42 @@
 module Main exposing (..)
 
-import GraphQL.Http
-import GraphQL.Input
-import GraphQL.Input.UserSignInForm
-import GraphQL.Mutations.SignIn
-import GraphQL.Mutations.SignIn.Input
+import Api.Input
+import Api.Input.UserSignInForm
+import Api.Mutations.SignIn exposing (Data)
+import Api.Mutations.SignIn.Input
+import GraphQL.Operation exposing (Operation)
+import Http
 
 
 type Msg
-    = ApiResponded (Result GraphQL.Http.Error GraphQL.Mutations.SignIn.Data)
+    = ApiResponded (Result Http.Error Data)
 
 
-config : GraphQL.Http.Config
-config =
-    GraphQL.Http.get
-        { url = "http://localhost:1234/graphql"
-        }
-
-
-sendSignInMutation : Cmd Msg
-sendSignInMutation =
+sendGraphQL : Cmd Msg
+sendGraphQL =
     let
-        input : GraphQL.Mutations.SignIn.Input
-        input =
-            GraphQL.Mutations.SignIn.Input.new
-                |> GraphQL.Mutations.SignIn.Input.form userSignInForm
+        signInMutation : Operation Data
+        signInMutation =
+            let
+                input : Api.Mutations.SignIn.Input
+                input =
+                    Api.Mutations.SignIn.Input.new
+                        |> Api.Mutations.SignIn.Input.form userSignInForm
 
-        userSignInForm : GraphQL.Input.UserSignInForm
-        userSignInForm =
-            GraphQL.Input.UserSignInForm.new
-                |> GraphQL.Input.UserSignInForm.email "ryan@elm.land"
-                |> GraphQL.Input.UserSignInForm.password "supersecret123"
+                userSignInForm : Api.Input.UserSignInForm
+                userSignInForm =
+                    Api.Input.UserSignInForm.new
+                        |> Api.Input.UserSignInForm.email "ryan@elm.land"
+                        |> Api.Input.UserSignInForm.password "supersecret123"
+            in
+            Api.Mutations.SignIn.new input
     in
-    GraphQL.Http.run config
-        { operation = GraphQL.Mutations.SignIn.new input
+    GraphQL.Operation.toHttpCmd
+        { method = "POST"
+        , url = "/api/graphql"
+        , headers = []
+        , tracker = Nothing
+        , timeout = Nothing
+        , operation = signInMutation
         , onResponse = ApiResponded
         }
