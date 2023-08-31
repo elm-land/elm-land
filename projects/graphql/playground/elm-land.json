@@ -24,7 +24,7 @@
     }
   },
   "graphql": {
-    "namespace": "Api",
-    "schema": "./schema.graphql"
+    "Api": "./graphql/Api/schema.graphql",
+    "Twitter": "./graphql/Twitter/schema.graphql"
   }
 }

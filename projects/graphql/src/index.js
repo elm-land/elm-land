@@ -34,47 +34,45 @@ const commands = {
   init: async () => {
     return [
       '',
-      `🌈 Welcome to Elm Land GraphQL (v${version})`,
+      ` 🌈 Welcome to Elm Land GraphQL (v${version})`,
       ''
     ].join('\n')
   },
   build: async () => {
     const config = await attemptToReadElmJson()
-    const introspection = await attemptToFetchIntrospectionJson(config)
-    const schema = graphql.buildClientSchema(introspection.data)
-    const { queries, mutations } = await attemptToLoadLocalGraphQLFiles(schema)
+    const projects = await getGraphQLProjects(config)
 
-    // Attempt to get namespace from config file
-    let namespace = 'Api'
-    try {
-      namespace =
-        (typeof config.graphql.namespace === 'string')
-          ? config.graphql.namespace
-          : namespace
-    } catch (_) { }
-
-    const flags = {
-      namespace,
-      introspection,
-      queries,
-      mutations,
+    let units = projects.length === 1 ? 'project' : 'projects'
+    console.info(`\n 🌈 ${Terminal.bold('Elm Land')} found ${projects.length} GraphQL ${units} to build\n    ${Terminal.green('⎺'.repeat(42))}`)
+    for (let project of projects) {
+      console.info(' 📂 ' + Terminal.bold(Terminal.cyan(project.namespace)))
+      await buildGraphQLProject(project)
+      console.info('')
     }
-
-    // Run Elm codegen worker
-    const { files } = await attemptToGenerateElmFiles(flags).catch(reason => {
-      console.error(reason)
-      process.exit(1)
-    })
-
-    // Save generated Elm files
-    await Promise.all(files.map(saveFileInElmLandSrcFolder))
-
-    console.info(`    ${Terminal.green('✔')} Successfully generated ${printCount(files, 'file', 'files')}`)
     return ''
   },
   watch: async () => {
 
   },
+}
+
+const getGraphQLProjects = async (config) => {
+  if (config && config.graphql) {
+    if (config.graphql == null || typeof config.graphql !== 'object') {
+      return Problem.create([
+        '',
+        '🌈 Elm Land expected an object at "graphql" in your elm-land.json file',
+        ''
+      ])
+    }
+    return Object.entries(config.graphql).map(([namespace, schema]) => ({ namespace, schema }))
+  }
+
+  return Problem.create([
+    '',
+    '🌈 Elm Land expected a field "graphql" in your elm-land.json file',
+    ''
+  ])
 }
 
 /**
@@ -133,127 +131,163 @@ const attemptToReadElmJson = () => {
 
 /**
  * 
- * @param {unknown} config 
+ * @param {{ namespace: string, schema : string | object }} project 
  * @returns {Promise<graphql.IntrospectionSchema>}
  */
-const attemptToFetchIntrospectionJson = async (config) => {
+const buildGraphQLProject = async (project) => {
+  const introspection = await fetchIntrospectionJsonForProject(project)
+  const schema = graphql.buildClientSchema(introspection.data)
+  const { queries, mutations } = await attemptToLoadLocalGraphQLFiles(schema, project)
+
+  // Attempt to get namespace from config file
+  const flags = {
+    namespace: project.namespace,
+    introspection,
+    queries,
+    mutations,
+  }
+
+  // Run Elm codegen worker
+  const { files } = await attemptToGenerateElmFiles(flags).catch(reason => {
+    console.error(reason)
+    process.exit(1)
+  })
+
+  // Save generated Elm files
+  await Promise.all(files.map(saveFileInElmLandSrcFolder))
+
+  console.info(`    ${Terminal.green('✔')} Generated ${printCount(files, 'new file', 'new files')}`)
+}
+
+const fetchSchemaFromLocalFile = async (project) => {
+  try {
+    const localFilepath = path.join(process.cwd(), ...project.schema.split('/'))
+    const [filename] = project.schema.split('/').slice(-1)
+    const localFileContents = await fs.promises.readFile(localFilepath, { encoding: 'utf-8' })
+
+    let schema = graphql.buildSchema(localFileContents)
+    console.info(`    ${Terminal.green('✔')} Found ${Terminal.pink(filename)} file`)
+
+    let result = await graphql.graphql({ schema, source: graphql.getIntrospectionQuery() })
+    return JSON.stringify(result, null, 2)
+  } catch (problem) {
+    console.error(problem)
+  }
+}
+
+const fetchSchemaFromRemoteUrl = async (project) => {
+  let { namespace } = project
   let introspectionJsonString = undefined
 
-  console.info([
-    '',
-    Utils.intro.success(`${Terminal.cyan('GraphQL')} build started...`),
-  ].join('\n'))
-
-  // 1️⃣ Attempt to read schema from local file
-  if (config && config.graphql && typeof config.graphql.schema === 'string') {
-    try {
-      const localFilepath = path.join(process.cwd(), ...config.graphql.schema.split('/'))
-      const filename = config.graphql.schema.split('/').slice(-1)[0]
-      const localFileContents = await fs.promises.readFile(localFilepath, { encoding: 'utf-8' })
-
-      let schema = graphql.buildSchema(localFileContents)
-      console.info(`    ${Terminal.green('✔')} Found ${Terminal.pink(filename)} file`)
-
-      let result = await graphql.graphql({ schema, source: graphql.getIntrospectionQuery() })
-      introspectionJsonString = JSON.stringify(result, null, 2)
-    } catch (problem) {
-      console.error(problem)
-    }
+  // Attempt to read url
+  let url = undefined
+  try {
+    url = project.schema.url
+  } catch (_) { }
+  if (!url) {
+    return Problem.create([
+      '',
+      `🌈 Elm Land expected a URL at "graphql.${namespace}.url"`,
+      ''
+    ])
   }
-  // 2️⃣ Attempt to read schema from GraphQL API endpoint
-  else {
-    let url = undefined
+
+  // Attempt to read method
+  let method = undefined
+  try {
+    method = project.schema.method
+  } catch (_) { }
+  if (!method) {
+    return Problem.create([
+      '',
+      `🌈 Elm Land expected "graphql.${namespace}.method" to be "GET" or "POST"`,
+      ''
+    ])
+  }
+
+  // Attempt to read headers
+  let headers = undefined
+  try {
+    headers = project.schema.headers || {}
+  } catch (_) { }
+
+  if (!headers) {
+    return Problem.create([
+      '',
+      `🌈 Elm Land expected HTTP headers at "graphql.${namespace}.headers"`,
+      ''
+    ])
+  }
+
+  if (url && method && headers) {
+    // Replace $VAR_NAME with actual environment variable values
     try {
-      url = config.graphql.schema.url
-    } catch (_) { }
-    if (!url) {
-      return Problem.create([
-        '',
-        '🌈 Elm Land did not find a URL at "graphql.schema.url" in your elm-land.json file',
-        ''
-      ])
+      headers = await replaceWithEnvVariables(headers)
+    } catch (reason) {
+      return Promise.reject(reason.message)
     }
 
-    // Attempt to read method
-    let method = undefined
-    try {
-      method = config.graphql.schema.method
-    } catch (_) { }
-    if (!method) {
-      return Problem.create([
-        '',
-        '🌈 Elm Land did not find GET or POST at "graphql.schema.method" in your elm-land.json file',
-        ''
-      ])
-    }
-
-    // Attempt to read headers
-    let headers = undefined
-    try {
-      headers = config.graphql.schema.headers || {}
-    } catch (_) { }
-
-    if (!headers) {
-      return Problem.create([
-        '',
-        '🌈 Elm Land did not find HTTP headers at "graphql.schema.headers" in your elm-land.json file',
-        ''
-      ])
-    }
-
-    if (url && method && headers) {
-      // Replace $VAR_NAME with actual environment variable values
-      try {
-        headers = await replaceWithEnvVariables(headers)
-      } catch (reason) {
-        return Promise.reject(reason.message)
-      }
-
-      introspectionJsonString = await new Promise((resolve, reject) => {
-        let body = JSON.stringify({
-          operationName: 'IntrospectionQuery',
-          query: graphql.getIntrospectionQuery(),
-          variables: {}
-        })
-        headers['Content-Type'] = 'application/json'
-        headers['Content-Length'] = body.length
-
-        let req = https.request(url, { method, headers, body }, (res) => {
-          let result = []
-          res.on('data', (chunk) => result.push(chunk))
-          res.on('end', () => {
-            const resString = Buffer.concat(result).toString()
-            resolve(resString)
-          })
-        })
-
-        req.on('error', (reason) => {
-          reject(Problem.create([
-            '',
-            `🌈 Elm Land couldn't request the schema at ${url}`,
-            ''
-          ]))
-        })
-
-        req.write(body)
-        req.end()
+    introspectionJsonString = await new Promise((resolve, reject) => {
+      let body = JSON.stringify({
+        operationName: 'IntrospectionQuery',
+        query: graphql.getIntrospectionQuery(),
+        variables: {}
       })
-      console.info(`    ${Terminal.green('✔')} Fetched schema from ${Terminal.pink(url)}`)
-    }
+      headers['Content-Type'] = 'application/json'
+      headers['Content-Length'] = body.length
+
+      let req = https.request(url, { method, headers, body }, (res) => {
+        let result = []
+        res.on('data', (chunk) => result.push(chunk))
+        res.on('end', () => {
+          const resString = Buffer.concat(result).toString()
+          resolve(resString)
+        })
+      })
+
+      req.on('error', () => {
+        reject(Problem.create([
+          '',
+          `🌈 Elm Land couldn't request the schema at ${url}`,
+          ''
+        ]))
+      })
+
+      req.write(body)
+      req.end()
+    })
+    console.info(`    ${Terminal.green('✔')} Fetched schema from ${Terminal.pink(url)}`)
+  }
+
+  return introspectionJsonString
+}
+
+const cacheIntrospectionJson = async (project, introspectionJsonString) => {
+  let introspectionFolder = path.join(process.cwd(), '.elm-land', 'graphql', project.namespace)
+
+  // Make folder if it doesn't exist
+  try { await fs.promises.mkdir(introspectionFolder, { recursive: true }) } catch (_) { }
+
+  // Create new introspection file for future requests
+  await fs.promises.writeFile(
+    path.join(introspectionFolder, 'introspection.json'),
+    introspectionJsonString,
+    { encoding: 'utf8' }
+  )
+}
+
+const fetchIntrospectionJsonForProject = async (project) => {
+  let introspectionJsonString = undefined
+
+  // 1️⃣ If schema is a string, it's pointing to a local file
+  if (typeof project.schema === 'string') {
+    introspectionJsonString = await fetchSchemaFromLocalFile(project)
+  } else {
+    introspectionJsonString = await fetchSchemaFromRemoteUrl(project)
   }
 
   if (introspectionJsonString) {
-    // Make folder if it doesn't exist
-    try {
-      fs.mkdirSync(path.join(process.cwd(), '.elm-land', 'graphql'), { recursive: true })
-    } catch (_) { }
-
-    // Create new introspection file for future requests
-    fs.writeFileSync(
-      path.join(process.cwd(), '.elm-land', 'graphql', 'introspection.json'),
-      introspectionJsonString,
-      { encoding: 'utf8' }
-    )
+    await cacheIntrospectionJson(project, introspectionJsonString)
 
     return JSON.parse(introspectionJsonString)
   } else {
@@ -268,14 +302,15 @@ const attemptToFetchIntrospectionJson = async (config) => {
 /**
  * @typedef {{ filename: string, contents: string, ast: graphql.DocumentNode }} File
  * @param {graphql.GraphQLSchema} schema
+ * @param {{ namespace: string }} project
  * @returns {Promise<{ queries: File[], mutations: File[] }}
  */
-const attemptToLoadLocalGraphQLFiles = async (schema) => {
+const attemptToLoadLocalGraphQLFiles = async (schema, { namespace }) => {
   let [queries, mutations] = await Promise.all([
-    loadGraphQLFilesFrom({ schema, folder: 'queries' }),
-    loadGraphQLFilesFrom({ schema, folder: 'mutations' }),
+    loadGraphQLFilesFrom({ schema, namespace, folder: 'Queries' }),
+    loadGraphQLFilesFrom({ schema, namespace, folder: 'Mutations' }),
   ])
-  console.info(`    ${Terminal.green('✔')} Validated ${printCount(queries, 'query', 'queries')} and ${printCount(mutations, 'mutation', 'mutations')}`)
+  console.info(`    ${Terminal.green('✔')} Found ${printCount(queries, 'query', 'queries')} and ${printCount(mutations, 'mutation', 'mutations')}`)
 
   return { queries, mutations }
 }
@@ -297,14 +332,15 @@ const printCount = (array, singular, plural) => {
 
 /**
  * 
- * @param {{ schema: graphql.GraphQLSchema, folder: string }} args
+ * @param {{ schema: graphql.GraphQLSchema, namespace: string, folder: string }} args
  * @returns {Promise<File>}
  */
-const loadGraphQLFilesFrom = ({ schema, folder }) =>
-  fs.promises.readdir(path.join(process.cwd(), 'graphql', folder))
+const loadGraphQLFilesFrom = ({ schema, namespace, folder }) => {
+  let folderWithGraphQLFiles = path.join(process.cwd(), 'graphql', namespace, folder)
+  return fs.promises.readdir(folderWithGraphQLFiles)
     .then(filenames => Promise.all(
       filenames.map(async filename => {
-        const filepath = path.join(process.cwd(), 'graphql', folder, filename)
+        const filepath = path.join(folderWithGraphQLFiles, filename)
         try {
           if (filename.endsWith('.graphql') || filename.endsWith('.gql')) {
             const contents = await fs.promises.readFile(filepath, { encoding: 'utf-8' })
@@ -350,6 +386,7 @@ const loadGraphQLFilesFrom = ({ schema, folder }) =>
       }).filter(a => a)
     ))
     .catch(_ => [])
+}
 
 
 /**

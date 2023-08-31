@@ -1,4 +1,7 @@
 projects:
-  api:
-    schema: './schema.graphql'
-    documents: './graphql/**/*.graphql'
+  Api:
+    schema: './graphql/Api/schema.graphql'
+    documents: './graphql/Api/**/*.graphql'
+  Twitter:
+    schema: './graphql/Twitter/schema.graphql'
+    documents: './graphql/Twitter/**/*.graphql'
