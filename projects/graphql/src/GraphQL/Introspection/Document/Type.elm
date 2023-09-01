@@ -3,7 +3,8 @@ module GraphQL.Introspection.Document.Type exposing
     , Type(..)
     , inputTypeDecoder
     , toEncoderStringUnwrappingFirstMaybe
-    , toImport
+    , toImports
+    , toName
     , toStringUnwrappingFirstMaybe
     )
 
@@ -17,6 +18,19 @@ type Type
     = Named NamedType
     | List_ Type
     | NonNull Type
+
+
+toName : Type -> String
+toName type_ =
+    case type_ of
+        Named { name } ->
+            name
+
+        List_ inner ->
+            toName inner
+
+        NonNull inner ->
+            toName inner
 
 
 inputTypeDecoder : Json.Decode.Decoder Type
@@ -69,23 +83,25 @@ toEncoderStringUnwrappingFirstMaybe schema type_ =
         (unwrapFirstMaybe (toElmTypeRef type_))
 
 
-toImport : Schema -> Type -> Maybe CodeGen.Import.Import
-toImport schema type_ =
+toImports : { namespace : String, schema : Schema, type_ : Type } -> List CodeGen.Import.Import
+toImports { namespace, schema, type_ } =
     let
         { name } =
             toNamedType type_
     in
     if name == "ID" then
-        Just (CodeGen.Import.new [ "GraphQL", "Scalar", "Id" ])
+        [ CodeGen.Import.new [ "GraphQL", "Scalar", "Id" ] ]
 
     else if Schema.isBuiltInScalarType name then
-        Nothing
+        []
 
     else if Schema.isScalarType name schema then
-        Just (CodeGen.Import.new [ "GraphQL", "Scalars", name ])
+        [ CodeGen.Import.new [ namespace, "Scalars", name ] ]
 
     else
-        Just (CodeGen.Import.new [ "GraphQL", "InputType", name ])
+        [ CodeGen.Import.new [ "Api", "Input" ]
+        , CodeGen.Import.new [ "Api", "Internals", "Input" ]
+        ]
 
 
 
@@ -136,7 +152,7 @@ toElmTypeRefString schema outerElmTypeRef =
                                 "GraphQL.Scalars." ++ String.Extra.decapitalize name
 
                             else
-                                name
+                                "Api.Input." ++ name
 
                 ElmTypeRef_List (ElmTypeRef_Named value) ->
                     "List " ++ toStringHelper (ElmTypeRef_Named value)
@@ -182,7 +198,7 @@ toElmTypeEncoderString schema outerElmTypeRef =
                                     |> String.replace "${name}" name
 
                             else
-                                name
+                                "(Dict.toList >> GraphQL.Encode.input)"
 
                 ElmTypeRef_List (ElmTypeRef_Named value) ->
                     "GraphQL.Encode.list " ++ toStringHelper (ElmTypeRef_Named value)

@@ -8,7 +8,8 @@
     "build:playground": "npm run build && (cd playground && elm-land graphql build)",
     "test:setup": "npm install && npm run build && npm run cli:setup",
     "cli:setup": "(cd ../cli && npm i && npm run setup && npm link)",
-    "test": "bats tests/*.bats"
+    "test": "bats tests/*.bats",
+    "example": "(npm run build > /dev/null && echo '  ✔ Compiled Elm worker') && (cd \"examples/$npm_config_name\" && elm-land graphql build && elm make src/Main.elm --output=/dev/null)"
   },
   "repository": {
     "type": "git",

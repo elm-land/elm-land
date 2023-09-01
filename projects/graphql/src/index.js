@@ -136,6 +136,16 @@ const attemptToReadElmJson = () => {
  */
 const buildGraphQLProject = async (project) => {
   const introspection = await fetchIntrospectionJsonForProject(project)
+
+  if (introspection.errors && introspection.errors.length) {
+    return Problem.create([
+      '',
+      ` 🌈 Elm Land found a ${Terminal.bold('problem with your schema')}:\n    ${Terminal.red('⎺').repeat(42)}`,
+      ...introspection.errors.map(err => '    • ' + err.message),
+      ''
+    ])
+  }
+
   const schema = graphql.buildClientSchema(introspection.data)
   const { queries, mutations } = await attemptToLoadLocalGraphQLFiles(schema, project)
 
@@ -167,7 +177,6 @@ const fetchSchemaFromLocalFile = async (project) => {
 
     let schema = graphql.buildSchema(localFileContents)
     console.info(`    ${Terminal.green('✔')} Found ${Terminal.pink(filename)} file`)
-
     let result = await graphql.graphql({ schema, source: graphql.getIntrospectionQuery() })
     return JSON.stringify(result, null, 2)
   } catch (problem) {
@@ -285,7 +294,6 @@ const fetchIntrospectionJsonForProject = async (project) => {
   } else {
     introspectionJsonString = await fetchSchemaFromRemoteUrl(project)
   }
-
   if (introspectionJsonString) {
     await cacheIntrospectionJson(project, introspectionJsonString)
 

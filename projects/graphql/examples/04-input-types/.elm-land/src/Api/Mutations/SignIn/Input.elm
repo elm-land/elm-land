@@ -8,7 +8,6 @@ module Api.Mutations.SignIn.Input exposing
 
 @docs Input, new
 @docs form
-
 @docs toInternalValue
 
 -}
@@ -17,6 +16,10 @@ import Api.Input
 import Api.Internals.Input
 import Dict exposing (Dict)
 import GraphQL.Encode
+
+
+
+-- INPUT
 
 
 type Input missing
@@ -28,14 +31,19 @@ new =
     Input Dict.empty
 
 
-form :
-    Api.Input.UserSignInForm
-    -> Input { missing | form : Api.Input.UserSignInForm }
-    -> Input missing
-form (Api.Internals.Input.UserSignInForm value_) (Input input_) =
-    Input (Dict.insert "form" (GraphQL.Encode.input (Dict.toList value_)) input_)
+
+-- FIELDS
+
+
+form : Api.Input.UserSignInForm -> Input { missing | form : Api.Input.UserSignInForm } -> Input missing
+form (Api.Internals.Input.UserSignInForm value_) (Input dict_) =
+    Input (Dict.insert "form" ((Dict.toList >> GraphQL.Encode.input) value_) dict_)
+
+
+
+-- USED INTERNALLY
 
 
 toInternalValue : Input {} -> List ( String, GraphQL.Encode.Value )
-toInternalValue (Input input_) =
-    Dict.toList input_
+toInternalValue (Input dict_) =
+    Dict.toList dict_
