@@ -1,9 +1,18 @@
+type Query {
+  users: [User!]!
+}
+
 type Mutation {
-  signUp(email: String!, password: String!, avatarUrl: String): User
+  signUp(
+    email: String!
+    password: String!
+    username: String
+  ): User
 }
 
 type User {
   id: ID!
   email: String!
+  username: String
   avatarUrl: String
 }

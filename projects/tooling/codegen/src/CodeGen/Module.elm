@@ -137,7 +137,11 @@ toString (Module options) =
                 ""
 
              else
-                "\n\n" ++ String.join "\n" (List.map CodeGen.Import.toString options.imports)
+                options.imports
+                    |> List.sortBy CodeGen.Import.toString
+                    |> List.map CodeGen.Import.toString
+                    |> String.join "\n"
+                    |> String.append "\n\n"
             )
         |> String.replace "{{declarations}}"
             (if List.isEmpty options.declarations then
