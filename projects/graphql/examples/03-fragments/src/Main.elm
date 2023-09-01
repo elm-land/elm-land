@@ -1,6 +1,6 @@
 module Main exposing (..)
 
-import Api.Queries.FetchUser exposing (Data)
+import Api.Queries.FetchUsers exposing (Data)
 import GraphQL.Operation exposing (Operation)
 import Http
 
@@ -14,7 +14,7 @@ sendGraphQL =
     let
         fetchUser : Operation Data
         fetchUser =
-            Api.Queries.FetchUser.new
+            Api.Queries.FetchUsers.new
     in
     GraphQL.Operation.toHttpCmd
         { method = "POST"

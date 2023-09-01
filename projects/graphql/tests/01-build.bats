@@ -27,3 +27,12 @@ load helpers
     expectToPass
     npx elm make src/Main.elm --output=/dev/null > /dev/null
 }
+
+@test "can compile 'examples/03-fragments'" {
+    cd examples/03-fragments
+    rm -rf .elm-land
+
+    run elm-land graphql build
+    expectToPass
+    npx elm make src/Main.elm --output=/dev/null > /dev/null
+}
