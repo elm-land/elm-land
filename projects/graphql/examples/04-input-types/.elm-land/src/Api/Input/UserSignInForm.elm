@@ -1,16 +1,12 @@
 module Api.Input.UserSignInForm exposing
     ( UserSignInForm, new
     , email, password
-    , null
     )
 
 {-|
 
 @docs UserSignInForm, new
 @docs email, password
-@docs null
-
-@docs toInternalValue
 
 -}
 
@@ -42,8 +38,3 @@ password :
     -> UserSignInForm missing
 password value (Api.Internals.Input.UserSignInForm input_) =
     Api.Internals.Input.UserSignInForm (Dict.insert "password" (GraphQL.Encode.string value) input_)
-
-
-null : {}
-null =
-    {}

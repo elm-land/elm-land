@@ -4,7 +4,7 @@
   "description": "Generate Elm code from GraphQL files",
   "main": "src/index.js",
   "scripts": {
-    "build": "(cd src/worker && elm make src/Main.elm --output=dist/elm.worker.js)",
+    "build": "elm make src/Main.elm --output=dist/elm.worker.js",
     "build:playground": "npm run build && (cd playground && elm-land graphql build)",
     "test:setup": "npm install && npm run build && npm run cli:setup",
     "cli:setup": "(cd ../cli && npm i && npm run setup && npm link)",
@@ -29,7 +29,7 @@
     "graphql": "16.6.0"
   },
   "devDependencies": {
-    "bats": "1.9.0",
-    "elm": "0.19.1-5"
+    "@lydell/elm": "0.19.1-12",
+    "bats": "1.9.0"
   }
 }

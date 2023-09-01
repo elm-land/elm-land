@@ -47,7 +47,6 @@ With `@elm-land/graphql`, you write your mutations in a normal `.graphql` file. 
         ( Input, new
         , email, password, name
         , null
-        , toInternalValue
         )
 
     -- ...

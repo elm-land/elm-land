@@ -42,33 +42,37 @@ new =
         , query = """
             query FetchUser {
               me {
-                id
-                email
-                avatarUrl
+                id 
+                email 
+                avatarUrl 
               }
             }
-        """
+          """
         , variables = []
-        , decoder =
-            GraphQL.Decode.object Data
-                |> GraphQL.Decode.field
-                    { name = "me"
-                    , decoder =
-                        GraphQL.Decode.object User
-                            |> GraphQL.Decode.field
-                                { name = "id"
-                                , decoder = GraphQL.Decode.id
-                                }
-                            |> GraphQL.Decode.field
-                                { name = "email"
-                                , decoder = GraphQL.Decode.string
-                                }
-                            |> GraphQL.Decode.field
-                                { name = "avatarUrl"
-                                , decoder =
-                                    GraphQL.Decode.string
-                                        |> GraphQL.Decode.maybe
-                                }
-                            |> GraphQL.Decode.maybe
-                    }
+        , decoder = decoder
         }
+
+
+decoder : GraphQL.Decode.Decoder Data
+decoder =
+    GraphQL.Decode.object Data
+        |> GraphQL.Decode.field
+            { name = "me"
+            , decoder =
+                GraphQL.Decode.object User
+                    |> GraphQL.Decode.field
+                        { name = "id"
+                        , decoder = GraphQL.Decode.id
+                        }
+                    |> GraphQL.Decode.field
+                        { name = "email"
+                        , decoder = GraphQL.Decode.string
+                        }
+                    |> GraphQL.Decode.field
+                        { name = "avatarUrl"
+                        , decoder =
+                            GraphQL.Decode.string
+                                |> GraphQL.Decode.maybe
+                        }
+                    |> GraphQL.Decode.maybe
+            }

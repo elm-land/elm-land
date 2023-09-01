@@ -401,7 +401,7 @@ const attemptToGenerateElmFiles = async (flags) => {
       // Load worker, ignore Debug mode errors
       let warn = console.warn
       console.warn = () => null
-      const { Elm } = require('./worker/dist/elm.worker.js')
+      const { Elm } = require('../dist/elm.worker.js')
       const app = Elm.Main.init({ flags })
       console.warn = warn
 
