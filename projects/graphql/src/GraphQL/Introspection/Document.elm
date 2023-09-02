@@ -52,6 +52,7 @@ type Document
 decoder : Json.Decode.Decoder Document
 decoder =
     Json.Decode.map Document internalsDecoder
+        |> Json.Decode.map addTypenamesForUnionSelections
 
 
 toName : Document -> String
@@ -268,6 +269,19 @@ type alias FieldSelection =
     }
 
 
+type alias Location =
+    { start : Int
+    , end : Int
+    }
+
+
+locationDecoder : Json.Decode.Decoder Location
+locationDecoder =
+    Json.Decode.map2 Location
+        (Json.Decode.field "start" Json.Decode.int)
+        (Json.Decode.field "end" Json.Decode.int)
+
+
 getNestedFields :
     String
     -> Schema
@@ -351,14 +365,16 @@ fragmentSpreadSelectionDecoder =
 
 type alias InlineFragmentSelection =
     { name : String
+    , location : Location
     , selections : List Selection
     }
 
 
 inlineFragmentSelectionDecoder : Json.Decode.Decoder InlineFragmentSelection
 inlineFragmentSelectionDecoder =
-    Json.Decode.map2 InlineFragmentSelection
+    Json.Decode.map3 InlineFragmentSelection
         (Json.Decode.at [ "typeCondition", "name", "value" ] Json.Decode.string)
+        (Json.Decode.field "loc" locationDecoder)
         (Json.Decode.at [ "selectionSet", "selections" ] (Json.Decode.list (Json.Decode.lazy (\_ -> selectionDecoder))))
 
 
@@ -413,3 +429,225 @@ fragmentDefinitionDecoder =
         (Json.Decode.at [ "selectionSet", "selections" ]
             (Json.Decode.list selectionDecoder)
         )
+
+
+
+-- TYPENAME INJECTION
+
+
+{-| @elm-land/graphql needs to automatically inject "\_\_typename" into
+a user's query, so that we know which union type JSON comes back.
+
+Without it, two selections might look indistinguishable, which leads to
+broken programs or unexpected behavior
+
+-}
+addTypenamesForUnionSelections : Document -> Document
+addTypenamesForUnionSelections (Document doc) =
+    let
+        info : TypenameInfo
+        info =
+            doc.definitions
+                |> List.foldl collectInfo { definitions = [], locations = [] }
+
+        collectInfo : Definition -> TypenameInfo -> TypenameInfo
+        collectInfo def info_ =
+            let
+                { definition, locations } =
+                    toTypenameInfo def
+            in
+            { info_
+                | definitions = info_.definitions ++ [ definition ]
+                , locations = info_.locations ++ locations
+            }
+    in
+    Document
+        { filename = doc.filename
+        , contents = injectTypenameFields info.locations doc.contents
+        , definitions = info.definitions
+        }
+
+
+type alias TypenameInfo =
+    { definitions : List Definition
+    , locations : List Location
+    }
+
+
+type alias SingleTypenameInfo =
+    { definition : Definition
+    , locations : List Location
+    }
+
+
+toTypenameInfo :
+    Definition
+    ->
+        { definition : Definition
+        , locations : List Location
+        }
+toTypenameInfo def =
+    case def of
+        Definition_Operation op ->
+            let
+                { selections, locations } =
+                    toTypenameInfoForSelections op.selections
+            in
+            { definition = Definition_Operation { op | selections = selections }
+            , locations = locations
+            }
+
+        Definition_Fragment frag ->
+            let
+                { selections, locations } =
+                    toTypenameInfoForSelections frag.selections
+            in
+            { definition = Definition_Fragment { frag | selections = selections }
+            , locations = locations
+            }
+
+
+type alias ManySelectionsTypenameInfo =
+    { selections : List Selection
+    , locations : List Location
+    }
+
+
+isInlineFragment : Selection -> Bool
+isInlineFragment selection =
+    case selection of
+        Selection_InlineFragment _ ->
+            True
+
+        _ ->
+            False
+
+
+typenameSelection : Selection
+typenameSelection =
+    Selection_Field
+        { name = "__typename"
+        , alias = Nothing
+        , selections = []
+        }
+
+
+toTypenameInfoForSelections : List Selection -> ManySelectionsTypenameInfo
+toTypenameInfoForSelections selections =
+    let
+        info : ManySelectionsTypenameInfo
+        info =
+            selections
+                |> List.indexedMap Tuple.pair
+                |> List.foldl collectInfo
+                    { selections =
+                        if List.any isInlineFragment selections then
+                            [ typenameSelection ]
+
+                        else
+                            []
+                    , locations = []
+                    }
+
+        unionSelectionIndices : List Int
+        unionSelectionIndices =
+            selections
+                |> List.indexedMap Tuple.pair
+                |> List.filter (\( _, selection ) -> isInlineFragment selection)
+                |> List.map Tuple.first
+
+        collectInfo :
+            ( Int, Selection )
+            -> ManySelectionsTypenameInfo
+            -> ManySelectionsTypenameInfo
+        collectInfo ( index, selection_ ) info_ =
+            let
+                isFirstInlineFragment : Bool
+                isFirstInlineFragment =
+                    List.head unionSelectionIndices == Just index
+
+                { selection, locations } =
+                    toSelectionTypenameInfo
+                        { isFirstInlineFragment = isFirstInlineFragment
+                        , selection = selection_
+                        }
+            in
+            { info_
+                | selections = info_.selections ++ [ selection ]
+                , locations = info_.locations ++ locations
+            }
+    in
+    { selections = info.selections
+    , locations = info.locations
+    }
+
+
+type alias SelectionTypenameInfo =
+    { selection : Selection
+    , locations : List Location
+    }
+
+
+toSelectionTypenameInfo :
+    { isFirstInlineFragment : Bool
+    , selection : Selection
+    }
+    -> SelectionTypenameInfo
+toSelectionTypenameInfo { isFirstInlineFragment, selection } =
+    case selection of
+        Selection_Field inner ->
+            let
+                info =
+                    toTypenameInfoForSelections inner.selections
+            in
+            { selection = Selection_Field { inner | selections = info.selections }
+            , locations = info.locations
+            }
+
+        Selection_FragmentSpread inner ->
+            { selection = Selection_FragmentSpread inner
+            , locations = []
+            }
+
+        Selection_InlineFragment inner ->
+            let
+                info =
+                    toTypenameInfoForSelections inner.selections
+            in
+            { selection = Selection_InlineFragment { inner | selections = info.selections }
+            , locations =
+                if isFirstInlineFragment then
+                    inner.location :: info.locations
+
+                else
+                    info.locations
+            }
+
+
+injectTypenameFields : List Location -> String -> String
+injectTypenameFields locations original =
+    let
+        injectTypenameField : Location -> String -> String
+        injectTypenameField { start, end } str =
+            let
+                trailingSpaces : Int
+                trailingSpaces =
+                    String.length (String.left start str)
+                        - String.length (String.trimRight (String.left start str))
+                        - 1
+            in
+            String.join ""
+                [ String.left start str
+                , "__typename # 🌈 Injected by @elm-land/graphql ✨"
+                , "\n" ++ String.repeat trailingSpaces " "
+                , String.slice start end str
+                , String.right (String.length str - end) str
+                ]
+
+        startIndexDescending : Location -> Int
+        startIndexDescending loc =
+            negate loc.start
+    in
+    locations
+        |> List.sortBy startIndexDescending
+        |> List.foldl injectTypenameField original
