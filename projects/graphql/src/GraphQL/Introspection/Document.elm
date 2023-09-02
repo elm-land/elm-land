@@ -39,6 +39,7 @@ NPM package's `node_modules/graphql/language/ast.d.ts` file.
 import GraphQL.CliError exposing (CliError(..))
 import GraphQL.Introspection.Document.VariableDefinition
 import GraphQL.Introspection.Schema as Schema exposing (Schema)
+import GraphQL.Introspection.Schema.TypeRef as TypeRef exposing (TypeRef)
 import Json.Decode
 import List.Extra
 import String.Extra
@@ -312,7 +313,7 @@ getNestedFields operationTypeName schema ((Document doc) as document) =
                                     }
                                     schema
                                     |> Maybe.map .type_
-                                    |> Maybe.map Schema.toTypeRefName
+                                    |> Maybe.map TypeRef.toName
                                     |> Maybe.withDefault "UNEXPECTED_ERROR_IN_toFieldSelections_please_report_this"
                         in
                         { parentTypeName = parentTypeName

@@ -22,15 +22,12 @@ import CodeGen.Module
 import GraphQL.CliError exposing (CliError)
 import GraphQL.Input
 import GraphQL.Introspection.Document as Document exposing (Document)
+import GraphQL.Introspection.Document.Type as DocumentType
+import GraphQL.Introspection.Document.VariableDefinition as VariableDefinition
 import GraphQL.Introspection.Schema as Schema exposing (Schema)
+import GraphQL.Introspection.Schema.TypeRef as TypeRef exposing (TypeRef)
 import Set exposing (Set)
 import String.Extra
-
-
-type alias File =
-    { filepath : List String
-    , contents : String
-    }
 
 
 type Kind
@@ -74,20 +71,9 @@ generate :
     , schema : Schema
     , document : Document
     }
-    -> Result CliError (List File)
+    -> Result CliError (List CodeGen.Module)
 generate ({ schema, document } as options) =
     toModules options
-        |> Result.map
-            (List.map
-                (\module_ ->
-                    { filepath =
-                        CodeGen.Module.toFilepath module_
-                            |> String.split "/"
-                    , contents =
-                        CodeGen.Module.toString module_
-                    }
-                )
-            )
 
 
 type alias Options =
@@ -185,7 +171,7 @@ toModules ({ schema, document } as options) =
                         |> Maybe.andThen
                             (\field ->
                                 Schema.findTypeWithName
-                                    (Schema.toTypeRefName field.type_)
+                                    (TypeRef.toName field.type_)
                                     schema
                             )
                         |> Maybe.andThen Schema.toObjectType
@@ -250,7 +236,7 @@ toModules ({ schema, document } as options) =
                                     }
                             in
                             Schema.findFieldForType
-                                { typeName = Schema.toTypeRefName field.type_
+                                { typeName = TypeRef.toName field.type_
                                 , fieldName = innerField.name
                                 }
                                 schema
@@ -405,30 +391,30 @@ toModules ({ schema, document } as options) =
                 }
 
         toTypeRefDecoder :
-            Schema.TypeRef
+            TypeRef
             -> CodeGen.Expression
             -> CodeGen.Expression
         toTypeRefDecoder typeRef innerExpression =
             let
-                toElmTypeRefExpression : Schema.ElmTypeRef -> CodeGen.Expression
+                toElmTypeRefExpression : TypeRef.ElmTypeRef -> CodeGen.Expression
                 toElmTypeRefExpression elmTypeRef =
                     case elmTypeRef of
-                        Schema.ElmTypeRef_Named _ ->
+                        TypeRef.ElmTypeRef_Named _ ->
                             innerExpression
 
-                        Schema.ElmTypeRef_List innerElmTypeRef ->
+                        TypeRef.ElmTypeRef_List innerElmTypeRef ->
                             CodeGen.Expression.pipeline
                                 [ toElmTypeRefExpression innerElmTypeRef
                                 , CodeGen.Expression.value "GraphQL.Decode.list"
                                 ]
 
-                        Schema.ElmTypeRef_Maybe innerElmTypeRef ->
+                        TypeRef.ElmTypeRef_Maybe innerElmTypeRef ->
                             CodeGen.Expression.pipeline
                                 [ toElmTypeRefExpression innerElmTypeRef
                                 , CodeGen.Expression.value "GraphQL.Decode.maybe"
                                 ]
             in
-            toElmTypeRefExpression (Schema.toElmTypeRef typeRef)
+            toElmTypeRefExpression (TypeRef.toElmTypeRef typeRef)
 
         toFieldDecoderForSelection :
             { existingNames : Set String
@@ -450,7 +436,7 @@ toModules ({ schema, document } as options) =
                             let
                                 typeRefName : String
                                 typeRefName =
-                                    Schema.toTypeRefName fieldSchema.type_
+                                    TypeRef.toName fieldSchema.type_
                             in
                             if Schema.isBuiltInScalarType typeRefName then
                                 CodeGen.Expression.value
@@ -608,7 +594,8 @@ toModules ({ schema, document } as options) =
                 [ [ toOperationModule dataTypeAlias ]
                 , if Document.hasVariables document then
                     [ GraphQL.Input.toInputModule
-                        { moduleName =
+                        { inputTypeName = "Input"
+                        , moduleName =
                             [ options.namespace
                             , fromKindToFolderName options.kind
                             , Document.toName document
@@ -617,6 +604,12 @@ toModules ({ schema, document } as options) =
                         , namespace = options.namespace
                         , schema = options.schema
                         , variables = Document.toVariables document
+                        , isRequired = VariableDefinition.isRequired
+                        , toVarName = .name
+                        , toTypeNameUnwrappingFirstMaybe = .type_ >> DocumentType.toStringUnwrappingFirstMaybe schema
+                        , toTypeName = .type_ >> DocumentType.toName
+                        , toEncoderString = .type_ >> DocumentType.toEncoderStringUnwrappingFirstMaybe schema
+                        , isInputObject = False
                         }
                     ]
 
@@ -659,7 +652,7 @@ toNameThatWontClash ({ alias_, field, existingNames } as options) nameAttempt =
             let
                 name : String
                 name =
-                    Schema.toTypeRefName field.type_
+                    TypeRef.toName field.type_
             in
             if Set.member name existingNames then
                 toNameThatWontClash options (NameBasedOffOfFieldPlus name)
@@ -796,14 +789,14 @@ toTypeRefAnnotation { documentFieldSelection, existingNames, field, matchingFrag
                 )
 
         ( typeAliasName, imports ) =
-            case Schema.toTypeRefName field.type_ of
+            case TypeRef.toName field.type_ of
                 "ID" ->
                     ( "GraphQL.Scalar.Id.Id"
                     , Set.singleton "GraphQL.Scalar.Id"
                     )
 
                 _ ->
-                    if Schema.isBuiltInScalarType (Schema.toTypeRefName field.type_) then
+                    if Schema.isBuiltInScalarType (TypeRef.toName field.type_) then
                         ( originalName, Set.empty )
 
                     else
@@ -811,7 +804,7 @@ toTypeRefAnnotation { documentFieldSelection, existingNames, field, matchingFrag
     in
     { annotation =
         CodeGen.Annotation.type_
-            (Schema.toTypeRefAnnotation
+            (TypeRef.toAnnotation
                 typeAliasName
                 field.type_
             )

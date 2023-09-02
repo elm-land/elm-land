@@ -1,4 +1,4 @@
-module Api.Mutations.SignIn exposing
+module Api.Mutations.SignIn exposing 
     ( Input, Data, new
     , User
     )
@@ -67,7 +67,7 @@ decoder =
     GraphQL.Decode.object Data
         |> GraphQL.Decode.field
             { name = "signIn"
-            , decoder =
+            , decoder = 
                 GraphQL.Decode.object User
                     |> GraphQL.Decode.field
                         { name = "id"
@@ -79,7 +79,7 @@ decoder =
                         }
                     |> GraphQL.Decode.field
                         { name = "avatarUrl"
-                        , decoder =
+                        , decoder = 
                             GraphQL.Decode.string
                                 |> GraphQL.Decode.maybe
                         }

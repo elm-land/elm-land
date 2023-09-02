@@ -36,3 +36,12 @@ load helpers
     expectToPass
     npx elm make src/Main.elm --output=/dev/null > /dev/null
 }
+
+@test "can compile 'examples/04-input-types'" {
+    cd examples/04-input-types
+    rm -rf .elm-land
+
+    run elm-land graphql build
+    expectToPass
+    npx elm make src/Main.elm --output=/dev/null > /dev/null
+}

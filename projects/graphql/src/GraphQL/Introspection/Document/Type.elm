@@ -83,12 +83,13 @@ toEncoderStringUnwrappingFirstMaybe schema type_ =
         (unwrapFirstMaybe (toElmTypeRef type_))
 
 
-toImports : { namespace : String, schema : Schema, type_ : Type } -> List CodeGen.Import.Import
-toImports { namespace, schema, type_ } =
-    let
-        { name } =
-            toNamedType type_
-    in
+toImports :
+    { namespace : String
+    , schema : Schema
+    , name : String
+    }
+    -> List CodeGen.Import.Import
+toImports { namespace, schema, name } =
     if name == "ID" then
         [ CodeGen.Import.new [ "GraphQL", "Scalar", "Id" ] ]
 

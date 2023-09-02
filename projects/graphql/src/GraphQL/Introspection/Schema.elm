@@ -1,17 +1,19 @@
 module GraphQL.Introspection.Schema exposing
     ( Schema, decoder
     , toQueryTypeName, toMutationTypeName
+    , toTypeRefNameUnwrappingFirstMaybe, toTypeRefEncoderStringUnwrappingFirstMaybe
     , Type(..)
     , findQueryType, findMutationType
     , findTypeWithName
     , toTypeName
     , ObjectType, toObjectType
-    , ScalarType, EnumType, InputObjectType
+    , InputObjectType, findInputObjectTypeWithName
+    , InputValue
+    , ScalarType, EnumType
     , InterfaceType, UnionType
     , Field, findFieldForType, findFieldWithName
-    , TypeRef, toTypeRefName, toTypeRefAnnotation
     , isBuiltInScalarType, isScalarType
-    , ElmTypeRef(..), toElmTypeRef
+    , findInputTypes, isInputType
     )
 
 {-| These decoders were translated from the official `graphql`
@@ -23,6 +25,8 @@ NPM package's `./graphql/utilties/getIntrospectionQuery.d.ts` file.
 @docs Schema, decoder
 @docs toQueryTypeName, toMutationTypeName
 
+@docs toTypeRefNameUnwrappingFirstMaybe, toTypeRefEncoderStringUnwrappingFirstMaybe
+
 
 ## Type
 
@@ -32,7 +36,10 @@ NPM package's `./graphql/utilties/getIntrospectionQuery.d.ts` file.
 @docs toTypeName
 
 @docs ObjectType, toObjectType
-@docs ScalarType, EnumType, InputObjectType
+@docs InputObjectType, findInputObjectTypeWithName
+@docs InputValue
+
+@docs ScalarType, EnumType
 @docs InterfaceType, UnionType
 
 
@@ -49,9 +56,13 @@ NPM package's `./graphql/utilties/getIntrospectionQuery.d.ts` file.
 
 -}
 
+import GraphQL.Introspection.Schema.Kind as Kind exposing (Kind)
+import GraphQL.Introspection.Schema.NamedTypeRef as NamedTypeRef exposing (NamedTypeRef)
+import GraphQL.Introspection.Schema.TypeRef as TypeRef exposing (TypeRef)
 import Json.Decode
 import List.Extra
 import Set exposing (Set)
+import String.Extra
 
 
 type Schema
@@ -83,6 +94,21 @@ findQueryType ((Schema schema) as wrappedSchema) =
         |> Maybe.andThen toObjectType
 
 
+findInputObjectTypeWithName : String -> Schema -> Maybe InputObjectType
+findInputObjectTypeWithName name schema =
+    findTypeWithName name schema
+        |> Maybe.andThen toInputObjectType
+
+
+findInputTypes : Set String -> Schema -> List InputObjectType
+findInputTypes names schema =
+    Set.toList names
+        |> List.filterMap
+            (\name ->
+                findInputObjectTypeWithName name schema
+            )
+
+
 findMutationType : Schema -> Maybe ObjectType
 findMutationType ((Schema schema) as wrappedSchema) =
     findTypeWithName schema.mutationTypeName wrappedSchema
@@ -97,6 +123,105 @@ findTypeWithName name (Schema schema) =
             toTypeName type_ == name
     in
     List.Extra.find hasMatchingName schema.types
+
+
+toTypeRefNameUnwrappingFirstMaybe : TypeRef -> Schema -> String
+toTypeRefNameUnwrappingFirstMaybe typeRef schema =
+    let
+        outerElmTypeRef : TypeRef.ElmTypeRef
+        outerElmTypeRef =
+            TypeRef.toElmTypeRef typeRef
+
+        toStringHelper : TypeRef.ElmTypeRef -> String
+        toStringHelper elmTypeRef =
+            case elmTypeRef of
+                TypeRef.ElmTypeRef_Named { name } ->
+                    case name of
+                        "String" ->
+                            "String"
+
+                        "Int" ->
+                            "Int"
+
+                        "Float" ->
+                            "Float"
+
+                        "Boolean" ->
+                            "Bool"
+
+                        "ID" ->
+                            "GraphQL.Scalar.Id.Id"
+
+                        _ ->
+                            if isScalarType name schema then
+                                "GraphQL.Scalars." ++ String.Extra.decapitalize name
+
+                            else
+                                "Api.Input." ++ name
+
+                TypeRef.ElmTypeRef_List (TypeRef.ElmTypeRef_Named value) ->
+                    "List " ++ toStringHelper (TypeRef.ElmTypeRef_Named value)
+
+                TypeRef.ElmTypeRef_List innerElmTypeRef ->
+                    "List (" ++ toStringHelper innerElmTypeRef ++ ")"
+
+                TypeRef.ElmTypeRef_Maybe (TypeRef.ElmTypeRef_Named value) ->
+                    "Maybe " ++ toStringHelper (TypeRef.ElmTypeRef_Named value)
+
+                TypeRef.ElmTypeRef_Maybe innerElmTypeRef ->
+                    "Maybe (" ++ toStringHelper innerElmTypeRef ++ ")"
+    in
+    toStringHelper outerElmTypeRef
+
+
+toTypeRefEncoderStringUnwrappingFirstMaybe : TypeRef -> Schema -> String
+toTypeRefEncoderStringUnwrappingFirstMaybe typeRef schema =
+    let
+        outerElmTypeRef : TypeRef.ElmTypeRef
+        outerElmTypeRef =
+            TypeRef.toElmTypeRef typeRef
+
+        toStringHelper : TypeRef.ElmTypeRef -> String
+        toStringHelper elmTypeRef =
+            case elmTypeRef of
+                TypeRef.ElmTypeRef_Named { name } ->
+                    case name of
+                        "String" ->
+                            "GraphQL.Encode.string"
+
+                        "Int" ->
+                            "GraphQL.Encode.int"
+
+                        "Float" ->
+                            "GraphQL.Encode.float"
+
+                        "Boolean" ->
+                            "GraphQL.Encode.bool"
+
+                        "ID" ->
+                            "GraphQL.Encode.id"
+
+                        _ ->
+                            if isScalarType name schema then
+                                "GraphQL.Scalars.${name}.encode"
+                                    |> String.replace "${name}" name
+
+                            else
+                                "(Dict.toList >> GraphQL.Encode.input)"
+
+                TypeRef.ElmTypeRef_List (TypeRef.ElmTypeRef_Named value) ->
+                    "GraphQL.Encode.list " ++ toStringHelper (TypeRef.ElmTypeRef_Named value)
+
+                TypeRef.ElmTypeRef_List innerElmTypeRef ->
+                    "GraphQL.Encode.list (" ++ toStringHelper innerElmTypeRef ++ ")"
+
+                TypeRef.ElmTypeRef_Maybe (TypeRef.ElmTypeRef_Named value) ->
+                    "GraphQL.Encode.maybe " ++ toStringHelper (TypeRef.ElmTypeRef_Named value)
+
+                TypeRef.ElmTypeRef_Maybe innerElmTypeRef ->
+                    "GraphQL.Encode.maybe (" ++ toStringHelper innerElmTypeRef ++ ")"
+    in
+    toStringHelper outerElmTypeRef
 
 
 findFieldForType :
@@ -142,6 +267,16 @@ toObjectType : Type -> Maybe ObjectType
 toObjectType type_ =
     case type_ of
         Type_Object data ->
+            Just data
+
+        _ ->
+            Nothing
+
+
+toInputObjectType : Type -> Maybe InputObjectType
+toInputObjectType type_ =
+    case type_ of
+        Type_InputObject data ->
             Just data
 
         _ ->
@@ -207,76 +342,32 @@ typeDecoder =
         fromKindToTypeDecoder : Kind -> Json.Decode.Decoder Type
         fromKindToTypeDecoder kind =
             case kind of
-                Kind_Scalar ->
+                Kind.Scalar ->
                     scalarTypeDecoder
                         |> Json.Decode.map Type_Scalar
 
-                Kind_Object ->
+                Kind.Object ->
                     objectTypeDecoder
                         |> Json.Decode.map Type_Object
 
-                Kind_Interface ->
+                Kind.Interface ->
                     interfaceTypeDecoder
                         |> Json.Decode.map Type_Interface
 
-                Kind_Union ->
+                Kind.Union ->
                     unionTypeDecoder
                         |> Json.Decode.map Type_Union
 
-                Kind_Enum ->
+                Kind.Enum ->
                     enumTypeDecoder
                         |> Json.Decode.map Type_Enum
 
-                Kind_InputObject ->
+                Kind.InputObject ->
                     inputObjectTypeDecoder
                         |> Json.Decode.map Type_InputObject
     in
-    Json.Decode.field "kind" kindDecoder
+    Json.Decode.field "kind" Kind.decoder
         |> Json.Decode.andThen fromKindToTypeDecoder
-
-
-
--- KIND
-
-
-type Kind
-    = Kind_Scalar
-    | Kind_Object
-    | Kind_Interface
-    | Kind_Union
-    | Kind_Enum
-    | Kind_InputObject
-
-
-kindDecoder : Json.Decode.Decoder Kind
-kindDecoder =
-    let
-        fromStringToKind : String -> Json.Decode.Decoder Kind
-        fromStringToKind str =
-            case str of
-                "SCALAR" ->
-                    Json.Decode.succeed Kind_Scalar
-
-                "OBJECT" ->
-                    Json.Decode.succeed Kind_Object
-
-                "INTERFACE" ->
-                    Json.Decode.succeed Kind_Interface
-
-                "UNION" ->
-                    Json.Decode.succeed Kind_Union
-
-                "ENUM" ->
-                    Json.Decode.succeed Kind_Enum
-
-                "INPUT_OBJECT" ->
-                    Json.Decode.succeed Kind_InputObject
-
-                _ ->
-                    Json.Decode.fail ("Unknown kind: " ++ str)
-    in
-    Json.Decode.string
-        |> Json.Decode.andThen fromStringToKind
 
 
 
@@ -314,7 +405,7 @@ objectTypeDecoder =
         (Json.Decode.field "name" Json.Decode.string)
         (Json.Decode.maybe (Json.Decode.field "description" Json.Decode.string))
         (Json.Decode.field "fields" (Json.Decode.list fieldDecoder))
-        (Json.Decode.field "interfaces" (Json.Decode.list namedTypeRefDecoder))
+        (Json.Decode.field "interfaces" (Json.Decode.list NamedTypeRef.decoder))
 
 
 
@@ -335,7 +426,7 @@ interfaceTypeDecoder =
         (Json.Decode.field "name" Json.Decode.string)
         (Json.Decode.maybe (Json.Decode.field "description" Json.Decode.string))
         (Json.Decode.field "fields" (Json.Decode.list fieldDecoder))
-        (Json.Decode.field "interfaces" (Json.Decode.list namedTypeRefDecoder))
+        (Json.Decode.field "interfaces" (Json.Decode.list NamedTypeRef.decoder))
 
 
 
@@ -354,7 +445,7 @@ unionTypeDecoder =
     Json.Decode.map3 UnionType
         (Json.Decode.field "name" Json.Decode.string)
         (Json.Decode.maybe (Json.Decode.field "description" Json.Decode.string))
-        (Json.Decode.field "possibleTypes" (Json.Decode.list namedTypeRefDecoder))
+        (Json.Decode.field "possibleTypes" (Json.Decode.list NamedTypeRef.decoder))
 
 
 
@@ -433,7 +524,7 @@ fieldDecoder =
         (Json.Decode.field "name" Json.Decode.string)
         (Json.Decode.maybe (Json.Decode.field "description" Json.Decode.string))
         (Json.Decode.field "args" (Json.Decode.list inputValueDecoder))
-        (Json.Decode.field "type" typeRefDecoder)
+        (Json.Decode.field "type" TypeRef.decoder)
         (Json.Decode.maybe (Json.Decode.field "deprecationReason" Json.Decode.string))
 
 
@@ -455,32 +546,13 @@ inputValueDecoder =
     Json.Decode.map5 InputValue
         (Json.Decode.field "name" Json.Decode.string)
         (Json.Decode.maybe (Json.Decode.field "description" Json.Decode.string))
-        (Json.Decode.field "type" typeRefDecoder)
+        (Json.Decode.field "type" TypeRef.decoder)
         (Json.Decode.field "defaultValue" (Json.Decode.maybe Json.Decode.string))
         (Json.Decode.maybe (Json.Decode.field "deprecationReason" Json.Decode.string))
 
 
 
--- TYPE REF
-
-
-type TypeRef
-    = Named NamedTypeRef
-    | List_ TypeRef
-    | NonNull TypeRef
-
-
-toTypeRefName : TypeRef -> String
-toTypeRefName typeRef =
-    case typeRef of
-        Named data ->
-            data.name
-
-        List_ inner ->
-            toTypeRefName inner
-
-        NonNull inner ->
-            toTypeRefName inner
+-- CHECKIN STUFF
 
 
 toScalarTypeNames : Schema -> List String
@@ -497,6 +569,20 @@ toScalarTypeNames (Schema schema) =
             )
 
 
+isInputType : String -> Schema -> Bool
+isInputType name (Schema schema) =
+    schema.types
+        |> List.any
+            (\type_ ->
+                case type_ of
+                    Type_InputObject inputType ->
+                        inputType.name == name
+
+                    _ ->
+                        False
+            )
+
+
 isScalarType : String -> Schema -> Bool
 isScalarType typeName schema =
     Set.member
@@ -509,114 +595,3 @@ isBuiltInScalarType typeName =
     List.member
         typeName
         [ "ID", "String", "Float", "Int", "Boolean" ]
-
-
-toTypeRefAnnotation : String -> TypeRef -> String
-toTypeRefAnnotation collisionFreeName typeRef =
-    let
-        toElmTypeRefAnnotation : ElmTypeRef -> String
-        toElmTypeRefAnnotation elmTypeRef =
-            case elmTypeRef of
-                ElmTypeRef_Named { name } ->
-                    collisionFreeName
-
-                ElmTypeRef_List (ElmTypeRef_Named value) ->
-                    "List " ++ toElmTypeRefAnnotation (ElmTypeRef_Named value)
-
-                ElmTypeRef_List innerElmTypeRef ->
-                    "List (" ++ toElmTypeRefAnnotation innerElmTypeRef ++ ")"
-
-                ElmTypeRef_Maybe (ElmTypeRef_Named value) ->
-                    "Maybe " ++ toElmTypeRefAnnotation (ElmTypeRef_Named value)
-
-                ElmTypeRef_Maybe innerElmTypeRef ->
-                    "Maybe (" ++ toElmTypeRefAnnotation innerElmTypeRef ++ ")"
-    in
-    toElmTypeRefAnnotation (toElmTypeRef typeRef)
-
-
-typeRefDecoder : Json.Decode.Decoder TypeRef
-typeRefDecoder =
-    let
-        fromKindToTypeRefDecoder : String -> Json.Decode.Decoder TypeRef
-        fromKindToTypeRefDecoder str =
-            case str of
-                "LIST" ->
-                    Json.Decode.field "ofType" typeRefDecoder
-                        |> Json.Decode.map List_
-
-                "NON_NULL" ->
-                    Json.Decode.field "ofType" typeRefDecoder
-                        |> Json.Decode.map NonNull
-
-                _ ->
-                    namedTypeRefDecoder
-                        |> Json.Decode.map Named
-    in
-    Json.Decode.field "kind" Json.Decode.string
-        |> Json.Decode.andThen fromKindToTypeRefDecoder
-
-
-
--- NAMED TYPE REF
-
-
-type alias NamedTypeRef =
-    { kind : Kind
-    , name : String
-    }
-
-
-namedTypeRefDecoder : Json.Decode.Decoder NamedTypeRef
-namedTypeRefDecoder =
-    Json.Decode.map2 NamedTypeRef
-        (Json.Decode.field "kind" kindDecoder)
-        (Json.Decode.field "name" Json.Decode.string)
-
-
-
--- ELM TYPE REF
-
-
-{-| Because required is the default, this function helps flip non-null into a `Maybe`.
-
-This data type makes it easier to generate Elm code.
-
-See usage with `toTypeRefAnnotation` below.
-
--}
-type ElmTypeRef
-    = ElmTypeRef_Named NamedTypeRef
-    | ElmTypeRef_List ElmTypeRef
-    | ElmTypeRef_Maybe ElmTypeRef
-
-
-toElmTypeRef : TypeRef -> ElmTypeRef
-toElmTypeRef typeRef =
-    toElmTypeRefHelp { isMaybe = True } typeRef
-
-
-toElmTypeRefHelp : { isMaybe : Bool } -> TypeRef -> ElmTypeRef
-toElmTypeRefHelp options typeRef =
-    let
-        applyMaybe : ElmTypeRef -> ElmTypeRef
-        applyMaybe inner =
-            if options.isMaybe then
-                ElmTypeRef_Maybe inner
-
-            else
-                inner
-    in
-    case typeRef of
-        NonNull innerTypeRef ->
-            toElmTypeRefHelp
-                { options | isMaybe = False }
-                innerTypeRef
-
-        List_ innerTypeRef ->
-            ElmTypeRef_List (toElmTypeRefHelp { options | isMaybe = True } innerTypeRef)
-                |> applyMaybe
-
-        Named value ->
-            ElmTypeRef_Named value
-                |> applyMaybe

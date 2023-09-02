@@ -1,4 +1,4 @@
-module Api.Mutations.SignIn.Input exposing
+module Api.Mutations.SignIn.Input exposing 
     ( Input, new
     , form
     , toInternalValue
