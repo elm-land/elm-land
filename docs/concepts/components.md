@@ -378,7 +378,7 @@ viewSignUpButton =
 
 ::: tip Extra resources
 
-I first learned about this component design idea from Brian Hicks, in his talk ["Robot Buttons from Mars"](https://www.youtube.com/watch?v=PDyWP-0H4Zo). That talk introduces the benefits of the appraoch, and how it compares to similar alternatives.
+I first learned about this component design idea from Brian Hicks, in his talk ["Robot Buttons from Mars"](https://www.youtube.com/watch?v=PDyWP-0H4Zo). That talk introduces the benefits of the approach, and how it compares to similar alternatives.
 
 This is the recommended way to define configurable stuff in Elm Land! :rainbow:
 
