@@ -444,73 +444,23 @@ broken programs or unexpected behavior
 -}
 addTypenamesForUnionSelections : Document -> Document
 addTypenamesForUnionSelections (Document doc) =
-    let
-        info : TypenameInfo
-        info =
-            doc.definitions
-                |> List.foldl collectInfo { definitions = [], locations = [] }
-
-        collectInfo : Definition -> TypenameInfo -> TypenameInfo
-        collectInfo def info_ =
-            let
-                { definition, locations } =
-                    toTypenameInfo def
-            in
-            { info_
-                | definitions = info_.definitions ++ [ definition ]
-                , locations = info_.locations ++ locations
-            }
-    in
     Document
-        { filename = doc.filename
-        , contents = injectTypenameFields info.locations doc.contents
-        , definitions = info.definitions
+        { doc
+            | contents =
+                doc.definitions
+                    |> List.concatMap toTypenameLocationsForDefinition
+                    |> injectTypenameFields doc.contents
         }
 
 
-type alias TypenameInfo =
-    { definitions : List Definition
-    , locations : List Location
-    }
-
-
-type alias SingleTypenameInfo =
-    { definition : Definition
-    , locations : List Location
-    }
-
-
-toTypenameInfo :
-    Definition
-    ->
-        { definition : Definition
-        , locations : List Location
-        }
-toTypenameInfo def =
+toTypenameLocationsForDefinition : Definition -> List Location
+toTypenameLocationsForDefinition def =
     case def of
         Definition_Operation op ->
-            let
-                { selections, locations } =
-                    toTypenameInfoForSelections op.selections
-            in
-            { definition = Definition_Operation { op | selections = selections }
-            , locations = locations
-            }
+            toTypenameLocationsForSelections op.selections
 
         Definition_Fragment frag ->
-            let
-                { selections, locations } =
-                    toTypenameInfoForSelections frag.selections
-            in
-            { definition = Definition_Fragment { frag | selections = selections }
-            , locations = locations
-            }
-
-
-type alias ManySelectionsTypenameInfo =
-    { selections : List Selection
-    , locations : List Location
-    }
+            toTypenameLocationsForSelections frag.selections
 
 
 isInlineFragment : Selection -> Bool
@@ -523,32 +473,9 @@ isInlineFragment selection =
             False
 
 
-typenameSelection : Selection
-typenameSelection =
-    Selection_Field
-        { name = "__typename"
-        , alias = Nothing
-        , selections = []
-        }
-
-
-toTypenameInfoForSelections : List Selection -> ManySelectionsTypenameInfo
-toTypenameInfoForSelections selections =
+toTypenameLocationsForSelections : List Selection -> List Location
+toTypenameLocationsForSelections selections =
     let
-        info : ManySelectionsTypenameInfo
-        info =
-            selections
-                |> List.indexedMap Tuple.pair
-                |> List.foldl collectInfo
-                    { selections =
-                        if List.any isInlineFragment selections then
-                            [ typenameSelection ]
-
-                        else
-                            []
-                    , locations = []
-                    }
-
         unionSelectionIndices : List Int
         unionSelectionIndices =
             selections
@@ -556,76 +483,50 @@ toTypenameInfoForSelections selections =
                 |> List.filter (\( _, selection ) -> isInlineFragment selection)
                 |> List.map Tuple.first
 
-        collectInfo :
-            ( Int, Selection )
-            -> ManySelectionsTypenameInfo
-            -> ManySelectionsTypenameInfo
-        collectInfo ( index, selection_ ) info_ =
+        toLocations : ( Int, Selection ) -> List Location
+        toLocations ( index, selection_ ) =
             let
                 isFirstInlineFragment : Bool
                 isFirstInlineFragment =
                     List.head unionSelectionIndices == Just index
-
-                { selection, locations } =
-                    toSelectionTypenameInfo
-                        { isFirstInlineFragment = isFirstInlineFragment
-                        , selection = selection_
-                        }
             in
-            { info_
-                | selections = info_.selections ++ [ selection ]
-                , locations = info_.locations ++ locations
-            }
+            toTypenameLocationsForSelection
+                { isFirstInlineFragment = isFirstInlineFragment
+                , selection = selection_
+                }
     in
-    { selections = info.selections
-    , locations = info.locations
-    }
+    selections
+        |> List.indexedMap Tuple.pair
+        |> List.concatMap toLocations
 
 
-type alias SelectionTypenameInfo =
-    { selection : Selection
-    , locations : List Location
-    }
-
-
-toSelectionTypenameInfo :
+toTypenameLocationsForSelection :
     { isFirstInlineFragment : Bool
     , selection : Selection
     }
-    -> SelectionTypenameInfo
-toSelectionTypenameInfo { isFirstInlineFragment, selection } =
+    -> List Location
+toTypenameLocationsForSelection { isFirstInlineFragment, selection } =
     case selection of
         Selection_Field inner ->
-            let
-                info =
-                    toTypenameInfoForSelections inner.selections
-            in
-            { selection = Selection_Field { inner | selections = info.selections }
-            , locations = info.locations
-            }
+            toTypenameLocationsForSelections inner.selections
 
         Selection_FragmentSpread inner ->
-            { selection = Selection_FragmentSpread inner
-            , locations = []
-            }
+            []
 
         Selection_InlineFragment inner ->
             let
                 info =
-                    toTypenameInfoForSelections inner.selections
+                    toTypenameLocationsForSelections inner.selections
             in
-            { selection = Selection_InlineFragment { inner | selections = info.selections }
-            , locations =
-                if isFirstInlineFragment then
-                    inner.location :: info.locations
+            if isFirstInlineFragment then
+                inner.location :: info
 
-                else
-                    info.locations
-            }
+            else
+                info
 
 
-injectTypenameFields : List Location -> String -> String
-injectTypenameFields locations original =
+injectTypenameFields : String -> List Location -> String
+injectTypenameFields original locations =
     let
         injectTypenameField : Location -> String -> String
         injectTypenameField { start, end } str =
