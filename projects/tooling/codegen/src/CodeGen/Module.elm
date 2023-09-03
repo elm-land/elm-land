@@ -126,6 +126,7 @@ toString (Module options) =
                             |> List.map (String.join ", ")
                             |> List.map (String.append "@docs ")
                             |> String.join "\n"
+                            |> String.replace "(..)" ""
                         , "\n\n-}"
                         ]
     in

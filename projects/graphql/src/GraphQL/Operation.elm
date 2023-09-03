@@ -697,7 +697,7 @@ toModules ({ schema, document } as options) =
                                 |> List.concatMap (Document.toFieldSelections document)
                                 |> List.filterMap
                                     (toTypeAliasRecordPair
-                                        { fieldTypeName = unionType.name
+                                        { fieldTypeName = selection.name
                                         , existingNames = Set.empty
                                         }
                                     )
