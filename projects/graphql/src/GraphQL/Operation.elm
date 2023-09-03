@@ -129,9 +129,7 @@ toModules ({ schema, document } as options) =
 
         extraImports : List CodeGen.Import
         extraImports =
-            moduleInfo.imports
-                |> Set.toList
-                |> List.map (String.split "." >> CodeGen.Import.new)
+            fromSetToImportList moduleInfo.imports
 
         inputTypeImports : List CodeGen.Import
         inputTypeImports =
@@ -202,64 +200,6 @@ toModules ({ schema, document } as options) =
                         newExistingNames =
                             Set.insert typeAliasName existingNames
 
-                        toTypeAliasRecordPair :
-                            Document.FieldSelection
-                            ->
-                                Maybe
-                                    { field : ( String, CodeGen.Annotation )
-                                    , imports : Set String
-                                    }
-                        toTypeAliasRecordPair innerField =
-                            let
-                                toTuple :
-                                    Schema.Field
-                                    ->
-                                        { field : ( String, CodeGen.Annotation )
-                                        , imports : Set String
-                                        }
-                                toTuple schemaField =
-                                    let
-                                        { annotation, imports } =
-                                            toTypeRefAnnotation
-                                                { documentFieldSelection = innerField
-                                                , existingNames = newExistingNames
-                                                , field = schemaField
-                                                , matchingFragmentName = toOnlyMatchingFragmentName innerField
-                                                }
-                                    in
-                                    { field =
-                                        ( innerField.alias
-                                            |> Maybe.withDefault innerField.name
-                                        , annotation
-                                        )
-                                    , imports = imports
-                                    }
-                            in
-                            Schema.findFieldForType
-                                { typeName = TypeRef.toName field.type_
-                                , fieldName = innerField.name
-                                }
-                                schema
-                                |> Maybe.map toTuple
-
-                        flattenImportsAndFields :
-                            List
-                                { field : ( String, CodeGen.Annotation )
-                                , imports : Set String
-                                }
-                            ->
-                                { fields : List ( String, CodeGen.Annotation )
-                                , imports : Set String
-                                }
-                        flattenImportsAndFields list =
-                            { fields = List.map .field list
-                            , imports =
-                                List.foldl
-                                    (\item set -> Set.union item.imports set)
-                                    data.imports
-                                    list
-                            }
-
                         fieldInfo :
                             { fields : List ( String, CodeGen.Annotation )
                             , imports : Set String
@@ -267,8 +207,13 @@ toModules ({ schema, document } as options) =
                         fieldInfo =
                             fieldSelection.selections
                                 |> List.concatMap (Document.toFieldSelections document)
-                                |> List.filterMap toTypeAliasRecordPair
-                                |> flattenImportsAndFields
+                                |> List.filterMap
+                                    (toTypeAliasRecordPair
+                                        { fieldTypeName = TypeRef.toName field.type_
+                                        , existingNames = newExistingNames
+                                        }
+                                    )
+                                |> flattenImportsAndFields data
                     in
                     { existingNames = newExistingNames
                     , imports = fieldInfo.imports
@@ -295,6 +240,69 @@ toModules ({ schema, document } as options) =
                                         ]
                                    ]
                     }
+
+        toTypeAliasRecordPair :
+            { fieldTypeName : String
+            , existingNames : Set String
+            }
+            -> Document.FieldSelection
+            ->
+                Maybe
+                    { field : ( String, CodeGen.Annotation )
+                    , imports : Set String
+                    }
+        toTypeAliasRecordPair { fieldTypeName, existingNames } innerField =
+            let
+                toTuple :
+                    Schema.Field
+                    ->
+                        { field : ( String, CodeGen.Annotation )
+                        , imports : Set String
+                        }
+                toTuple schemaField =
+                    let
+                        { annotation, imports } =
+                            toTypeRefAnnotation
+                                { documentFieldSelection = innerField
+                                , existingNames = existingNames
+                                , field = schemaField
+                                , matchingFragmentName = toOnlyMatchingFragmentName innerField
+                                }
+                    in
+                    { field =
+                        ( innerField.alias
+                            |> Maybe.withDefault innerField.name
+                        , annotation
+                        )
+                    , imports = imports
+                    }
+            in
+            Schema.findFieldForType
+                { typeName = fieldTypeName
+                , fieldName = innerField.name
+                }
+                schema
+                |> Maybe.map toTuple
+
+        flattenImportsAndFields :
+            { data | imports : Set String }
+            ->
+                List
+                    { field : ( String, CodeGen.Annotation )
+                    , imports : Set String
+                    }
+            ->
+                { fields : List ( String, CodeGen.Annotation )
+                , imports : Set String
+                }
+        flattenImportsAndFields data list =
+            { fields = List.map .field list
+            , imports =
+                List.foldl
+                    (\item set -> Set.union item.imports set)
+                    data.imports
+                    list
+            }
 
         newFunction : CodeGen.Declaration
         newFunction =
@@ -587,34 +595,205 @@ toModules ({ schema, document } as options) =
                         [ "Data", "new" ]
                     , exposedTypeAliases
                     ]
+
+        unionTypeModules : List CodeGen.Module
+        unionTypeModules =
+            Document.toAllSelections schema document
+                |> List.concatMap toUnionTypeModules
+
+        toUnionTypeModules : { parent : Schema.Type, selection : Document.Selection } -> List CodeGen.Module
+        toUnionTypeModules { parent, selection } =
+            let
+                toTypeForSelection : String -> Maybe Schema.Type
+                toTypeForSelection fieldName =
+                    Schema.findFieldForType
+                        { typeName = Schema.toTypeName parent
+                        , fieldName = fieldName
+                        }
+                        schema
+                        |> Maybe.andThen (\f -> Schema.findTypeWithName (TypeRef.toName f.type_) schema)
+
+                toModulesForNestedSelections :
+                    { info
+                        | selections : List Document.Selection
+                        , name : String
+                    }
+                    -> List CodeGen.Module
+                toModulesForNestedSelections inner =
+                    List.concatMap
+                        (\nextSelection ->
+                            case toTypeForSelection inner.name of
+                                Nothing ->
+                                    []
+
+                                Just nextParent ->
+                                    toUnionTypeModules
+                                        { parent = nextParent
+                                        , selection = nextSelection
+                                        }
+                        )
+                        inner.selections
+            in
+            case selection of
+                Document.Selection_FragmentSpread inner ->
+                    []
+
+                Document.Selection_Field inner ->
+                    let
+                        modules : List CodeGen.Module
+                        modules =
+                            if List.any Document.isInlineFragment inner.selections then
+                                toTypeForSelection inner.name
+                                    |> Maybe.andThen Schema.toUnionType
+                                    |> Maybe.map (toUnionTypeModule inner.selections)
+                                    |> Maybe.map List.singleton
+                                    |> Maybe.withDefault []
+
+                            else
+                                []
+                    in
+                    modules ++ toModulesForNestedSelections inner
+
+                Document.Selection_InlineFragment inner ->
+                    toModulesForNestedSelections inner
+
+        toUnionTypeModule : List Document.Selection -> Schema.UnionType -> CodeGen.Module
+        toUnionTypeModule selections unionType =
+            let
+                inlineFragmentSelections : List Document.InlineFragmentSelection
+                inlineFragmentSelections =
+                    selections
+                        |> List.filterMap Document.toInlineFragmentSelection
+
+                customType : CodeGen.Declaration
+                customType =
+                    CodeGen.Declaration.customType
+                        { name = unionType.name
+                        , variants =
+                            inlineFragmentSelections
+                                |> List.map
+                                    (\selection ->
+                                        ( "On_" ++ selection.name
+                                        , [ CodeGen.Annotation.type_ selection.name ]
+                                        )
+                                    )
+                        }
+
+                toInfo :
+                    Document.InlineFragmentSelection
+                    ->
+                        { name : String
+                        , declaration : CodeGen.Declaration
+                        , imports : Set String
+                        }
+                toInfo selection =
+                    let
+                        fieldInfo :
+                            { fields : List ( String, CodeGen.Annotation )
+                            , imports : Set String
+                            }
+                        fieldInfo =
+                            selection.selections
+                                |> List.concatMap (Document.toFieldSelections document)
+                                |> List.filterMap
+                                    (toTypeAliasRecordPair
+                                        { fieldTypeName = unionType.name
+                                        , existingNames = Set.empty
+                                        }
+                                    )
+                                |> flattenImportsAndFields { imports = Set.empty }
+                    in
+                    { name = selection.name
+                    , declaration =
+                        CodeGen.Declaration.typeAlias
+                            { name = selection.name
+                            , annotation = CodeGen.Annotation.multilineRecord fieldInfo.fields
+                            }
+                    , imports = fieldInfo.imports
+                    }
+
+                addToInfo :
+                    { name : String
+                    , declaration : CodeGen.Declaration
+                    , imports : Set String
+                    }
+                    ->
+                        { variantNames : List String
+                        , typeAnnotations : List CodeGen.Declaration
+                        , importsFromAnnotations : Set String
+                        }
+                    ->
+                        { variantNames : List String
+                        , typeAnnotations : List CodeGen.Declaration
+                        , importsFromAnnotations : Set String
+                        }
+                addToInfo item info =
+                    { variantNames = info.variantNames ++ [ item.name ]
+                    , typeAnnotations = info.typeAnnotations ++ [ item.declaration ]
+                    , importsFromAnnotations = Set.union info.importsFromAnnotations item.imports
+                    }
+
+                { variantNames, typeAnnotations, importsFromAnnotations } =
+                    inlineFragmentSelections
+                        |> List.map toInfo
+                        |> List.foldl addToInfo
+                            { variantNames = []
+                            , typeAnnotations = []
+                            , importsFromAnnotations = Set.empty
+                            }
+            in
+            CodeGen.Module.new
+                { name =
+                    [ options.namespace
+                    , fromKindToFolderName options.kind
+                    , Document.toName document
+                    , unionType.name
+                    ]
+                , imports = fromSetToImportList importsFromAnnotations
+                , exposing_ = []
+                , declarations =
+                    List.concat
+                        [ [ customType ]
+                        , typeAnnotations
+                        ]
+                }
+                |> CodeGen.Module.withOrderedExposingList
+                    [ [ unionType.name ++ "(..)" ]
+                    , variantNames
+                    ]
+
+        operationInputModules : List CodeGen.Module
+        operationInputModules =
+            if Document.hasVariables document then
+                [ GraphQL.Input.toInputModule
+                    { inputTypeName = "Input"
+                    , moduleName =
+                        [ options.namespace
+                        , fromKindToFolderName options.kind
+                        , Document.toName document
+                        , "Input"
+                        ]
+                    , namespace = options.namespace
+                    , schema = options.schema
+                    , variables = Document.toVariables document
+                    , isRequired = VariableDefinition.isRequired
+                    , toVarName = .name
+                    , toTypeNameUnwrappingFirstMaybe = .type_ >> DocumentType.toStringUnwrappingFirstMaybe schema
+                    , toTypeName = .type_ >> DocumentType.toName
+                    , toEncoderString = .type_ >> DocumentType.toEncoderStringUnwrappingFirstMaybe schema
+                    , isInputObject = False
+                    }
+                ]
+
+            else
+                []
     in
     Result.map
         (\dataTypeAlias ->
             List.concat
                 [ [ toOperationModule dataTypeAlias ]
-                , if Document.hasVariables document then
-                    [ GraphQL.Input.toInputModule
-                        { inputTypeName = "Input"
-                        , moduleName =
-                            [ options.namespace
-                            , fromKindToFolderName options.kind
-                            , Document.toName document
-                            , "Input"
-                            ]
-                        , namespace = options.namespace
-                        , schema = options.schema
-                        , variables = Document.toVariables document
-                        , isRequired = VariableDefinition.isRequired
-                        , toVarName = .name
-                        , toTypeNameUnwrappingFirstMaybe = .type_ >> DocumentType.toStringUnwrappingFirstMaybe schema
-                        , toTypeName = .type_ >> DocumentType.toName
-                        , toEncoderString = .type_ >> DocumentType.toEncoderStringUnwrappingFirstMaybe schema
-                        , isInputObject = False
-                        }
-                    ]
-
-                  else
-                    []
+                , unionTypeModules
+                , operationInputModules
                 ]
         )
         dataTypeAliasResult
@@ -760,6 +939,13 @@ toRecordField existingTypeAliasNames schema objectType selection =
 
         _ ->
             Nothing
+
+
+fromSetToImportList : Set String -> List CodeGen.Import
+fromSetToImportList set =
+    set
+        |> Set.toList
+        |> List.map (String.split "." >> CodeGen.Import.new)
 
 
 toTypeRefAnnotation :

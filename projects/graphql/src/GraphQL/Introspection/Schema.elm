@@ -1,16 +1,17 @@
 module GraphQL.Introspection.Schema exposing
     ( Schema, decoder
-    , toQueryTypeName, toMutationTypeName
+    , toQueryTypeName, toMutationTypeName, findSubscriptionType
     , toTypeRefNameUnwrappingFirstMaybe, toTypeRefEncoderStringUnwrappingFirstMaybe
     , Type(..)
     , findQueryType, findMutationType
     , findTypeWithName
     , toTypeName
     , ObjectType, toObjectType
+    , UnionType, toUnionType
     , InputObjectType, findInputObjectTypeWithName
     , InputValue
     , ScalarType, EnumType
-    , InterfaceType, UnionType
+    , InterfaceType
     , Field, findFieldForType, findFieldWithName
     , isBuiltInScalarType, isScalarType
     , findInputTypes, isInputType
@@ -23,7 +24,7 @@ NPM package's `./graphql/utilties/getIntrospectionQuery.d.ts` file.
 ## Schema
 
 @docs Schema, decoder
-@docs toQueryTypeName, toMutationTypeName
+@docs toQueryTypeName, toMutationTypeName, findSubscriptionType
 
 @docs toTypeRefNameUnwrappingFirstMaybe, toTypeRefEncoderStringUnwrappingFirstMaybe
 
@@ -36,6 +37,7 @@ NPM package's `./graphql/utilties/getIntrospectionQuery.d.ts` file.
 @docs toTypeName
 
 @docs ObjectType, toObjectType
+@docs UnionType, toUnionType
 @docs InputObjectType, findInputObjectTypeWithName
 @docs InputValue
 
@@ -112,6 +114,12 @@ findInputTypes names schema =
 findMutationType : Schema -> Maybe ObjectType
 findMutationType ((Schema schema) as wrappedSchema) =
     findTypeWithName schema.mutationTypeName wrappedSchema
+        |> Maybe.andThen toObjectType
+
+
+findSubscriptionType : Schema -> Maybe ObjectType
+findSubscriptionType ((Schema schema) as wrappedSchema) =
+    findTypeWithName schema.subscriptionTypeName wrappedSchema
         |> Maybe.andThen toObjectType
 
 
@@ -273,6 +281,16 @@ toObjectType type_ =
             Nothing
 
 
+toUnionType : Type -> Maybe UnionType
+toUnionType type_ =
+    case type_ of
+        Type_Union data ->
+            Just data
+
+        _ ->
+            Nothing
+
+
 toInputObjectType : Type -> Maybe InputObjectType
 toInputObjectType type_ =
     case type_ of
@@ -309,16 +327,20 @@ findFieldWithName name { fields } =
 type alias Internals =
     { queryTypeName : String
     , mutationTypeName : String
+    , subscriptionTypeName : String
     , types : List Type
     }
 
 
 internalsDecoder : Json.Decode.Decoder Internals
 internalsDecoder =
-    Json.Decode.map3 Internals
+    Json.Decode.map4 Internals
         (Json.Decode.at [ "queryType", "name" ] Json.Decode.string)
         (Json.Decode.maybe (Json.Decode.at [ "mutationType", "name" ] Json.Decode.string)
             |> Json.Decode.map (Maybe.withDefault "Mutation")
+        )
+        (Json.Decode.maybe (Json.Decode.at [ "subscriptionType", "name" ] Json.Decode.string)
+            |> Json.Decode.map (Maybe.withDefault "Subscription")
         )
         (Json.Decode.field "types" (Json.Decode.list typeDecoder))
 

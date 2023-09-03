@@ -2,10 +2,12 @@ module GraphQL.Introspection.Document exposing
     ( Document, decoder
     , toName, toContents
     , toVariables, hasVariables
+    , toRootSelections, toAllSelections
     , FragmentDefinition, findFragmentDefinitionWithName
     , FragmentSpreadSelection
     , VariableDefinition
-    , Selection(..), toRootSelections
+    , Selection(..), isInlineFragment
+    , InlineFragmentSelection, toInlineFragmentSelection
     , FieldSelection, getNestedFields, toFieldSelections
     )
 
@@ -21,6 +23,7 @@ NPM package's `node_modules/graphql/language/ast.d.ts` file.
 
 @docs toName, toContents
 @docs toVariables, hasVariables
+@docs toRootSelections, toAllSelections
 
 
 ## Fragments
@@ -32,7 +35,8 @@ NPM package's `node_modules/graphql/language/ast.d.ts` file.
 ## Selection
 
 @docs VariableDefinition
-@docs Selection, toRootSelections
+@docs Selection, isInlineFragment
+@docs InlineFragmentSelection, toInlineFragmentSelection
 
 -}
 
@@ -105,6 +109,61 @@ toRootSelections : Document -> Result CliError (List Selection)
 toRootSelections ((Document doc) as document) =
     toRootOperation document
         |> Result.map .selections
+
+
+{-| Finds all selections in the file, including those in fragments
+-}
+toAllSelections : Schema -> Document -> List SelectionWithParent
+toAllSelections schema (Document doc) =
+    let
+        toSelectionWithParent : Definition -> List SelectionWithParent
+        toSelectionWithParent def =
+            case def of
+                Definition_Operation { operation, selections } ->
+                    case operation of
+                        Query ->
+                            case Schema.findQueryType schema of
+                                Just parent ->
+                                    selections
+                                        |> List.map (SelectionWithParent (Schema.Type_Object parent))
+
+                                Nothing ->
+                                    []
+
+                        Mutation ->
+                            case Schema.findMutationType schema of
+                                Just parent ->
+                                    selections
+                                        |> List.map (SelectionWithParent (Schema.Type_Object parent))
+
+                                Nothing ->
+                                    []
+
+                        Subscription ->
+                            case Schema.findSubscriptionType schema of
+                                Just parent ->
+                                    selections
+                                        |> List.map (SelectionWithParent (Schema.Type_Object parent))
+
+                                Nothing ->
+                                    []
+
+                Definition_Fragment { name, selections } ->
+                    case Schema.findTypeWithName name schema of
+                        Just parent ->
+                            selections |> List.map (SelectionWithParent parent)
+
+                        Nothing ->
+                            []
+    in
+    doc.definitions
+        |> List.concatMap toSelectionWithParent
+
+
+type alias SelectionWithParent =
+    { parent : Schema.Type
+    , selection : Selection
+    }
 
 
 findFragmentDefinitionWithName : String -> Document -> Maybe FragmentDefinition
@@ -216,6 +275,16 @@ type Selection
     = Selection_Field FieldSelection
     | Selection_FragmentSpread FragmentSpreadSelection
     | Selection_InlineFragment InlineFragmentSelection
+
+
+toInlineFragmentSelection : Selection -> Maybe InlineFragmentSelection
+toInlineFragmentSelection selection =
+    case selection of
+        Selection_InlineFragment inline ->
+            Just inline
+
+        _ ->
+            Nothing
 
 
 toFieldSelections : Document -> Selection -> List FieldSelection
