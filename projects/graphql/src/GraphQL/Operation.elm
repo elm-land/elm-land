@@ -302,7 +302,9 @@ toModules ({ schema, document } as options) =
                     let
                         { annotation, imports } =
                             toTypeRefAnnotation
-                                { documentFieldSelection = innerField
+                                { schema = schema
+                                , namespace = options.namespace
+                                , documentFieldSelection = innerField
                                 , existingNames = existingNames
                                 , field = schemaField
                                 , matchingFragmentName = toOnlyMatchingFragmentName innerField
@@ -527,6 +529,14 @@ toModules ({ schema, document } as options) =
                             else if Schema.isScalarType typeRefName schema then
                                 CodeGen.Expression.value
                                     ("${namespace}.Scalars.${typeRefName}.decoder"
+                                        |> String.replace "${namespace}" options.namespace
+                                        |> String.replace "${typeRefName}" (String.Extra.toSentenceCase typeRefName)
+                                    )
+                                    |> toTypeRefDecoder fieldSchema.type_
+
+                            else if Schema.isEnumType typeRefName schema then
+                                CodeGen.Expression.value
+                                    ("${namespace}.Enum.${typeRefName}.decoder"
                                         |> String.replace "${namespace}" options.namespace
                                         |> String.replace "${typeRefName}" (String.Extra.toSentenceCase typeRefName)
                                     )
@@ -978,6 +988,7 @@ toDataAnnotation ({ schema, document } as options) =
                     |> Result.map
                         (List.filterMap
                             (toRecordField
+                                options.namespace
                                 Set.empty
                                 schema
                                 operationType
@@ -990,12 +1001,13 @@ toDataAnnotation ({ schema, document } as options) =
 
 
 toRecordField :
-    Set String
+    String
+    -> Set String
     -> Schema
     -> Schema.ObjectType
     -> Document.Selection
     -> Maybe ( String, CodeGen.Annotation )
-toRecordField existingTypeAliasNames schema objectType selection =
+toRecordField namespace existingTypeAliasNames schema objectType selection =
     case selection of
         Document.Selection_Field field ->
             case Schema.findFieldWithName field.name objectType of
@@ -1004,7 +1016,9 @@ toRecordField existingTypeAliasNames schema objectType selection =
                         (let
                             { annotation } =
                                 toTypeRefAnnotation
-                                    { documentFieldSelection = field
+                                    { namespace = namespace
+                                    , schema = schema
+                                    , documentFieldSelection = field
                                     , existingNames = existingTypeAliasNames
                                     , field = fieldSchema
                                     , matchingFragmentName = toOnlyMatchingFragmentName field
@@ -1031,7 +1045,9 @@ fromSetToImportList set =
 
 
 toTypeRefAnnotation :
-    { documentFieldSelection : Document.FieldSelection
+    { namespace : String
+    , schema : Schema
+    , documentFieldSelection : Document.FieldSelection
     , existingNames : Set String
     , field : Schema.Field
     , matchingFragmentName : Maybe String
@@ -1040,7 +1056,7 @@ toTypeRefAnnotation :
         { annotation : CodeGen.Annotation
         , imports : Set String
         }
-toTypeRefAnnotation { documentFieldSelection, existingNames, field, matchingFragmentName } =
+toTypeRefAnnotation { namespace, schema, documentFieldSelection, existingNames, field, matchingFragmentName } =
     let
         -- TODO: This won't work when there are two selections
         -- on the same object type within one selection (Ex. "coworkers" and "manager")
@@ -1056,16 +1072,24 @@ toTypeRefAnnotation { documentFieldSelection, existingNames, field, matchingFrag
                     |> Maybe.withDefault NameBasedOffOfSchemaType
                 )
 
+        fieldTypeName =
+            TypeRef.toName field.type_
+
         ( typeAliasName, imports ) =
-            case TypeRef.toName field.type_ of
+            case fieldTypeName of
                 "ID" ->
                     ( "GraphQL.Scalar.Id.Id"
                     , Set.singleton "GraphQL.Scalar.Id"
                     )
 
                 _ ->
-                    if Schema.isBuiltInScalarType (TypeRef.toName field.type_) then
+                    if Schema.isBuiltInScalarType fieldTypeName then
                         ( originalName, Set.empty )
+
+                    else if Schema.isEnumType fieldTypeName schema then
+                        ( String.join "." [ namespace, "Enum", originalName, originalName ]
+                        , Set.singleton (String.join "." [ namespace, "Enum", originalName ])
+                        )
 
                     else
                         ( originalName, Set.empty )

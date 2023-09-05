@@ -3,12 +3,14 @@ port module Main exposing (main)
 import CodeGen
 import CodeGen.Module
 import GraphQL.CliError exposing (CliError)
+import GraphQL.Enum
 import GraphQL.Input
 import GraphQL.Introspection.Document as Document exposing (Document)
 import GraphQL.Introspection.Schema as Schema exposing (Schema)
 import GraphQL.Introspection.Schema.TypeRef as TypeRef exposing (TypeRef)
 import GraphQL.Operation
 import Json.Decode
+import List.Extra
 import Result.Extra
 import Set exposing (Set)
 
@@ -83,8 +85,8 @@ init json =
                         inputTypeNames
                         flags.schema
 
-                generatedInputFiles : List CodeGen.Module
-                generatedInputFiles =
+                generatedInputModules : List CodeGen.Module
+                generatedInputModules =
                     if List.isEmpty inputTypes then
                         []
 
@@ -126,6 +128,19 @@ init json =
                                     flags.schema
                         , isInputObject = True
                         }
+
+                enumTypes : List Schema.EnumType
+                enumTypes =
+                    List.concat
+                        [ flags.queries
+                        , flags.mutations
+                        ]
+                        |> List.concatMap (Document.toEnumTypes flags.schema)
+                        |> List.Extra.uniqueBy .name
+
+                generatedEnumModules : List CodeGen.Module
+                generatedEnumModules =
+                    List.map (GraphQL.Enum.toModule flags) enumTypes
 
                 generatedFilesFromQueries : Result CliError (List CodeGen.Module)
                 generatedFilesFromQueries =
@@ -176,7 +191,11 @@ init json =
                 Ok files ->
                     success
                         { files =
-                            (generatedInputFiles ++ files)
+                            List.concat
+                                [ generatedInputModules
+                                , generatedEnumModules
+                                , files
+                                ]
                                 |> List.map fromModuleToFile
                         }
 

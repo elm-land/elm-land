@@ -99,6 +99,9 @@ toImports { namespace, schema, name } =
     else if Schema.isScalarType name schema then
         [ CodeGen.Import.new [ namespace, "Scalars", name ] ]
 
+    else if Schema.isEnumType name schema then
+        [ CodeGen.Import.new [ namespace, "Enums", name ] ]
+
     else
         [ CodeGen.Import.new [ "Api", "Input" ]
         , CodeGen.Import.new [ "Api", "Internals", "Input" ]

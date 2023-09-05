@@ -1,4 +1,4 @@
-module Api.Queries.FetchUser exposing
+module Api.Queries.FetchUser exposing 
     ( Data, new
     , User
     )
@@ -59,7 +59,7 @@ decoder =
     GraphQL.Decode.object Data
         |> GraphQL.Decode.field
             { name = "me"
-            , decoder =
+            , decoder = 
                 GraphQL.Decode.object User
                     |> GraphQL.Decode.field
                         { name = "id"
@@ -71,14 +71,7 @@ decoder =
                         }
                     |> GraphQL.Decode.field
                         { name = "department"
-                        , decoder =
-                            GraphQL.Decode.enum
-                                [ ( "PRODUCT", Api.Enum.Department.PRODUCT )
-                                , ( "DESIGN", Api.Enum.Department.DESIGN )
-                                , ( "ENGINEERING", Api.Enum.Department.ENGINEERING )
-                                , ( "MARKETING", Api.Enum.Department.MARKETING )
-                                , ( "SALES", Api.Enum.Department.SALES )
-                                ]
+                        , decoder = Api.Enum.Department.decoder
                         }
                     |> GraphQL.Decode.maybe
             }

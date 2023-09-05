@@ -1,8 +1,19 @@
-module Api.Enum.Department exposing
+module Api.Enum.Department exposing 
     ( Department(..)
-    , fromString
-    , list
+    , list, fromString
+    , decoder, encode
     )
+
+{-|
+
+@docs Department
+@docs list, fromString
+@docs decoder, encode
+
+-}
+
+import GraphQL.Decode
+import GraphQL.Encode
 
 
 type Department
@@ -43,3 +54,41 @@ fromString str =
 
         _ ->
             Nothing
+
+
+
+-- USED INTERNALLY
+
+
+toString : Department -> String
+toString enum =
+    case enum of
+        PRODUCT ->
+            "PRODUCT"
+
+        DESIGN ->
+            "DESIGN"
+
+        ENGINEERING ->
+            "ENGINEERING"
+
+        MARKETING ->
+            "MARKETING"
+
+        SALES ->
+            "SALES"
+
+
+encode : Department -> GraphQL.Encode.Value
+encode enum =
+    GraphQL.Encode.enum
+        { toString = toString
+        , value = enum
+        }
+
+
+decoder : GraphQL.Decode.Decoder Department
+decoder =
+    list
+        |> List.map (\enum -> ( toString enum, enum ))
+        |> GraphQL.Decode.enum
