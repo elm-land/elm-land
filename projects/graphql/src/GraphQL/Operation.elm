@@ -163,8 +163,8 @@ toModules ({ schema, document } as options) =
                     parentObjectType
                         |> Maybe.andThen (Schema.findFieldWithName fieldSelection.name)
 
-                maybeObjectType : Maybe Schema.ObjectType
-                maybeObjectType =
+                isUnionType : Bool
+                isUnionType =
                     maybeField
                         |> Maybe.andThen
                             (\field ->
@@ -172,10 +172,19 @@ toModules ({ schema, document } as options) =
                                     (TypeRef.toName field.type_)
                                     schema
                             )
-                        |> Maybe.andThen Schema.toObjectType
+                        |> Maybe.map
+                            (\t ->
+                                case t of
+                                    Schema.Type_Union _ ->
+                                        True
+
+                                    _ ->
+                                        False
+                            )
+                        |> Maybe.withDefault False
             in
-            case ( maybeField, maybeObjectType ) of
-                ( Just field, _ ) ->
+            case maybeField of
+                Just field ->
                     let
                         typeAliasName : String
                         typeAliasName =
@@ -199,36 +208,66 @@ toModules ({ schema, document } as options) =
                         newExistingNames : Set String
                         newExistingNames =
                             Set.insert typeAliasName existingNames
-
-                        fieldInfo :
-                            { fields : List ( String, CodeGen.Annotation )
-                            , imports : Set String
-                            }
-                        fieldInfo =
-                            fieldSelection.selections
-                                |> List.concatMap (Document.toFieldSelections document)
-                                |> List.filterMap
-                                    (toTypeAliasRecordPair
-                                        { fieldTypeName = TypeRef.toName field.type_
-                                        , existingNames = newExistingNames
-                                        }
-                                    )
-                                |> flattenImportsAndFields data
                     in
-                    { existingNames = newExistingNames
-                    , imports = fieldInfo.imports
-                    , declarations =
-                        declarations
-                            ++ [ CodeGen.Declaration.typeAlias
-                                    { name = typeAliasName
-                                    , annotation =
-                                        fieldInfo.fields
-                                            |> CodeGen.Annotation.multilineRecord
-                                    }
-                               ]
-                    }
+                    if isUnionType then
+                        { existingNames = newExistingNames
+                        , imports =
+                            Set.singleton
+                                (String.join "."
+                                    [ options.namespace
+                                    , fromKindToFolderName options.kind
+                                    , Document.toName document
+                                    , typeAliasName
+                                    ]
+                                )
+                        , declarations =
+                            declarations
+                                ++ [ CodeGen.Declaration.typeAlias
+                                        { name = typeAliasName
+                                        , annotation =
+                                            String.join "."
+                                                [ options.namespace
+                                                , fromKindToFolderName options.kind
+                                                , Document.toName document
+                                                , typeAliasName
+                                                , typeAliasName
+                                                ]
+                                                |> CodeGen.Annotation.type_
+                                        }
+                                   ]
+                        }
 
-                _ ->
+                    else
+                        let
+                            fieldInfo :
+                                { fields : List ( String, CodeGen.Annotation )
+                                , imports : Set String
+                                }
+                            fieldInfo =
+                                fieldSelection.selections
+                                    |> List.concatMap (Document.toFieldSelections document)
+                                    |> List.filterMap
+                                        (toTypeAliasRecordPair
+                                            { fieldTypeName = TypeRef.toName field.type_
+                                            , existingNames = newExistingNames
+                                            }
+                                        )
+                                    |> flattenImportsAndFields data
+                        in
+                        { existingNames = newExistingNames
+                        , imports = fieldInfo.imports
+                        , declarations =
+                            declarations
+                                ++ [ CodeGen.Declaration.typeAlias
+                                        { name = typeAliasName
+                                        , annotation =
+                                            fieldInfo.fields
+                                                |> CodeGen.Annotation.multilineRecord
+                                        }
+                                   ]
+                        }
+
+                Nothing ->
                     { data
                         | declarations =
                             declarations
@@ -460,6 +499,9 @@ toModules ({ schema, document } as options) =
                                         |> String.replace "${typeRefName}" (String.Extra.toSentenceCase typeRefName)
                                     )
                                     |> toTypeRefDecoder fieldSchema.type_
+
+                            else if Schema.isUnionType typeRefName schema then
+                                CodeGen.Expression.value "GraphQL.Decode.union []"
 
                             else
                                 let

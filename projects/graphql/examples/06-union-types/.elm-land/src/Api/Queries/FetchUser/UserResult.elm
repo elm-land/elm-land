@@ -1,4 +1,4 @@
-module Api.Queries.FetchUser.UserResult exposing
+module Api.Queries.FetchUser.UserResult exposing 
     ( UserResult(..)
     , User, NotSignedIn
     )

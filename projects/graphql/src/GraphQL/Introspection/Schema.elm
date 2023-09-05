@@ -7,7 +7,7 @@ module GraphQL.Introspection.Schema exposing
     , findTypeWithName
     , toTypeName
     , ObjectType, toObjectType
-    , UnionType, toUnionType
+    , UnionType, toUnionType, isUnionType
     , InputObjectType, findInputObjectTypeWithName
     , InputValue
     , ScalarType, EnumType
@@ -37,7 +37,7 @@ NPM package's `./graphql/utilties/getIntrospectionQuery.d.ts` file.
 @docs toTypeName
 
 @docs ObjectType, toObjectType
-@docs UnionType, toUnionType
+@docs UnionType, toUnionType, isUnionType
 @docs InputObjectType, findInputObjectTypeWithName
 @docs InputValue
 
@@ -610,6 +610,16 @@ isScalarType typeName schema =
     Set.member
         typeName
         (Set.fromList (toScalarTypeNames schema))
+
+
+isUnionType : String -> Schema -> Bool
+isUnionType typeName schema =
+    case findTypeWithName typeName schema of
+        Just (Type_Union _) ->
+            True
+
+        _ ->
+            False
 
 
 isBuiltInScalarType : String -> Bool
