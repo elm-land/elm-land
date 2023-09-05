@@ -1,4 +1,4 @@
-module Api.Queries.Characters exposing
+module Api.Queries.Characters exposing 
     ( Data, new
     , Character
     )
@@ -39,9 +39,9 @@ new =
         , query = """
             query Characters {
               characters {
-                __typename # 🌈 Injected by @elm-land/graphql ✨
                 id
                 name
+                __typename # 🌈 Injected by @elm-land/graphql ✨
                 ...on Human {
                   hasHair
                 }
@@ -61,46 +61,46 @@ decoder =
     GraphQL.Decode.object Data
         |> GraphQL.Decode.field
             { name = "characters"
-            , decoder =
-                GraphQL.Decode.union
-                    [ GraphQL.Decode.variant
-                        { typename = "Human"
-                        , onVariant = Api.Queries.Characters.Character.On_Human
-                        , decoder =
-                            GraphQL.Decode.object Api.Queries.Characters.Character.Human
-                                |> GraphQL.Decode.field
-                                    { name = "id"
-                                    , decoder = GraphQL.Decode.id
-                                    }
-                                |> GraphQL.Decode.field
-                                    { name = "name"
-                                    , decoder = GraphQL.Decode.string
-                                    }
-                                |> GraphQL.Decode.field
-                                    { name = "hasHair"
-                                    , decoder = GraphQL.Decode.bool
-                                    }
-                        }
-                    , GraphQL.Decode.variant
-                        { typename = "Droid"
-                        , onVariant = Api.Queries.Characters.Character.On_Droid
-                        , decoder =
-                            GraphQL.Decode.object Api.Queries.Characters.Character.Droid
-                                |> GraphQL.Decode.field
-                                    { name = "id"
-                                    , decoder = GraphQL.Decode.id
-                                    }
-                                |> GraphQL.Decode.field
-                                    { name = "name"
-                                    , decoder = GraphQL.Decode.string
-                                    }
-                                |> GraphQL.Decode.field
-                                    { name = "primaryFunction"
-                                    , decoder =
-                                        GraphQL.Decode.string
-                                            |> GraphQL.Decode.maybe
-                                    }
-                        }
-                    ]
+            , decoder = 
+                GraphQL.Decode.interface
+                        [ GraphQL.Decode.variant
+                              { typename = "Human"
+                              , onVariant = Api.Queries.Characters.Character.On_Human
+                              , decoder = 
+                                  GraphQL.Decode.object Api.Queries.Characters.Character.Human
+                                      |> GraphQL.Decode.field
+                                          { name = "id"
+                                          , decoder = GraphQL.Decode.id
+                                          }
+                                      |> GraphQL.Decode.field
+                                          { name = "name"
+                                          , decoder = GraphQL.Decode.string
+                                          }
+                                      |> GraphQL.Decode.field
+                                          { name = "hasHair"
+                                          , decoder = GraphQL.Decode.bool
+                                          }
+                              }
+                        , GraphQL.Decode.variant
+                              { typename = "Droid"
+                              , onVariant = Api.Queries.Characters.Character.On_Droid
+                              , decoder = 
+                                  GraphQL.Decode.object Api.Queries.Characters.Character.Droid
+                                      |> GraphQL.Decode.field
+                                          { name = "id"
+                                          , decoder = GraphQL.Decode.id
+                                          }
+                                      |> GraphQL.Decode.field
+                                          { name = "name"
+                                          , decoder = GraphQL.Decode.string
+                                          }
+                                      |> GraphQL.Decode.field
+                                          { name = "primaryFunction"
+                                          , decoder = 
+                                              GraphQL.Decode.string
+                                                  |> GraphQL.Decode.maybe
+                                          }
+                              }
+                        ]
                     |> GraphQL.Decode.list
             }

@@ -163,8 +163,8 @@ toModules ({ schema, document } as options) =
                     parentObjectType
                         |> Maybe.andThen (Schema.findFieldWithName fieldSelection.name)
 
-                isUnionType : Bool
-                isUnionType =
+                isUnionOrInterfaceType : Bool
+                isUnionOrInterfaceType =
                     maybeField
                         |> Maybe.andThen
                             (\field ->
@@ -176,6 +176,9 @@ toModules ({ schema, document } as options) =
                             (\t ->
                                 case t of
                                     Schema.Type_Union _ ->
+                                        True
+
+                                    Schema.Type_Interface _ ->
                                         True
 
                                     _ ->
@@ -209,7 +212,7 @@ toModules ({ schema, document } as options) =
                         newExistingNames =
                             Set.insert typeAliasName existingNames
                     in
-                    if isUnionType then
+                    if isUnionOrInterfaceType then
                         { existingNames = newExistingNames
                         , imports =
                             Set.singleton
@@ -465,8 +468,13 @@ toModules ({ schema, document } as options) =
             in
             toElmTypeRefExpression (TypeRef.toElmTypeRef typeRef)
 
-        toUnionVariant : String -> Document.InlineFragmentSelection -> CodeGen.Expression
-        toUnionVariant unionTypeName inline =
+        toUnionVariant :
+            { sharedSelections : List Document.Selection
+            , unionTypeName : String
+            , inline : Document.InlineFragmentSelection
+            }
+            -> CodeGen.Expression
+        toUnionVariant { sharedSelections, unionTypeName, inline } =
             let
                 toQualifiedName : String -> String
                 toQualifiedName inner =
@@ -494,12 +502,24 @@ toModules ({ schema, document } as options) =
                                 , parentType =
                                     Schema.findTypeWithName inline.name schema
                                         |> Maybe.andThen Schema.toObjectType
-                                , selections = inline.selections
+                                , selections = sharedSelections ++ inline.selections
                                 }
                           )
                         ]
                     ]
                 }
+
+        isNotAnInlineFragmentSelection : Document.Selection -> Bool
+        isNotAnInlineFragmentSelection selection =
+            case selection of
+                Document.Selection_InlineFragment _ ->
+                    False
+
+                Document.Selection_FragmentSpread _ ->
+                    True
+
+                Document.Selection_Field _ ->
+                    True
 
         toFieldDecoderForSelection :
             { existingNames : Set String
@@ -518,11 +538,39 @@ toModules ({ schema, document } as options) =
                                 typeRefName : String
                                 typeRefName =
                                     TypeRef.toName fieldSchema.type_
+
+                                toUnionOrInterfaceDecoder :
+                                    { name : String }
+                                    -> CodeGen.Expression
+                                toUnionOrInterfaceDecoder { name } =
+                                    let
+                                        sharedSelections : List Document.Selection
+                                        sharedSelections =
+                                            field.selections
+                                                |> List.filter isNotAnInlineFragmentSelection
+                                    in
+                                    CodeGen.Expression.multilineFunction
+                                        { name = name
+                                        , arguments =
+                                            [ field.selections
+                                                |> List.filterMap Document.toInlineFragmentSelection
+                                                |> List.map
+                                                    (\inlineFragmentSelections ->
+                                                        toUnionVariant
+                                                            { unionTypeName = typeRefName
+                                                            , sharedSelections = sharedSelections
+                                                            , inline = inlineFragmentSelections
+                                                            }
+                                                    )
+                                                |> CodeGen.Expression.multilineList
+                                            ]
+                                        }
+                                        |> toTypeRefDecoder fieldSchema.type_
                             in
                             if Schema.isBuiltInScalarType typeRefName then
                                 CodeGen.Expression.value
                                     ("GraphQL.Decode.${typeRefName}"
-                                        |> String.replace "${typeRefName}" (String.toLower typeRefName)
+                                        |> String.replace "${typeRefName}" (fromBuiltInScalarToFunctionName typeRefName)
                                     )
                                     |> toTypeRefDecoder fieldSchema.type_
 
@@ -543,14 +591,13 @@ toModules ({ schema, document } as options) =
                                     |> toTypeRefDecoder fieldSchema.type_
 
                             else if Schema.isUnionType typeRefName schema then
-                                CodeGen.Expression.multilineFunction
+                                toUnionOrInterfaceDecoder
                                     { name = "GraphQL.Decode.union"
-                                    , arguments =
-                                        [ field.selections
-                                            |> List.filterMap Document.toInlineFragmentSelection
-                                            |> List.map (toUnionVariant typeRefName)
-                                            |> CodeGen.Expression.multilineList
-                                        ]
+                                    }
+
+                            else if Schema.isInterfaceType typeRefName schema then
+                                toUnionOrInterfaceDecoder
+                                    { name = "GraphQL.Decode.interface"
                                     }
 
                             else
@@ -736,8 +783,7 @@ toModules ({ schema, document } as options) =
                         modules =
                             if List.any Document.isInlineFragment inner.selections then
                                 toTypeForSelection inner.name
-                                    |> Maybe.andThen Schema.toUnionType
-                                    |> Maybe.map (toUnionTypeModule inner.selections)
+                                    |> Maybe.map (toUnionOrInterfaceTypeModule inner.selections)
                                     |> Maybe.map List.singleton
                                     |> Maybe.withDefault []
 
@@ -749,13 +795,30 @@ toModules ({ schema, document } as options) =
                 Document.Selection_InlineFragment inner ->
                     toModulesForNestedSelections inner
 
-        toUnionTypeModule : List Document.Selection -> Schema.UnionType -> CodeGen.Module
-        toUnionTypeModule selections unionType =
+        toUnionOrInterfaceTypeModule : List Document.Selection -> Schema.Type -> CodeGen.Module
+        toUnionOrInterfaceTypeModule selections type_ =
             let
+                unionType : { name : String }
+                unionType =
+                    case type_ of
+                        Schema.Type_Union union ->
+                            { name = union.name }
+
+                        Schema.Type_Interface interface ->
+                            { name = interface.name }
+
+                        _ ->
+                            { name = "HOWDY_DO_DATS" }
+
                 inlineFragmentSelections : List Document.InlineFragmentSelection
                 inlineFragmentSelections =
                     selections
                         |> List.filterMap Document.toInlineFragmentSelection
+
+                sharedSelections : List Document.Selection
+                sharedSelections =
+                    selections
+                        |> List.filter isNotAnInlineFragmentSelection
 
                 customType : CodeGen.Declaration
                 customType =
@@ -785,7 +848,7 @@ toModules ({ schema, document } as options) =
                             , imports : Set String
                             }
                         fieldInfo =
-                            selection.selections
+                            (sharedSelections ++ selection.selections)
                                 |> List.concatMap (Document.toFieldSelections document)
                                 |> List.filterMap
                                     (toTypeAliasRecordPair
@@ -1082,6 +1145,11 @@ toTypeRefAnnotation { namespace, schema, documentFieldSelection, existingNames, 
                     , Set.singleton "GraphQL.Scalar.Id"
                     )
 
+                "Boolean" ->
+                    ( "Bool"
+                    , Set.empty
+                    )
+
                 _ ->
                     if Schema.isBuiltInScalarType fieldTypeName then
                         ( originalName, Set.empty )
@@ -1102,3 +1170,22 @@ toTypeRefAnnotation { namespace, schema, documentFieldSelection, existingNames, 
             )
     , imports = imports
     }
+
+
+fromBuiltInScalarToFunctionName : String -> String
+fromBuiltInScalarToFunctionName str =
+    case str of
+        "String" ->
+            "string"
+
+        "Int" ->
+            "int"
+
+        "Float" ->
+            "float"
+
+        "Boolean" ->
+            "bool"
+
+        _ ->
+            String.toLower str

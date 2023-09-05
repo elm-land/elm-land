@@ -12,7 +12,7 @@ module GraphQL.Introspection.Schema exposing
     , InputObjectType, findInputObjectTypeWithName
     , InputValue
     , ScalarType
-    , InterfaceType
+    , InterfaceType, toInterfaceType, isInterfaceType
     , Field, findFieldForType, findFieldWithName
     , isBuiltInScalarType, isScalarType
     , findInputTypes, isInputType
@@ -43,7 +43,7 @@ NPM package's `./graphql/utilties/getIntrospectionQuery.d.ts` file.
 @docs InputObjectType, findInputObjectTypeWithName
 @docs InputValue
 @docs ScalarType
-@docs InterfaceType
+@docs InterfaceType, toInterfaceType, isInterfaceType
 
 
 ## Field
@@ -300,6 +300,16 @@ toUnionType : Type -> Maybe UnionType
 toUnionType type_ =
     case type_ of
         Type_Union data ->
+            Just data
+
+        _ ->
+            Nothing
+
+
+toInterfaceType : Type -> Maybe InterfaceType
+toInterfaceType type_ =
+    case type_ of
+        Type_Interface data ->
             Just data
 
         _ ->
@@ -651,6 +661,16 @@ isUnionType : String -> Schema -> Bool
 isUnionType typeName schema =
     case findTypeWithName typeName schema of
         Just (Type_Union _) ->
+            True
+
+        _ ->
+            False
+
+
+isInterfaceType : String -> Schema -> Bool
+isInterfaceType typeName schema =
+    case findTypeWithName typeName schema of
+        Just (Type_Interface _) ->
             True
 
         _ ->

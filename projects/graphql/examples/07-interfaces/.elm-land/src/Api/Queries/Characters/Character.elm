@@ -1,4 +1,4 @@
-module Api.Queries.Characters.Character exposing
+module Api.Queries.Characters.Character exposing 
     ( Character(..)
     , Human, Droid
     )
