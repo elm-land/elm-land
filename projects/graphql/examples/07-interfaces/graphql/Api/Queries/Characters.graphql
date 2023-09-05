@@ -1,0 +1,12 @@
+query Characters {
+  characters {
+    id
+    name
+    ...on Human {
+      hasHair
+    }
+    ...on Droid {
+      primaryFunction
+    }
+  }
+}

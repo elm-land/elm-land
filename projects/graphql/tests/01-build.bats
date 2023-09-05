@@ -46,8 +46,8 @@ load helpers
     npx elm make src/Main.elm --output=/dev/null > /dev/null
 }
 
-@test "can compile 'examples/05-nested-input-types'" {
-    cd examples/05-nested-input-types
+@test "can compile 'examples/08-nested-input-types'" {
+    cd examples/08-nested-input-types
     rm -rf .elm-land
 
     run elm-land graphql build

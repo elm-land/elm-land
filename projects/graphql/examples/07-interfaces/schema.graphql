@@ -1,0 +1,20 @@
+type Query {
+  characters: [Character!]!
+}
+
+interface Character {
+  id: ID!
+  name: String!
+}
+
+type Human implements Character {
+  id: ID!
+  name: String!
+  hasHair: Boolean!
+}
+
+type Droid implements Character {
+  id: ID!
+  name: String!
+  primaryFunction: String
+}
