@@ -1,5 +1,5 @@
 type Query {
-  me: User 
+  findUser(department: Department): User 
 } 
 
 type User {

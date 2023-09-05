@@ -43,6 +43,7 @@ NPM package's `node_modules/graphql/language/ast.d.ts` file.
 -}
 
 import GraphQL.CliError exposing (CliError(..))
+import GraphQL.Introspection.Document.Type as DocumentType
 import GraphQL.Introspection.Document.VariableDefinition
 import GraphQL.Introspection.Schema as Schema exposing (Schema)
 import GraphQL.Introspection.Schema.TypeRef as TypeRef exposing (TypeRef)
@@ -254,9 +255,50 @@ toEnumTypes schema document =
         toEnumType : String -> Maybe Schema.EnumType
         toEnumType name =
             Schema.findEnumTypeWithName name schema
+
+        enumsInVariables : Set String
+        enumsInVariables =
+            toVariables document
+                |> List.foldl scanVariableForEnums Set.empty
+
+        scanVariableForEnums : VariableDefinition -> Set String -> Set String
+        scanVariableForEnums var enums =
+            case Schema.findTypeWithName (DocumentType.toName var.type_) schema of
+                Nothing ->
+                    enums
+
+                Just (Schema.Type_Enum enum) ->
+                    Set.insert enum.name enums
+
+                Just (Schema.Type_InputObject { inputFields }) ->
+                    List.foldl
+                        findEnumsInInputValues
+                        enums
+                        inputFields
+
+                Just _ ->
+                    enums
+
+        findEnumsInInputValues : Schema.InputValue -> Set String -> Set String
+        findEnumsInInputValues inputValue enums =
+            case Schema.findTypeWithName (TypeRef.toName inputValue.type_) schema of
+                Nothing ->
+                    enums
+
+                Just (Schema.Type_Enum enum) ->
+                    Set.insert enum.name enums
+
+                Just (Schema.Type_InputObject { inputFields }) ->
+                    List.foldl
+                        findEnumsInInputValues
+                        enums
+                        inputFields
+
+                Just _ ->
+                    enums
     in
     selectionsWithParent
-        |> List.foldl addToEnumSet Set.empty
+        |> List.foldl addToEnumSet enumsInVariables
         |> Set.toList
         |> List.filterMap toEnumType
 

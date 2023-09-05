@@ -72,3 +72,12 @@ load helpers
     expectToPass
     npx elm make src/Main.elm --output=/dev/null > /dev/null
 }
+
+@test "can compile 'examples/09-input-enums'" {
+    cd examples/09-input-enums
+    rm -rf .elm-land
+
+    run elm-land graphql build
+    expectToPass
+    npx elm make src/Main.elm --output=/dev/null > /dev/null
+}

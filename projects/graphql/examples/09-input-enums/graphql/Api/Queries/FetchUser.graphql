@@ -1,0 +1,6 @@
+query FetchUser($department: Department) {
+  findUser(department: $department) {
+    id 
+    email 
+  }
+}
