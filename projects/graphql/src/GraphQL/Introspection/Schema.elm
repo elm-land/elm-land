@@ -10,7 +10,8 @@ module GraphQL.Introspection.Schema exposing
     , UnionType, toUnionType, isUnionType
     , InputObjectType, findInputObjectTypeWithName
     , InputValue
-    , ScalarType, EnumType
+    , EnumType, findEnumTypeWithName
+    , ScalarType
     , InterfaceType
     , Field, findFieldForType, findFieldWithName
     , isBuiltInScalarType, isScalarType
@@ -40,9 +41,9 @@ NPM package's `./graphql/utilties/getIntrospectionQuery.d.ts` file.
 @docs UnionType, toUnionType, isUnionType
 @docs InputObjectType, findInputObjectTypeWithName
 @docs InputValue
-
-@docs ScalarType, EnumType
-@docs InterfaceType, UnionType
+@docs EnumType, findEnumTypeWithName
+@docs ScalarType
+@docs InterfaceType
 
 
 ## Field
@@ -100,6 +101,12 @@ findInputObjectTypeWithName : String -> Schema -> Maybe InputObjectType
 findInputObjectTypeWithName name schema =
     findTypeWithName name schema
         |> Maybe.andThen toInputObjectType
+
+
+findEnumTypeWithName : String -> Schema -> Maybe EnumType
+findEnumTypeWithName name schema =
+    findTypeWithName name schema
+        |> Maybe.andThen toEnumType
 
 
 findInputTypes : Set String -> Schema -> List InputObjectType
@@ -295,6 +302,16 @@ toInputObjectType : Type -> Maybe InputObjectType
 toInputObjectType type_ =
     case type_ of
         Type_InputObject data ->
+            Just data
+
+        _ ->
+            Nothing
+
+
+toEnumType : Type -> Maybe EnumType
+toEnumType type_ =
+    case type_ of
+        Type_Enum data ->
             Just data
 
         _ ->

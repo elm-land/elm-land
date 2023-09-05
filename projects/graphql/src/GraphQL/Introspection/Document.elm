@@ -2,6 +2,7 @@ module GraphQL.Introspection.Document exposing
     ( Document, decoder
     , toName, toContents
     , toVariables, hasVariables
+    , toEnumTypes
     , toRootSelections, toAllSelections
     , FragmentDefinition, findFragmentDefinitionWithName
     , FragmentSpreadSelection
@@ -23,6 +24,7 @@ NPM package's `node_modules/graphql/language/ast.d.ts` file.
 
 @docs toName, toContents
 @docs toVariables, hasVariables
+@docs toEnumTypes
 @docs toRootSelections, toAllSelections
 
 
@@ -46,6 +48,7 @@ import GraphQL.Introspection.Schema as Schema exposing (Schema)
 import GraphQL.Introspection.Schema.TypeRef as TypeRef exposing (TypeRef)
 import Json.Decode
 import List.Extra
+import Set exposing (Set)
 import String.Extra
 
 
@@ -178,6 +181,84 @@ toVariables document =
     toRootOperation document
         |> Result.map .variables
         |> Result.withDefault []
+
+
+{-| Given a document, determine what enums should be generated
+-}
+toEnumTypes : Schema -> Document -> List Schema.EnumType
+toEnumTypes schema document =
+    let
+        selectionsWithParent : List SelectionWithParent
+        selectionsWithParent =
+            toAllSelections schema document
+
+        addToEnumSet : SelectionWithParent -> Set String -> Set String
+        addToEnumSet { selection, parent } enums =
+            let
+                parentTypeName : String
+                parentTypeName =
+                    Schema.toTypeName parent
+
+                addEnumsForField : { name : String, selections : List Selection } -> Set String
+                addEnumsForField { name, selections } =
+                    case
+                        Schema.findFieldForType
+                            { typeName = parentTypeName
+                            , fieldName = name
+                            }
+                            schema
+                    of
+                        Nothing ->
+                            enums
+
+                        Just field ->
+                            let
+                                fieldTypeName : String
+                                fieldTypeName =
+                                    TypeRef.toName field.type_
+                            in
+                            case Schema.findTypeWithName fieldTypeName schema of
+                                Just newParentType ->
+                                    let
+                                        enumsFromThisSelection =
+                                            case newParentType of
+                                                Schema.Type_Enum enum ->
+                                                    Set.insert enum.name enums
+
+                                                _ ->
+                                                    enums
+                                    in
+                                    selections
+                                        |> List.map (SelectionWithParent newParentType)
+                                        |> List.foldl addToEnumSet enumsFromThisSelection
+
+                                Nothing ->
+                                    enums
+            in
+            case selection of
+                Selection_Field { name, selections } ->
+                    addEnumsForField
+                        { name = name
+                        , selections = selections
+                        }
+
+                Selection_FragmentSpread _ ->
+                    enums
+
+                Selection_InlineFragment { name, selections } ->
+                    addEnumsForField
+                        { name = name
+                        , selections = selections
+                        }
+
+        toEnumType : String -> Maybe Schema.EnumType
+        toEnumType name =
+            Schema.findEnumTypeWithName name schema
+    in
+    selectionsWithParent
+        |> List.foldl addToEnumSet Set.empty
+        |> Set.toList
+        |> List.filterMap toEnumType
 
 
 hasVariables : Document -> Bool
