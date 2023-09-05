@@ -20,7 +20,7 @@ type UserResult
 
 type alias User =
     { id : GraphQL.Scalar.Id.Id
-    , name : String
+    , username : String
     , avatarUrl : Maybe String
     }
 

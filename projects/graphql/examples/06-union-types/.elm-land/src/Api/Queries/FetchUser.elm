@@ -1,4 +1,4 @@
-module Api.Queries.FetchUser exposing
+module Api.Queries.FetchUser exposing 
     ( Data, new
     , UserResult
     )
@@ -42,7 +42,7 @@ new =
                 __typename # 🌈 Injected by @elm-land/graphql ✨
                 ...on User {
                   id
-                  name
+                  username
                   avatarUrl
                 }
                 ...on NotSignedIn {
@@ -61,37 +61,37 @@ decoder =
     GraphQL.Decode.object Data
         |> GraphQL.Decode.field
             { name = "currentUser"
-            , decoder =
+            , decoder = 
                 GraphQL.Decode.union
                     [ GraphQL.Decode.variant
-                        { typename = "User"
-                        , onVariant = Api.Queries.FetchUser.UserResult.On_User
-                        , decoder =
-                            GraphQL.Decode.object Api.Queries.FetchUser.UserResult.User
-                                |> GraphQL.Decode.field
-                                    { name = "id"
-                                    , decoder = GraphQL.Decode.id
-                                    }
-                                |> GraphQL.Decode.field
-                                    { name = "username"
-                                    , decoder = GraphQL.Decode.string
-                                    }
-                                |> GraphQL.Decode.field
-                                    { name = "avatarUrl"
-                                    , decoder =
-                                        GraphQL.Decode.string
-                                            |> GraphQL.Decode.maybe
-                                    }
-                        }
+                          { typename = "User"
+                          , onVariant = Api.Queries.FetchUser.UserResult.On_User
+                          , decoder = 
+                              GraphQL.Decode.object Api.Queries.FetchUser.UserResult.User
+                                  |> GraphQL.Decode.field
+                                      { name = "id"
+                                      , decoder = GraphQL.Decode.id
+                                      }
+                                  |> GraphQL.Decode.field
+                                      { name = "username"
+                                      , decoder = GraphQL.Decode.string
+                                      }
+                                  |> GraphQL.Decode.field
+                                      { name = "avatarUrl"
+                                      , decoder = 
+                                          GraphQL.Decode.string
+                                              |> GraphQL.Decode.maybe
+                                      }
+                          }
                     , GraphQL.Decode.variant
-                        { typename = "NotSignedIn"
-                        , onVariant = Api.Queries.FetchUser.UserResult.On_NotSignedIn
-                        , decoder =
-                            GraphQL.Decode.object Api.Queries.FetchUser.UserResult.NotSignedIn
-                                |> GraphQL.Decode.field
-                                    { name = "message"
-                                    , decoder = GraphQL.Decode.string
-                                    }
-                        }
+                          { typename = "NotSignedIn"
+                          , onVariant = Api.Queries.FetchUser.UserResult.On_NotSignedIn
+                          , decoder = 
+                              GraphQL.Decode.object Api.Queries.FetchUser.UserResult.NotSignedIn
+                                  |> GraphQL.Decode.field
+                                      { name = "message"
+                                      , decoder = GraphQL.Decode.string
+                                      }
+                          }
                     ]
             }

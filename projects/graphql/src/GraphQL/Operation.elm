@@ -463,6 +463,42 @@ toModules ({ schema, document } as options) =
             in
             toElmTypeRefExpression (TypeRef.toElmTypeRef typeRef)
 
+        toUnionVariant : String -> Document.InlineFragmentSelection -> CodeGen.Expression
+        toUnionVariant unionTypeName inline =
+            let
+                toQualifiedName : String -> String
+                toQualifiedName inner =
+                    String.join "."
+                        [ options.namespace
+                        , fromKindToFolderName options.kind
+                        , Document.toName document
+                        , unionTypeName
+                        , inner
+                        ]
+            in
+            CodeGen.Expression.multilineFunction
+                { name = "GraphQL.Decode.variant"
+                , arguments =
+                    [ CodeGen.Expression.multilineRecord
+                        [ ( "typename", inline.name |> CodeGen.Expression.string )
+                        , ( "onVariant"
+                          , toQualifiedName ("On_" ++ inline.name)
+                                |> CodeGen.Expression.value
+                          )
+                        , ( "decoder"
+                          , toObjectDecoder
+                                { existingNames = Set.empty
+                                , constructor = toQualifiedName inline.name
+                                , parentType =
+                                    Schema.findTypeWithName inline.name schema
+                                        |> Maybe.andThen Schema.toObjectType
+                                , selections = inline.selections
+                                }
+                          )
+                        ]
+                    ]
+                }
+
         toFieldDecoderForSelection :
             { existingNames : Set String
             , parentObjectType : Schema.ObjectType
@@ -474,11 +510,7 @@ toModules ({ schema, document } as options) =
             let
                 decoder : CodeGen.Expression
                 decoder =
-                    case
-                        Schema.findFieldWithName
-                            field.name
-                            parentObjectType
-                    of
+                    case Schema.findFieldWithName field.name parentObjectType of
                         Just fieldSchema ->
                             let
                                 typeRefName : String
@@ -501,7 +533,15 @@ toModules ({ schema, document } as options) =
                                     |> toTypeRefDecoder fieldSchema.type_
 
                             else if Schema.isUnionType typeRefName schema then
-                                CodeGen.Expression.value "GraphQL.Decode.union []"
+                                CodeGen.Expression.multilineFunction
+                                    { name = "GraphQL.Decode.union"
+                                    , arguments =
+                                        [ field.selections
+                                            |> List.filterMap Document.toInlineFragmentSelection
+                                            |> List.map (toUnionVariant typeRefName)
+                                            |> CodeGen.Expression.multilineList
+                                        ]
+                                    }
 
                             else
                                 let
