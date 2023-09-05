@@ -42,7 +42,7 @@ new =
                 __typename # 🌈 Injected by @elm-land/graphql ✨
                 ...on User {
                   id
-                  username
+                  name
                   avatarUrl
                 }
                 ...on NotSignedIn {
@@ -73,7 +73,7 @@ decoder =
                                       , decoder = GraphQL.Decode.id
                                       }
                                   |> GraphQL.Decode.field
-                                      { name = "username"
+                                      { name = "name"
                                       , decoder = GraphQL.Decode.string
                                       }
                                   |> GraphQL.Decode.field
