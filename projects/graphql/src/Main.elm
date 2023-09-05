@@ -118,12 +118,14 @@ init json =
                         , toTypeNameUnwrappingFirstMaybe =
                             \var ->
                                 Schema.toTypeRefNameUnwrappingFirstMaybe
+                                    flags.namespace
                                     var.type_
                                     flags.schema
                         , toTypeName = .type_ >> TypeRef.toName
                         , toEncoderString =
                             \var ->
                                 Schema.toTypeRefEncoderStringUnwrappingFirstMaybe
+                                    flags.namespace
                                     var.type_
                                     flags.schema
                         , isInputObject = True

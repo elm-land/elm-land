@@ -140,8 +140,8 @@ findTypeWithName name (Schema schema) =
     List.Extra.find hasMatchingName schema.types
 
 
-toTypeRefNameUnwrappingFirstMaybe : TypeRef -> Schema -> String
-toTypeRefNameUnwrappingFirstMaybe typeRef schema =
+toTypeRefNameUnwrappingFirstMaybe : String -> TypeRef -> Schema -> String
+toTypeRefNameUnwrappingFirstMaybe namespace typeRef schema =
     let
         outerElmTypeRef : TypeRef.ElmTypeRef
         outerElmTypeRef =
@@ -171,8 +171,11 @@ toTypeRefNameUnwrappingFirstMaybe typeRef schema =
                             if isScalarType name schema then
                                 "GraphQL.Scalars." ++ String.Extra.decapitalize name
 
+                            else if isEnumType name schema then
+                                namespace ++ ".Enum." ++ name ++ "." ++ name
+
                             else
-                                "Api.Input." ++ name
+                                namespace ++ ".Input." ++ name
 
                 TypeRef.ElmTypeRef_List (TypeRef.ElmTypeRef_Named value) ->
                     "List " ++ toStringHelper (TypeRef.ElmTypeRef_Named value)
@@ -189,8 +192,8 @@ toTypeRefNameUnwrappingFirstMaybe typeRef schema =
     toStringHelper outerElmTypeRef
 
 
-toTypeRefEncoderStringUnwrappingFirstMaybe : TypeRef -> Schema -> String
-toTypeRefEncoderStringUnwrappingFirstMaybe typeRef schema =
+toTypeRefEncoderStringUnwrappingFirstMaybe : String -> TypeRef -> Schema -> String
+toTypeRefEncoderStringUnwrappingFirstMaybe namespace typeRef schema =
     let
         outerElmTypeRef : TypeRef.ElmTypeRef
         outerElmTypeRef =
@@ -219,6 +222,11 @@ toTypeRefEncoderStringUnwrappingFirstMaybe typeRef schema =
                         _ ->
                             if isScalarType name schema then
                                 "GraphQL.Scalars.${name}.encode"
+                                    |> String.replace "${name}" name
+
+                            else if isEnumType name schema then
+                                "${namespace}.Enum.${name}.encode"
+                                    |> String.replace "${namespace}" namespace
                                     |> String.replace "${name}" name
 
                             else

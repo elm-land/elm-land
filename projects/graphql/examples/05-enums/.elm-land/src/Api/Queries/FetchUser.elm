@@ -1,19 +1,28 @@
 module Api.Queries.FetchUser exposing 
-    ( Data, new
+    ( Input, Data, new
     , User
     )
 
 {-|
 
-@docs Data, new
+@docs Input, Data, new
 @docs User
 
 -}
 
 import Api.Enum.Department
+import Api.Queries.FetchUser.Input
 import GraphQL.Decode
 import GraphQL.Operation
 import GraphQL.Scalar.Id
+
+
+
+-- INPUT
+
+
+type alias Input =
+    Api.Queries.FetchUser.Input.Input {}
 
 
 
@@ -21,7 +30,7 @@ import GraphQL.Scalar.Id
 
 
 type alias Data =
-    { me : Maybe User
+    { findUser : Maybe User
     }
 
 
@@ -36,20 +45,20 @@ type alias User =
 -- OPERATION
 
 
-new : GraphQL.Operation.Operation Data
-new =
+new : Input -> GraphQL.Operation.Operation Data
+new input =
     GraphQL.Operation.new
         { name = "FetchUser"
         , query = """
-            query FetchUser {
-              me {
+            query FetchUser($department: Department) {
+              findUser(department: $department) {
                 id 
                 email 
                 department 
               }
             }
           """
-        , variables = []
+        , variables = Api.Queries.FetchUser.Input.toInternalValue input
         , decoder = decoder
         }
 
@@ -58,7 +67,7 @@ decoder : GraphQL.Decode.Decoder Data
 decoder =
     GraphQL.Decode.object Data
         |> GraphQL.Decode.field
-            { name = "me"
+            { name = "findUser"
             , decoder = 
                 GraphQL.Decode.object User
                     |> GraphQL.Decode.field

@@ -211,7 +211,7 @@ toInputModule { isInputObject, inputTypeName, moduleName, namespace, schema, var
                         |> String.replace "${type}" (toTypeNameUnwrappingFirstMaybe var)
                         |> CodeGen.Annotation.type_
                 , arguments =
-                    [ if Schema.isScalarType typeName schema then
+                    [ if Schema.isScalarType typeName schema || Schema.isEnumType typeName schema then
                         CodeGen.Argument.new "value_"
 
                       else
@@ -233,7 +233,7 @@ toInputModule { isInputObject, inputTypeName, moduleName, namespace, schema, var
         variant : String
         variant =
             if isInputObject then
-                "Api.Internals.Input." ++ inputTypeName
+                namespace ++ ".Internals.Input." ++ inputTypeName
 
             else
                 "Input"

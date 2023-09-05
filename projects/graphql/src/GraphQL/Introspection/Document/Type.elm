@@ -71,15 +71,19 @@ namedTypeDecoder =
         (Json.Decode.field "name" Json.Decode.string)
 
 
-toStringUnwrappingFirstMaybe : Schema -> Type -> String
-toStringUnwrappingFirstMaybe schema type_ =
-    toElmTypeRefString schema
+toStringUnwrappingFirstMaybe : String -> Schema -> Type -> String
+toStringUnwrappingFirstMaybe namespace schema type_ =
+    toElmTypeRefString
+        namespace
+        schema
         (unwrapFirstMaybe (toElmTypeRef type_))
 
 
-toEncoderStringUnwrappingFirstMaybe : Schema -> Type -> String
-toEncoderStringUnwrappingFirstMaybe schema type_ =
-    toElmTypeEncoderString schema
+toEncoderStringUnwrappingFirstMaybe : String -> Schema -> Type -> String
+toEncoderStringUnwrappingFirstMaybe namespace schema type_ =
+    toElmTypeEncoderString
+        namespace
+        schema
         (unwrapFirstMaybe (toElmTypeRef type_))
 
 
@@ -100,11 +104,11 @@ toImports { namespace, schema, name } =
         [ CodeGen.Import.new [ namespace, "Scalars", name ] ]
 
     else if Schema.isEnumType name schema then
-        [ CodeGen.Import.new [ namespace, "Enums", name ] ]
+        [ CodeGen.Import.new [ namespace, "Enum", name ] ]
 
     else
-        [ CodeGen.Import.new [ "Api", "Input" ]
-        , CodeGen.Import.new [ "Api", "Internals", "Input" ]
+        [ CodeGen.Import.new [ namespace, "Input" ]
+        , CodeGen.Import.new [ namespace, "Internals", "Input" ]
         ]
 
 
@@ -128,8 +132,8 @@ unwrapFirstMaybe typeRef =
             typeRef
 
 
-toElmTypeRefString : Schema -> ElmTypeRef -> String
-toElmTypeRefString schema outerElmTypeRef =
+toElmTypeRefString : String -> Schema -> ElmTypeRef -> String
+toElmTypeRefString namespace schema outerElmTypeRef =
     let
         toStringHelper : ElmTypeRef -> String
         toStringHelper elmTypeRef =
@@ -155,8 +159,13 @@ toElmTypeRefString schema outerElmTypeRef =
                             if Schema.isScalarType name schema then
                                 "GraphQL.Scalars." ++ String.Extra.decapitalize name
 
+                            else if Schema.isEnumType name schema then
+                                String.join "."
+                                    [ namespace, "Enum", name, name ]
+
                             else
-                                "Api.Input." ++ name
+                                String.join "."
+                                    [ namespace, "Input", name ]
 
                 ElmTypeRef_List (ElmTypeRef_Named value) ->
                     "List " ++ toStringHelper (ElmTypeRef_Named value)
@@ -173,8 +182,8 @@ toElmTypeRefString schema outerElmTypeRef =
     toStringHelper outerElmTypeRef
 
 
-toElmTypeEncoderString : Schema -> ElmTypeRef -> String
-toElmTypeEncoderString schema outerElmTypeRef =
+toElmTypeEncoderString : String -> Schema -> ElmTypeRef -> String
+toElmTypeEncoderString namespace schema outerElmTypeRef =
     let
         toStringHelper : ElmTypeRef -> String
         toStringHelper elmTypeRef =
@@ -199,6 +208,11 @@ toElmTypeEncoderString schema outerElmTypeRef =
                         _ ->
                             if Schema.isScalarType name schema then
                                 "GraphQL.Scalars.${name}.encode"
+                                    |> String.replace "${name}" name
+
+                            else if Schema.isEnumType name schema then
+                                "${namespace}.Enum.${name}.encode"
+                                    |> String.replace "${namespace}" namespace
                                     |> String.replace "${name}" name
 
                             else

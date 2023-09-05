@@ -870,9 +870,9 @@ toModules ({ schema, document } as options) =
                     , variables = Document.toVariables document
                     , isRequired = VariableDefinition.isRequired
                     , toVarName = .name
-                    , toTypeNameUnwrappingFirstMaybe = .type_ >> DocumentType.toStringUnwrappingFirstMaybe schema
+                    , toTypeNameUnwrappingFirstMaybe = .type_ >> DocumentType.toStringUnwrappingFirstMaybe options.namespace schema
                     , toTypeName = .type_ >> DocumentType.toName
-                    , toEncoderString = .type_ >> DocumentType.toEncoderStringUnwrappingFirstMaybe schema
+                    , toEncoderString = .type_ >> DocumentType.toEncoderStringUnwrappingFirstMaybe options.namespace schema
                     , isInputObject = False
                     }
                 ]
