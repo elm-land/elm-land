@@ -5,8 +5,14 @@
 
 ```bash
 # Requires Node.js v18+ (https://nodejs.org)
-npx elm-land server
+npm start
 ```
+
+Normally, you can run Elm Land apps with `elm-land server`, but this example
+uses `sass` to compile your SCSS files to CSS as you code.
+
+For that reason, we'll be running a script in our `package.json` file.
+
 
 ## Deploying to production
 
