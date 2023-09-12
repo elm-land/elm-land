@@ -89,6 +89,13 @@ pushRoute :
 pushRoute route =
     PushUrl (Route.toString route)
 
+{-| Set given path as route (without any query params or hash), and make the back button go back to the current route.
+-}
+pushPath :
+    Route.Path.Path
+    -> Effect msg
+pushPath path =
+    PushUrl (Route.toString { path = path, query = Dict.empty, hash = Nothing })
 
 {-| Set the new route, but replace the previous one, so clicking the back
 button **won't** go back to the previous route.
@@ -102,6 +109,14 @@ replaceRoute :
 replaceRoute route =
     ReplaceUrl (Route.toString route)
 
+{-| Set given path as route (without any query params or hash), but replace the previous route,
+so clicking the back button **won't** go back to the previous route
+-}
+replacePath :
+    Route.Path.Path
+    -> Effect msg
+replacePath path =
+    ReplaceUrl (Route.toString { path = path, query = Dict.empty, hash = Nothing })
 
 {-| Redirect users to a new URL, somewhere external your web application.
 -}

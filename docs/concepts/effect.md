@@ -87,6 +87,18 @@ Effect.pushRoute :
     -> Effect msg
 ```
 
+### `Effect.pushPath`
+
+Push a new Path onto the browser history as a route without query and hash. This is just like [Browser.Navigation.pushUrl](https://package.elm-lang.org/packages/elm/browser/latest/Browser-Navigation#pushUrl), except it doesn't require a `Key` argument.
+
+#### __Definition__
+
+```elm
+Effect.pushPath :
+    Route.Path.Path
+    -> Effect msg
+```
+
 ### `Effect.replaceRoute`
 
 Replace the current browser history entry with a new URL. This is just like [Browser.Navigation.replaceUrl](https://package.elm-lang.org/packages/elm/browser/latest/Browser-Navigation#replaceUrl), except it doesn't require a `Key` argument.
@@ -99,6 +111,18 @@ Effect.replaceRoute :
     , query : Dict String String
     , hash : Maybe String
     }
+    -> Effect msg
+```
+
+### `Effect.replacePath`
+
+Replace the current browser history entry with a new Path as URL without query and hash. This is just like [Browser.Navigation.replaceUrl](https://package.elm-lang.org/packages/elm/browser/latest/Browser-Navigation#replaceUrl), except it doesn't require a `Key` argument.
+
+#### __Definition__
+
+```elm
+Effect.replacePath :
+    Route.Path.Path
     -> Effect msg
 ```
 
