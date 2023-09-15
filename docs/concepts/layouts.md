@@ -291,7 +291,7 @@ One example of a nested layout could be if you're trying to standardize pages th
 elm-land add layout Sidebar.Header
 ```
 
-This command will create a file at `src/Sidebar/Header.elm`. This new layout file will include a way to provide `Layouts.Sidebar.Props` into the parent component:
+This command will create a file at `src/Layouts/Sidebar/Header.elm`. This new layout file will include a way to provide `Layouts.Sidebar.Props` into the parent component:
 
 
 ```elm{4,18,26-28}
