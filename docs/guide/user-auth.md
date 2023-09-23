@@ -472,7 +472,7 @@ After importing Elm Land's `Effect` module, we can have access to the `Effect.se
 
 ::: tip "Why not just return a `Cmd msg`?" 
 
-Later in the guide, we'll learn that `Effect msg` is a useful type because it can do _more_ that just send commands. For that reason, Elm Land applications use it by default, rather than the standard `Cmd msg` you'll see in other Elm applications.
+Later in the guide, we'll learn that `Effect msg` is a useful type because it can do _more_ than just send commands. For that reason, Elm Land applications use it by default, rather than the standard `Cmd msg` you'll see in other Elm applications.
 
 :::
 
