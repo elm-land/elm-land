@@ -5,6 +5,7 @@ import BrowserWindow from './components/BrowserWindow.vue'
 import ExampleGallery from './components/ExampleGallery.vue'
 import NewsPost from './components/NewsPost.vue'
 import Header from './components/Header.vue'
+import FoundingSponsors from './components/FoundingSponsors.vue'
 
 export default {
   ...DefaultTheme,
@@ -14,5 +15,6 @@ export default {
     app.component('NewsPost', NewsPost)
     app.component('Header', Header)
     app.component('ExampleGallery', ExampleGallery)
+    app.component('FoundingSponsors', FoundingSponsors)
   }
 }

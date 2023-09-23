@@ -39,7 +39,17 @@ footer: Made for you with ❤️
 <script setup>
 import { VPTeamMembers } from 'vitepress/theme'
 
-const members = [
+const foundingSponsors = [
+  {
+    logo: '/images/sponsors/lamdera.jpg',
+    name: 'Lamdera',
+    width: 480,
+    height: 161,
+    url: 'https://lamdera.com/'
+  }
+]
+
+const sponsors = [
   {
     avatar: 'https://www.github.com/dbj.png',
     name: 'Dirk Johnson',
@@ -130,14 +140,28 @@ const members = [
   .sponsor:hover .icon {
     fill: #cd2e90;
   }
+
+  h6 { letter-spacing: 0.05em; text-transform: uppercase; margin-top: 2rem; opacity: 0.75; }
 </style>
 
 
 ### 💖 Sponsors
 
-Here are some of the __wonderful__ people who make Elm Land possible by supporting the project each month. Thank you so much for supporting the Elm Land community!
+Here are some of the successful companies and wonderful people that make Elm Land possible by supporting the project each month.
 
-<VPTeamMembers size="small" :members="members" />
+
+<h6>Companies</h6>
+<FoundingSponsors :sponsors="foundingSponsors" />
+
+<h6>Individuals</h6>
+<VPTeamMembers size="small" :members="sponsors" />
+
+
+
+<h3>Want to support Elm Land?</h3>
+<br/>
+
+If you'd like to contribute to the health and continuous improvement of the framework, ensure a strong foundation for your business, or be featured on this page– you can support Elm Land via GitHub Sponsors:
 
 <div class="flex">
   <a class="sponsor" href="https://github.com/sponsors/ryannhg/">
