@@ -89,6 +89,14 @@ const sponsors = [
       { icon: 'github', link: 'https://github.com/nathanbraun' }
     ]
   },
+  {
+    avatar: 'https://www.github.com/shahnhogan.png',
+    name: 'Shahn Hogan',
+    title: '@shahnhogan',
+    links: [
+      { icon: 'github', link: 'https://github.com/shahnhogan' }
+    ]
+  },
 ]
 </script>
 
