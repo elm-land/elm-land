@@ -166,7 +166,7 @@ var header = function (error, problem, cwd_) {
     relativePath = absolutePath.slice(cwd.length + 1);
   }
   var dashCount = MAX_WIDTH - left.length - PREFIX.length - SPACING_COUNT - relativePath.length;
-  return "".concat(PREFIX).concat(left, " ").concat(SPACER.repeat(dashCount), " ").concat(relativePath);
+  return "".concat(PREFIX).concat(left, " ").concat(SPACER.repeat(dashCount < 0 ? 0 : dashCount), " ").concat(relativePath);
 };
 var escapeHtml = function (str) {
   return str
