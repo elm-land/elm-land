@@ -16,10 +16,10 @@ type Layout parentProps model msg contentMsg
 
 Here's a breakdown of each parameter:
 
-1. `parentProps` – When working with [Nested layouts](#nested-layouts), this parameter is the parent layout's settings. For top-level layouts that aren't nested, this value is always `()`.
+1. `parentProps` – When working with [Nested layouts](/concepts/layouts#nested-layouts), this parameter is the parent layout's settings. For top-level layouts that aren't nested, this value is always `()`.
 2. `model` – Represents the state of the layout
 3. `msg` – Represents the messages the layout can send
-4. `contentMsg` – Because layouts can embed other HTML, this common variable allows us to combine that HTML together. We describe this in more detail in [the "Understanding layouts" section](#understanding-layouts) above!
+4. `contentMsg` – Because layouts can embed other HTML, this common variable allows us to combine that HTML together. We describe this in more detail in [the "Understanding layouts" section](/concepts/layouts#understanding-layouts) above!
 
 ### Layout.new
 
@@ -42,7 +42,7 @@ Layout.new :
 
 ### Layout.withParentProps
 
-This is required for [nested layouts](#nested-layouts), which are embedded within other parent layouts. Use this function to provide settings that are required by the parent layout.
+This is required for [nested layouts](/concepts/layouts#nested-layouts), which are embedded within other parent layouts. Use this function to provide settings that are required by the parent layout.
 
 #### Type definition
 
