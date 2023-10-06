@@ -565,7 +565,7 @@ mainElmModule data =
                                             ]
                                         , in_ =
                                             CodeGen.Expression.ifElse
-                                                { condition = CodeGen.Expression.value "isAuthProtected (Route.fromUrl () model.url).path && oldAction /= newAction"
+                                                { condition = CodeGen.Expression.value "isAuthProtected (Route.fromUrl () model.url).path && (hasActionTypeChanged oldAction newAction)"
                                                 , ifBranch =
                                                     CodeGen.Expression.letIn
                                                         { let_ =
@@ -660,6 +660,7 @@ mainElmModule data =
                 }
             , toLayoutFromPageDeclaration data.pages
             , toAuthProtectedPageDeclaration
+            , hasActionTypeChangedDeclaration
             , CodeGen.Declaration.function
                 { name = "subscriptions"
                 , annotation =
@@ -1229,6 +1230,45 @@ toAuthProtectedPageDeclaration =
                     , { name = "_"
                       , arguments = []
                       , expression = CodeGen.Expression.value "Nothing"
+                      }
+                    ]
+                }
+        }
+
+
+hasActionTypeChangedDeclaration : CodeGen.Declaration
+hasActionTypeChangedDeclaration =
+    CodeGen.Declaration.function
+        { name = "hasActionTypeChanged"
+        , annotation = CodeGen.Annotation.type_ "Auth.Action.Action user -> Auth.Action.Action user -> Bool"
+        , arguments = [ CodeGen.Argument.new "oldAction", CodeGen.Argument.new "newAction" ]
+        , expression =
+            CodeGen.Expression.caseExpression
+                { value = CodeGen.Argument.new "( newAction, oldAction )"
+                , branches =
+                    [ { name = "( Auth.Action.LoadPageWithUser _, Auth.Action.LoadPageWithUser _ )"
+                      , arguments = []
+                      , expression = CodeGen.Expression.value "False"
+                      }
+                    , { name = "( Auth.Action.ShowLoadingPage _, Auth.Action.ShowLoadingPage _ )"
+                      , arguments = []
+                      , expression = CodeGen.Expression.value "False"
+                      }
+                    , { name = "( Auth.Action.ReplaceRoute _, Auth.Action.ReplaceRoute _ )"
+                      , arguments = []
+                      , expression = CodeGen.Expression.value "False"
+                      }
+                    , { name = "( Auth.Action.PushRoute _, Auth.Action.PushRoute _ )"
+                      , arguments = []
+                      , expression = CodeGen.Expression.value "False"
+                      }
+                    , { name = "( Auth.Action.LoadExternalUrl _, Auth.Action.LoadExternalUrl _ )"
+                      , arguments = []
+                      , expression = CodeGen.Expression.value "False"
+                      }
+                    , { name = "( _,  _ )"
+                      , arguments = []
+                      , expression = CodeGen.Expression.value "True"
                       }
                     ]
                 }
