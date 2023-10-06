@@ -1,6 +1,6 @@
 {
   "name": "elm-land",
-  "version": "0.19.3",
+  "version": "0.19.4",
   "description": "Reliable web apps for everyone",
   "main": "index.js",
   "types": "./index.d.ts",
