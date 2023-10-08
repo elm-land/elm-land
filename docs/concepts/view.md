@@ -20,13 +20,9 @@ For many applications, this type is all you need. But you can also change this t
 
 ## Custom views
 
-If you'd like to customize the `View` module, you can do this with the `elm-land customize` command:
+Some folks in the Elm community prefer to build their UI in things other than the core [elm/html](https://package.elm-lang.org/packages/elm/html/latest/) package.
 
-```sh
-elm-land customize view
-```
-
-Some folks in the Elm community prefer to build their UI in things other than the core [elm/html](https://package.elm-lang.org/packages/elm/html/latest/) package. Here are some popular alternatives:
+Here are some popular alternatives:
 
 Package | Description
 :-- | :--
@@ -35,6 +31,23 @@ Package | Description
 [matheus23/elm-default-tailwind-modules](https://package.elm-lang.org/packages/matheus23/elm-default-tailwind-modules/latest/) | "The default tailwind classes as elm-css, generated using elm-tailwind-modules."
 
 Each of these packages don't use the `Html` type. By customizing Elm Land's `View` type, we make it easier to work with them across pages and layouts.
+
+If you'd like to use an alternative Elm UI package, you can do this with the `elm-land customize` command.
+
+Use [mdgriffith/elm-ui](https://package.elm-lang.org/packages/mdgriffith/elm-ui/latest/):
+```sh
+elm-land customize view:elm-ui
+```
+
+Use [rtfeldman/elm-css](https://package.elm-lang.org/packages/rtfeldman/elm-css/latest/):
+```sh
+elm-land customize view:elm-css
+```
+
+To use an arbitrary custom UI package, start with the default View module and adjust it as needed:
+```sh
+elm-land customize view
+```
 
 ::: tip Looking for examples?
 
