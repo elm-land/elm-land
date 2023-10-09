@@ -153,7 +153,7 @@ let runServer = async (options) => {
     // if the customized versions are deleted
     let customizableFileFilepaths =
       Object.values(Utils.customizableFiles)
-        .flatMap(({ filepaths }) => filepaths.map(filepath => path.join(process.cwd(), 'src', ...filepath.split('/'))))
+        .flatMap(({ filepaths }) => filepaths.map(filepath => path.join(process.cwd(), 'src', ...filepath.target.split('/'))))
     let customizedFilepaths = chokidar.watch(customizableFileFilepaths, {
       ignorePermissionErrors: true,
       ignoreInitial: true
@@ -355,7 +355,7 @@ const customize = async (filepaths) => {
       }
 
       try {
-        await Files.remove(path.join(process.cwd(), '.elm-land', 'src', ...filepath.split('/')))
+        await Files.remove(path.join(process.cwd(), '.elm-land', 'src', ...filepath.target.split('/')))
       } catch (_) {
         // If the file isn't there, no worries
       }
@@ -368,12 +368,14 @@ const customize = async (filepaths) => {
 
 
 const syncCustomizableFiles = async () => {
-  let defaultFilepaths = Object.values(Utils.customizableFiles).flatMap(obj => obj.filepaths)
+  let defaultFilepaths = Object.values(Utils.customizableFiles)
+    .flatMap(obj => obj.filepaths)
+    .filter(filepath => filepath.src === filepath.target)
 
   await Promise.all(defaultFilepaths.map(async filepath => {
-    let fileInUsersSrcFolder = path.join(process.cwd(), 'src', ...filepath.split('/'))
-    let fileInTemplatesFolder = path.join(__dirname, 'templates', '_elm-land', 'customizable', ...filepath.split('/'))
-    let fileInElmLandSrcFolder = path.join(process.cwd(), '.elm-land', 'src', ...filepath.split('/'))
+    let fileInUsersSrcFolder = path.join(process.cwd(), 'src', ...filepath.target.split('/'))
+    let fileInTemplatesFolder = path.join(__dirname, 'templates', '_elm-land', 'customizable', ...filepath.src.split('/'))
+    let fileInElmLandSrcFolder = path.join(process.cwd(), '.elm-land', 'src', ...filepath.target.split('/'))
 
     let userSrcFileExists = await Files.exists(fileInUsersSrcFolder)
 
