@@ -23,21 +23,6 @@ html.dark  {
   display: none;
 }
 
-details>summary {
-  list-style: none;
-}
-summary::-webkit-details-marker {
-  display: none
-}
-
-summary::before {
-  /* ▸▾▶▼▶️▶️🔽🙈🐵 */
-  content: '👉 ';
-}
-details[open] summary:before {
-  content: "👇 ";
-}
-
 .vp-doc h1, .vp-doc h2, .vp-doc h3 {
   font-family: var(--vp-font-family-header);
   font-weight: 700;
