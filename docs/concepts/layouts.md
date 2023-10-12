@@ -8,7 +8,7 @@ outline: [2,3]
 
 Layouts allow your pages to reuse stateful UI. They can save you time wiring things up, and prevent bugs that come from duplication across pages. In many web apps, you might have a common element, like a sidebar, that should be available across multiple pages.
 
-In Elm Land, each page explicitly chooses the layout it wants to use. This design choice means there aren't be any secret or "default" layouts. For example, if you have a sign-in page that you don't want to use your sidebar layout, that's totally fine!
+In Elm Land, each page explicitly chooses the layout it wants to use. This design choice means there won't be any secret or "default" layouts. For example, if you have a sign-in page that you don't want to use your sidebar layout, that's totally fine!
 
 ![Example of a layout being used on three different pages](./images/layout-visual.jpg)
 
@@ -209,7 +209,7 @@ Here are some highlights from the code snippet above:
 1. __On line 12__, we used the `toContentMsg` function along with to `Html.map`. This converts the `Html Msg` value returned by `viewSidebar` into the expected `Html contentMsg` value our `view` function needs to return.
 1. __On line 14__, we embedded the HTML content from our page into a `<div class="page">` tag.
     - If we were on the `Settings` page, then `content.body` would be the exact HTML content returned by the `Page.Settings.view` function.
-1. __On line 16__, we use a capitalized `Msg` type in the HTML value we returned. This means our `viewSidebar` can send messages in this function, which is important for interactive layouts!
+1. __On line 18__, we use a capitalized `Msg` type in the HTML value we returned. This means our `viewSidebar` can send messages in this function, which is important for interactive layouts!
 :::
 
 #### `subscriptions`
@@ -269,7 +269,7 @@ toLayout user model =
 
 Here are the important things to know when using a layout:
 
-1. __On line 4__, we import a `Layouts` module. This module is updated anytime you add a new layout in `src/Layouts. It provides a "custom type" with all possible layouts in your application.
+1. __On line 4__, we import a `Layouts` module. This module is updated anytime you add a new layout in `src/Layouts`. It provides a "custom type" with all possible layouts in your application.
     - __Note:__ This is distinct from the `Layout` module, which is used for defining layouts
 1. __On line 16__, we use the [Page.withLayout](./pages.md#pagewithlayout) function to tell Elm Land which layout we'd like our `Settings` page to use. 
     - __Note:__ Because it is within the `page` function, you'll be able to access values like `user` and pass them along to your `toLayout` function.
