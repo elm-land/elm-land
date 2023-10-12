@@ -126,7 +126,7 @@ But what are these arguments for?
   - In [the Route section](./route), you'll learn more about the other values on the `route` field.
 
 
-Both of these values are available to any function `within` page. That means `init`, `update`, `view` and `subscriptions` all can get access to `shared` and `route`.
+Both of these values are available to any function within `page`. That means `init`, `update`, `view` and `subscriptions` all can get access to `shared` and `route`.
 
 In the code example below, note how we pass the `shared` value as the first argument of the `view` function:
 
