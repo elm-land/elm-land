@@ -46,24 +46,36 @@ type PageFile
 type alias Internals =
     { filepath : List String
     , contents : String
+    , isSandboxOrElementElmLandPage : Bool
+    , isAdvancedElmLandPage : Bool
     }
 
 
 decoder : Json.Decode.Decoder PageFile
 decoder =
-    Json.Decode.map PageFile
-        (Json.Decode.map2 Internals
-            (Json.Decode.field "filepath" (Json.Decode.list Json.Decode.string))
-            (Json.Decode.oneOf
-                [ Json.Decode.field "contents" Json.Decode.string
-                , Json.Decode.succeed ""
-                ]
+    Json.Decode.oneOf
+        [ Json.Decode.field "contents" Json.Decode.string
+        , Json.Decode.succeed ""
+        ]
+        |> Json.Decode.andThen
+            (\contents ->
+                Json.Decode.map PageFile
+                    (Json.Decode.map4 Internals
+                        (Json.Decode.field "filepath" (Json.Decode.list Json.Decode.string))
+                        (Json.Decode.succeed contents)
+                        (Json.Decode.succeed (isSandboxOrElementElmLandPageInternal contents))
+                        (Json.Decode.succeed (isAdvancedElmLandPageInternal contents))
+                    )
             )
-        )
 
 
 isSandboxOrElementElmLandPage : PageFile -> Bool
-isSandboxOrElementElmLandPage (PageFile { contents }) =
+isSandboxOrElementElmLandPage (PageFile page) =
+    page.isSandboxOrElementElmLandPage
+
+
+isSandboxOrElementElmLandPageInternal : String -> Bool
+isSandboxOrElementElmLandPageInternal contents =
     let
         isElmLandPageFromFile : Elm.Syntax.File.File -> Bool
         isElmLandPageFromFile file =
@@ -110,7 +122,12 @@ isSandboxOrElementElmLandPage (PageFile { contents }) =
 
 
 isAdvancedElmLandPage : PageFile -> Bool
-isAdvancedElmLandPage (PageFile { contents }) =
+isAdvancedElmLandPage (PageFile page) =
+    page.isAdvancedElmLandPage
+
+
+isAdvancedElmLandPageInternal : String -> Bool
+isAdvancedElmLandPageInternal contents =
     let
         isElmLandPageFromFile : Elm.Syntax.File.File -> Bool
         isElmLandPageFromFile file =
