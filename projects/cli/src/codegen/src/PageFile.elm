@@ -48,6 +48,7 @@ type alias Internals =
     , contents : String
     , isSandboxOrElementElmLandPage : Bool
     , isAdvancedElmLandPage : Bool
+    , isAuthProtectedPage : Bool
     }
 
 
@@ -60,11 +61,12 @@ decoder =
         |> Json.Decode.andThen
             (\contents ->
                 Json.Decode.map PageFile
-                    (Json.Decode.map4 Internals
+                    (Json.Decode.map5 Internals
                         (Json.Decode.field "filepath" (Json.Decode.list Json.Decode.string))
                         (Json.Decode.succeed contents)
                         (Json.Decode.succeed (isSandboxOrElementElmLandPageInternal contents))
                         (Json.Decode.succeed (isAdvancedElmLandPageInternal contents))
+                        (Json.Decode.succeed (isAuthProtectedPageInternal contents))
                     )
             )
 
@@ -317,7 +319,12 @@ fromFunctionToExpression function =
 
 
 isAuthProtectedPage : PageFile -> Bool
-isAuthProtectedPage (PageFile { contents }) =
+isAuthProtectedPage (PageFile page) =
+    page.isAuthProtectedPage
+
+
+isAuthProtectedPageInternal : String -> Bool
+isAuthProtectedPageInternal contents =
     let
         isElmLandPageFromFile : Elm.Syntax.File.File -> Bool
         isElmLandPageFromFile file =
