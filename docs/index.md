@@ -51,6 +51,14 @@ const foundingSponsors = [
 
 const sponsors = [
   {
+    avatar: 'https://www.github.com/vladimirlogachev.png',
+    name: 'Vladimir Logachev',
+    title: '@vladimirlogachev',
+    links: [
+      { icon: 'github', link: 'https://github.com/vladimirlogachev' }
+    ]
+  },
+  {
     avatar: 'https://www.github.com/dbj.png',
     name: 'Dirk Johnson',
     title: '@dbj',
