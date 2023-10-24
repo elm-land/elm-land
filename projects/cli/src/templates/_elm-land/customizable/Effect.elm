@@ -4,6 +4,7 @@ module Effect exposing
     , sendCmd, sendMsg
     , pushRoute, replaceRoute, loadExternalUrl
     , map, toCmd
+    , popUrl
     )
 
 {-|
@@ -36,6 +37,7 @@ type Effect msg
     | PushUrl String
     | ReplaceUrl String
     | LoadExternalUrl String
+    | PopUrl
       -- SHARED
     | SendSharedMsg Shared.Msg.Msg
 
@@ -89,6 +91,7 @@ pushRoute :
 pushRoute route =
     PushUrl (Route.toString route)
 
+
 {-| Set given path as route (without any query params or hash), and make the back button go back to the current route.
 -}
 pushPath :
@@ -96,6 +99,7 @@ pushPath :
     -> Effect msg
 pushPath path =
     PushUrl (Route.toString { path = path, query = Dict.empty, hash = Nothing })
+
 
 {-| Set the new route, but replace the previous one, so clicking the back
 button **won't** go back to the previous route.
@@ -109,6 +113,7 @@ replaceRoute :
 replaceRoute route =
     ReplaceUrl (Route.toString route)
 
+
 {-| Set given path as route (without any query params or hash), but replace the previous route,
 so clicking the back button **won't** go back to the previous route
 -}
@@ -118,11 +123,17 @@ replacePath :
 replacePath path =
     ReplaceUrl (Route.toString { path = path, query = Dict.empty, hash = Nothing })
 
+
 {-| Redirect users to a new URL, somewhere external your web application.
 -}
 loadExternalUrl : String -> Effect msg
 loadExternalUrl =
     LoadExternalUrl
+
+
+popUrl : Effect msg
+popUrl =
+    PopUrl
 
 
 
@@ -149,6 +160,9 @@ map fn effect =
 
         ReplaceUrl url ->
             ReplaceUrl url
+
+        PopUrl ->
+            PopUrl
 
         LoadExternalUrl url ->
             LoadExternalUrl url
@@ -188,6 +202,9 @@ toCmd options effect =
 
         LoadExternalUrl url ->
             Browser.Navigation.load url
+
+        PopUrl ->
+            Browser.Navigation.back options.key 1
 
         SendSharedMsg sharedMsg ->
             Task.succeed sharedMsg
