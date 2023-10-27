@@ -821,7 +821,7 @@ view (Setting settings) =
         viewDropdownMenuItem item =
             button
                 [ class "dropdown__menu-item"
-                , onClick onMenuItemClick
+                , onMouseDown (onMenuItemClick item)
                 ]
                 [ text (settings.toLabel item)
                 ]
