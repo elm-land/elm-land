@@ -155,7 +155,7 @@ Go back one or more entries from the browser history. This is just like [Browser
 #### __Definition__
 
 ```elm
-Effect.popPath : Effect msg
+Effect.back : Int -> Effect msg
 ```
 
 ### `Effect.loadExternalUrl`
