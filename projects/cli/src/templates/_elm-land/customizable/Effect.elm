@@ -4,7 +4,7 @@ module Effect exposing
     , sendCmd, sendMsg
     , pushRoute, replaceRoute, loadExternalUrl
     , map, toCmd
-    , popPath, popRoute
+    , back, popPath, popRoute
     )
 
 {-|
@@ -37,7 +37,7 @@ type Effect msg
     | PushUrl String
     | ReplaceUrl String
     | LoadExternalUrl String
-    | PopRoute
+    | NavigateBack Int
       -- SHARED
     | SendSharedMsg Shared.Msg.Msg
 
@@ -133,14 +133,19 @@ loadExternalUrl =
 
 popRoute : Effect msg
 popRoute =
-    PopRoute
+    NavigateBack 1
 
 
 {-| Convenience function to be semetric to pushUrl and pushRoute
 -}
 popPath : Effect msg
 popPath =
-    PopRoute
+    NavigateBack 1
+
+
+back : Int -> Effect msg
+back n =
+    NavigateBack n
 
 
 
@@ -168,8 +173,8 @@ map fn effect =
         ReplaceUrl url ->
             ReplaceUrl url
 
-        PopRoute ->
-            PopRoute
+        NavigateBack n ->
+            NavigateBack n
 
         LoadExternalUrl url ->
             LoadExternalUrl url
@@ -210,8 +215,8 @@ toCmd options effect =
         LoadExternalUrl url ->
             Browser.Navigation.load url
 
-        PopRoute ->
-            Browser.Navigation.back options.key 1
+        NavigateBack n ->
+            Browser.Navigation.back options.key n
 
         SendSharedMsg sharedMsg ->
             Task.succeed sharedMsg
