@@ -126,6 +126,38 @@ Effect.replacePath :
     -> Effect msg
 ```
 
+### `Effect.popRoute`
+
+Pop the current entry from the browser history. This is just like [Browser.Navigation.back 1](https://package.elm-lang.org/packages/elm/browser/latest/Browser-Navigation#backUrl), except it doesn't require a `Key` argument.
+
+#### __Definition__
+
+```elm
+Effect.popRoute : Effect msg
+```
+
+### `Effect.popPath`
+
+Pop the current entry from the browser history. This is just like [Browser.Navigation.back 1](https://package.elm-lang.org/packages/elm/browser/latest/Browser-Navigation#backUrl), except it doesn't require a `Key` argument. Same as popRoute.
+
+
+#### __Definition__
+
+```elm
+Effect.popPath : Effect msg
+```
+
+### `Effect.back`
+
+Go back one or more entries from the browser history. This is just like [Browser.Navigation.back](https://package.elm-lang.org/packages/elm/browser/latest/Browser-Navigation#backUrl), except it doesn't require a `Key` argument.
+
+
+#### __Definition__
+
+```elm
+Effect.popPath : Effect msg
+```
+
 ### `Effect.loadExternalUrl`
 
 Navigate to an external URL, outside your application. This is just like [Browser.Navigation.load](https://package.elm-lang.org/packages/elm/browser/latest/Browser-Navigation#load), except it returns an `Effect` rather than a `Cmd`.
