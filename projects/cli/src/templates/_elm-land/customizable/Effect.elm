@@ -136,7 +136,7 @@ popRoute =
     NavigateBack 1
 
 
-{-| Convenience function to be semetric to pushUrl and pushRoute
+{-| Convenience function to be symmetric to pushUrl and pushRoute
 -}
 popPath : Effect msg
 popPath =
