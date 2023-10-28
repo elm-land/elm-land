@@ -128,7 +128,7 @@ Effect.replacePath :
 
 ### `Effect.popRoute`
 
-Pop the current entry from the browser history. This is just like [Browser.Navigation.back 1](https://package.elm-lang.org/packages/elm/browser/latest/Browser-Navigation#backUrl), except it doesn't require a `Key` argument.
+Pop the current entry from the browser history. This is just like [Browser.Navigation.back 1](https://package.elm-lang.org/packages/elm/browser/latest/Browser-Navigation#back), except it doesn't require a `Key` argument.
 
 #### __Definition__
 
@@ -138,7 +138,7 @@ Effect.popRoute : Effect msg
 
 ### `Effect.popPath`
 
-Pop the current entry from the browser history. This is just like [Browser.Navigation.back 1](https://package.elm-lang.org/packages/elm/browser/latest/Browser-Navigation#backUrl), except it doesn't require a `Key` argument. Same as popRoute.
+Pop the current entry from the browser history. This is just like [Browser.Navigation.back 1](https://package.elm-lang.org/packages/elm/browser/latest/Browser-Navigation#back), except it doesn't require a `Key` argument. Same as popRoute.
 
 
 #### __Definition__
@@ -149,7 +149,7 @@ Effect.popPath : Effect msg
 
 ### `Effect.back`
 
-Go back one or more entries from the browser history. This is just like [Browser.Navigation.back](https://package.elm-lang.org/packages/elm/browser/latest/Browser-Navigation#backUrl), except it doesn't require a `Key` argument.
+Go back one or more entries from the browser history. This is just like [Browser.Navigation.back](https://package.elm-lang.org/packages/elm/browser/latest/Browser-Navigation#back), except it doesn't require a `Key` argument.
 
 
 #### __Definition__
