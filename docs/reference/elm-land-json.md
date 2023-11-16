@@ -336,6 +336,51 @@ __Output__: `dist/index.html`
 ```
 :::
 
+### app.html.base
+
+::: info TYPE
+
+```elm
+String
+```
+:::
+
+The base tag in your Elm Land application can be used to specify a base URL for all the relative URLs within your application. This can be particularly useful when you have a scenario where your Elm Land application is nested within a larger site or application and you need to specify a different base URL for your Elm Land application.
+
+For example, if your Elm Land application is hosted at www.example.com/my-app, you can set the base property to "/my-app". This way, all your relative URLs will be based on this base URL.
+
+::: tip EXAMPLE
+
+__Input__: elm-land.json
+
+```jsonc {6}
+{
+  "app": {
+    // ...
+    "html": {
+      // ...
+      "base": "/my-app",
+      // ...
+    }
+  }
+}
+```
+
+__Output__: `dist/index.html`
+
+```html {4}
+<!DOCTYPE>
+<html lang="en">
+  <body>
+    <base href="/my-app">
+    <!-- ... -->
+  </body>
+    <!-- ... -->
+</html>
+```
+
+:::
+
 ### app.html.meta
 
 ::: info TYPE
