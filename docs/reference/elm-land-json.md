@@ -359,7 +359,9 @@ __Input__: elm-land.json
     // ...
     "html": {
       // ...
-      "base": "/my-app",
+      "base": {
+        "href": "/my-app/"
+      }
       // ...
     }
   }
