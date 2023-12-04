@@ -17,6 +17,7 @@ const sidebar = [
     text: 'Concepts',
     items: [
       { text: 'Introduction', link: '/concepts/' },
+      { text: 'CLI', link: '/concepts/cli' },
       { text: 'Pages', link: '/concepts/pages' },
       { text: 'Layouts', link: '/concepts/layouts' },
       { text: 'Components', link: '/concepts/components' },

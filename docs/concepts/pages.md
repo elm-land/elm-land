@@ -207,7 +207,7 @@ We recommend using `Route.href` rather than `Html.Attributes.href` when linking 
 
 ## Route naming convention 
 
-When working with pages, it's important to understand how Elm Land determines which page files to learn. If you have worked with a JavaScript application framework before, these rules should look familiar.
+When working with pages, it's important to understand how Elm Land determines which page files to load. If you have worked with a JavaScript application framework before, these rules should look familiar.
 
 Here are the categories of routes you'll find in every Elm Land project, ordered from most to least specific:
 
