@@ -361,7 +361,7 @@ route.params ==
     { repo = "elm-land"
     , user = "elm-land"
     , branch = "main"
-    , all_ = [ "README" ]
+    , all_ = [ "README.md" ]
     }
 
 -- /ryannhg/elm-spa/tree/master/README.md
@@ -369,7 +369,7 @@ route.params ==
     { repo = "ryannhg"
     , user = "elm-spa"
     , branch = "master"
-    , all_ = [ "README" ]
+    , all_ = [ "README.md" ]
     }
 
 -- /elm-land/elm-land/tree/main/projects/cli/package.json
