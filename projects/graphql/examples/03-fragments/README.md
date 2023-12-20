@@ -8,9 +8,9 @@ Elm Land GraphQL uses a simple formula when naming type aliases in your generate
 2. If that name is already in use, attempt to prefix it with the field that's using it (Example: "Followers_User")
 3. If that name is already in use, keep incrementing numbers until it works ("User_1", "User_2", etc)
 
-This strategy prevents conflicts, but can generate less-readable names like `Followers_User` when the same GraphQL type is used twice in one query.
+This strategy prevents conflicts, but can generate less-readable names like `Followers_User` when the same `User` GraphQL type is used with different selections in one query.
 
-Elm Land GraphQL allows you to use __GraphQL fragments__ to solve this problem, and provide more readable names in your code. If you move an entire selection into a named fragment, Elm will generate type aliases with the name you want to use in your Elm code.
+Elm Land GraphQL allows you to use __GraphQL fragments__ to solve this problem, and provide more readable names in your code. If you move an entire selection into a named fragment, Elm will generate type aliases with the name of the fragment.
 
 
 ## Example
