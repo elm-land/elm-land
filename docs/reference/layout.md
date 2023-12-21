@@ -132,7 +132,7 @@ type Msg
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        OnUrlChanged { from, to } ->
+        UrlChanged { from, to } ->
             ( model, Effect.none )
 
         ...
