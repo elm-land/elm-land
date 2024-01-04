@@ -41,16 +41,15 @@ import { VPTeamMembers } from 'vitepress/theme'
 
 const foundingSponsors = [
   {
-    logo: '/images/sponsors/lamdera.jpg',
+    logo: 'https://lamdera.com/images/lamdera-logo-black.png',
     name: 'Lamdera',
-    width: 480,
-    height: 161,
+    width: 878,
+    height: 141,
     url: 'https://lamdera.com/'
   },
   {
     logo: 'https://blog.cachix.org/img/logo.png',
     name: 'Cachix',
-    bg: 'white',
     width: 788,
     height: 261,
     url: 'https://www.cachix.org/'
