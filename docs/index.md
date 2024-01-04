@@ -46,6 +46,14 @@ const foundingSponsors = [
     width: 480,
     height: 161,
     url: 'https://lamdera.com/'
+  },
+  {
+    logo: 'https://blog.cachix.org/img/logo.png',
+    name: 'Cachix',
+    bg: 'white',
+    width: 788,
+    height: 261,
+    url: 'https://www.cachix.org/'
   }
 ]
 
