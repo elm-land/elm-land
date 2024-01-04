@@ -326,7 +326,7 @@ elm-land routes
 
 ```txt
 
-  🌈  Elm Land (v0.19.4) found 6 pages in your application
+  🌈  Elm Land (v0.19.5) found 6 pages in your application
     ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
   src/Pages/Home_.elm ........................... /
   src/Pages/SignIn.elm .......................... /sign-in
@@ -481,7 +481,8 @@ Let's add a `<link>` tag to our HTML by updating the `app.html.link` property:
     },
     "router": {
       "useHashRouting": false
-    }
+    },
+    "proxy": null
   }
 }
 ```
