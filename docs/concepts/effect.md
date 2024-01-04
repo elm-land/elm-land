@@ -87,16 +87,14 @@ Effect.pushRoute :
     -> Effect msg
 ```
 
-### `Effect.pushPath`
+### `Effect.pushRoutePath`
 
 Push a new Path onto the browser history as a route without query and hash. This is just like [Browser.Navigation.pushUrl](https://package.elm-lang.org/packages/elm/browser/latest/Browser-Navigation#pushUrl), except it doesn't require a `Key` argument.
 
 #### __Definition__
 
 ```elm
-Effect.pushPath :
-    Route.Path.Path
-    -> Effect msg
+Effect.pushRoutePath : Route.Path.Path -> Effect msg
 ```
 
 ### `Effect.replaceRoute`
@@ -114,16 +112,14 @@ Effect.replaceRoute :
     -> Effect msg
 ```
 
-### `Effect.replacePath`
+### `Effect.replaceRoutePath`
 
 Replace the current browser history entry with a new Path as URL without query and hash. This is just like [Browser.Navigation.replaceUrl](https://package.elm-lang.org/packages/elm/browser/latest/Browser-Navigation#replaceUrl), except it doesn't require a `Key` argument.
 
 #### __Definition__
 
 ```elm
-Effect.replacePath :
-    Route.Path.Path
-    -> Effect msg
+Effect.replaceRoutePath : Route.Path.Path -> Effect msg
 ```
 
 ### `Effect.loadExternalUrl`
@@ -132,6 +128,14 @@ Navigate to an external URL, outside your application. This is just like [Browse
 
 ```elm
 Effect.loadExternalUrl : String -> Effect msg
+```
+
+### `Effect.back`
+
+Navigate back on page. This is just like [Browser.Navigation.back](https://package.elm-lang.org/packages/elm/browser/latest/Browser-Navigation#back), except it returns an `Effect` rather than a `Cmd`.
+
+```elm
+Effect.back : Effect msg
 ```
 
 
