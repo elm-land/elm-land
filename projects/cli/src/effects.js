@@ -381,9 +381,15 @@ const syncCustomizableFiles = async () => {
     let fileInTemplatesFolder = path.join(__dirname, 'templates', '_elm-land', 'customizable', ...filepath.split('/'))
     let fileInElmLandSrcFolder = path.join(process.cwd(), '.elm-land', 'src', ...filepath.split('/'))
 
-    let userSrcFileExists = await Files.exists(fileInUsersSrcFolder)
+    let usersSrcFileExists = await Files.exists(fileInUsersSrcFolder)
 
-    if (!userSrcFileExists) {
+    if (usersSrcFileExists) {
+      let elmLandSrcFileExists = await Files.exists(fileInElmLandSrcFolder)
+
+      if (elmLandSrcFileExists) {
+        return Files.remove(fileInElmLandSrcFolder)
+      }
+    } else {
       return Files.copyPasteFile({
         source: fileInTemplatesFolder,
         destination: fileInElmLandSrcFolder
