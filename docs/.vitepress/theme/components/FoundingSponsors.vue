@@ -14,33 +14,41 @@ export default {
 </script>
 
 <style>
+
+
 .founding-sponsor__grid {
-  padding: 2rem;
-  margin: 0 -4rem;
-  display: grid;
-  gap: 2rem;
-  justify-content: center;
-  grid-template-columns: repeat(auto-fit, 480px);
+    padding: 2rem;
+    margin: 0 -4rem;
+    display: grid;
+    gap: 2rem;
+    justify-content: center;
+    grid-template-columns: repeat(auto-fit, min(320px, 80vw));
 }
+
 .founding-sponsor {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 1rem;
-  margin: 0;
-  transition: opacity 200ms ease-in-out;
+    display: flex;
+    flex: 1 1 auto;
+    padding: 0 2rem;
+    margin: 0;
+    transition: opacity .2s ease-in-out;
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    min-height: 120px;
+    align-items: center;
 }
+
 .founding-sponsor:hover {
-  opacity: 0.75;
+    opacity: .75
 }
 
 .founding-sponsor h3 {
-  padding: 0;
-  margin: 0;
+    padding: 0;
+    margin: 0
 }
+
 .founding-sponsor img {
-  border-radius: 4px;
-  margin: 0;
-  flex-grow: 1;
+    margin: 0;
+    max-width: 100%;
 }
 </style>
