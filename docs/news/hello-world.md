@@ -48,7 +48,7 @@ In the top-left corner, he added "ML family" (things like Haskell or OCaml) and 
 
 Evan suggested that there's an ideal place, somewhere in the top-right corner of the graph, where a language could be __both usable _and_ easy to maintain__. To represent that ideal spot, Evan drew a little rainbow:
 
-![A graph, showing a happy rainbow in the top right, that looks oddly like the Elm Land logo...](../public/images/news/hello-world/empty-graph.jpg)
+![A graph, showing a happy rainbow in the top right, that looks oddly like the Elm Land logo...](/images/news/hello-world/empty-graph.jpg)
 
 Evan asked the audience another question: how do we get __those functional programmers__ to this happy place? After a brief pause, he revealed that it was a trick question: this goal might not make sense.
 
@@ -61,7 +61,7 @@ Why isn't this Evan's goal? Here's how he explains the problem in his talk:
 
 Instead, Evan suggested a different goal: Set out to __improve the maintainability__ for the huge number of folks doing frontend web development. This led to a brand new arrow being drawn on the graph instead:
 
-![An arrow pointing from JS to a happy rainbow logo](../public//images/news/hello-world/js-to-rainbow.jpg)
+![An arrow pointing from JS to a happy rainbow logo](/images/news/hello-world/js-to-rainbow.jpg)
 
 At its core, Elm is about making reliable apps more accessible to everyone. The goal of _Elm Land_ is to return to the guiding principles that Evan outlined in his talk:
 - __Gradual learning__ - Make things welcoming for folks getting started

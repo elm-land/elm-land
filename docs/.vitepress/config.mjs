@@ -1,3 +1,5 @@
+import { defineConfig } from 'vitepress'
+
 const version = '0.19.4'
 
 const sidebar = [
@@ -49,7 +51,7 @@ const sidebar = [
   }
 ]
 
-export default {
+export default defineConfig({
   title: 'Elm Land',
   description: 'Reliable web apps for everyone. A production-ready framework for building Elm applications. Build your next app with confidence, step by step.',
   head: [
@@ -117,3 +119,4 @@ export default {
     lastUpdatedText: 'Updated on'
   }
 }
+)

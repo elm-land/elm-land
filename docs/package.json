@@ -1,13 +1,13 @@
 {
-  "name": "@elm-land/docs",
+  "name": "docs",
   "version": "1.0.0",
   "description": "The website at https://elm.land",
   "main": "index.js",
   "scripts": {
-    "start": "npm install && npm run dev",
-    "dev": "vitepress dev .",
-    "build": "vitepress build .",
-    "serve": "vitepress serve ."
+    "start": "npm i && npm run dev",
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "preview": "vitepress preview"
   },
   "repository": {
     "type": "git",
@@ -22,10 +22,6 @@
   "license": "ISC",
   "homepage": "https://elm.land",
   "devDependencies": {
-    "vitepress": "1.0.0-alpha.73",
-    "vue": "3.2.37"
-  },
-  "volta": {
-    "node": "16.17.0"
+    "vitepress": "1.0.0-rc.35"
   }
 }
