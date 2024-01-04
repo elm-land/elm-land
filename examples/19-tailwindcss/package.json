@@ -1,0 +1,20 @@
+{
+  "name": "elm-land-tailwindcss",
+  "version": "1.0.0",
+  "description": "> Built with [Elm Land](https://elm.land) 🌈",
+  "main": "index.js",
+  "scripts": {
+    "start": "elm-land server",
+    "build": "elm-land build",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "BSD-3-Clause",
+  "devDependencies": {
+    "autoprefixer": "^10.4.16",
+    "elm-land": "^0.19.4",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.4.0"
+  }
+}
