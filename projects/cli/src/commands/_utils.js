@@ -77,31 +77,43 @@ let couldntFindTypeScriptBinary = (filepath) => [
 
 let customizableFiles = {
   'shared': {
-    filepaths: ['Shared.elm', 'Shared/Model.elm', 'Shared/Msg.elm'],
+    filepaths: [
+      {src: 'Shared.elm', target: 'Shared.elm'},
+      {src: 'Shared/Model.elm', target: 'Shared/Model.elm'},
+      {src: 'Shared/Msg.elm', target: 'Shared/Msg.elm'}
+    ],
     description: '.................... share data across pages'
   },
   'not-found': {
-    filepaths: ['Pages/NotFound_.elm'],
+    filepaths: [{src: 'Pages/NotFound_.elm', target: 'Pages/NotFound_.elm'}],
     description: '... the 404 page shown for unknown routes'
   },
   'view': {
-    filepaths: ['View.elm'],
-    description: '................ use Elm UI, Elm CSS, and more'
+    filepaths: [{src: 'View.elm', target: 'View.elm'}],
+    description: '......... use whatever Elm UI package you like'
+  },
+  'view:elm-ui': {
+    filepaths: [{src: 'ViewElmUi.elm', target: 'View.elm'}],
+    description: '............................ use Elm UI'
+  },
+  'view:elm-css': {
+    filepaths: [{src: 'ViewElmCss.elm', target: 'View.elm'}],
+    description: '.......................... use Elm CSS'
   },
   'effect': {
-    filepaths: ['Effect.elm'],
+    filepaths: [{src: 'Effect.elm', target: 'Effect.elm'}],
     description: '............. send custom effects from pages'
   },
   'auth': {
-    filepaths: ['Auth.elm'],
+    filepaths: [{src: 'Auth.elm', target: 'Auth.elm'}],
     description: '................... handle user authentication'
   },
   'js': {
-    filepaths: ['interop.js'],
+    filepaths: [{src: 'interop.js', target: 'interop.js'}],
     description: '......... work with JavaScript, flags, and ports'
   },
   'ts': {
-    filepaths: ['interop.ts'],
+    filepaths: [{src: 'interop.ts', target: 'interop.ts'}],
     description: '......... work with TypeScript, flags, and ports'
   },
 }

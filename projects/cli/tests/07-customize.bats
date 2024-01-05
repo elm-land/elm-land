@@ -32,7 +32,7 @@ load helpers
 
   # Run elm-land customize without an argument
   run elm-land customize fart
-  expectToFail  
+  expectToFail
   expectOutputContains "Here are the commands"
 
   # Clean up tmp folder
@@ -91,6 +91,81 @@ load helpers
   run elm-land add page /test
   expectFileExists "src/Pages/Test.elm"
   expectFileContains "src/Pages/Test.elm" "View.fromString"
+
+  # Clean up tmp folder
+  cd ../..
+  rm -r tmp
+}
+
+@test "'elm-land customize view' customizes the View module using the default variant" {
+
+  # Create a new project
+  mkdir -p tests/tmp
+  cd tests/tmp
+  run elm-land init hello-world
+  expectToPass
+  cd hello-world
+
+  run elm-land customize view
+  expectFileExists "src/View.elm"
+  expectFileContains "src/View.elm" "import Html exposing (Html)"
+
+  # Clean up tmp folder
+  cd ../..
+  rm -r tmp
+}
+
+@test "'elm-land customize view:elm-css' customizes the View module using elm-css variant" {
+
+  # Create a new project
+  mkdir -p tests/tmp
+  cd tests/tmp
+  run elm-land init hello-world
+  expectToPass
+  cd hello-world
+
+  run elm-land customize view:elm-css
+  expectFileExists "src/View.elm"
+  expectFileContains "src/View.elm" "import Html.Styled"
+
+  # Clean up tmp folder
+  cd ../..
+  rm -r tmp
+}
+
+@test "'elm-land customize view:elm-ui' customizes the View module using elm-ui variant" {
+
+  # Create a new project
+  mkdir -p tests/tmp
+  cd tests/tmp
+  run elm-land init hello-world
+  expectToPass
+  cd hello-world
+
+  run elm-land customize view:elm-ui
+  expectFileExists "src/View.elm"
+  expectFileContains "src/View.elm" "import Element"
+
+  # Clean up tmp folder
+  cd ../..
+  rm -r tmp
+}
+
+@test "default View module is restored after customization and removal of custom View module" {
+
+  # Create a new project
+  mkdir -p tests/tmp
+  cd tests/tmp
+  run elm-land init hello-world
+  expectToPass
+  cd hello-world
+
+  run elm-land customize view:elm-css
+  rm src/View.elm
+  run elm-land generate
+  expectFileDoesNotExist "src/View.elm"
+  expectFileExists ".elm-land/src/View.elm"
+  expectFileContains ".elm-land/src/View.elm" "import Html exposing (Html)"
 
   # Clean up tmp folder
   cd ../..

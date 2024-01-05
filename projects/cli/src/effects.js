@@ -153,7 +153,7 @@ let runServer = async (options) => {
     // if the customized versions are deleted
     let customizableFileFilepaths =
       Object.values(Utils.customizableFiles)
-        .flatMap(({ filepaths }) => filepaths.map(filepath => path.join(process.cwd(), 'src', ...filepath.split('/'))))
+        .flatMap(({ filepaths }) => filepaths.map(filepath => path.join(process.cwd(), 'src', ...filepath.target.split('/'))))
     let customizedFilepaths = chokidar.watch(customizableFileFilepaths, {
       ignorePermissionErrors: true,
       ignoreInitial: true
@@ -347,8 +347,8 @@ const attempt = (fn) => {
 const customize = async (filepaths) => {
   await Promise.all(
     filepaths.map(async filepath => {
-      let source = path.join(__dirname, 'templates', '_elm-land', 'customizable', ...filepath.split('/'))
-      let destination = path.join(process.cwd(), 'src', ...filepath.split('/'))
+      let source = path.join(__dirname, 'templates', '_elm-land', 'customizable', ...filepath.src.split('/'))
+      let destination = path.join(process.cwd(), 'src', ...filepath.target.split('/'))
 
       let alreadyExists = await Files.exists(destination)
 
@@ -361,7 +361,7 @@ const customize = async (filepaths) => {
       }
 
       try {
-        await Files.remove(path.join(process.cwd(), '.elm-land', 'src', ...filepath.split('/')))
+        await Files.remove(path.join(process.cwd(), '.elm-land', 'src', ...filepath.target.split('/')))
       } catch (_) {
         // If the file isn't there, no worries
       }
@@ -374,12 +374,14 @@ const customize = async (filepaths) => {
 
 
 const syncCustomizableFiles = async () => {
-  let defaultFilepaths = Object.values(Utils.customizableFiles).flatMap(obj => obj.filepaths)
+  let defaultFilepaths = Object.values(Utils.customizableFiles)
+    .flatMap(obj => obj.filepaths)
+    .filter(filepath => filepath.src === filepath.target)
 
   await Promise.all(defaultFilepaths.map(async filepath => {
-    let fileInUsersSrcFolder = path.join(process.cwd(), 'src', ...filepath.split('/'))
-    let fileInTemplatesFolder = path.join(__dirname, 'templates', '_elm-land', 'customizable', ...filepath.split('/'))
-    let fileInElmLandSrcFolder = path.join(process.cwd(), '.elm-land', 'src', ...filepath.split('/'))
+    let fileInUsersSrcFolder = path.join(process.cwd(), 'src', ...filepath.target.split('/'))
+    let fileInTemplatesFolder = path.join(__dirname, 'templates', '_elm-land', 'customizable', ...filepath.src.split('/'))
+    let fileInElmLandSrcFolder = path.join(process.cwd(), '.elm-land', 'src', ...filepath.target.split('/'))
 
     let usersSrcFileExists = await Files.exists(fileInUsersSrcFolder)
 
@@ -412,7 +414,7 @@ const handleElmLandFiles = async () => {
 }
 
 const generate = async (config) => {
-  // Create default files in `.elm-land/src` if they aren't already 
+  // Create default files in `.elm-land/src` if they aren't already
   // defined by the user in the `src` folder
   await handleElmLandFiles()
 
@@ -432,7 +434,7 @@ const build = async (config) => {
   // Typecheck any TypeScript interop
   await TypeScriptPlugin.verifyTypescriptCompiles()
 
-  // Build app in dist folder 
+  // Build app in dist folder
   try {
     await Vite.build({
       configFile: false,
