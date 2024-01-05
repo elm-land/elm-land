@@ -7,12 +7,13 @@
   "bin": {
     "elm-land": "src/index.js"
   },
+  "type": "module",
   "scripts": {
     "start": "npm install && npm run setup && npm run dev",
     "setup": "npm run build",
     "build": "npm run build:codegen-worker && npm run build:validate-worker",
-    "build:codegen-worker": "(cd src/codegen && elm make src/Worker.elm --optimize --output=../../dist/codegen-worker.js)",
-    "build:validate-worker": "(cd src/validate && elm make src/Worker.elm --optimize --output=../../dist/validate-worker.js)",
+    "build:codegen-worker": "(cd src/codegen && elm make src/Worker.elm --optimize --output=../../dist/codegen-worker.js && mv ../../dist/codegen-worker.js ../../dist/codegen-worker.cjs)",
+    "build:validate-worker": "(cd src/validate && elm make src/Worker.elm --optimize --output=../../dist/validate-worker.js && mv ../../dist/validate-worker.js ../../dist/validate-worker.cjs)",
     "dev": "npm run dev:codegen-worker & npm run dev:validate-worker",
     "dev:codegen-worker": "chokidar src/codegen/src -c \"npm run build:codegen-worker\" --initial",
     "dev:validate-worker": "chokidar src/validate/src -c \"npm run build:validate-worker\" --initial",
@@ -43,6 +44,7 @@
     "node-elm-compiler": "5.0.6",
     "terser": "5.15.1",
     "typescript": "4.9.3",
-    "vite": "4.3.9"
+    "vite": "5.0.10",
+    "vite-plugin-elm-watch": "1.3.0"
   }
 }

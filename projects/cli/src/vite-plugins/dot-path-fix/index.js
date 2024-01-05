@@ -1,5 +1,5 @@
-const fs = require('fs')
-const path = require('path')
+import fs from 'fs'
+import path from 'path'
 
 const plugin = (props = {}) => {
     return {
@@ -32,6 +32,6 @@ const plugin = (props = {}) => {
     }
 };
 
-module.exports = {
+export default {
     plugin
 }

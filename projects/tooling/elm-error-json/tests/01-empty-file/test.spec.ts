@@ -1,14 +1,14 @@
 import path from 'path'
-import ElmErrorJson, { ElmError } from  '../../src/index'
+import ElmErrorJson, { ElmError } from '../../src/index'
 
-let rawJson : string | undefined
-let parsedError : ElmError | undefined
+let rawJson: string | undefined
+let parsedError: ElmError | undefined
 
 beforeAll(async () => {
   let filepath = path.join(__dirname, 'src', 'Main.elm')
   process.chdir(__dirname)
   rawJson = await ElmErrorJson.toRawJsonString(filepath)
-  parsedError = await ElmErrorJson.compile(filepath)  
+  parsedError = await ElmErrorJson.compile(filepath)
 })
 
 describe('01-empty-file', () => {

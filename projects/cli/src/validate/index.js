@@ -1,7 +1,9 @@
-const path = require('path')
+import path from 'path'
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url)
 
-let validate = async (flags) => {
-  let { Elm } = require('../../dist/validate-worker.js')
+export let validate = async (flags) => {
+  let { Elm } = require('../../dist/validate-worker.cjs')
 
   let elmLandErrors = await new Promise((resolve) => {
     let app = Elm.Worker.init({ flags })
@@ -14,8 +16,4 @@ let validate = async (flags) => {
   })
 
   return elmLandErrors
-}
-
-module.exports = {
-  validate
 }

@@ -1,12 +1,23 @@
-let { version } = require('../../package.json')
+import fs from 'fs'
+import path, { dirname } from 'path'
+import { fileURLToPath } from 'url'
 
-const Terminal = {
-  bold: (str) => '\033[1m' + str + '\033[0m',
-  dim: (str) => '\033[2m' + str + '\033[0m',
-  red: (str) => '\033[31m' + str + '\033[0m',
-  green: (str) => '\033[32m' + str + '\033[0m',
-  pink: (str) => '\033[35m' + str + '\033[0m',
-  cyan: (str) => '\033[36m' + str + '\033[0m',
+export const toDirname = (importMetaUrl) =>
+  dirname(fileURLToPath(importMetaUrl))
+
+const { version } = JSON.parse(fs.readFileSync(
+  path.join(toDirname(import.meta.url), '..', '..', 'package.json'),
+  { encoding: 'utf-8' })
+)
+
+
+export const Terminal = {
+  bold: (str) => '\u001b[1m' + str + '\u001b[0m',
+  dim: (str) => '\u001b[2m' + str + '\u001b[0m',
+  red: (str) => '\u001b[31m' + str + '\u001b[0m',
+  green: (str) => '\u001b[32m' + str + '\u001b[0m',
+  pink: (str) => '\u001b[35m' + str + '\u001b[0m',
+  cyan: (str) => '\u001b[36m' + str + '\u001b[0m',
 }
 
 const stripAnsi = (str) =>
@@ -106,15 +117,12 @@ let customizableFiles = {
   },
 }
 
-module.exports = {
-  Terminal,
-  Utils: {
-    intro,
-    didNotRecognizeCommand,
-    notInElmLandProject,
-    foundTypeScriptErrors,
-    couldntFindTypeScriptBinary,
-    customizableFiles
-  }
+export const Utils = {
+  intro,
+  didNotRecognizeCommand,
+  notInElmLandProject,
+  foundTypeScriptErrors,
+  couldntFindTypeScriptBinary,
+  customizableFiles
 }
 

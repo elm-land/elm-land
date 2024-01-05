@@ -8,7 +8,7 @@
 const queue = []
 let locked = false
 
-const acquireLock = async () => {
+export const acquireLock = async () => {
   await new Promise((resolve) => {
     if (!locked) {
       resolve()
@@ -26,8 +26,4 @@ const acquireLock = async () => {
       locked = false
     }
   }
-}
-
-module.exports = {
-  acquireLock
 }

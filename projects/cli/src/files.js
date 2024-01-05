@@ -1,5 +1,6 @@
-const fs = require('fs')
-const path = require('path')
+import fs from 'fs'
+import path from 'path'
+import { toDirname } from './commands/_utils.js'
 
 let create = async (filesAndFolders) => {
   await Promise.all(filesAndFolders.map(item => {
@@ -139,7 +140,7 @@ let createFolder = async ({ name }) => {
 let readFromCliFolder = async (filepath) => {
   let pieces = filepath.split('/')
   let content = fs.readFileSync(
-    path.join(__dirname, '..', ...pieces),
+    path.join(toDirname(import.meta.url), '..', ...pieces),
     { encoding: 'utf-8' }
   )
   return content.split('\r').join('')
@@ -201,17 +202,15 @@ let isNonEmptyFolder = async (filepath) => {
   }
 }
 
-module.exports = {
-  Files: {
-    isNonEmptyFolder,
-    readFromCliFolder,
-    readFromUserFolder,
-    create,
-    remove,
-    exists,
-    copyPasteFolder,
-    copyPasteFile,
-    touch,
-    listElmFilepathsInFolder
-  }
+export const Files = {
+  isNonEmptyFolder,
+  readFromCliFolder,
+  readFromUserFolder,
+  create,
+  remove,
+  exists,
+  copyPasteFolder,
+  copyPasteFile,
+  touch,
+  listElmFilepathsInFolder
 }

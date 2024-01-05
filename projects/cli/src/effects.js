@@ -1,14 +1,14 @@
-const chokidar = require('chokidar')
-const path = require('path')
-const Vite = require('vite')
-const ElmVitePlugin = require('./vite-plugins/elm/index.js')
-const TypeScriptPlugin = require('./vite-plugins/typescript/index.js')
-const DotPathFixPlugin = require('./vite-plugins/dot-path-fix/index.js')
-const { Codegen } = require('./codegen')
-const { Files } = require('./files')
-const { Utils, Terminal } = require('./commands/_utils')
-const { validate } = require('./validate/index.js')
-const { default: ElmErrorJson } = require('./vite-plugins/elm/elm-error-json.js')
+import ElmVitePlugin from 'vite-plugin-elm-watch'
+import * as chokidar from 'chokidar'
+import * as path from 'path'
+import * as Vite from 'vite'
+import TypeScriptPlugin from './vite-plugins/typescript/index.js'
+import DotPathFixPlugin from './vite-plugins/dot-path-fix/index.js'
+import { Codegen } from './codegen.js'
+import { Files } from './files.js'
+import { Utils, Terminal, toDirname } from './commands/_utils.js'
+import { validate } from './validate/index.js'
+import ElmErrorJson from './vite-plugins/elm/elm-error-json.js'
 
 
 let srcPagesFolderFilepath = path.join(process.cwd(), 'src', 'Pages')
@@ -185,9 +185,8 @@ let runServer = async (options) => {
       },
       plugins: [
         DotPathFixPlugin.plugin({ proxy }),
-        ElmVitePlugin.plugin({
-          debug,
-          optimize: false
+        ElmVitePlugin({
+          mode: (debug ? 'debug' : 'standard')
         }),
         TypeScriptPlugin.plugin()
       ],
@@ -347,7 +346,7 @@ const attempt = (fn) => {
 const customize = async (filepaths) => {
   await Promise.all(
     filepaths.map(async filepath => {
-      let source = path.join(__dirname, 'templates', '_elm-land', 'customizable', ...filepath.split('/'))
+      let source = path.join(toDirname(import.meta.url), 'templates', '_elm-land', 'customizable', ...filepath.split('/'))
       let destination = path.join(process.cwd(), 'src', ...filepath.split('/'))
 
       let alreadyExists = await Files.exists(destination)
@@ -378,7 +377,7 @@ const syncCustomizableFiles = async () => {
 
   await Promise.all(defaultFilepaths.map(async filepath => {
     let fileInUsersSrcFolder = path.join(process.cwd(), 'src', ...filepath.split('/'))
-    let fileInTemplatesFolder = path.join(__dirname, 'templates', '_elm-land', 'customizable', ...filepath.split('/'))
+    let fileInTemplatesFolder = path.join(toDirname(import.meta.url), 'templates', '_elm-land', 'customizable', ...filepath.split('/'))
     let fileInElmLandSrcFolder = path.join(process.cwd(), '.elm-land', 'src', ...filepath.split('/'))
 
     let usersSrcFileExists = await Files.exists(fileInUsersSrcFolder)
@@ -402,11 +401,11 @@ const handleElmLandFiles = async () => {
   await syncCustomizableFiles()
 
   await Files.copyPasteFolder({
-    source: path.join(__dirname, 'templates', '_elm-land', 'server'),
+    source: path.join(toDirname(import.meta.url), 'templates', '_elm-land', 'server'),
     destination: path.join(process.cwd(), '.elm-land'),
   })
   await Files.copyPasteFolder({
-    source: path.join(__dirname, 'templates', '_elm-land', 'src'),
+    source: path.join(toDirname(import.meta.url), 'templates', '_elm-land', 'src'),
     destination: path.join(process.cwd(), '.elm-land'),
   })
 }
@@ -444,10 +443,7 @@ const build = async (config) => {
       envDir: process.cwd(),
       envPrefix: 'ELM_LAND_',
       plugins: [
-        ElmVitePlugin.plugin({
-          debug: false,
-          optimize: true
-        })
+        ElmVitePlugin({ mode: 'minify' })
       ],
       logLevel: 'silent'
     })
@@ -646,6 +642,4 @@ let run = async (effects) => {
   return { problem: null, port }
 }
 
-module.exports = {
-  Effects: { run }
-}
+export const Effects = { run }

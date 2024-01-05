@@ -1,17 +1,17 @@
-const path = require('path')
-const fs = require('fs')
-const ChildProcess = require('child_process')
-const { Terminal, Utils } = require('../../commands/_utils.js')
-const { Files } = require('../../files.js')
+import path from 'path'
+import fs from 'fs'
+import ChildProcess from 'child_process'
+import { Terminal, Utils, toDirname } from '../../commands/_utils.js'
+import { Files } from '../../files.js'
 
 // Here's where we'll expect to find the Typescript binary installed
 const tscPaths = {
   // When locally installed with `npm install -D elm-land`
   // ✅ Tested with npm install -D, yarn, pnpm i
-  local: path.join(__dirname, '..', '..', '..', '..', 'typescript', 'bin', 'tsc'),
+  local: path.join(toDirname(import.meta.url), '..', '..', '..', '..', 'typescript', 'bin', 'tsc'),
   // When globally installed with `npm install -g elm-land`
   // ✅ Tested with npm install -g, yarn, pnpm
-  global: path.join(__dirname, '..', '..', '..', 'node_modules', '.bin', 'tsc'),
+  global: path.join(toDirname(import.meta.url), '..', '..', '..', 'node_modules', '.bin', 'tsc'),
 }
 
 const pathToTsc =
@@ -153,7 +153,7 @@ const verifyTypescriptCompiles = async (mode) => {
   }
 }
 
-module.exports = {
+export default {
   plugin,
   verifyTypescriptCompiles
 }

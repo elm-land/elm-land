@@ -1,3 +1,5 @@
+import { toDirname } from '../../commands/_utils.js'
+
 const compiler = require('node-elm-compiler')
 const { relative } = require('path')
 const { acquireLock } = require('./mutex')
@@ -13,10 +15,10 @@ const viteProjectPath = (dependency) => `/${relative(process.cwd(), dependency)}
 const elmPaths = {
   // When locally installed with `npm install -D elm-land`
   // ✅ Tested with npm install -D, yarn, pnpm i
-  local: path.join(__dirname, '..', '..', '..', '..', 'elm', 'bin', 'elm'),
+  local: path.join(toDirname(import.meta.url), '..', '..', '..', '..', 'elm', 'bin', 'elm'),
   // When globally installed with `npm install -g elm-land`
   // ✅ Tested with npm install -g, yarn, pnpm
-  global: path.join(__dirname, '..', '..', '..', 'node_modules', '.bin', 'elm'),
+  global: path.join(toDirname(import.meta.url), '..', '..', '..', 'node_modules', '.bin', 'elm'),
 }
 
 const pathToElm =
@@ -37,7 +39,7 @@ const parseImportId = (id) => {
   }
 }
 
-const plugin = (opts) => {
+export const plugin = (opts) => {
   const compilableFiles = new Map()
   const debug = opts ? opts.debug : undefined
   const optimize = opts ? opts.optimize : undefined
@@ -213,6 +215,4 @@ const plugin = (opts) => {
   }
 }
 
-module.exports = {
-  plugin
-}
+

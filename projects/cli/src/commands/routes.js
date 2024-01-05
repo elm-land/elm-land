@@ -1,6 +1,6 @@
-const path = require('path')
-const { Files } = require("../files")
-const { Utils, Terminal } = require("./_utils")
+import path from 'path'
+import { Files } from "../files.js"
+import { Utils, Terminal } from "./_utils.js"
 
 let printHelpInfo = () => {
   return {
@@ -110,8 +110,7 @@ const sortRoutes = (a, b) => {
 }
 
 
-module.exports = {
-  Routes: {
-    run, printHelpInfo
-  }
+export const Routes = {
+  run,
+  printHelpInfo
 }
