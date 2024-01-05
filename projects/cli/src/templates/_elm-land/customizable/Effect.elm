@@ -2,16 +2,22 @@ module Effect exposing
     ( Effect
     , none, batch
     , sendCmd, sendMsg
-    , pushRoute, replaceRoute, loadExternalUrl
+    , pushRoute, replaceRoute
+    , pushRoutePath, replaceRoutePath
+    , loadExternalUrl, back
     , map, toCmd
     )
 
 {-|
 
 @docs Effect
+
 @docs none, batch
 @docs sendCmd, sendMsg
-@docs pushRoute, replaceRoute, loadExternalUrl
+
+@docs pushRoute, replaceRoute
+@docs pushRoutePath, replaceRoutePath
+@docs loadExternalUrl, back
 
 @docs map, toCmd
 
@@ -36,6 +42,7 @@ type Effect msg
     | PushUrl String
     | ReplaceUrl String
     | LoadExternalUrl String
+    | Back
       -- SHARED
     | SendSharedMsg Shared.Msg.Msg
 
@@ -89,13 +96,13 @@ pushRoute :
 pushRoute route =
     PushUrl (Route.toString route)
 
-{-| Set given path as route (without any query params or hash), and make the back button go back to the current route.
+
+{-| Same as `Effect.pushRoute`, but without `query` or `hash` support
 -}
-pushPath :
-    Route.Path.Path
-    -> Effect msg
-pushPath path =
-    PushUrl (Route.toString { path = path, query = Dict.empty, hash = Nothing })
+pushRoutePath : Route.Path.Path -> Effect msg
+pushRoutePath path =
+    PushUrl (Route.Path.toString path)
+
 
 {-| Set the new route, but replace the previous one, so clicking the back
 button **won't** go back to the previous route.
@@ -109,20 +116,26 @@ replaceRoute :
 replaceRoute route =
     ReplaceUrl (Route.toString route)
 
-{-| Set given path as route (without any query params or hash), but replace the previous route,
-so clicking the back button **won't** go back to the previous route
+
+{-| Same as `Effect.replaceRoute`, but without `query` or `hash` support
 -}
-replacePath :
-    Route.Path.Path
-    -> Effect msg
-replacePath path =
-    ReplaceUrl (Route.toString { path = path, query = Dict.empty, hash = Nothing })
+replaceRoutePath : Route.Path.Path -> Effect msg
+replaceRoutePath path =
+    ReplaceUrl (Route.Path.toString path)
+
 
 {-| Redirect users to a new URL, somewhere external your web application.
 -}
 loadExternalUrl : String -> Effect msg
 loadExternalUrl =
     LoadExternalUrl
+
+
+{-| Navigate back one page
+-}
+back : Effect msg
+back =
+    Back
 
 
 
@@ -149,6 +162,9 @@ map fn effect =
 
         ReplaceUrl url ->
             ReplaceUrl url
+
+        Back ->
+            Back
 
         LoadExternalUrl url ->
             LoadExternalUrl url
@@ -185,6 +201,9 @@ toCmd options effect =
 
         ReplaceUrl url ->
             Browser.Navigation.replaceUrl options.key url
+
+        Back ->
+            Browser.Navigation.back options.key 1
 
         LoadExternalUrl url ->
             Browser.Navigation.load url

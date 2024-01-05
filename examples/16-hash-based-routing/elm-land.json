@@ -23,6 +23,7 @@
     },
     "router": {
       "useHashRouting": true
-    }
+    },
+    "proxy": null
   }
 }

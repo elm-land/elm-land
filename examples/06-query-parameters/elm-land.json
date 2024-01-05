@@ -25,6 +25,7 @@
     },
     "router": {
       "useHashRouting": false
-    }
+    },
+    "proxy": null
   }
 }

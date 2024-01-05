@@ -36,7 +36,8 @@ For reference, here is the default `elm-land.json` file that is created with eve
     },
     "router": {
       "useHashRouting": false
-    }
+    },
+    "proxy": null
   }
 }
 ```
@@ -521,3 +522,43 @@ Route.Path.SignIn ...................... /#/sign-in
 Route.Path.Users ....................... /#/users
 Route.Path.Users_Id_ { id = "123" } .... /#/users/123
 ```
+
+## app.proxy
+
+
+::: info TYPE
+```elm
+Dict String String
+```
+:::
+
+Configure custom proxy rules for the dev server. These options are
+forwarded directly to the internal Vite dev server configuration. If
+you don't have any proxy needs, you can leave this as `null`.
+
+::: tip EXAMPLE
+
+```jsonc {5}
+{
+  "app": {
+    // ...
+    "proxy": {
+      "/api": "http://localhost:5000"
+    }
+  }
+}
+```
+
+:::
+
+The example above allows requests to `http://localhost:1234/api/xyz` to be redirected to `http://localhost:5000/api/xyz`.
+
+__Note:__ Because the `elm-land.json` file does not support JS functions, you won't be able to
+specify the `rewrite` or `configure` functions mentioned in [Vite's proxy options](https://vitejs.dev/config/server-options.html#server-proxy).
+
+::: warning
+
+Just like with Vite, this `proxy` setting only applies to the __development__ server. You'll need
+to do something similar to get `/api` forwarding to your production API server another way.
+
+:::

@@ -165,6 +165,11 @@ let runServer = async (options) => {
     try { debug = config.app.elm[mode()].debugger }
     catch (_) { }
 
+    // Check for optional proxy field:
+    let proxy = null
+    try { proxy = config.app.proxy }
+    catch (_) { }
+
     // Run the vite server on options.port
     server = await Vite.createServer({
       configFile: false,
@@ -175,10 +180,11 @@ let runServer = async (options) => {
       server: {
         host: options.host,
         port: options.port,
-        fs: { allow: ['../..'] }
+        fs: { allow: ['../..'] },
+        proxy
       },
       plugins: [
-        DotPathFixPlugin.plugin(),
+        DotPathFixPlugin.plugin({ proxy }),
         ElmVitePlugin.plugin({
           debug,
           optimize: false
@@ -375,9 +381,15 @@ const syncCustomizableFiles = async () => {
     let fileInTemplatesFolder = path.join(__dirname, 'templates', '_elm-land', 'customizable', ...filepath.split('/'))
     let fileInElmLandSrcFolder = path.join(process.cwd(), '.elm-land', 'src', ...filepath.split('/'))
 
-    let userSrcFileExists = await Files.exists(fileInUsersSrcFolder)
+    let usersSrcFileExists = await Files.exists(fileInUsersSrcFolder)
 
-    if (!userSrcFileExists) {
+    if (usersSrcFileExists) {
+      let elmLandSrcFileExists = await Files.exists(fileInElmLandSrcFolder)
+
+      if (elmLandSrcFileExists) {
+        return Files.remove(fileInElmLandSrcFolder)
+      }
+    } else {
       return Files.copyPasteFile({
         source: fileInTemplatesFolder,
         destination: fileInElmLandSrcFolder
@@ -559,7 +571,7 @@ const generateHtml = async (config) => {
     ? [toHtmlTag('title', {}, config.app.html.title)]
     : []
   let metaTags = toSelfClosingHtmlTags('meta', [
-    { name: 'elm-land', content: '0.19.4' }
+    { name: 'elm-land', content: '0.19.5' }
   ].concat(attempt(_ => config.app.html.meta)))
   let linkTags = toSelfClosingHtmlTags('link', attempt(_ => config.app.html.link))
   let scriptTags = toHtmlTags('script', attempt(_ => config.app.html.script))

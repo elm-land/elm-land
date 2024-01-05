@@ -23,6 +23,9 @@
     },
     "router": {
       "useHashRouting": false
+    },
+    "proxy": {
+      "/api": "http://localhost:5000"
     }
   }
 }
