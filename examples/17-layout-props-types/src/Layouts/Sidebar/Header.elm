@@ -25,7 +25,7 @@ map fn props =
     }
 
 
-layout : Props contentMsg -> Shared.Model -> Route () -> Layout Layouts.Sidebar.Props Model Msg contentMsg
+layout : Props contentMsg -> Shared.Model -> Route () -> Layout (Layouts.Sidebar.Props contentMsg) Model Msg contentMsg
 layout props shared route =
     Layout.new
         { init = init

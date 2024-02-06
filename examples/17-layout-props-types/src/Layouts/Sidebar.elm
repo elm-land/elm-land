@@ -11,11 +11,12 @@ import Shared
 import View exposing (View)
 
 
-type alias Props =
-    {}
+type alias Props contentMsg =
+    { example : Html contentMsg 
+    }
 
 
-layout : Props -> Shared.Model -> Route () -> Layout () Model Msg contentMsg
+layout : Props contentMsg -> Shared.Model -> Route () -> Layout () Model Msg contentMsg
 layout props shared route =
     Layout.new
         { init = init
