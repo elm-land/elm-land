@@ -370,7 +370,7 @@ map fn effect =
             SendApiRequest
                 { endpoint = data.endpoint
                 , decoder = Json.Decode.map fn data.decoder
-                , onHttpError = \err -> Json.Decode.map fn (data.onHttpError err)
+                , onHttpError = \err -> fn (data.onHttpError err)
                 }
 
 -- ...
