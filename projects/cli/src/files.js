@@ -166,6 +166,8 @@ let listElmFilepathsInFolder = (filepath) => {
 
   if (folderExists) {
     let fullFilepaths = walk(filepath)
+      // Exclude temporary files saved by code editors, such as 'Foo.elm~'.
+      .filter(str => str.endsWith('.elm'))
     let relativeFilepaths = fullFilepaths.map(str => str.slice(filepath.length + 1, -'.elm'.length))
 
     return relativeFilepaths
