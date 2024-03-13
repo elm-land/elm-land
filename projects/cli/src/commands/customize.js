@@ -1,5 +1,5 @@
-const { Files } = require("../files")
-const { Utils, Terminal } = require("./_utils")
+import { Files } from "../files.js"
+import { Utils, Terminal } from "./_utils.js"
 
 let printHelpInfo = () => {
   return {
@@ -62,7 +62,7 @@ let run = async ({ moduleName } = {}) => {
   let count = obj.filepaths.length
   let countWithUnits = count === 1 ? `${count} new file` : `${count} new files`
 
-  let pathsToNewFiles = obj.filepaths.map(({target}) => Terminal.cyan(`    ./src/${target}`))
+  let pathsToNewFiles = obj.filepaths.map(({ target }) => Terminal.cyan(`    ./src/${target}`))
 
   let helpMessage = count === 1
     ? `    If this was a mistake, you can delete that file\n    to safely restore the original version.`
@@ -84,8 +84,6 @@ let run = async ({ moduleName } = {}) => {
   }
 }
 
-module.exports = {
-  Customize: {
-    run, printHelpInfo
-  }
+export const Customize = {
+  run, printHelpInfo
 }

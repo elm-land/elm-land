@@ -1,7 +1,7 @@
-const fs = require('fs')
-const path = require('path')
+import { existsSync } from 'fs'
+import { join } from 'path'
 
-const plugin = (props = {}) => {
+export const plugin = (props = {}) => {
     return {
         name: 'dot-path-fix-plugin',
         configureServer: (server) => {
@@ -18,20 +18,17 @@ const plugin = (props = {}) => {
                     }
                 }
 
-                const publicReqPath = path.join(server.config.publicDir, decodeURI(reqPath));
+                const publicReqPath = join(server.config.publicDir, decodeURI(reqPath))
                 if (reqPath == '/main.js') {
                     next()
                 } else {
-                    if (!req.url.startsWith('/@') && !fs.existsSync(`.${reqPath}`) && !fs.existsSync(`${publicReqPath}`)) {
-                        req.url = '/';
+                    if (!req.url.startsWith('/@') && !existsSync(`.${reqPath}`) && !existsSync(`${publicReqPath}`)) {
+                        req.url = '/'
                     }
-                    next();
+                    next()
                 }
-            });
+            })
         }
     }
-};
-
-module.exports = {
-    plugin
 }
+

@@ -1,7 +1,7 @@
-const { Files } = require("../files")
-const { Utils, Terminal } = require("./_utils")
-const path = require('path')
-const { Codegen } = require("../codegen")
+import { Files } from "../files.js"
+import { Utils, Terminal } from "./_utils.js"
+import { join } from 'path'
+import { Codegen } from "../codegen.js"
 
 let addNewLayout = () => async ([name]) => {
   if (name === '-h' || name === '--help') {
@@ -36,7 +36,7 @@ let addNewLayout = () => async ([name]) => {
   }
 
   let inFolderWithElmLandJson =
-    await Files.exists(path.join(process.cwd(), 'elm-land.json'))
+    await Files.exists(join(process.cwd(), 'elm-land.json'))
 
   if (!inFolderWithElmLandJson) {
     return Promise.reject(Utils.notInElmLandProject)
@@ -158,7 +158,7 @@ let addNewPage = (kind) => async ([originalUrl]) => {
         ...pageAddExamples
       ].join('\n'))
     }
-    let inFolderWithElmLandJson = await Files.exists(path.join(process.cwd(), 'elm-land.json'))
+    let inFolderWithElmLandJson = await Files.exists(join(process.cwd(), 'elm-land.json'))
 
     if (!inFolderWithElmLandJson) {
       return Promise.reject(Utils.notInElmLandProject)
@@ -250,8 +250,8 @@ let printHelpInfo = () => {
   }
 }
 
-let run = async ({ arguments }) => {
-  let [subCommand, ...otherArgs] = arguments
+let run = async ({ args }) => {
+  let [subCommand, ...otherArgs] = args
   let subCommandHandlers = {
     'page': addNewPage('new'),
     'page:view': addNewPage('static'),
@@ -273,10 +273,8 @@ let run = async ({ arguments }) => {
   }
 }
 
-module.exports = {
-  Add: {
-    run, printHelpInfo
-  }
+export const Add = {
+  run, printHelpInfo
 }
 
 // Return true if the string starts with a lowercase letter between a-z,

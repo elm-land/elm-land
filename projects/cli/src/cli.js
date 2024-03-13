@@ -1,13 +1,19 @@
-const { Init } = require('./commands/init')
-const { Add } = require('./commands/add')
-const { Server } = require('./commands/server')
-const { Generate } = require('./commands/generate')
-const { Build } = require('./commands/build')
-const { Customize } = require('./commands/customize')
-const { Routes } = require('./commands/routes')
-const { Utils, Terminal } = require('./commands/_utils')
+import { Init } from './commands/init.js'
+import { Add } from './commands/add.js'
+import { Server } from './commands/server.js'
+import { Generate } from './commands/generate.js'
+import { Build } from './commands/build.js'
+import { Customize } from './commands/customize.js'
+import { Routes } from './commands/routes.js'
+import { Utils, Terminal } from './commands/_utils.js'
+import fs from 'fs/promises'
+import path from 'path'
+import url from 'url'
 
-let { version } = require('../package.json')
+let __dirname = path.dirname(url.fileURLToPath(import.meta.url))
+let packageJsonContents = await fs.readFile(path.join(__dirname, '..', 'package.json'), { encoding: 'utf-8' })
+let packageJson = JSON.parse(packageJsonContents)
+let version = packageJson.version
 
 let subcommandList = [
   `    Here are the available commands:`,
@@ -61,7 +67,7 @@ let run = async (commandFromCli) => {
       if (isHelpFlag(args[0])) {
         return Add.printHelpInfo()
       } else {
-        return Add.run({ arguments: args })
+        return Add.run({ args })
       }
     },
     'server': (args = []) => {
@@ -151,6 +157,4 @@ const isHelpFlag = (str) => {
   return ['-h', '--help'].includes(str)
 }
 
-module.exports = {
-  Cli: { run }
-}
+export const Cli = { run }

@@ -1,21 +1,25 @@
-const path = require('path')
-const fs = require('fs')
-const ChildProcess = require('child_process')
-const { Terminal, Utils } = require('../../commands/_utils.js')
-const { Files } = require('../../files.js')
+import { join } from 'path'
+import { existsSync } from 'fs'
+import { spawn } from 'child_process'
+import { Terminal, Utils } from '../../commands/_utils.js'
+import { Files } from '../../files.js'
+import path from 'path'
+import url from 'url'
+
+let __dirname = path.dirname(url.fileURLToPath(import.meta.url))
 
 // Here's where we'll expect to find the Typescript binary installed
 const tscPaths = {
   // When locally installed with `npm install -D elm-land`
   // ✅ Tested with npm install -D, yarn, pnpm i
-  local: path.join(__dirname, '..', '..', '..', '..', 'typescript', 'bin', 'tsc'),
+  local: join(__dirname, '..', '..', '..', '..', 'typescript', 'bin', 'tsc'),
   // When globally installed with `npm install -g elm-land`
   // ✅ Tested with npm install -g, yarn, pnpm
-  global: path.join(__dirname, '..', '..', '..', 'node_modules', '.bin', 'tsc'),
+  global: join(__dirname, '..', '..', '..', 'node_modules', '.bin', 'tsc'),
 }
 
 const pathToTsc =
-  fs.existsSync(tscPaths.global)
+  existsSync(tscPaths.global)
     ? tscPaths.global
     : tscPaths.local
 
@@ -29,7 +33,7 @@ const parseImportId = (id) => {
   }
 }
 
-const plugin = () => {
+export const plugin = () => {
   return {
     name: 'vite-plugin-typescript',
     enforce: 'pre',
@@ -72,7 +76,7 @@ const formatTypeScriptError = (str) => {
 }
 
 const checkForTypeScriptInteropFile = () =>
-  Files.exists(path.join(process.cwd(), 'src', 'interop.ts'))
+  Files.exists(join(process.cwd(), 'src', 'interop.ts'))
 
 const handleUnexpectedTypeScriptError = (reject) => (err) => {
   if (err.code === 'ENOENT') {
@@ -83,11 +87,11 @@ const handleUnexpectedTypeScriptError = (reject) => (err) => {
 }
 
 const spawnNewTypeScriptBuild = () =>
-  ChildProcess.spawn(pathToTsc, argsForTypeScript())
+  spawn(pathToTsc, argsForTypeScript())
 
 const argsForTypeScript = () => {
-  const pathToTsConfigFile = path.join(process.cwd(), 'tsconfig.json')
-  const hasTsConfigFile = fs.existsSync(pathToTsConfigFile)
+  const pathToTsConfigFile = join(process.cwd(), 'tsconfig.json')
+  const hasTsConfigFile = existsSync(pathToTsConfigFile)
 
   if (hasTsConfigFile) {
     return ['--project', pathToTsConfigFile]
@@ -130,14 +134,14 @@ const reportTypeScriptErrors = async () => {
 
 // Used during `elm-land build` to report errors
 // to users via the terminal (in full color!)
-const verifyTypescriptCompiles = async (mode) => {
+export const verifyTypescriptCompiles = async (mode) => {
   const hasInteropTs = await checkForTypeScriptInteropFile()
 
   if (hasInteropTs) {
     return new Promise((resolve, reject) => {
       console.info('\n' + Utils.intro.info(`is compiling ${Terminal.cyan('src/interop.ts')}...`))
 
-      let tsc = ChildProcess.spawn(pathToTsc, argsForTypeScript(), { stdio: 'inherit' })
+      let tsc = spawn(pathToTsc, argsForTypeScript(), { stdio: 'inherit' })
       tsc.on('error', handleUnexpectedTypeScriptError(reject))
 
       tsc.on('close', (code) => {
@@ -151,9 +155,4 @@ const verifyTypescriptCompiles = async (mode) => {
   } else {
     return true
   }
-}
-
-module.exports = {
-  plugin,
-  verifyTypescriptCompiles
 }

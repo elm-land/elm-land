@@ -1,6 +1,6 @@
-const path = require('path')
-const { Files } = require("../files")
-const { Utils, Terminal } = require("./_utils")
+import { join, sep } from 'path'
+import { Files } from "../files.js"
+import { Utils, Terminal } from "./_utils.js"
 
 let printHelpInfo = () => {
   return {
@@ -28,7 +28,7 @@ let run = async ({ url } = {}) => {
   let pages = []
 
   try {
-    pages = await Files.listElmFilepathsInFolder(path.join(process.cwd(), 'src', 'Pages'))
+    pages = await Files.listElmFilepathsInFolder(join(process.cwd(), 'src', 'Pages'))
   } catch (_) {
     return Promise.reject([
       '',
@@ -67,7 +67,7 @@ let run = async ({ url } = {}) => {
 
   let lines = pages
     .sort(sortRoutes)
-    .map(segments => `    ${Terminal.cyan(`src/Pages/${segments}.elm`)} ... ${Terminal.pink(toUrl(segments.split(path.sep)))}`)
+    .map(segments => `    ${Terminal.cyan(`src/Pages/${segments}.elm`)} ... ${Terminal.pink(toUrl(segments.split(sep)))}`)
 
   let lengthOfFilepath = (str) => str.split('...')[0].length
 
@@ -110,8 +110,6 @@ const sortRoutes = (a, b) => {
 }
 
 
-module.exports = {
-  Routes: {
-    run, printHelpInfo
-  }
+export const Routes = {
+  run, printHelpInfo
 }
