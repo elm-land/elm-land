@@ -191,7 +191,7 @@ Here's example output of what you'd see if you ran this command in the ["Pages a
 
 ```txt
 
-  🌈  Elm Land (v0.19.5) found 5 pages in your application
+  🌈  Elm Land (v0.20.0) found 5 pages in your application
   ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
   src/Pages/Home_.elm ............... http://localhost:1234/
   src/Pages/SignIn.elm .............. http://localhost:1234/sign-in
