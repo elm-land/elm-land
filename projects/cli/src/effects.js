@@ -2,19 +2,17 @@ import { watch } from 'chokidar'
 import { join } from 'path'
 import { createServer, loadEnv, build as _build } from 'vite'
 import ElmVitePlugin from 'vite-plugin-elm-watch'
+import * as ElmErrorJson from 'vite-plugin-elm-watch/src/elm-error-json.js'
 import * as TypeScriptPlugin from './vite-plugins/typescript/index.js'
-import * as DotPathFixPlugin from './vite-plugins/dot-path-fix/index.js'
 import { Codegen } from './codegen.js'
 import { Files } from './files.js'
 import { Utils, Terminal } from './commands/_utils.js'
 import { validate } from './validate/index.js'
-import * as ElmErrorJson from './vite-plugins/elm/elm-error-json.cjs'
 import path from 'path'
 import url from 'url'
+import { readFile } from 'fs/promises'
 
 let __dirname = path.dirname(url.fileURLToPath(import.meta.url))
-
-
 let srcPagesFolderFilepath = join(process.cwd(), 'src', 'Pages')
 let srcLayoutsFolderFilepath = join(process.cwd(), 'src', 'Layouts')
 
@@ -174,48 +172,70 @@ let runServer = async (options) => {
     try { proxy = config.app.proxy }
     catch (_) { }
 
+    const ElmLandIndexHtml = {
+      /**
+       * @returns {import('vite').Plugin}
+       */
+      plugin() {
+        return {
+          name: 'elmLandIndexHtml',
+          configureServer(server_) {
+            server_.middlewares.use(async function elmLandIndexHtmlMiddleware(req, res, next) {
+              if (req.url === '/' || req.url === `/index.html`) {
+                let rawHTML = await readFile(join(process.cwd(), '.elm-land', 'server', 'index.html'), { encoding: 'utf-8' })
+                res.setHeader('Content-Type', 'text/html')
+                res.end(rawHTML)
+              } else if (req.url === '/main.js') {
+                let rawJS = await readFile(join(process.cwd(), '.elm-land', 'server', 'main.js'), { encoding: 'utf-8' })
+                res.setHeader('Content-Type', 'text/javascript')
+                res.end(rawJS)
+              } else {
+                next()
+              }
+            })
+          }
+        }
+      }
+    }
+
     // Run the vite server on options.port
     server = await createServer({
       configFile: false,
-      root: join(process.cwd()), // TODO: Does this mean no more index.html in `.elm-land/server`?
+      root: process.cwd(),
       publicDir: join(process.cwd(), 'static'),
       envDir: process.cwd(),
       envPrefix: 'ELM_LAND_',
-      build: {
-        rollupOptions: {
-          input: join(process.cwd(), '.elm-land', 'server', 'index.html')
-        }
-      },
       server: {
         host: options.host,
         port: options.port,
         fs: { allow: ['../..'] },
-        proxy,
+        proxy
       },
       plugins: [
-        DotPathFixPlugin.plugin({ proxy }),
         ElmVitePlugin({
           mode: 'standard',
           isBodyPatchEnabled: false
         }),
-        TypeScriptPlugin.plugin()
+        // TODO: Typescript support?
+        // TODO: Test if dot fix is still necessary?
+        // DotPathFixPlugin.plugin({ proxy }),
+        // ElmLandIndexHtml.plugin(),
+        // TypeScriptPlugin.plugin()
       ],
-      logLevel: 'silent'
+      logLevel: 'silent',
+      appType: 'spa'
     })
 
     server.ws.on('error', (e) => console.error(e))
     server.ws.on('elm:client-ready', (client) => {
-      // console.log("CLIENT READY")
-      // TODO: UNCOMMENT ME
-      // id = client.id
-      // if (lastErrorSent) {
-      //   let error = ElmErrorJson.default.toColoredHtmlOutput(lastErrorSent)
-      //   console.log('error', error)
-      //   // server.ws.send('elm:error', {
-      //   //   id,
-      //   //   error
-      //   // })
-      // }
+      id = client.id
+      if (lastErrorSent) {
+        let error = ElmErrorJson.toColoredHtmlOutput(lastErrorSent)
+        server.ws.send('elm:error', {
+          id,
+          error
+        })
+      }
     })
 
     await generateElmFiles(config, server)
@@ -272,47 +292,48 @@ let generateElmFiles = async (config, server = undefined) => {
       view
     })
 
+    // Always generate Elm Land files
+    let layoutsData = layouts.map(({ filepath, contents }) => {
+      const typeVariablePattern = 'type alias Props contentMsg'
+      const isUsingTypeVariable = contents.includes(typeVariablePattern)
+
+      return {
+        segments: filepath,
+        isUsingTypeVariable
+      }
+    })
+
+    let newFiles = await Codegen.generateElmLandFiles({
+      pages,
+      layouts: layoutsData,
+      router
+    })
+
+    await Files.create(
+      newFiles.map(generatedFile => ({
+        kind: 'file',
+        name: `.elm-land/src/${generatedFile.filepath}`,
+        content: generatedFile.contents
+      }))
+    )
+
     if (errors.length === 0) {
       if (server) {
-        // lastErrorSent = undefined
-        // server.ws.send('elm:success', { id })
+        lastErrorSent = undefined
+        server.ws.send('elm:success', { id })
       }
-
-      let layoutsData = layouts.map(({ filepath, contents }) => {
-        const typeVariablePattern = 'type alias Props contentMsg'
-        const isUsingTypeVariable = contents.includes(typeVariablePattern)
-
-        return {
-          segments: filepath,
-          isUsingTypeVariable
-        }
-      })
-
-      let newFiles = await Codegen.generateElmLandFiles({
-        pages,
-        layouts: layoutsData,
-        router
-      })
-
-      await Files.create(
-        newFiles.map(generatedFile => ({
-          kind: 'file',
-          name: `.elm-land/src/${generatedFile.filepath}`,
-          content: generatedFile.contents
-        }))
-      )
     } else if (server) {
-      // lastErrorSent = errors[0]
-      // console.log({ lastErrorSent })
-      // server.ws.send('elm:error', {
-      //   id,
-      //   error: ElmErrorJson.default.toColoredHtmlOutput(errors[0])
-      // })
+      lastErrorSent = errors[0]
+      server.ws.send('elm:error', {
+        id,
+        error: ElmErrorJson.toColoredHtmlOutput(errors[0])
+      })
     } else {
+      // console.log({ errors })
       return Promise.reject([
         '',
         Utils.intro.error('failed to build project'),
-        errors.map(ElmErrorJson.default.toColoredTerminalOutput).join('\n\n'),
+        errors.map(ElmErrorJson.toColoredTerminalOutput).join('\n\n'),
         ''
       ].join('\n'))
     }
@@ -458,15 +479,13 @@ const build = async (config) => {
       configFile: false,
       root: join(process.cwd(), '.elm-land', 'server'),
       publicDir: join(process.cwd(), 'static'),
-      build: {
-        outDir: '../../dist'
-      },
+      build: { outDir: '../../dist' },
       envDir: process.cwd(),
       envPrefix: 'ELM_LAND_',
       plugins: [
-        plugin({
-          debug: false,
-          optimize: true
+        ElmVitePlugin({
+          mode: 'minify',
+          isBodyPatchEnabled: false
         })
       ],
       logLevel: 'silent'
