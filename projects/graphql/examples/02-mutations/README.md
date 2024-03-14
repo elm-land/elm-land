@@ -1,82 +1,80 @@
 # 2️⃣ Mutations
 
-## Context
+## Introduction
 
-GraphQL provides "[mutations](https://graphql.org/learn/queries/)" that allow users to make changes in their API. Unlike [queries](../01-queries/), which are designed for read-only stuff, mutations are for creating, updating, or deleting things.
+GraphQL provides "[mutations](https://graphql.org/learn/queries/)" that allow users to make changes in their API. [Queries](../01-queries/) are intended for read-only stuff, while mutations are for write operations (creating, updating, deleting, etc).
 
+With `@elm-land/graphql`, you write your mutations in a normal `.graphql` file. From there, the `elm-land graphql build` command will generate Elm code that can be used in your program.
 
 ## Example
 
-### Schema
+### 1️⃣ What you write
 
-```graphql
-type Mutation {
-  signUp(email: String!, password: String!, avatarUrl: String): User
-}
+- [./graphql/Api/Mutations/SignUp.graphql](./graphql/Api/Mutations/SignUp.graphql)
 
-type User {
-  id: ID!
-  email: String!
-  avatarUrl: String
-}
-```
+    ```graphql
+    mutation SignUp(
+      $email: String!
+      $password: String!
+      $name: String
+    ) {
+      signUp(email: $email, password: $password, name: $name) {
+        id
+        email
+        avatarUrl
+      }
+    }
+    ```
 
-### Input
 
-```graphql
-mutation SignUp($email: String!, $password: String!, $name: String) {
-  signUp(email: $email, password: $password, name: $name) {
-    id
-    email
-    avatarUrl
-  }
-}
-```
+### 2️⃣ The files Elm Land generates
 
-### Output
+- [Api.Mutations.SignUp](.elm-land/src/Api/Mutations/SignUp.elm)
 
-- [src/GraphQL/Mutations/SignUp.elm](src/GraphQL/Mutations/SignUp.elm)
-- [src/GraphQL/Mutations/SignUp/Input.elm](src/GraphQL/Mutations/SignUp/Input.elm)
-- [src/GraphQL/Scalar.elm](src/GraphQL/Scalar.elm)
-- [src/GraphQL/Scalar/ID.elm](src/GraphQL/Scalar/ID.elm)
+    ```elm
+    module Api.Mutations.SignUp exposing
+        ( Input, Data, new
+        , User
+        )
 
-### Usage
+    -- ...
+    ```
+
+- [Api.Mutations.SignUp.Input](.elm-land/src/Api/Mutations/SignUp/Input.elm)
+
+    ```elm
+    module Api.Mutations.SignUp.Input exposing
+        ( Input, new
+        , email, password, name
+        , null
+        )
+
+    -- ...
+    ```
+
+
+### 3️⃣ How you use it
 
 ```elm
 module Main exposing (..)
 
-import GraphQL.Http
-import GraphQL.Mutations.SignUp
-import GraphQL.Mutations.SignUp.Input
+import GraphQL.Operation exposing (Operation)
+import Api.Mutations.SignUp exposing (Data)
+import Api.Mutations.SignUp.Input
 
 
-type Msg
-    = ApiResponded (Result GraphQL.Http.Error GraphQL.Mutations.SignUp.Data)
-
-
-config : GraphQL.Http.Config
-config =
-    GraphQL.Http.get
-        { url = "http://localhost:1234/graphql"
-        }
-
-
-sendSignUpMutation : Cmd Msg
-sendSignUpMutation =
+signUpMutation : Operation Data
+signUpMutation =
     let
-        input : GraphQL.Mutations.SignUp.Input
+        input : Api.Mutations.SignUp.Input
         input =
-            GraphQL.Mutations.SignUp.Input.new
-                |> GraphQL.Mutations.SignUp.Input.email "ryan@elm.land"
-                |> GraphQL.Mutations.SignUp.Input.password "supersecret123"
+            Api.Mutations.SignUp.Input.new
+                |> Api.Mutations.SignUp.Input.email "ryan@elm.land"
+                |> Api.Mutations.SignUp.Input.password "supersecret123"
     in
-    GraphQL.Http.run config
-        { operation = GraphQL.Mutations.SignUp.new input
-        , onResponse = ApiResponded
-        }
+    Api.Mutations.SignUp.new input
 ```
 
-```bash
-# Run this to see it compile!
-elm make src/Main.elm --output=/dev/null
-```
+[View full source](./src/Main.elm)
+
+

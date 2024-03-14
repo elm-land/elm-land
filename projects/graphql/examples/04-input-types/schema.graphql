@@ -1,3 +1,7 @@
+type Query {
+  user: User
+}
+
 type Mutation {
   signIn(form: UserSignInForm!): User
 }

@@ -1,7 +1,0 @@
-query FetchCurrentUser {
-  me {
-    id 
-    email 
-    avatarUrl 
-  }
-}

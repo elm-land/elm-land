@@ -1,0 +1,17 @@
+type Query {
+  findUser(department: Department): User 
+} 
+
+type User {
+  id: ID!
+  email: String!
+  department: Department!
+}
+
+enum Department {
+  PRODUCT
+  DESIGN
+  ENGINEERING
+  MARKETING
+  SALES
+}

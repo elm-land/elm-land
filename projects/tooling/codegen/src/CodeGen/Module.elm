@@ -1,11 +1,13 @@
 module CodeGen.Module exposing
     ( Module, new
+    , withOrderedExposingList
     , toFilepath, toString
     )
 
 {-|
 
 @docs Module, new
+@docs withOrderedExposingList
 
 @docs toFilepath, toString
 
@@ -20,7 +22,7 @@ import CodeGen.Import
 type Module
     = Module
         { name : List String
-        , exposing_ : List String
+        , exposing_ : ExposingList
         , imports : List CodeGen.Import.Import
         , declarations : List CodeGen.Declaration.Declaration
         }
@@ -52,7 +54,31 @@ new :
     }
     -> Module
 new options =
-    Module options
+    Module
+        { name = options.name
+        , exposing_ = OrderedByList options.exposing_
+        , imports = options.imports
+        , declarations = options.declarations
+        }
+
+
+type ExposingList
+    = OrderedByDocsComment (List (List String))
+    | OrderedByList (List String)
+
+
+{-| Provide this module with a series of `@docs`
+that control how exposed values are organized.
+
+This overrides `exposing`
+
+-}
+withOrderedExposingList :
+    List (List String)
+    -> Module
+    -> Module
+withOrderedExposingList docs (Module options) =
+    Module { options | exposing_ = OrderedByDocsComment docs }
 
 
 {-| The name of the new Elm file, including folders
@@ -80,15 +106,43 @@ Renders the following:
 -}
 toString : Module -> String
 toString (Module options) =
-    "module {{name}} exposing ({{exposing}}){{imports}}{{declarations}}\n"
+    let
+        exposing_ : String
+        exposing_ =
+            case options.exposing_ of
+                OrderedByList list ->
+                    "(" ++ String.join ", " list ++ ")"
+
+                OrderedByDocsComment listOfLists ->
+                    String.join ""
+                        [ "\n    ( "
+                        , listOfLists
+                            |> List.filter (List.length >> (<) 0)
+                            |> List.map (String.join ", ")
+                            |> String.join "\n    , "
+                        , "\n    )\n\n{-|\n\n"
+                        , listOfLists
+                            |> List.filter (List.length >> (<) 0)
+                            |> List.map (String.join ", ")
+                            |> List.map (String.append "@docs ")
+                            |> String.join "\n"
+                            |> String.replace "(..)" ""
+                        , "\n\n-}"
+                        ]
+    in
+    "module {{name}} exposing {{exposing}}{{imports}}{{declarations}}\n"
         |> String.replace "{{name}}" (String.join "." options.name)
-        |> String.replace "{{exposing}}" (String.join ", " options.exposing_)
+        |> String.replace "{{exposing}}" exposing_
         |> String.replace "{{imports}}"
             (if List.isEmpty options.imports then
                 ""
 
              else
-                "\n\n" ++ String.join "\n" (List.map CodeGen.Import.toString options.imports)
+                options.imports
+                    |> List.sortBy CodeGen.Import.toString
+                    |> List.map CodeGen.Import.toString
+                    |> String.join "\n"
+                    |> String.append "\n\n"
             )
         |> String.replace "{{declarations}}"
             (if List.isEmpty options.declarations then

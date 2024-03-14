@@ -1,31 +1,35 @@
 module Main exposing (..)
 
-import GraphQL.Http
-import GraphQL.Mutations.SignUp
-import GraphQL.Mutations.SignUp.Input
+import Api.Mutations.SignUp exposing (Data)
+import Api.Mutations.SignUp.Input
+import GraphQL.Operation exposing (Operation)
+import Http
 
 
 type Msg
-    = ApiResponded (Result GraphQL.Http.Error GraphQL.Mutations.SignUp.Data)
+    = ApiResponded (Result Http.Error Data)
 
 
-config : GraphQL.Http.Config
-config =
-    GraphQL.Http.get
-        { url = "http://localhost:1234/graphql"
-        }
-
-
-sendSignUpMutation : Cmd Msg
-sendSignUpMutation =
+sendGraphQL : Cmd Msg
+sendGraphQL =
     let
-        input : GraphQL.Mutations.SignUp.Input
-        input =
-            GraphQL.Mutations.SignUp.Input.new
-                |> GraphQL.Mutations.SignUp.Input.email "ryan@elm.land"
-                |> GraphQL.Mutations.SignUp.Input.password "supersecret123"
+        operation : Operation Data
+        operation =
+            let
+                input : Api.Mutations.SignUp.Input
+                input =
+                    Api.Mutations.SignUp.Input.new
+                        |> Api.Mutations.SignUp.Input.email "ryan@elm.land"
+                        |> Api.Mutations.SignUp.Input.password "supersecret123"
+            in
+            Api.Mutations.SignUp.new input
     in
-    GraphQL.Http.run config
-        { operation = GraphQL.Mutations.SignUp.new input
+    GraphQL.Operation.toHttpCmd
+        { method = "POST"
+        , url = "/api/graphql"
+        , headers = []
+        , tracker = Nothing
+        , timeout = Nothing
+        , operation = operation
         , onResponse = ApiResponded
         }

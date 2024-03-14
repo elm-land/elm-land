@@ -1,0 +1,22 @@
+type Query {
+  user: User
+}
+
+type Mutation {
+  signIn(form: UserSignInForm!): User
+}
+
+input UserSignInForm {
+  form: NestedForm!
+}
+
+input NestedForm {
+  email: String!
+  password: String!
+}
+
+type User {
+  id: ID!
+  email: String!
+  avatarUrl: String
+}

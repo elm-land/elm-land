@@ -1,0 +1,40 @@
+# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+
+name: "@elm-land/graphql"
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'projects/cli/**'
+      - 'projects/graphql/**'
+  pull_request:
+    paths:
+      - 'projects/cli/**'
+      - 'projects/graphql/**'
+
+jobs:
+  build:
+    defaults:
+      run:
+        working-directory: projects/graphql
+
+    name: "Tests"
+    runs-on: macos-12
+
+    strategy:
+      matrix:
+        node-version: [16,18]
+
+    steps:
+      - name: "Checkout latest code"
+        uses: actions/checkout@v3
+      - name: Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: "Setup test dependencies"
+        run: npm run test:setup
+      - name: "Run test suite"
+        run: npm test

@@ -1,0 +1,12 @@
+query FetchUser {
+  currentUser {
+    ...on User {
+      id
+      name
+      avatarUrl
+    }
+    ...on NotSignedIn {
+      message
+    }
+  }
+}

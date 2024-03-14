@@ -2,22 +2,24 @@
 
 ## Context
 
-Elm Land GraphQL does its best to generate Elm types based on your schema, but to prevent conflicts, it can sometimes generate less-readable names like `User` and `Followers_User` if the same GraphQL type is used twice in one query.
+Elm Land GraphQL uses a simple formula when naming type aliases in your generated code:
 
-Here is the auto-naming strategy it uses:
-- Create a type exactly matching what's in the GraphQL schema
-- If that type is already used, prefix it with the field name where it was used
+1. Attempt to use the exact name from the GraphQL Schema (Example: "User")
+2. If that name is already in use, attempt to prefix it with the field that's using it (Example: "Followers_User")
+3. If that name is already in use, keep incrementing numbers until it works ("User_1", "User_2", etc)
 
-By using GraphQL fragments, you can let `elm-land/graphql` know what you'd like it to call your type aliases!
+This strategy prevents conflicts, but can generate less-readable names like `Followers_User` when the same `User` GraphQL type is used with different selections in one query.
+
+Elm Land GraphQL allows you to use __GraphQL fragments__ to solve this problem, and provide more readable names in your code. If you move an entire selection into a named fragment, Elm will generate type aliases with the name of the fragment.
 
 
 ## Example
 
-### Schema
+### Backend Schema
 
 ```graphql
 type Query {
-  users: [User!]!
+  user: User!
 }
 
 type User {
@@ -28,11 +30,11 @@ type User {
 }
 ```
 
-### Input
+### Frontend Query
 
 ```graphql
-query FetchUsers {
-  users {
+query FetchUser {
+  user {
     id
     username
     avatarUrl
@@ -45,47 +47,35 @@ query FetchUsers {
 fragment Follower on User {
   id
   username
-  avatarUrl
 }
 ```
-
-### Output
-
-- [src/GraphQL/Queries/FetchUsers.elm](src/GraphQL/Queries/FetchUsers.elm)
-- [src/GraphQL/Scalar.elm](src/GraphQL/Scalar.elm)
-- [src/GraphQL/Scalar/ID.elm](src/GraphQL/Scalar/ID.elm)
 
 ### Usage
 
 ```elm
-module Main exposing (..)
-
-import GraphQL.Http
-import Http
-import GraphQL.Queries.FetchUsers
+import Api.Queries.FetchUser
+-- ...
 
 
-type Msg
-    = ApiResponded (Result Http.Error GraphQL.Queries.FetchUsers.Data)
-
-
-config : GraphQL.Http.Config
-config =
-    GraphQL.Http.get
-        { url = "http://localhost:3000/graphql"
-        }
-
-
-sendMeQuery : Cmd Msg
-sendMeQuery =
-    GraphQL.Http.run config
-        { operation = GraphQL.Queries.FetchUsers.new
-        , onResponse = ApiResponded
-        }
-
+fetchUser : Operation Api.Queries.FetchUser.Data
+fetchUser =
+    Api.Queries.FetchUser.new
 ```
 
-```bash
-# Run this to see it compile!
-elm make src/Main.elm --output=/dev/null
+```elm
+-- BEFORE
+followers : List Followers_User
+followers =
+    data.user.followers
+
+-- AFTER
+followers : List Follower
+followers =
+    data.user.followers
 ```
+
+### Generated code
+
+- [Api.Queries.FetchUser](.elm-land/src/Api/Queries/FetchUser.elm)
+
+

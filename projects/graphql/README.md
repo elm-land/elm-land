@@ -4,7 +4,7 @@
 
 [![Elm Land: Reliable web apps for everyone](https://github.com/elm-land/elm-land/raw/main/elm-land-banner.jpg)](https://elm.land)
 
-### Alpha release 🌱
+### Alpha release! 🌱
 
 Although Elm Land is still a work-in-progress, please feel free to tinker around until the big `v1.0.0` release!
 
@@ -58,14 +58,14 @@ $ elm-land graphql build
 🌈 Elm Land (v0.20.0) needs a GraphQL schema
    ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
    You can provide one by customizing the "elm-land.json"
-   file to include a "graphql.schema" field.
+   file to include a "graphql" field.
 
    Here's an example with a **local file**:
 
    {
      ...,
      "graphql": {
-       "schema": "../backend/schema.graphql"
+       "Api": "../backend/schema.graphql"
      }
    }
 
@@ -74,7 +74,7 @@ $ elm-land graphql build
    {
      ...,
      "graphql": {
-       "schema": {
+       "Api": {
          "method": "POST",
          "url": "https://api.github.com/graphql",
          "headers": {

@@ -728,7 +728,8 @@ toString expression =
 
         Pipeline expressions ->
             expressions
-                |> List.map toString
+                |> flattenPipelines
+                |> List.map (toString >> String.lines >> String.join "\n    ")
                 |> String.join "\n    |> "
 
         LambdaExpression options ->
@@ -885,3 +886,17 @@ fromLetDeclarationToString declaration =
                         |> toString
                         |> Util.String.indent 4
                     )
+
+
+flattenPipelines : List Expression -> List Expression
+flattenPipelines expressions =
+    List.concatMap
+        (\expr ->
+            case expr of
+                Pipeline expressions_ ->
+                    flattenPipelines expressions_
+
+                _ ->
+                    [ expr ]
+        )
+        expressions

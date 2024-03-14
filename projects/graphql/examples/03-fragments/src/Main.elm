@@ -1,24 +1,27 @@
 module Main exposing (..)
 
-import GraphQL.Http
-import GraphQL.Http.Error
-import GraphQL.Queries.FetchUsers
+import Api.Queries.FetchUsers exposing (Data)
+import GraphQL.Operation exposing (Operation)
+import Http
 
 
 type Msg
-    = ApiResponded (Result GraphQL.Http.Error GraphQL.Queries.FetchUsers.Data)
+    = ApiResponded (Result Http.Error Data)
 
 
-config : GraphQL.Http.Config
-config =
-    GraphQL.Http.get
-        { url = "http://localhost:3000/graphql"
-        }
-
-
-sendMeQuery : Cmd Msg
-sendMeQuery =
-    GraphQL.Http.run config
-        { operation = GraphQL.Queries.FetchUsers.new
+sendGraphQL : Cmd Msg
+sendGraphQL =
+    let
+        fetchUser : Operation Data
+        fetchUser =
+            Api.Queries.FetchUsers.new
+    in
+    GraphQL.Operation.toHttpCmd
+        { method = "POST"
+        , url = "/api/graphql"
+        , headers = []
+        , tracker = Nothing
+        , timeout = Nothing
+        , operation = fetchUser
         , onResponse = ApiResponded
         }
