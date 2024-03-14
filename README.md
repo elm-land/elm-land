@@ -36,6 +36,6 @@ The official website, including guides and examples, available at [elm.land](htt
 
 Write GraphQL code and we'll generate the Elm code for you! (Available via [npm](https://npmjs.org/@elm-land/graphql))
 
-### __[@elm-land/codegen](./projects/tooling/codegen/)__ 
+### __[@elm-land/codegen](./projects/codegen/)__ 
 
 A tiny codegen library used internally by Elm Land to generate Elm code!
