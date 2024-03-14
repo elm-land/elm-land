@@ -10,7 +10,6 @@ import { Utils, Terminal } from './commands/_utils.js'
 import { validate } from './validate/index.js'
 import path from 'path'
 import url from 'url'
-import { readFile } from 'fs/promises'
 
 let __dirname = path.dirname(url.fileURLToPath(import.meta.url))
 let srcPagesFolderFilepath = join(process.cwd(), 'src', 'Pages')
@@ -73,10 +72,8 @@ let runServer = async (options) => {
       ignorePermissionErrors: true,
       ignoreInitial: true
     })
-    let indexHtmlPath = join(process.cwd(), '.elm-land', 'server', 'index.html')
-
     staticFolderWatcher.on('all', () => {
-      Files.touch(indexHtmlPath)
+      Files.touch(mainJsPath)
     })
 
     // Listen for config file changes, regenerating the index.html
@@ -172,6 +169,14 @@ let runServer = async (options) => {
     try { proxy = config.app.proxy }
     catch (_) { }
 
+    /**
+     * This plugin allows me to keep the `index.html` file out of
+     * the root of the repository.
+     * 
+     * It works by replacing the built-in 'viteIndexHtmlMiddleware' middleware
+     * at runtime with one that provides a "virtual" index.html file instead.
+     * 
+     */
     const ElmLandIndexHtml = {
       /**
        * @returns {import('vite').Plugin}
@@ -180,19 +185,31 @@ let runServer = async (options) => {
         return {
           name: 'elmLandIndexHtml',
           configureServer(server_) {
-            server_.middlewares.use(async function elmLandIndexHtmlMiddleware(req, res, next) {
-              if (req.url === '/' || req.url === `/index.html`) {
-                let rawHTML = await readFile(join(process.cwd(), '.elm-land', 'server', 'index.html'), { encoding: 'utf-8' })
-                res.setHeader('Content-Type', 'text/html')
-                res.end(rawHTML)
-              } else if (req.url === '/main.js') {
-                let rawJS = await readFile(join(process.cwd(), '.elm-land', 'server', 'main.js'), { encoding: 'utf-8' })
-                res.setHeader('Content-Type', 'text/javascript')
-                res.end(rawJS)
-              } else {
-                next()
+            let virtualIndexHtmlHandler = async function elmLandIndexHtmlMiddleware(req, res, next) {
+              let virtualIndexHtmlContents = toIndexHtmlFile(config, './.elm-land/server/main.js')
+              res.setHeader('Content-Type', 'text/html')
+              res.end(virtualIndexHtmlContents)
+            }
+
+            setTimeout(() => {
+              for (let index in server_.middlewares.stack) {
+                let item = server_.middlewares.stack[index]
+                if (item.handle.name === 'viteIndexHtmlMiddleware') {
+                  let viteIndexHtmlMiddleware = item.handle
+                  item.handle = async function viteIndexHtmlMiddlewareMod(req, res, next) {
+                    return new Promise(async (resolve, reject) => {
+                      let myNext = () => virtualIndexHtmlHandler(req, res, next).then(_ => resolve()).catch(reject)
+                      await viteIndexHtmlMiddleware(req, res, myNext)
+                    })
+                  }
+                  return
+                }
               }
-            })
+
+              // Only prints if a new version of Vite changed the name
+              // "viteIndexHtmlMiddleware"
+              console.error('‼️ FATAL ', 'viteIndexHtmlMiddleware was not found')
+            }, 0)
           }
         }
       }
@@ -205,6 +222,7 @@ let runServer = async (options) => {
       publicDir: join(process.cwd(), 'static'),
       envDir: process.cwd(),
       envPrefix: 'ELM_LAND_',
+      cacheDir: join(process.cwd(), '.elm-land', 'server', '.vite'),
       server: {
         host: options.host,
         port: options.port,
@@ -213,14 +231,10 @@ let runServer = async (options) => {
       },
       plugins: [
         ElmVitePlugin({
-          mode: 'standard',
+          mode: debug ? 'debug' : 'standard',
           isBodyPatchEnabled: false
         }),
-        // TODO: Typescript support?
-        // TODO: Test if dot fix is still necessary?
-        // DotPathFixPlugin.plugin({ proxy }),
-        // ElmLandIndexHtml.plugin(),
-        // TypeScriptPlugin.plugin()
+        ElmLandIndexHtml.plugin()
       ],
       logLevel: 'silent',
       appType: 'spa'
@@ -546,8 +560,7 @@ const handleViteBuildErrors = (err) => {
 }
 
 // Generating index.html from elm-land.json file
-const generateHtml = async (config) => {
-
+const toIndexHtmlFile = (config, relativePathToMainJs = './main.js') => {
   const escapeHtml = (unsafe) => {
     return unsafe
       .split('&',).join('&amp')
@@ -621,20 +634,22 @@ const generateHtml = async (config) => {
     : ''
 
   let htmlContent = `<!DOCTYPE html>
-  <html${htmlAttributes}>
-  <head${headAttributes}>${headTags}</head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="./main.js"></script>
-  </body>
+<html${htmlAttributes}>
+<head${headAttributes}>${headTags}</head>
+<body>
+  <script type="module" src="${relativePathToMainJs}"></script>
+</body>
 </html>`
+  return htmlContent
+}
 
+const generateHtml = async (config) => {
   try {
     await Files.create([
       {
         kind: 'file',
         name: '.elm-land/server/index.html',
-        content: htmlContent
+        content: toIndexHtmlFile(config)
       }
     ])
     return { problem: null }
