@@ -41,7 +41,6 @@
   "dependencies": {
     "chokidar": "3.5.3",
     "elm": "0.19.1-6",
-    "node-elm-compiler": "5.0.6",
     "terser": "5.15.1",
     "typescript": "4.9.3",
     "vite": "5.1.6",
