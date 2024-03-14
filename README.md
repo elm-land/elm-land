@@ -20,27 +20,22 @@ __Ready to get started?__ Your adventure begins at https://elm.land/guide
 
 ---
 
-## Navigating this repo
+## Exploring this codebase
 
-Elm Land is open source and free to use. The code for this GitHub project is broken down into smaller projects:
+Elm Land is open source and free to use. The code for this GitHub project is broken down into smaller projects within one "monorepo".
 
-- __[@elm-land/cli](./projects/cli/)__ - The CLI tool, available at [npmjs.org/elm-land](https://npmjs.org/elm-land)
-- __[@elm-land/www](./docs/)__ - The official website, available at [elm.land](https://elm.land)
+### __[@elm-land/cli](./projects/cli/)__
 
-### 🧩 Plugins
+The CLI tool, available at [npmjs.org/elm-land](https://npmjs.org/elm-land). This includes `elm-land build`, `elm-land server`, and other commands run from the terminal.
 
-This repo also has official plugins to help you be productive in any Elm application, even if you're not using the Elm Land application framework.
+### __[@elm-land/www](./docs/)__
 
-These cover popular frontend technologies that might not make sense for every web application. 
+The official website, including guides and examples, available at [elm.land](https://elm.land).
 
-Here are the available plugins:
+### __[@elm-land/graphql](./projects/graphql/)__ 
 
-- __[@elm-land/graphql](./projects/graphql/)__ - Write __GraphQL__ code and we'll generate the Elm code for you! (Available via [npm](https://npmjs.org/@elm-land/graphql))
+Write GraphQL code and we'll generate the Elm code for you! (Available via [npm](https://npmjs.org/@elm-land/graphql))
 
-### 🛠️ Tooling
+### __[@elm-land/codegen](./projects/tooling/codegen/)__ 
 
-To help make the projects mentioned above work, we created a few tools. We've separated those out for anyone else making tools for Elm:
-
-- __[@elm-land/elm-error-json](./projects/tooling/elm-error-json/)__ - Render the Elm compiler's JSON error output as full-color HTML or colored ASCII terminal output
-
-- __[@elm-land/codegen](./projects/tooling/codegen/)__ - a lightweight codegen library used internally by the Elm Land CLI
+A tiny codegen library used internally by Elm Land to generate Elm code!
