@@ -24,7 +24,7 @@ load helpers
 
 @test "'elm-land build' should pass even if elm is globally installed with npm" {
   npm link
-  npm install -g elm --force
+  npm install -g @lydell/elm --force
 
   cd ../../examples/01-hello-world
   run elm-land build
@@ -44,7 +44,7 @@ load helpers
   echo '{ "dependencies": { "elm-land": "file:../../projects/cli/elm-land-0.19.5.tgz" } }' > package.json
   npm install
 
-  run npx elm-land build
+  run npx elm-land build # will fail
   expectToPass
 
   # Cleanup
