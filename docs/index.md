@@ -104,14 +104,6 @@ const sponsors = [
       { icon: 'github', link: 'https://github.com/nathanbraun' }
     ]
   },
-  {
-    avatar: 'https://www.github.com/shahnhogan.png',
-    name: 'Shahn Hogan',
-    title: '@shahnhogan',
-    links: [
-      { icon: 'github', link: 'https://github.com/shahnhogan' }
-    ]
-  },
 ]
 </script>
 
@@ -179,15 +171,13 @@ Here are some of the successful companies and wonderful people that make Elm Lan
 <h6>Individuals</h6>
 <VPTeamMembers size="small" :members="sponsors" />
 
-
-
 <h3>Want to support Elm Land?</h3>
 <br/>
 
 If you'd like to contribute to the health and continuous improvement of the framework, ensure a strong foundation for your business, or be featured on this page– you can support Elm Land via GitHub Sponsors:
 
 <div class="flex">
-  <a class="sponsor" href="https://github.com/sponsors/ryannhg/">
+  <a class="sponsor" href="https://github.com/sponsors/ryan-haskell/">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="icon"><path d="M12,22.2c-0.3,0-0.5-0.1-0.7-0.3l-8.8-8.8c-2.5-2.5-2.5-6.7,0-9.2c2.5-2.5,6.7-2.5,9.2,0L12,4.3l0.4-0.4c0,0,0,0,0,0C13.6,2.7,15.2,2,16.9,2c0,0,0,0,0,0c1.7,0,3.4,0.7,4.6,1.9l0,0c1.2,1.2,1.9,2.9,1.9,4.6c0,1.7-0.7,3.4-1.9,4.6l-8.8,8.8C12.5,22.1,12.3,22.2,12,22.2zM7,4C5.9,4,4.7,4.4,3.9,5.3c-1.8,1.8-1.8,4.6,0,6.4l8.1,8.1l8.1-8.1c0.9-0.9,1.3-2,1.3-3.2c0-1.2-0.5-2.3-1.3-3.2l0,0C19.3,4.5,18.2,4,17,4c0,0,0,0,0,0c-1.2,0-2.3,0.5-3.2,1.3c0,0,0,0,0,0l-1.1,1.1c-0.4,0.4-1,0.4-1.4,0l-1.1-1.1C9.4,4.4,8.2,4,7,4z"></path></svg>
     <span>Support Elm Land</span>
   </a>
