@@ -2160,7 +2160,7 @@ page user shared route =
         |> Page.withLayout (toLayout user)
 
 
-toLayout : Auth.User -> Model -> Layouts.Layout
+toLayout : Auth.User -> Model -> Layouts.Layout Msg
 toLayout user model =
     Layouts.Sidebar
         { title = "Dashboard"
@@ -2195,7 +2195,7 @@ page user shared route =
         |> Page.withLayout (toLayout user)
 
 
-toLayout : Auth.User -> Model -> Layouts.Layout
+toLayout : Auth.User -> Model -> Layouts.Layout Msg
 toLayout user model =
     Layouts.Sidebar
         { title = "Dashboard"
@@ -2224,7 +2224,7 @@ page user shared route =
         |> Page.withLayout (toLayout user)
 
 
-toLayout : Auth.User -> Model -> Layouts.Layout
+toLayout : Auth.User -> Model -> Layouts.Layout Msg
 toLayout user model =
     Layouts.Sidebar
         { title = "Profile"
