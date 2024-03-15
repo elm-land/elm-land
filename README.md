@@ -62,16 +62,20 @@ Elm Land is open source and free to use. The code for this GitHub project is bro
 
 ### __[@elm-land/cli](./projects/cli/)__
 
-The CLI tool, available at [npmjs.org/elm-land](https://npmjs.org/elm-land). This includes `elm-land build`, `elm-land server`, and other commands run from the terminal.
+The official CLI tool, available at [npmjs.org/elm-land](https://npmjs.org/elm-land). This includes `elm-land new`, `elm-land server`, and the other commands you'll run from a terminal.
 
 ### __[@elm-land/www](./docs/)__
 
-The official website, including guides and examples, available at [elm.land](https://elm.land).
+The documentation website including guides, concepts, and real-world examples. Available at [elm.land](https://elm.land).
 
 ### __[@elm-land/graphql](./projects/graphql/)__ 
 
 Write GraphQL code and we'll generate the Elm code for you! (Available via [npm](https://npmjs.org/@elm-land/graphql))
 
+### __[@elm-land/css](./projects/css)__
+
+Generate a type-safe Elm code from a standard CSS file. Works great with existing CSS frameworks, too! (Available via [npm](https://npmjs.org/@elm-land/css))
+
 ### __[@elm-land/codegen](./projects/codegen/)__ 
 
-A tiny codegen library used internally by Elm Land to generate Elm code!
+The codegen library used internally by Elm Land to generate Elm code. Feel free to steal it for your Elm tooling.
