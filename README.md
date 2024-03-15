@@ -5,10 +5,10 @@
 [![@elm-land/cli](https://github.com/elm-land/elm-land/actions/workflows/cli.js.yml/badge.svg?)](https://github.com/elm-land/elm-land/actions/workflows/cli.js.yml)
 [![@elm-land/graphql](https://github.com/elm-land/elm-land/actions/workflows/graphql.js.yml/badge.svg?)](https://github.com/elm-land/elm-land/actions/workflows/graphql.js.yml)
 
-[![Latest NPM version](https://badgen.net/badge/icon/v0.20.0?label=npm&icon&labelColor=050f2c&color=ff3c41)](https://npmjs.com/package/elm-land)
-[![GitHub](https://badgen.net/github/stars/elm-land/elm-land?icon&labelColor=050f2c&color=4078c0)](https://github.com/elm-land/elm-land)
-[![Discord](https://badgen.net/discord/members/vnmYFfySbH?icon&label=discord&labelColor=050f2c&color=5865f2)](https://join.elm.land) 
-[![Twitter](https://badgen.net/badge/icon/@elmland_?icon&label=twitter&labelColor=050f2c&color=1da1f2)](https://twitter.com/elmland_)
+[![Latest NPM version](https://badgen.net/badge/npm/v0.20.0?icon&labelColor=050f2c&color=blue)](https://npmjs.com/package/elm-land)
+[![GitHub](https://badgen.net/badge/github/BSD-3-Clause?icon&labelColor=050f2c&color=blue)](https://github.com/elm-land/elm-land)
+[![Discord](https://badgen.net/discord/members/vnmYFfySbH?icon=discord&label=discord&labelColor=050f2c&color=5865f2)](https://join.elm.land) 
+[![Twitter](https://badgen.net/badge/twitter/@elmland_?icon&labelColor=050f2c&color=1da1f2)](https://twitter.com/elmland_)
 
 
 ## Introduction
@@ -74,8 +74,8 @@ Write GraphQL code and we'll generate the Elm code for you! (Available via [npm]
 
 ### __[@elm-land/css](./projects/css)__
 
-Generate a type-safe Elm code from a standard CSS file. Works great with existing CSS frameworks, too! (Available via [npm](https://npmjs.org/@elm-land/css))
+Generate type-safe Elm code from standard CSS files. Works great with existing CSS frameworks, too! (Available via [npm](https://npmjs.org/@elm-land/css))
 
 ### __[@elm-land/codegen](./projects/codegen/)__ 
 
-The codegen library used internally by Elm Land to generate Elm code. Feel free to steal it for your Elm tooling.
+The codegen library used internally by Elm Land to generate Elm code. Feel free to steal it for your own Elm tooling.
