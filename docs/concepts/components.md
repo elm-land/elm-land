@@ -657,6 +657,7 @@ type Msg item msg
         { item : item
         , onChange : Maybe msg
         }
+    | NoOp
 
 
 update :
@@ -821,10 +822,15 @@ view (Setting settings) =
         viewDropdownMenuItem item =
             button
                 [ class "dropdown__menu-item"
-                , onClick onMenuItemClick
+                , onMouseDownPreventDefaul
+                , onClick (onMenuItemClick item)
                 ]
                 [ text (settings.toLabel item)
                 ]
+
+        onMouseDownPreventDefaul : Attribute msg
+        onMouseDownPreventDefaul =
+            preventDefaultOn "mousedown" (Json.succeed ( settings.toMsg NoOp, True ))
 
         onMenuItemClick : item -> msg
         onMenuItemClick item =
