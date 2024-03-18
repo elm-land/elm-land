@@ -657,6 +657,7 @@ type Msg item msg
         { item : item
         , onChange : Maybe msg
         }
+    | NoOp
 
 
 update :
