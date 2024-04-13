@@ -124,7 +124,7 @@ replaceRoutePath path =
     ReplaceUrl (Route.Path.toString path)
 
 
-{-| Redirect users to a new URL, somewhere external your web application.
+{-| Redirect users to a new URL, somewhere external to your web application.
 -}
 loadExternalUrl : String -> Effect msg
 loadExternalUrl =

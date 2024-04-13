@@ -263,7 +263,7 @@ page user shared route =
 toLayout : Auth.User -> Model -> Layouts.Layout Msg
 toLayout user model =
     Layouts.Sidebar
-        { title = "Settings"
+        { user = user
         }
 ```
 
