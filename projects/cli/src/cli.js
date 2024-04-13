@@ -16,16 +16,19 @@ let packageJson = JSON.parse(packageJsonContents)
 let version = packageJson.version
 
 let subcommandList = [
-  `    Here are the available commands:`,
+  `    Commonly used commands:`,
   ``,
-  `    ✨ elm-land ${Terminal.pink('init <folder-name>')} ...... create a new project`,
-  `    🚀 elm-land ${Terminal.pink('server')} ................ run a local dev server`,
-  `    📦 elm-land ${Terminal.pink('build')} .......... build your app for production`,
-  `    🪄 elm-land ${Terminal.pink('generate')} ............. generate Elm Land files`,
-  `    📄 elm-land ${Terminal.pink('add page <url>')} ................ add a new page`,
-  `    🍱 elm-land ${Terminal.pink('add layout <name>')} ........... add a new layout`,
-  `    🔧 elm-land ${Terminal.pink('customize <name>')} .. customize a default module`,
-  `    🔍 elm-land ${Terminal.pink('routes')} ........... list all routes in your app`,
+  `     elm-land ${Terminal.pink('init <folder-name>')} ...... create a new project`,
+  `     elm-land ${Terminal.pink('server')} ................ run a local dev server`,
+  `     elm-land ${Terminal.pink('build')} .......... build your app for production`,
+  '',
+  '    Other helpful commands:',
+  '',
+  `     elm-land ${Terminal.pink('generate')} ............. generate Elm Land files`,
+  `     elm-land ${Terminal.pink('add page <url>')} ................ add a new page`,
+  `     elm-land ${Terminal.pink('add layout <name>')} ........... add a new layout`,
+  `     elm-land ${Terminal.pink('customize <name>')} .. customize a default module`,
+  `     elm-land ${Terminal.pink('routes')} ........... list all routes in your app`,
 ]
 
 
