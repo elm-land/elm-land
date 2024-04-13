@@ -12,7 +12,7 @@ If you're excited to try things out– come join the [Elm Land Discord](https://
 
 ## Installation
 
-If you have [Node.js v16+](https://nodejs.org) installed, you can install the `elm-land` CLI via NPM.
+If you have [Node.js v18+](https://nodejs.org) installed, you can install the `elm-land` CLI via NPM.
 
 Running the `elm-land graphql` command will automatically download this separate package, which includes dependencies on `graphql`
 
