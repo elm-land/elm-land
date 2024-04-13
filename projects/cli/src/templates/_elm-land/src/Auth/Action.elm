@@ -1,6 +1,6 @@
 module Auth.Action exposing
     ( Action(..)
-    , loadPageWithUser, showLoadingPage
+    , loadPageWithUser, loadCustomPage
     , replaceRoute, pushRoute, loadExternalUrl
     , view, subscriptions, command
     )
@@ -8,7 +8,7 @@ module Auth.Action exposing
 {-|
 
 @docs Action
-@docs loadPageWithUser, showLoadingPage
+@docs loadPageWithUser, loadCustomPage
 @docs replaceRoute, pushRoute, loadExternalUrl
 
 @docs view, subscriptions, command
@@ -23,9 +23,12 @@ import Url exposing (Url)
 import View exposing (View)
 
 
+{-| Describes the action to take for authenticated pages, based
+on the current `Route` and `Shared.Model`
+-}
 type Action user
     = LoadPageWithUser user
-    | ShowLoadingPage (View Never)
+    | LoadCustomPage
     | ReplaceRoute
         { path : Route.Path.Path
         , query : Dict String String
@@ -39,16 +42,27 @@ type Action user
     | LoadExternalUrl String
 
 
+{-| Successfully pass the user along to the authenticated page.
+-}
 loadPageWithUser : user -> Action user
 loadPageWithUser =
     LoadPageWithUser
 
 
-showLoadingPage : View Never -> Action user
-showLoadingPage =
-    ShowLoadingPage
+{-| Rather than navigating to a different route, keep the URL, but render
+what was defined in `Auth.loadCustomPage`.
+
+**Note:** `Auth.loadCustomPage` has access to the `Shared.Model`, so you
+can render different pages in different authentication scenarios.
+
+-}
+loadCustomPage : Action user
+loadCustomPage =
+    LoadCustomPage
 
 
+{-| Replace the URL with the provided route.
+-}
 replaceRoute :
     { path : Route.Path.Path
     , query : Dict String String
@@ -59,6 +73,8 @@ replaceRoute =
     ReplaceRoute
 
 
+{-| Push a new URL with the provided route.
+-}
 pushRoute :
     { path : Route.Path.Path
     , query : Dict String String
@@ -69,6 +85,8 @@ pushRoute =
     PushRoute
 
 
+{-| Navigate to a URL for an external website.
+-}
 loadExternalUrl : String -> Action user
 loadExternalUrl =
     LoadExternalUrl
@@ -78,14 +96,14 @@ loadExternalUrl =
 -- USED INTERNALLY BY ELM LAND
 
 
-view : (user -> View msg) -> Action user -> View msg
-view toView authAction =
+view : View msg -> (user -> View msg) -> Action user -> View msg
+view viewCustomPage viewPageWithUser authAction =
     case authAction of
         LoadPageWithUser user ->
-            toView user
+            viewPageWithUser user
 
-        ShowLoadingPage loadingView ->
-            View.map never loadingView
+        LoadCustomPage ->
+            viewCustomPage
 
         ReplaceRoute _ ->
             View.none
@@ -103,7 +121,7 @@ subscriptions toSub authAction =
         LoadPageWithUser user ->
             toSub user
 
-        ShowLoadingPage _ ->
+        LoadCustomPage ->
             Sub.none
 
         ReplaceRoute _ ->
@@ -122,7 +140,7 @@ command toCmd authAction =
         LoadPageWithUser user ->
             toCmd user
 
-        ShowLoadingPage _ ->
+        LoadCustomPage ->
             Cmd.none
 
         ReplaceRoute _ ->

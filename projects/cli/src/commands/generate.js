@@ -1,5 +1,5 @@
-const { Files } = require("../files")
-const { Utils, Terminal } = require("./_utils")
+import { Files } from "../files.js"
+import { Utils, Terminal } from "./_utils.js"
 
 let printHelpInfo = () => {
   return {
@@ -47,8 +47,6 @@ let run = async () => {
   }
 }
 
-module.exports = {
-  Generate: {
-    run, printHelpInfo
-  }
+export const Generate = {
+  run, printHelpInfo
 }

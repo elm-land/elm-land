@@ -1,7 +1,7 @@
 #! /usr/bin/env node
-const { Cli } = require('./cli')
-const { Effects } = require('./effects')
-const { Files } = require('./files')
+import { Cli } from './cli.js'
+import { Effects } from './effects.js'
+import { Files } from './files.js'
 
 let main = async () => {
   try {

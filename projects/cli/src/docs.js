@@ -1,10 +1,14 @@
-const fs = require('fs')
-const path = require('path')
+import { readFile } from 'fs'
+import { join } from 'path'
+import path from 'path'
+import url from 'url'
+
+let __dirname = path.dirname(url.fileURLToPath(import.meta.url))
 
 let read = async (filepath) => {
   let pieces = filepath.split('/')
-  let content = await new Promise((resolve, reject) => fs.readFile(
-    path.join(__dirname, '..', '..', 'docs', ...pieces),
+  let content = await new Promise((resolve, reject) => readFile(
+    join(__dirname, '..', '..', 'docs', ...pieces),
     { encoding: 'utf-8' },
     (err, data) => {
       if (err) { reject(err) } else { resolve(data) }
@@ -13,6 +17,4 @@ let read = async (filepath) => {
   return content.split('\r').join('')
 }
 
-module.exports = {
-  Docs: { read }
-}
+export const Docs = { read }

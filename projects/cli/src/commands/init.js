@@ -1,6 +1,6 @@
-const path = require('path')
-const { Files } = require("../files")
-const { Utils, Terminal } = require('./_utils')
+import { join } from 'path'
+import { Files } from "../files.js"
+import { Utils, Terminal } from './_utils.js'
 
 let helpMessage = [
   `    For example, if your project was called "${Terminal.cyan('my-cool-app')}"`,
@@ -44,7 +44,7 @@ let run = async (options = {}) => {
       ].join('\n'))
     }
 
-    let isNonEmptyFolder = await Files.isNonEmptyFolder(path.join(process.cwd(), name))
+    let isNonEmptyFolder = await Files.isNonEmptyFolder(join(process.cwd(), name))
 
     if (isNonEmptyFolder) {
       return Promise.reject([
@@ -172,6 +172,4 @@ Please visit [the "Deployment" guide](https://elm.land/guide/deploying) to learn
 about deploying your app for free using Netlify or Vercel.
 `.trim()
 
-module.exports = {
-  Init: { run, printHelpInfo }
-}
+export const Init = { run, printHelpInfo }

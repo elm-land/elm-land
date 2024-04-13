@@ -1,12 +1,19 @@
-let { version } = require('../../package.json')
+import fs from 'fs/promises'
+import path from 'path'
+import url from 'url'
 
-const Terminal = {
-  bold: (str) => '\033[1m' + str + '\033[0m',
-  dim: (str) => '\033[2m' + str + '\033[0m',
-  red: (str) => '\033[31m' + str + '\033[0m',
-  green: (str) => '\033[32m' + str + '\033[0m',
-  pink: (str) => '\033[35m' + str + '\033[0m',
-  cyan: (str) => '\033[36m' + str + '\033[0m',
+let __dirname = path.dirname(url.fileURLToPath(import.meta.url))
+let packageJsonContents = await fs.readFile(path.join(__dirname, '..', '..', 'package.json'), { encoding: 'utf-8' })
+let packageJson = JSON.parse(packageJsonContents)
+let version = packageJson.version
+
+export const Terminal = {
+  bold: (str) => '\x1b[1m' + str + '\x1b[0m',
+  dim: (str) => '\x1b[2m' + str + '\x1b[0m',
+  red: (str) => '\x1b[31m' + str + '\x1b[0m',
+  green: (str) => '\x1b[32m' + str + '\x1b[0m',
+  pink: (str) => '\x1b[35m' + str + '\x1b[0m',
+  cyan: (str) => '\x1b[36m' + str + '\x1b[0m',
 }
 
 const stripAnsi = (str) =>
@@ -78,55 +85,51 @@ let couldntFindTypeScriptBinary = (filepath) => [
 let customizableFiles = {
   'shared': {
     filepaths: [
-      {src: 'Shared.elm', target: 'Shared.elm'},
-      {src: 'Shared/Model.elm', target: 'Shared/Model.elm'},
-      {src: 'Shared/Msg.elm', target: 'Shared/Msg.elm'}
+      { src: 'Shared.elm', target: 'Shared.elm' },
+      { src: 'Shared/Model.elm', target: 'Shared/Model.elm' },
+      { src: 'Shared/Msg.elm', target: 'Shared/Msg.elm' }
     ],
     description: '.................... share data across pages'
   },
   'not-found': {
-    filepaths: [{src: 'Pages/NotFound_.elm', target: 'Pages/NotFound_.elm'}],
+    filepaths: [{ src: 'Pages/NotFound_.elm', target: 'Pages/NotFound_.elm' }],
     description: '... the 404 page shown for unknown routes'
   },
   'view': {
-    filepaths: [{src: 'View.elm', target: 'View.elm'}],
+    filepaths: [{ src: 'View.elm', target: 'View.elm' }],
     description: '......... use whatever Elm UI package you like'
   },
   'view:elm-ui': {
-    filepaths: [{src: 'ViewElmUi.elm', target: 'View.elm'}],
+    filepaths: [{ src: 'ViewElmUi.elm', target: 'View.elm' }],
     description: '............................ use Elm UI'
   },
   'view:elm-css': {
-    filepaths: [{src: 'ViewElmCss.elm', target: 'View.elm'}],
+    filepaths: [{ src: 'ViewElmCss.elm', target: 'View.elm' }],
     description: '.......................... use Elm CSS'
   },
   'effect': {
-    filepaths: [{src: 'Effect.elm', target: 'Effect.elm'}],
+    filepaths: [{ src: 'Effect.elm', target: 'Effect.elm' }],
     description: '............. send custom effects from pages'
   },
   'auth': {
-    filepaths: [{src: 'Auth.elm', target: 'Auth.elm'}],
+    filepaths: [{ src: 'Auth.elm', target: 'Auth.elm' }],
     description: '................... handle user authentication'
   },
   'js': {
-    filepaths: [{src: 'interop.js', target: 'interop.js'}],
+    filepaths: [{ src: 'interop.js', target: 'interop.js' }],
     description: '......... work with JavaScript, flags, and ports'
   },
   'ts': {
-    filepaths: [{src: 'interop.ts', target: 'interop.ts'}],
+    filepaths: [{ src: 'interop.ts', target: 'interop.ts' }],
     description: '......... work with TypeScript, flags, and ports'
   },
 }
 
-module.exports = {
-  Terminal,
-  Utils: {
-    intro,
-    didNotRecognizeCommand,
-    notInElmLandProject,
-    foundTypeScriptErrors,
-    couldntFindTypeScriptBinary,
-    customizableFiles
-  }
+export const Utils = {
+  intro,
+  didNotRecognizeCommand,
+  notInElmLandProject,
+  foundTypeScriptErrors,
+  couldntFindTypeScriptBinary,
+  customizableFiles
 }
-

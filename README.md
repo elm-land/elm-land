@@ -5,7 +5,7 @@
 
 [![Discord](https://badgen.net/discord/members/vnmYFfySbH?icon=discord&label)](https://join.elm.land) [![Twitter](https://badgen.net/badge/icon/twitter?icon=twitter&label&color=00acee)](https://twitter.com/elmland_) [![GitHub](https://badgen.net/badge/icon/github?icon=github&label&color=4078c0)](https://www.github.com/elm-land/elm-land) 
 
-[![Elm Land: Reliable web apps for everyone](https://github.com/elm-land/elm-land/raw/main/elm-land-banner.jpg)](https://elm.land)
+[![Elm Land: Reliable web apps for everyone](https://github.com/elm-land/elm-land/raw/main/docs/elm-land-banner.jpg)](https://elm.land)
 
 
 ## Welcome to our repo!

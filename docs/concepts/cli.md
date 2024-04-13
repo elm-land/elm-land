@@ -15,7 +15,7 @@ detailed breakdown of the documentation you'll see in your terminal.
 ## elm-land init
 
 ```txt
-✨ elm-land init <folder-name> ...... create a new project
+elm-land init <folder-name> ...... create a new project
 ```
 
 #### Description
@@ -37,7 +37,7 @@ be committed to version control.
 ## elm-land server
 
 ```txt
-🚀 elm-land server ................ run a local dev server
+elm-land server ................ run a local dev server
 ```
 
 #### Description
@@ -65,7 +65,7 @@ Next, we're looking to add `elm-watch` to our existing Vite setup. That will com
 ## elm-land build
 
 ```txt
-📦 elm-land build .......... build your app for production
+elm-land build .......... build your app for production
 ```
 
 #### Description
@@ -80,7 +80,7 @@ Visit the [Deploying to production](../guide/deploying) guide to learn how to co
 ## elm-land generate
 
 ```txt
-🪄 elm-land generate ............. generate Elm Land files
+elm-land generate ............. generate Elm Land files
 ```
 
 #### Description
@@ -93,7 +93,7 @@ For those advanced use cases, we've added a specific `generate` command that doe
 ## elm-land add page
 
 ```txt
-📄 elm-land add page <url> ................ add a new page
+elm-land add page <url> ................ add a new page
 ```
 
 #### Description
@@ -125,7 +125,7 @@ __Because there is no command for upgrading an existing page__, we recommend usi
 ## elm-land add layout
 
 ```txt
-🍱 elm-land add layout <name> ........... add a new layout
+elm-land add layout <name> ........... add a new layout
 ```
 
 #### Description
@@ -150,7 +150,7 @@ elm-land add layout Sidebar.Header ... Creates "src/Layouts/Sidebar/Header.elm"
 ## elm-land customize
 
 ```txt
-🔧 elm-land customize <name> .. customize a default module
+elm-land customize <name> .. customize a default module
 ```
 
 #### Description
@@ -176,7 +176,7 @@ elm-land customize auth ................... handle user authentication
 ## elm-land routes
 
 ```txt
-🔍 elm-land routes ........... list all routes in your app
+elm-land routes ........... list all routes in your app
 ```
 
 #### Description
@@ -191,7 +191,7 @@ Here's example output of what you'd see if you ran this command in the ["Pages a
 
 ```txt
 
-  🌈  Elm Land (v0.19.5) found 5 pages in your application
+  🌈  Elm Land (v0.20.0) found 5 pages in your application
   ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
   src/Pages/Home_.elm ............... http://localhost:1234/
   src/Pages/SignIn.elm .............. http://localhost:1234/sign-in

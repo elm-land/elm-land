@@ -17,17 +17,21 @@ The `elm-land` CLI comes with everything you need to create your next web applic
 ```
 $ elm-land
 
-🌈  Welcome to Elm Land! (v0.19.5)
+🌈  Welcome to Elm Land! (v0.20.0)
     ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
-    Here are the available commands:
+    Commonly used commands:
 
-    ✨ elm-land init <folder-name> ...... create a new project
-    🚀 elm-land server ................ run a local dev server
-    📦 elm-land build .......... build your app for production
-    🪄 elm-land generate ............. generate Elm Land files
-    📄 elm-land add page <url> ................ add a new page
-    🍱 elm-land add layout <name> ........... add a new layout
-    🔧 elm-land customize <name> .. customize a default module
+     elm-land init <folder-name> ...... create a new project
+     elm-land server ................ run a local dev server
+     elm-land build .......... build your app for production
+
+    Other helpful commands:
+
+     elm-land generate ............. generate Elm Land files
+     elm-land add page <url> ................ add a new page
+     elm-land add layout <name> ........... add a new layout
+     elm-land customize <name> .. customize a default module
+     elm-land routes ........... list all routes in your app
 
     Want to learn more? Visit https://elm.land/guide
 

@@ -1,8 +1,8 @@
-const path = require('path')
-const { Files } = require('./files')
+import { join } from 'path'
+import { Files } from './files.js'
 
 let generateElmLandFiles = async ({ pages, layouts, router }) => {
-  let { Elm } = require('../dist/codegen-worker.js')
+  let { Elm } = (await import('../dist/codegen-worker.cjs')).default
 
   let newFiles = await new Promise((resolve, reject) => {
     // Insert not found page if it hasn't been customized yet
@@ -23,9 +23,9 @@ let generateElmLandFiles = async ({ pages, layouts, router }) => {
 }
 
 let addNewPage = async ({ kind, url, filepath }) => {
-  let { Elm } = require('../dist/codegen-worker.js')
+  let { Elm } = (await import('../dist/codegen-worker.cjs')).default
 
-  let hasViewBeenCustomized = await Files.exists(path.join(process.cwd(), 'src', 'View.elm'))
+  let hasViewBeenCustomized = await Files.exists(join(process.cwd(), 'src', 'View.elm'))
 
   let newFiles = await new Promise((resolve, reject) => {
     let app = Elm.Worker.init({
@@ -46,7 +46,7 @@ let addNewPage = async ({ kind, url, filepath }) => {
 }
 
 let addNewLayout = async ({ moduleSegments }) => {
-  let { Elm } = require('../dist/codegen-worker.js')
+  let { Elm } = (await import('../dist/codegen-worker.cjs')).default
 
   let newFiles = await new Promise((resolve, reject) => {
     let app = Elm.Worker.init({
@@ -61,12 +61,10 @@ let addNewLayout = async ({ moduleSegments }) => {
   return newFiles
 }
 
-module.exports = {
-  Codegen: {
-    generateElmLandFiles,
-    addNewPage,
-    addNewLayout
-  }
+export const Codegen = {
+  generateElmLandFiles,
+  addNewPage,
+  addNewLayout
 }
 
 // Not found page

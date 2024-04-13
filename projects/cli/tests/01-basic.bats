@@ -9,5 +9,5 @@ load helpers
   run elm-land banana
   expectToFail
   expectOutputContains "couldn't find"
-  expectOutputContains "Here are the available commands"
+  expectOutputContains "Commonly used commands"
 }
