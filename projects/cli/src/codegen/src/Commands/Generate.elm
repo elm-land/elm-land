@@ -1255,7 +1255,7 @@ hasActionTypeChangedDeclaration =
                       , arguments = []
                       , expression = CodeGen.Expression.value "False"
                       }
-                    , { name = "( Auth.Action.ShowLoadingPage _, Auth.Action.ShowLoadingPage _ )"
+                    , { name = "( Auth.Action.LoadCustomPage, Auth.Action.LoadCustomPage )"
                       , arguments = []
                       , expression = CodeGen.Expression.value "False"
                       }
@@ -1373,8 +1373,8 @@ runWhenAuthenticatedWithLayoutDeclaration =
                               , arguments = [ CodeGen.Argument.new "user" ]
                               , expression = CodeGen.Expression.value "toRecord user"
                               }
-                            , { name = "Auth.Action.ShowLoadingPage"
-                              , arguments = [ CodeGen.Argument.new "loadingView" ]
+                            , { name = "Auth.Action.LoadCustomPage"
+                              , arguments = []
                               , expression =
                                     wrapInPageLayout
                                         (CodeGen.Expression.multilineTuple
@@ -1570,7 +1570,7 @@ toViewPageCaseExpression pages =
         conditionallyWrapInAuthView page expression =
             if PageFile.isAuthProtectedPage page then
                 CodeGen.Expression.multilineFunction
-                    { name = "Auth.Action.view"
+                    { name = "Auth.Action.view (View.map never (Auth.viewCustomPage model.shared (Route.fromUrl () model.url)))"
                     , arguments =
                         [ CodeGen.Expression.multilineLambda
                             { arguments = [ CodeGen.Argument.new "user" ]
@@ -1605,7 +1605,7 @@ toViewPageCaseExpression pages =
                     , arguments = []
                     , expression =
                         CodeGen.Expression.pipeline
-                            [ CodeGen.Expression.value "Auth.viewLoadingPage model.shared (Route.fromUrl () model.url)"
+                            [ CodeGen.Expression.value "Auth.viewCustomPage model.shared (Route.fromUrl () model.url)"
                             , CodeGen.Expression.value "View.map never"
                             ]
                     }

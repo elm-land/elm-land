@@ -120,7 +120,7 @@ init flags =
                     { types = [ "User" ]
                     , functions =
                         [ ( "onPageLoad", "Shared.Model -> Route () -> Auth.Action.Action User" )
-                        , ( "viewLoadingPage", "Shared.Model -> Route () -> View Never" )
+                        , ( "viewCustomPage", "Shared.Model -> Route () -> View Never" )
                         ]
                     }
                 , toCustomizableErrors customizedFiles.shared

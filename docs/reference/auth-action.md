@@ -65,12 +65,14 @@ Auth.Action.loadExternalUrl : String -> Auth.Action.Action
 ```
 
 
-### `Auth.Action.showLoadingPage`
+### `Auth.Action.loadCustomPage`
 
-Sometimes it is helpful to wait on the current page while validating if a JWT token is expired. The `showLoadingPage` function will display a static view to the user while they wait.
+Sometimes it is helpful to wait on the current page while validating if a JWT token is expired. The `loadCustomPage` function will display a static view to the user while they wait.
+
+__Note:__ You can use `Auth.viewCustomPage` to specify what to render in each scenario
 
 #### Type definition
 
 ```elm
-Auth.Action.showLoadingPage : View Never -> Auth.Action.Action
+Auth.Action.loadCustomPage : Auth.Action.Action
 ```

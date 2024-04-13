@@ -36,7 +36,7 @@ elm-land customize auth
 By default, all auth-only pages redirect users to the `NotFound_` page when the application starts up. Let's edit our new `src/Auth.elm` file so it automatically passes the user to any pages that need it, but redirects to `/sign-in` if there's no user logged in.
 
 ```elm{7-8,14-28}
-module Auth exposing (User, onPageLoad, viewLoadingPage)
+module Auth exposing (User, onPageLoad, viewCustomPage)
 
 -- ...
 
@@ -66,9 +66,9 @@ onPageLoad shared route =
                 }
 
 
-{-| Used whenever `Auth.Action.showLoadingPage` is returned. -}
-viewLoadingPage : Shared.Model -> Route () -> View Msg
-viewLoadingPage shared route =
+{-| Used whenever `Auth.Action.loadCustomPage` is returned. -}
+viewCustomPage : Shared.Model -> Route () -> View Msg
+viewCustomPage shared route =
     View.none
 ```
 
