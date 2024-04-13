@@ -351,15 +351,20 @@ mainElmModule data =
                             , { name = "UrlRequested"
                               , arguments = [ CodeGen.Argument.new "(Browser.External url)" ]
                               , expression =
-                                    CodeGen.Expression.multilineTuple
-                                        [ CodeGen.Expression.value "model"
-                                        , CodeGen.Expression.function
-                                            { name = "Browser.Navigation.load"
-                                            , arguments =
-                                                [ CodeGen.Expression.value "url"
+                                    CodeGen.Expression.ifElse
+                                        { condition = CodeGen.Expression.value "String.isEmpty (String.trim url)"
+                                        , ifBranch = CodeGen.Expression.value "( model, Cmd.none )"
+                                        , elseBranch =
+                                            CodeGen.Expression.multilineTuple
+                                                [ CodeGen.Expression.value "model"
+                                                , CodeGen.Expression.function
+                                                    { name = "Browser.Navigation.load"
+                                                    , arguments =
+                                                        [ CodeGen.Expression.value "url"
+                                                        ]
+                                                    }
                                                 ]
-                                            }
-                                        ]
+                                        }
                               }
                             , { name = "UrlChanged"
                               , arguments = [ CodeGen.Argument.new "url" ]
