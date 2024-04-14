@@ -1382,7 +1382,7 @@ module Pages.Home_ exposing (Model, Msg, page)
 import Auth
 -- ...
 
-page : Auth.User -> Shared.Model -> Route () -> ( Model, Effect Msg )
+page : Auth.User -> Shared.Model -> Route () -> Page Model Msg
 page user shared route =
     ...
 
