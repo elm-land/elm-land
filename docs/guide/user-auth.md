@@ -435,7 +435,18 @@ The `Json.Encode` module is part of [the elm/json package](https://package.elm-l
 
 For `/api/sign-in`, we're expecting a JSON response like `{ "token": "???" }`. This JSON decoder describes the names of fields we expect, and what kinds of data are in those fields.
 
-On line 8 of the code snippet above, we're saying _"look for a field named 'token' and expect to find a `String` value there."_
+```json {8}
+type alias Data =
+    { token : String
+    }
+
+decoder : Json.Decode.Decoder Data
+decoder =
+    Json.Decode.map Data
+        (Json.Decode.field "token" Json.Decode.string)
+```
+
+On the highlighted line above, we're saying _"look for a field named 'token' and expect to find a `String` value there."_ We can use `Json.Decode.map` to add that `String` value to our `Data` type. In the end, we have the `Json.Decode.Decoder Data` that our HTTP request expects.
 
 #### 2. We create a HTTP request using `Http.post`
 
