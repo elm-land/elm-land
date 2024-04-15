@@ -94,3 +94,14 @@ load helpers
   cd ../../examples/18-shared-subscriptions
   expectElmExampleBuilds
 }
+
+@test "'19-tailwindcss' example builds successfully" {
+  cd ../../examples/19-tailwindcss
+  run npm install
+  expectElmExampleBuilds
+}
+
+@test "'20-auth-error-page' example builds successfully" {
+  cd ../../examples/20-auth-error-page
+  expectElmExampleBuilds
+}
