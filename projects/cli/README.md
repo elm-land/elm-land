@@ -17,7 +17,7 @@ The `elm-land` CLI comes with everything you need to create your next web applic
 ```
 $ elm-land
 
-🌈  Welcome to Elm Land! (v0.20.0)
+🌈  Welcome to Elm Land! (v0.20.1)
     ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
     Commonly used commands:
 

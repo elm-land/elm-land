@@ -1,6 +1,6 @@
 import { defineConfig } from 'vitepress'
 
-const version = '0.20.0'
+const version = '0.20.1'
 
 const sidebar = [
   {
