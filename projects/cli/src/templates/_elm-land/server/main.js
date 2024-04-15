@@ -17,7 +17,6 @@ let startApp = async ({ Interop }) => {
 
   if (Main && Main.init) {
     let app = Main.init({
-      node: document.getElementById('app'),
       flags
     })
 
