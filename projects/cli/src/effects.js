@@ -11,6 +11,8 @@ import { validate } from './validate/index.js'
 import path from 'path'
 import url from 'url'
 
+const isWindows = process.platform === "win32"
+
 let __dirname = path.dirname(url.fileURLToPath(import.meta.url))
 let srcPagesFolderFilepath = join(process.cwd(), 'src', 'Pages')
 let srcLayoutsFolderFilepath = join(process.cwd(), 'src', 'Layouts')
@@ -52,18 +54,20 @@ let runServer = async (options) => {
     // Expose ENV variables explicitly allowed by the user
     handleEnvironmentVariables({ config })
 
-    // // Listen for changes to the "src" folder, so the browser
-    // // automatically refreshes when an Elm file is changed
-    // let srcFolder = `${join(process.cwd(), 'src')}/**/*.elm`
-    // let srcFolderWatcher = watch(srcFolder, {
-    //   ignorePermissionErrors: true,
-    //   ignoreInitial: true
-    // })
-    // let mainElmPath = join(process.cwd(), '.elm-land', 'src', 'Main.elm')
+    if (isWindows) {
+      // Listen for changes to the "src" folder, so the browser
+      // automatically refreshes when an Elm file is changed
+      let srcFolder = `${join(process.cwd(), 'src')}/**/*.elm`
+      let srcFolderWatcher = watch(srcFolder, {
+        ignorePermissionErrors: true,
+        ignoreInitial: true
+      })
+      let mainElmPath = join(process.cwd(), '.elm-land', 'src', 'Main.elm')
 
-    // srcFolderWatcher.on('all', () => {
-    //   Files.touch(mainElmPath)
-    // })
+      srcFolderWatcher.on('all', () => {
+        Files.touch(mainElmPath)
+      })
+    }
 
     // Listen for changes to static assets, so the browser
     // automatically shows the latest asset changes
@@ -186,7 +190,7 @@ let runServer = async (options) => {
           name: 'elmLandIndexHtml',
           configureServer(server_) {
             let virtualIndexHtmlHandler = async function elmLandIndexHtmlMiddleware(req, res, next) {
-              let virtualIndexHtmlContents = toIndexHtmlFile(config, './.elm-land/server/main.js')
+              let virtualIndexHtmlContents = toIndexHtmlFile(config, '/.elm-land/server/main.js')
               res.setHeader('Content-Type', 'text/html')
               res.end(virtualIndexHtmlContents)
             }
@@ -560,7 +564,7 @@ const handleViteBuildErrors = (err) => {
 }
 
 // Generating index.html from elm-land.json file
-const toIndexHtmlFile = (config, relativePathToMainJs = './main.js') => {
+const toIndexHtmlFile = (config, pathToMainJs) => {
   const escapeHtml = (unsafe) => {
     return unsafe
       .split('&',).join('&amp')
@@ -623,7 +627,7 @@ const toIndexHtmlFile = (config, relativePathToMainJs = './main.js') => {
     ? [toHtmlTag('title', {}, config.app.html.title)]
     : []
   let metaTags = toSelfClosingHtmlTags('meta', [
-    { name: 'elm-land', content: '0.20.0' }
+    { name: 'elm-land', content: '0.20.1' }
   ].concat(attempt(_ => config.app.html.meta)))
   let linkTags = toSelfClosingHtmlTags('link', attempt(_ => config.app.html.link))
   let scriptTags = toHtmlTags('script', attempt(_ => config.app.html.script))
@@ -637,7 +641,7 @@ const toIndexHtmlFile = (config, relativePathToMainJs = './main.js') => {
 <html${htmlAttributes}>
 <head${headAttributes}>${headTags}</head>
 <body>
-  <script type="module" src="${relativePathToMainJs}"></script>
+  <script type="module" src="${pathToMainJs}"></script>
 </body>
 </html>`
   return htmlContent
@@ -649,7 +653,7 @@ const generateHtml = async (config) => {
       {
         kind: 'file',
         name: '.elm-land/server/index.html',
-        content: toIndexHtmlFile(config)
+        content: toIndexHtmlFile(config, './main.js')
       }
     ])
     return { problem: null }
