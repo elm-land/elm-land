@@ -5,6 +5,7 @@ module Layout exposing
     , isNotExposingPropsType, isNotExposingModelType, isNotExposingMsgType
     , Problem(..), toProblem
     , toAnnotationForLayoutFunction
+    , toValidLayoutFunctionAnnotations
     )
 
 {-|
@@ -17,6 +18,7 @@ module Layout exposing
 
 @docs Problem, toProblem
 @docs toAnnotationForLayoutFunction
+@docs toValidLayoutFunctionAnnotations
 
 -}
 
@@ -110,24 +112,10 @@ type Problem
 toProblem : Layout -> Maybe Problem
 toProblem layout =
     let
-        -- TODO: Don't duplicate these strings in both this file and Worker.elm
         validAnnotations : List String
         validAnnotations =
-            let
-                parentProps : String
-                parentProps =
-                    case Filepath.toParentLayoutModuleName (filepath layout) of
-                        Just str ->
-                            str ++ ".Props"
-
-                        Nothing ->
-                            "()"
-            in
-            [ "Props -> Shared.Model -> Route () -> Layout ${parentProps} Model Msg contentMsg"
-                |> String.replace "${parentProps}" parentProps
-            , "Props contentMsg -> Shared.Model -> Route () -> Layout ${parentProps} Model Msg contentMsg"
-                |> String.replace "${parentProps}" parentProps
-            ]
+            Filepath.toParentLayoutModuleName (filepath layout)
+                |> toValidLayoutFunctionAnnotations
     in
     case toAnnotationForLayoutFunction layout of
         Nothing ->
@@ -144,3 +132,35 @@ toProblem layout =
 toAnnotationForLayoutFunction : Layout -> Maybe String
 toAnnotationForLayoutFunction (Layout layout) =
     Extras.ElmSyntax.toAnnotationForFunction "layout" layout.file
+
+
+toValidLayoutFunctionAnnotations : Maybe String -> List String
+toValidLayoutFunctionAnnotations parentLayoutModuleName =
+    let
+        parentPropsWithoutContentMsg : String
+        parentPropsWithoutContentMsg =
+            case parentLayoutModuleName of
+                Just str ->
+                    str ++ ".Props"
+
+                Nothing ->
+                    "()"
+
+        parentPropsWithContentMsg : String
+        parentPropsWithContentMsg =
+            case parentLayoutModuleName of
+                Just str ->
+                    "(" ++ str ++ ".Props contentMsg)"
+
+                Nothing ->
+                    "()"
+    in
+    List.concatMap
+        (\parentProps ->
+            [ "Props -> Shared.Model -> Route () -> Layout ${parentProps} Model Msg contentMsg"
+                |> String.replace "${parentProps}" parentProps
+            , "Props contentMsg -> Shared.Model -> Route () -> Layout ${parentProps} Model Msg contentMsg"
+                |> String.replace "${parentProps}" parentProps
+            ]
+        )
+        [ parentPropsWithoutContentMsg, parentPropsWithContentMsg ]

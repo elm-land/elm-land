@@ -132,6 +132,15 @@ fromAnnotationToString typeAnnotation =
     fromAnnotationToStringHelper False typeAnnotation
 
 
+addParensIf : Bool -> String -> String
+addParensIf condition string =
+    if condition then
+        "(" ++ string ++ ")"
+
+    else
+        string
+
+
 fromAnnotationToStringHelper : Bool -> Elm.Syntax.TypeAnnotation.TypeAnnotation -> String
 fromAnnotationToStringHelper needsParens typeAnnotation =
     case typeAnnotation of
@@ -142,16 +151,18 @@ fromAnnotationToStringHelper needsParens typeAnnotation =
             fromModuleNodeToString firstNode
 
         Elm.Syntax.TypeAnnotation.Typed firstNode [ otherNode ] ->
-            String.join " "
-                [ fromModuleNodeToString firstNode
-                , fromAnnotationToString (Elm.Syntax.Node.value otherNode)
-                ]
+            addParensIf needsParens <|
+                String.join " "
+                    [ fromModuleNodeToString firstNode
+                    , fromAnnotationToStringHelper True (Elm.Syntax.Node.value otherNode)
+                    ]
 
         Elm.Syntax.TypeAnnotation.Typed firstNode restOfNodes ->
-            String.join " "
-                (fromModuleNodeToString firstNode
-                    :: List.map (fromAnnotationToString << Elm.Syntax.Node.value) restOfNodes
-                )
+            addParensIf needsParens <|
+                String.join " "
+                    (fromModuleNodeToString firstNode
+                        :: List.map (fromAnnotationToStringHelper True << Elm.Syntax.Node.value) restOfNodes
+                    )
 
         Elm.Syntax.TypeAnnotation.Unit ->
             "()"
@@ -160,7 +171,7 @@ fromAnnotationToStringHelper needsParens typeAnnotation =
             "()"
 
         Elm.Syntax.TypeAnnotation.Tupled list ->
-            "( " ++ String.join ", " (List.map (fromAnnotationToString << Elm.Syntax.Node.value) list) ++ " )"
+            "( " ++ String.join ", " (List.map (fromAnnotationToStringHelper False << Elm.Syntax.Node.value) list) ++ " )"
 
         Elm.Syntax.TypeAnnotation.Record [] ->
             "{}"
@@ -197,11 +208,11 @@ fromAnnotationToStringHelper needsParens typeAnnotation =
             in
             String.join " -> "
                 [ if isFunctionAnnotation left then
-                    "(" ++ fromAnnotationToString left ++ ")"
+                    "(" ++ fromAnnotationToStringHelper False left ++ ")"
 
                   else
-                    fromAnnotationToString left
-                , fromAnnotationToString (Elm.Syntax.Node.value outputNode)
+                    fromAnnotationToStringHelper False left
+                , fromAnnotationToStringHelper False (Elm.Syntax.Node.value outputNode)
                 ]
 
 

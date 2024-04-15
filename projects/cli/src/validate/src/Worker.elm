@@ -451,21 +451,8 @@ unexpectedPageAnnotationError options =
 
 validLayoutFunctionAnnotations : Filepath -> List String
 validLayoutFunctionAnnotations filepath =
-    let
-        parentProps : String
-        parentProps =
-            case Filepath.toParentLayoutModuleName filepath of
-                Just str ->
-                    str ++ ".Props"
-
-                Nothing ->
-                    "()"
-    in
-    [ "Props -> Shared.Model -> Route () -> Layout ${parentProps} Model Msg contentMsg"
-        |> String.replace "${parentProps}" parentProps
-    , "Props contentMsg -> Shared.Model -> Route () -> Layout ${parentProps} Model Msg contentMsg"
-        |> String.replace "${parentProps}" parentProps
-    ]
+    Filepath.toParentLayoutModuleName filepath
+        |> Layout.toValidLayoutFunctionAnnotations
 
 
 missingLayoutAnnotationError : { filepath : Filepath } -> Error
