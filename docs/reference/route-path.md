@@ -62,3 +62,32 @@ Route.toString : Path -> String
 ```
 
 __Note:__ The resulting URL string does __not contain__ query parameters or hash fragments (see [Route.toString](./route.md) if you need those)
+
+## Route.Path.fromString
+
+When using programmatic navigation with `Effect.pushRoute` or `Effect.replaceRoute`, you might need to go from a raw URL path like `"/blog"` to an Elm Land route path like `Route.Path.Blog`. 
+
+For that reason, Elm Land also exposes a `fromString` function.
+
+```elm
+Route.fromString : String -> Maybe Path
+```
+
+#### Example usage
+
+```elm
+update : Route () -> Msg -> Model -> ( Model, Effect Msg )
+update route msg model =
+    case msg of
+        OnSignInSuccess user ->
+            ( { model | user = Just user }
+            , Effect.pushRoute
+                { path =
+                    Dict.get "from" route.query
+                        |> Maybe.andThen Route.Path.fromString
+                        |> Maybe.withDefault Route.Path.Dashboard
+                , query = Dict.empty
+                , hash = Nothing
+                }
+            )
+```
