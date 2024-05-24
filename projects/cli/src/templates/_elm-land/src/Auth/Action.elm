@@ -50,9 +50,9 @@ loadPageWithUser =
 
 
 {-| Rather than navigating to a different route, keep the URL, but render
-what was defined in `Auth.loadCustomPage`.
+what was defined in `Auth.viewCustomPage`.
 
-**Note:** `Auth.loadCustomPage` has access to the `Shared.Model`, so you
+**Note:** `Auth.viewCustomPage` has access to the `Shared.Model`, so you
 can render different pages in different authentication scenarios.
 
 -}
