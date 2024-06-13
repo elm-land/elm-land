@@ -632,7 +632,16 @@ const toIndexHtmlFile = (config, pathToMainJs) => {
   let linkTags = toSelfClosingHtmlTags('link', attempt(_ => config.app.html.link))
   let scriptTags = toHtmlTags('script', attempt(_ => config.app.html.script))
 
+  let baseTagsAttributes = toAttributeString(attempt(() =>  config.app.html.base ))
+  let baseTag = ''
+  if(baseTagsAttributes.length > 0){
+    baseTag = `<base${baseTagsAttributes}>`
+  }
+
   let combinedTags = [...titleTags, ...metaTags, ...linkTags, ...scriptTags]
+  if(baseTag !== ''){
+    combinedTags.push(baseTag)
+  }
   let headTags = combinedTags.length > 0
     ? '\n    ' + combinedTags.join('\n    ') + '\n  '
     : ''
