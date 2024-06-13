@@ -764,7 +764,7 @@ This is an important part of making this component easier to plug in!
 
 
 view : Dropdown item msg -> Html msg
-view (Setting settings) =
+view (Settings settings) =
     let
         (Model model) =
             settings.model
