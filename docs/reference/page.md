@@ -123,7 +123,7 @@ This is a more specific version of `Page.onUrlChanged`, often used with filters 
 
 ```elm
 Page.withOnQueryParameterChanged :
-    { name : String
+    { key : String
     , onChange : { from : Maybe String, to : Maybe String } -> Msg
     }
     -> Page Model Msg
@@ -148,7 +148,7 @@ page shared route =
         , subscriptions = subscriptions
         }
         |> Page.withOnQueryParameterChanged
-            { name = "sort" 
+            { key = "sort" 
             , onChange = SortParameterChanged
             }
 
