@@ -1422,7 +1422,7 @@ module Pages.Settings exposing (Model, Msg, page)
 import Auth
 -- ...
 
-page : Auth.User -> Shared.Model -> Route () -> ( Model, Effect Msg )
+page : Auth.User -> Shared.Model -> Route () -> Page Model Msg
 page user shared route =
     ...
 
@@ -1437,7 +1437,7 @@ module Pages.Profile.Me exposing (Model, Msg, page)
 import Auth
 -- ...
 
-page : Auth.User -> Shared.Model -> Route () -> ( Model, Effect Msg )
+page : Auth.User -> Shared.Model -> Route () -> Page Model Msg
 page user shared route =
     ...
 
@@ -2081,7 +2081,7 @@ viewAppNameAndLogo =
     Html.div [ class "is-flex p-3" ]
         [ Html.figure []
             [ Html.img
-                [ src "https://bulma.io/images/placeholders/24x24.png"
+                [ src "https://placehold.co/24x24"
                 , alt "My Cool App's logo"
                 ]
                 []
@@ -2209,7 +2209,7 @@ page user shared route =
 toLayout : Auth.User -> Model -> Layouts.Layout Msg
 toLayout user model =
     Layouts.Sidebar
-        { title = "Dashboard"
+        { title = "Settings"
         , user = user
         }
 
