@@ -2081,7 +2081,7 @@ viewAppNameAndLogo =
     Html.div [ class "is-flex p-3" ]
         [ Html.figure []
             [ Html.img
-                [ src "https://bulma.io/images/placeholders/24x24.png"
+                [ src "https://placehold.co/24x24"
                 , alt "My Cool App's logo"
                 ]
                 []
