@@ -1,0 +1,43 @@
+{
+  "app": {
+    "elm": {
+      "development": { "debugger": true },
+      "production": { "debugger": false }
+    },
+    "env": [],
+    "html": {
+      "attributes": {
+        "html": { "lang": "en" },
+        "head": {}
+      },
+      "title": "My Elm Land App",
+      "meta": [
+        { "charset": "UTF-8" },
+        { "http-equiv": "X-UA-Compatible", "content": "IE=edge" },
+        {
+          "name": "viewport",
+          "content": "width=device-width, initial-scale=1.0"
+        }
+      ],
+      "link": [],
+      "script": []
+    },
+    "router": {
+      "useHashRouting": false
+    },
+    "proxy": {
+      "/api": {
+        "target": "http://localhost:3000",
+        "pathRewrite": { "^/api": "" }
+      },
+      "/foo": "http://localhost:3000",
+      "/bar": {
+        "target": "http://localhost:3000"
+      },
+      "/baz": {
+        "target": "http://localhost:3000",
+        "pathRewrite": { "^/baz": "/baz/quux" }
+      }
+    }
+  }
+}
