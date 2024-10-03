@@ -1422,7 +1422,7 @@ module Pages.Settings exposing (Model, Msg, page)
 import Auth
 -- ...
 
-page : Auth.User -> Shared.Model -> Route () -> ( Model, Effect Msg )
+page : Auth.User -> Shared.Model -> Route () -> Page Model Msg
 page user shared route =
     ...
 
@@ -1437,7 +1437,7 @@ module Pages.Profile.Me exposing (Model, Msg, page)
 import Auth
 -- ...
 
-page : Auth.User -> Shared.Model -> Route () -> ( Model, Effect Msg )
+page : Auth.User -> Shared.Model -> Route () -> Page Model Msg
 page user shared route =
     ...
 
@@ -2209,7 +2209,7 @@ page user shared route =
 toLayout : Auth.User -> Model -> Layouts.Layout Msg
 toLayout user model =
     Layouts.Sidebar
-        { title = "Dashboard"
+        { title = "Settings"
         , user = user
         }
 
