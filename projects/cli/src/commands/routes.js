@@ -37,22 +37,22 @@ let run = async ({ url } = {}) => {
     ].join('\n'))
   }
 
-  let toKebabCase = (pascalCase) => {
-    return pascalCase.split('').map((char = '') => {
-      if (char.toUpperCase() == char) {
-        return `-${char.toLowerCase()}`
-      } else {
-        return char
-      }
-    }).join('').slice(1)
+  let toKebabCaseFromPascalCase = (str) => {
+    const re = /([A-Z][a-z0-9_]*)/g;
+    const groups = str.match(re);
+    if (groups === null) {
+      return str;
+    }
+    return groups.join("-").toLowerCase();
   }
+
   let toUrl = (segments) => {
     let isHomepage = segments.length === 1 && segments[0] === 'Home_'
     let isNotFound = segments.length === 1 && segments[0] === 'NotFound_'
     let toUrlSegment = (piece = '') => {
       if (piece === 'ALL_') return '*'
-      else if (piece.endsWith('_')) return `:${toKebabCase(piece.slice(0, -1))}`
-      else return toKebabCase(piece)
+      else if (piece.endsWith('_')) return `:${toKebabCaseFromPascalCase(piece.slice(0, -1))}`
+      else return toKebabCaseFromPascalCase(piece)
     }
 
     let urlPath =
