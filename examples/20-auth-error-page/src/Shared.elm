@@ -2,6 +2,7 @@ module Shared exposing
     ( Flags, decoder
     , Model, Msg
     , init, update, subscriptions
+    , onUrlRequest
     )
 
 {-|
@@ -9,9 +10,11 @@ module Shared exposing
 @docs Flags, decoder
 @docs Model, Msg
 @docs init, update, subscriptions
+@docs onUrlRequest
 
 -}
 
+import Browser
 import Effect exposing (Effect)
 import Json.Decode
 import Route exposing (Route)
@@ -60,10 +63,27 @@ type alias Msg =
 update : Route () -> Msg -> Model -> ( Model, Effect Msg )
 update route msg model =
     case msg of
-        Shared.Msg.NoOp ->
+        Shared.Msg.UrlRequested (Browser.Internal url) ->
             ( model
-            , Effect.none
+            , let
+                { path, query, hash } =
+                    Route.fromUrl () url
+              in
+              Effect.pushRoute
+                { path = path
+                , query = query
+                , hash = hash
+                }
             )
+
+        Shared.Msg.UrlRequested (Browser.External url) ->
+            if String.isEmpty (String.trim url) then
+                ( model, Effect.none )
+
+            else
+                ( model
+                , Effect.loadExternalUrl url
+                )
 
 
 
@@ -73,3 +93,12 @@ update route msg model =
 subscriptions : Route () -> Model -> Sub Msg
 subscriptions route model =
     Sub.none
+
+
+
+-- APPLICATION CONFIGURATION
+
+
+onUrlRequest : Browser.UrlRequest -> Msg
+onUrlRequest =
+    Shared.Msg.UrlRequested
