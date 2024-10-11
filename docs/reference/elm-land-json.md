@@ -163,6 +163,7 @@ If you ever need to audit which variables are exposed to your frontend, this one
 , meta : List (Dict String String)
 , link : List (Dict String String)
 , script : List (Dict String String)
+, base : List (Dict String String)
 }
 ```
 :::
@@ -181,6 +182,7 @@ Here is the general shape of that HTML template to give you an overview:
     {{ meta tags }}
     {{ link tags }}
     {{ script tags }}
+    {{ base tag }}
   </head>
   <body>
     <!-- Elm Land's entrypoint -->
@@ -470,6 +472,52 @@ __Output__: `dist/index.html`
   <head>
     <!-- ... -->
     <script src="https://code.jquery.com/jquery-3.6.1.min.js"></script>
+  </head>
+  <!-- ... -->
+</html>
+```
+
+:::
+
+### app.html.base
+
+::: info TYPE
+```elm
+List (Dict String String)
+```
+:::
+
+For each item in the list, an attribute will be rendered within the `<base>` tag.
+
+::: tip EXAMPLE
+
+__Input__: `elm-land.json`
+
+```jsonc {7}
+{
+  "app": {
+    // ...
+    "html": {
+      // ...
+      "base": [
+        {
+          "href": "https://href.example.elm.land" ,
+            "target": "fun"
+        }
+      ]
+    }
+  }
+}
+```
+
+__Output__: `dist/index.html`
+
+```html {5}
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- ... -->
+    <base href="https://href.example.elm.land" target="fun">
   </head>
   <!-- ... -->
 </html>
