@@ -22,6 +22,10 @@ function expectOutputContains {
   [[ $output == *$1* ]]
 }
 
+function expectOutputEquals {
+  [[ $output == $1 ]]
+}
+
 function expectFileContains {
   run cat $1
   [[ $output == *$2* ]]

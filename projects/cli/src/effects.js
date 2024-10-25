@@ -170,7 +170,25 @@ let runServer = async (options) => {
 
     // Check for optional proxy field:
     let proxy = null
-    try { proxy = config.app.proxy }
+    try { 
+      proxy = config.app.proxy
+
+      // Check for optional `pathRewrite` object, and use it to create a Vite-compatible `rewrite` function
+      for (const target of Object.values(proxy)) {
+        if (typeof target !== 'string' && target.pathRewrite != null) {
+          target.rewrite = path => {
+            for (const [pattern, replacement] of Object.entries(target.pathRewrite)) {
+              const regExp = new RegExp(pattern)
+              if (regExp.test(path)) {
+                // Use only the first match
+                return path.replace(regExp, replacement)
+              }
+            }
+            return path
+          }
+        }
+      }
+    }
     catch (_) { }
 
     /**
