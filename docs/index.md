@@ -104,6 +104,14 @@ const sponsors = [
       { icon: 'github', link: 'https://github.com/nathanbraun' }
     ]
   },
+  {
+    avatar: 'https://www.github.com/synalysis.png',
+    name: 'Andreas Pehnack',
+    title: '@synalysis',
+    links: [
+      { icon: 'github', link: 'https://github.com/synalysis' }
+    ]
+  },
 ]
 </script>
 
