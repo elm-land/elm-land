@@ -626,13 +626,14 @@ const toIndexHtmlFile = (config, pathToMainJs) => {
   let titleTags = attempt(_ => config.app.html.title)
     ? [toHtmlTag('title', {}, config.app.html.title)]
     : []
+  let baseTags = toSelfClosingHtmlTags('base', [attempt(_ => config.app.html.base)]);
   let metaTags = toSelfClosingHtmlTags('meta', [
     { name: 'elm-land', content: '0.20.1' }
   ].concat(attempt(_ => config.app.html.meta)))
   let linkTags = toSelfClosingHtmlTags('link', attempt(_ => config.app.html.link))
   let scriptTags = toHtmlTags('script', attempt(_ => config.app.html.script))
 
-  let combinedTags = [...titleTags, ...metaTags, ...linkTags, ...scriptTags]
+  let combinedTags = [...titleTags, ...baseTags, ...metaTags, ...linkTags, ...scriptTags]
   let headTags = combinedTags.length > 0
     ? '\n    ' + combinedTags.join('\n    ') + '\n  '
     : ''
