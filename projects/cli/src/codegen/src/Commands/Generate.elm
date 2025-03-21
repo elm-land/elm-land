@@ -335,36 +335,13 @@ mainElmModule data =
                         { value = CodeGen.Argument.new "msg"
                         , branches =
                             [ { name = "UrlRequested"
-                              , arguments = [ CodeGen.Argument.new "(Browser.Internal url)" ]
+                              , arguments = [ CodeGen.Argument.new "urlRequest" ]
                               , expression =
                                     CodeGen.Expression.multilineTuple
                                         [ CodeGen.Expression.value "model"
-                                        , CodeGen.Expression.function
-                                            { name = "Browser.Navigation.pushUrl"
-                                            , arguments =
-                                                [ CodeGen.Expression.value "model.key"
-                                                , CodeGen.Expression.value "(Url.toString url)"
-                                                ]
-                                            }
+                                        , CodeGen.Expression.value
+                                            "Task.perform identity (Task.succeed (Shared (Shared.onUrlRequest urlRequest)))"
                                         ]
-                              }
-                            , { name = "UrlRequested"
-                              , arguments = [ CodeGen.Argument.new "(Browser.External url)" ]
-                              , expression =
-                                    CodeGen.Expression.ifElse
-                                        { condition = CodeGen.Expression.value "String.isEmpty (String.trim url)"
-                                        , ifBranch = CodeGen.Expression.value "( model, Cmd.none )"
-                                        , elseBranch =
-                                            CodeGen.Expression.multilineTuple
-                                                [ CodeGen.Expression.value "model"
-                                                , CodeGen.Expression.function
-                                                    { name = "Browser.Navigation.load"
-                                                    , arguments =
-                                                        [ CodeGen.Expression.value "url"
-                                                        ]
-                                                    }
-                                                ]
-                                        }
                               }
                             , { name = "UrlChanged"
                               , arguments = [ CodeGen.Argument.new "url" ]

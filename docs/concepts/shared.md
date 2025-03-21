@@ -286,3 +286,45 @@ subscriptions route model =
 ```
 
 The subscriptions defined here will be active regardless of the page you are on. This means you can reliably use `shared.window.width` in any of your pages, and won't have to worry about it getting out-of-sync!
+
+
+## `Shared.onUrlRequest`
+
+If your application needs to perform some special logic before the URL changes, like saving some application state in local storage before the browser navigates to an external URL, you can use this function to specify the shared `Msg` to run through `Shared.update` to handle the incoming `Browser.UrlRequest`.
+
+The default handles it by calling `Browser.Navigation.load` on `External` URLs and calling `Browser.Navigation.pushUrl` on `Internal` URLs, like this:
+
+```elm
+module Shared exposing (..)
+
+-- ...
+
+update : Route () -> Msg -> Model -> ( Model, Effect Msg )
+update route msg model =
+    case msg of
+        Shared.Msg.UrlRequested (Browser.Internal url) ->
+            ( model
+            , let
+                { path, query, hash } =
+                    (Route.fromUrl () url)
+              in
+              Effect.pushRoute
+                { path = path
+                , query = query
+                , hash = hash
+                }
+            )
+
+        Shared.Msg.UrlRequested (Browser.External url) ->
+            if String.isEmpty (String.trim url) then
+                ( model, Effect.none )
+
+            else
+                ( model
+                , Effect.loadExternalUrl url
+                )
+
+-- ...
+```
+
+Note that this runs before either `Page.withOnUrlChanged` or `Layout.withOnUrlChanged` and can potentially prevent them from running depending on how you handle the `UrlRequest`, since they only run if you actually perform a URL change with something like `Browser.Navigation.pushUrl`.

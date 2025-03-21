@@ -2,6 +2,7 @@ module Shared.Msg exposing (Msg(..))
 
 {-| -}
 
+import Browser
 import Http
 import Json.Decode
 
@@ -26,3 +27,4 @@ type Msg
         , response : Maybe String
         , error : Http.Error
         }
+    | UrlRequested Browser.UrlRequest
