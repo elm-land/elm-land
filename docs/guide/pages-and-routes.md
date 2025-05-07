@@ -251,7 +251,7 @@ Here are some real URL examples to help you visualize how the depth of this page
 There will always be an `owner`, `repo`, and `branch`, but the number of files in a user's repo could be multiple URL levels deep. It depends on the content of each project's repo.
 
 ```sh
-elm-land add page:view '/:user/:repo/tree/:branch/*'
+elm-land add page:view /:user/:repo/tree/:branch/*
 ```
 
 This will create a file at `src/Pages/User_/Repo_/Tree/Branch_/ALL_.elm`: 
