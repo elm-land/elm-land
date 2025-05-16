@@ -153,6 +153,9 @@ mainElmModule data =
                   , CodeGen.Import.new [ "View" ]
                         |> CodeGen.Import.withExposing [ "View" ]
                   ]
+                , [ CodeGen.Import.new [ "Ui" ]
+                  , CodeGen.Import.new [ "Ui.Anim" ]
+                  ]
                 ]
         , declarations =
             [ CodeGen.Declaration.function
@@ -184,6 +187,7 @@ mainElmModule data =
                         , ( "page", CodeGen.Annotation.type_ "Main.Pages.Model.Model" )
                         , ( "layout", CodeGen.Annotation.type_ "Maybe Main.Layouts.Model.Model" )
                         , ( "shared", CodeGen.Annotation.type_ "Shared.Model" )
+                        , ( "ui", CodeGen.Annotation.type_ "Ui.State" )
                         ]
                 }
             , CodeGen.Declaration.function
@@ -249,6 +253,7 @@ mainElmModule data =
                                     , ( "page", CodeGen.Expression.value "Tuple.first page" )
                                     , ( "layout", CodeGen.Expression.value "layout |> Maybe.map Tuple.first" )
                                     , ( "shared", CodeGen.Expression.value "sharedModel" )
+                                    , ( "ui", CodeGen.Expression.value "Ui.Anim.init" )
                                     ]
                                 , CodeGen.Expression.multilineFunction
                                     { name = "Cmd.batch"
@@ -316,6 +321,7 @@ mainElmModule data =
                     , ( "Layout", [ CodeGen.Annotation.type_ "Main.Layouts.Msg.Msg" ] )
                     , ( "Shared", [ CodeGen.Annotation.type_ "Shared.Msg" ] )
                     , ( "Batch", [ CodeGen.Annotation.type_ "(List Msg)" ] )
+                    , ( "Ui", [ CodeGen.Annotation.type_ "Ui.Msg" ] )
                     ]
                 }
             , CodeGen.Declaration.function
@@ -632,7 +638,29 @@ mainElmModule data =
                                             ]
                                         ]
                               }
-                            ]
+                            , { name = "Ui"
+                              , arguments = [ CodeGen.Argument.new "uiMsg" ]
+                              , expression =
+                                    CodeGen.Expression.letIn
+                                        { let_ =
+                                            [ { argument = CodeGen.Argument.new "( newUI, uiCmd )"
+                                              , annotation = Nothing
+                                              , expression = CodeGen.Expression.value "Ui.Anim.update Ui uiMsg model.ui"
+                                              }
+                                            ]
+                                        , in_ =
+                                            CodeGen.Expression.multilineTuple
+                                                [CodeGen.Expression.recordUpdate
+                                                    { value = "model"
+                                                    , fields =
+                                                        [ ( "ui", CodeGen.Expression.value "newUI" )
+                                                        ]
+                                                    }
+                                                , CodeGen.Expression.value "uiCmd"
+                                                ]
+                                        }
+                                    }
+                                ]
                         }
                 }
             , CodeGen.Declaration.function
@@ -732,6 +760,10 @@ mainElmModule data =
                               , annotation = Just (CodeGen.Annotation.type_ "View Msg")
                               , expression = CodeGen.Expression.value "toView model"
                               }
+                            , { argument = CodeGen.Argument.new "opts_"
+                              , annotation = Nothing --Just (CodeGen.Annotation.type_ "Ui.Options msg")
+                              , expression = CodeGen.Expression.value "Ui.default |> Ui.withAnimation { toMsg = Ui, state = model.ui }"
+                              }
                             ]
                         , in_ =
                             CodeGen.Expression.multilineFunction
@@ -741,6 +773,7 @@ mainElmModule data =
                                         [ ( "shared", CodeGen.Expression.value "model.shared" )
                                         , ( "route", CodeGen.Expression.value "Route.fromUrl () model.url" )
                                         , ( "view", CodeGen.Expression.value "view_" )
+                                        , ( "opts", CodeGen.Expression.value "opts_" )
                                         ]
                                     ]
                                 }

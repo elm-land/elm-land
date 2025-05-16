@@ -144,7 +144,7 @@ load helpers
 
   run elm-land customize view:elm-ui
   expectFileExists "src/View.elm"
-  expectFileContains "src/View.elm" "import Element"
+  expectFileContains "src/View.elm" "import Ui"
 
   # Clean up tmp folder
   cd ../..

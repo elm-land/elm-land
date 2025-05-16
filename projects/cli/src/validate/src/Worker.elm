@@ -154,7 +154,7 @@ init flags =
                 , toCustomizableErrors customizedFiles.view
                     { types = [ "View" ]
                     , functions =
-                        [ ( "toBrowserDocument", "{ shared : Shared.Model.Model, route : Route (), view : View msg } -> Browser.Document msg" )
+                        [ ( "toBrowserDocument", "{ shared : Shared.Model.Model, route : Route (), view : View msg, opts : Ui.Options msg } -> Browser.Document msg" )
                         , ( "map", "(msg1 -> msg2) -> View msg1 -> View msg2" )
                         , ( "none", "View msg" )
                         , ( "fromString", "String -> View msg" )
