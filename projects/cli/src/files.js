@@ -6,7 +6,7 @@ import url from 'url'
 let __dirname = path.dirname(url.fileURLToPath(import.meta.url))
 
 let create = async (filesAndFolders) => {
-  await Promise.all(filesAndFolders.map(item => {
+  return Promise.all(filesAndFolders.map(item => {
     switch (item.kind) {
       case 'file':
         return createFile(item)
@@ -110,7 +110,7 @@ let createFile = async ({ name, content }) => {
   let containingFolder = folderPieces.join('/')
 
   await createFolder({ name: containingFolder })
-  await new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     writeFile(
       join(process.cwd(), ...pieces),
       content, { encoding: 'utf-8' },
