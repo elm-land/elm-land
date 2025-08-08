@@ -24,8 +24,8 @@
   },
   "homepage": "https://github.com/elm-land/elm-land#readme",
   "devDependencies": {
-    "elm": "^0.19.1-5",
-    "elm-doc-preview": "5.0.5",
+    "elm": "^0.19.1-6",
+    "elm-doc-preview": "6.0.1",
     "elm-test": "^0.19.1-revision7"
   }
 }

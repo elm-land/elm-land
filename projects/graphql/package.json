@@ -22,6 +22,6 @@
   },
   "homepage": "https://github.com/elm-land/elm-land#readme",
   "dependencies": {
-    "graphql": "16.6.0"
+    "graphql": "16.11.0"
   }
 }
