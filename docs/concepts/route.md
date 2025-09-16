@@ -23,7 +23,7 @@ This guide will walk you through the functions you'll have access to in these ge
 
 ## `Route`
 
-This module represents the full URL, and is provided to every page and route. It even includes a field the original `elm/url` value. 
+This module represents the full URL, and is provided to every page and route. It even includes a field with the original `elm/url` value. 
 
 
 ```elm
