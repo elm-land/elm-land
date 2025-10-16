@@ -139,3 +139,48 @@ update msg model =
 ```
 
 __Note:__ In [the Route section](./route), you'll learn about the `Route` type and how it stores URL information.
+
+### `Layout.withOnSharedMsg`
+
+The `Layout.withOnSharedMsg` function allows a layout to respond to events in the shared state, rather than just reading the latest shared state.
+
+This is useful when you need to react to **a point in time** (like `Browser.Events.onResize`) rather than simply displaying the current shared state in your view.
+
+#### Type definition
+
+```elm
+Layout.withOnSharedMsg :
+    (Shared.Msg -> msg)
+    -> Layout parentProps model msg contentMsg
+    -> Layout parentProps model msg contentMsg
+```
+
+#### Usage example
+
+```elm{15-20}
+module Layouts.Sidebar exposing (Props, Model, Msg, layout)
+
+import Layout exposing (Layout)
+-- ...
+
+
+layout : Props -> Shared.Model -> Route () -> Layout () Model Msg contentMsg
+layout props shared route =
+    Layout.new
+        { init = init
+        , update = update
+        , view = view
+        , subscriptions = subscriptions
+        }
+        |> Layout.withOnSharedMsg
+            (\sharedMsg ->
+                case sharedMsg of
+                    Shared.Msg.WebSocketConnected ->
+                        ShowConnectionToast
+                    
+                    _ ->
+                        NoOp
+            )
+```
+
+__Note:__ Use `Layout.withOnSharedMsg` for event-based responses. For displaying the latest shared state, simply use the `shared` argument already provided to your `layout` function.

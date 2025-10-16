@@ -602,6 +602,8 @@ mainElmModule data =
                                                                             [ CodeGen.Expression.value "pageCmd"
                                                                             , CodeGen.Expression.value "layoutCmd"
                                                                             , CodeGen.Expression.value "fromSharedEffect { model | shared = sharedModel } sharedEffect"
+                                                                            , CodeGen.Expression.value "toPageSharedMsgCmd { model | shared = sharedModel, page = pageModel, layout = layoutModel } sharedMsg"
+                                                                            , CodeGen.Expression.value "toLayoutSharedMsgCmd { model | shared = sharedModel, page = pageModel, layout = layoutModel } sharedMsg"
                                                                             ]
                                                                         ]
                                                                     }
@@ -615,7 +617,16 @@ mainElmModule data =
                                                                 [ ( "shared", CodeGen.Expression.value "sharedModel" )
                                                                 ]
                                                             }
-                                                        , CodeGen.Expression.value "fromSharedEffect { model | shared = sharedModel } sharedEffect"
+                                                        , CodeGen.Expression.multilineFunction
+                                                            { name = "Cmd.batch"
+                                                            , arguments =
+                                                                [ CodeGen.Expression.multilineList
+                                                                    [ CodeGen.Expression.value "fromSharedEffect { model | shared = sharedModel } sharedEffect"
+                                                                    , CodeGen.Expression.value "toPageSharedMsgCmd { model | shared = sharedModel } sharedMsg"
+                                                                    , CodeGen.Expression.value "toLayoutSharedMsgCmd { model | shared = sharedModel } sharedMsg"
+                                                                    ]
+                                                                ]
+                                                            }
                                                         ]
                                                 }
                                         }
@@ -794,6 +805,19 @@ mainElmModule data =
                 , annotation = CodeGen.Annotation.type_ "Model -> Model -> { from : Route (), to : Route () } -> Cmd Msg"
                 , arguments = List.map CodeGen.Argument.new [ "oldModel", "model", "routes" ]
                 , expression = toLayoutUrlHookCmd data.layouts
+                }
+            , CodeGen.Declaration.comment [ "SHARED MESSAGE HOOKS" ]
+            , CodeGen.Declaration.function
+                { name = "toPageSharedMsgCmd"
+                , annotation = CodeGen.Annotation.type_ "Model -> Shared.Msg -> Cmd Msg"
+                , arguments = List.map CodeGen.Argument.new [ "model", "sharedMsg" ]
+                , expression = toPageSharedMsgCmd data.pages
+                }
+            , CodeGen.Declaration.function
+                { name = "toLayoutSharedMsgCmd"
+                , annotation = CodeGen.Annotation.type_ "Model -> Shared.Msg -> Cmd Msg"
+                , arguments = List.map CodeGen.Argument.new [ "model", "sharedMsg" ]
+                , expression = toLayoutSharedMsgCmd data.layouts
                 }
             , CodeGen.Declaration.function
                 { name = "hasNavigatedWithinNewLayout"
@@ -1091,6 +1115,177 @@ toPageUrlHookCmd pages =
                             , expression = CodeGen.Expression.value "Cmd.none"
                             }
                           , { name = "Main.Pages.Model.Loading_"
+                            , arguments = []
+                            , expression = CodeGen.Expression.value "Cmd.none"
+                            }
+                          ]
+                        ]
+                }
+        }
+
+
+toPageSharedMsgCmd : List PageFile -> CodeGen.Expression.Expression
+toPageSharedMsgCmd pages =
+    let
+        toBranchForStaticPage : PageFile -> CodeGen.Expression.Branch
+        toBranchForStaticPage page =
+            { name = "Main.Pages.Model." ++ PageFile.toVariantName page
+            , arguments = toPageModelArgs page
+            , expression = CodeGen.Expression.value "Cmd.none"
+            }
+
+        toBranchForElmLandPage : Bool -> PageFile -> CodeGen.Expression.Branch
+        toBranchForElmLandPage isAdvancedElmLandPage page =
+            { name = "Main.Pages.Model." ++ PageFile.toVariantName page
+            , arguments = toPageModelArgs page
+            , expression =
+                CodeGen.Expression.pipeline
+                    [ toPageModelMapper
+                        { isAdvancedElmLandPage = isAdvancedElmLandPage
+                        , isAuthProtectedPage = PageFile.isAuthProtectedPage page
+                        , page = page
+                        , function = "toSharedMsg sharedMsg"
+                        , hasPageModelArg = False
+                        , mapper = "Maybe.map"
+                        }
+                    , CodeGen.Expression.value "Maybe.map (\\msg -> Task.succeed msg |> Task.perform identity)"
+                    , CodeGen.Expression.value "Maybe.withDefault Cmd.none"
+                    ]
+                    |> conditionallyWrapInAuthAction page
+            }
+
+        conditionallyWrapInAuthAction : PageFile -> CodeGen.Expression -> CodeGen.Expression
+        conditionallyWrapInAuthAction page expression =
+            if PageFile.isAuthProtectedPage page then
+                CodeGen.Expression.multilineFunction
+                    { name = "Auth.Action.command"
+                    , arguments =
+                        [ CodeGen.Expression.multilineLambda
+                            { arguments = [ CodeGen.Argument.new "user" ]
+                            , expression = expression
+                            }
+                        , CodeGen.Expression.value "(Auth.onPageLoad model.shared (Route.fromUrl () model.url))"
+                        ]
+                    }
+
+            else
+                expression
+
+        toBranch : PageFile -> CodeGen.Expression.Branch
+        toBranch page =
+            if PageFile.isSandboxOrElementElmLandPage page then
+                toBranchForElmLandPage False page
+
+            else if PageFile.isAdvancedElmLandPage page then
+                toBranchForElmLandPage True page
+
+            else
+                toBranchForStaticPage page
+    in
+    CodeGen.Expression.caseExpression
+        { value = CodeGen.Argument.new "model.page"
+        , branches =
+            List.concat
+                [ List.map toBranch pages
+                , [ { name = "Main.Pages.Model.Redirecting_"
+                    , arguments = []
+                    , expression = CodeGen.Expression.value "Cmd.none"
+                    }
+                  , { name = "Main.Pages.Model.Loading_"
+                    , arguments = []
+                    , expression = CodeGen.Expression.value "Cmd.none"
+                    }
+                  ]
+                ]
+        }
+
+
+toLayoutSharedMsgCmd : List LayoutFile -> CodeGen.Expression.Expression
+toLayoutSharedMsgCmd layouts =
+    let
+        toBranch : LayoutFile -> CodeGen.Expression.Branch
+        toBranch layout =
+            { name =
+                "( Just (Layouts.{{name}} props), Just (Main.Layouts.Model.{{name}} layoutModel) )"
+                    |> String.replace "{{name}}" (LayoutFile.toVariantName layout)
+            , arguments =
+                []
+            , expression =
+                toBranchExpression layout
+            }
+
+        toBranchExpression : LayoutFile -> CodeGen.Expression
+        toBranchExpression layout =
+            case LayoutFile.toListOfSelfAndParents layout of
+                [] ->
+                    CodeGen.Expression.value "Cmd.none"
+
+                self :: [] ->
+                    toSharedMsgExpression Nothing layout
+
+                self :: parentLayouts ->
+                    let
+                        selfAndParentLayouts : List LayoutFile
+                        selfAndParentLayouts =
+                            self :: parentLayouts
+                    in
+                    CodeGen.Expression.letIn
+                        { let_ =
+                            List.map2
+                                (\child parent ->
+                                    toParentLayoutProps
+                                        { self = self
+                                        , child = child
+                                        , parent = parent
+                                        }
+                                )
+                                selfAndParentLayouts
+                                parentLayouts
+                        , in_ =
+                            CodeGen.Expression.multilineFunction
+                                { name = "Cmd.batch"
+                                , arguments =
+                                    [ CodeGen.Expression.multilineList
+                                        (List.map2 toSharedMsgExpression
+                                            (toListOfParents (List.reverse selfAndParentLayouts))
+                                            selfAndParentLayouts
+                                            |> List.reverse
+                                        )
+                                    ]
+                                }
+                        }
+
+        toSharedMsgExpression : Maybe LayoutFile -> LayoutFile -> CodeGen.Expression
+        toSharedMsgExpression maybeParent layout =
+            CodeGen.Expression.pipeline
+                [ CodeGen.Expression.function
+                    { name = "Layout.toSharedMsg sharedMsg"
+                    , arguments =
+                        [ CodeGen.Expression.parens
+                            [ callLayoutFunction maybeParent layout
+                            ]
+                        ]
+                    }
+                , CodeGen.Expression.value ("Maybe.map Main.Layouts.Msg." ++ LayoutFile.toVariantName layout)
+                , CodeGen.Expression.value "Maybe.map Layout"
+                , CodeGen.Expression.value "Maybe.map (\\msg -> Task.succeed msg |> Task.perform identity)"
+                , CodeGen.Expression.value "Maybe.withDefault Cmd.none"
+                ]
+    in
+    CodeGen.Expression.letIn
+        { let_ =
+            [ { argument = CodeGen.Argument.new "route"
+              , annotation = Nothing
+              , expression = CodeGen.Expression.value "Route.fromUrl () model.url"
+              }
+            ]
+        , in_ =
+            CodeGen.Expression.caseExpression
+                { value = CodeGen.Argument.new "( toLayoutFromPage model, model.layout )"
+                , branches =
+                    List.concat
+                        [ List.map toBranch layouts
+                        , [ { name = "_"
                             , arguments = []
                             , expression = CodeGen.Expression.value "Cmd.none"
                             }

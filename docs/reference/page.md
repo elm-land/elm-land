@@ -2,7 +2,7 @@
 
 When you see `import Page` at the top of your file, this refers to the generated Elm Land `Page` module.
 
-That module is centered around the `Page Model Msg` type, which every page creates with `Page.new`. This module also contains useful "modifier" functions that allow you to add optional features to your pages. 
+That module is centered around the `Page Model Msg` type, which every page creates with `Page.new`. This module also contains useful "modifier" functions that allow you to add optional features to your pages.
 
 Let's take a look at each function, and why you might use them in your own pages.
 
@@ -48,16 +48,15 @@ toLayout model =
         }
 ```
 
-
 ### `Page.withOnUrlChanged`
 
 The `Page.withOnUrlChanged` function allows a page to respond to any changes in the URL __that don't involve navigating to another page__.
 
-For example, going from `/dashboard` to `/settings` moves you from `Pages.Dashboard` to `Pages.Settings`. In that case, `Page.withOnUrlChanged` won't be called. 
+For example, going from `/dashboard` to `/settings` moves you from `Pages.Dashboard` to `Pages.Settings`. In that case, `Page.withOnUrlChanged` won't be called.
 
 Instead, the `Page.Settings.init` function will run to initialize the new page.
 
-Use the `Page.withOnUrlChanged` whenever you want to know if any "query parameters" or "hash" values have changed within a page. 
+Use the `Page.withOnUrlChanged` whenever you want to know if any "query parameters" or "hash" values have changed within a page.
 
 ::: tip But wait, there's more!
 
@@ -115,7 +114,7 @@ __Note:__ In [the Route section](./route), you'll learn about the `Route` type a
 
 ### `Page.withOnQueryParameterChanged`
 
-The `Page.withOnQueryParameterChanged` function allows your page to respond to changes for a certain URL query parameter. 
+The `Page.withOnQueryParameterChanged` function allows your page to respond to changes for a certain URL query parameter.
 
 This is a more specific version of `Page.onUrlChanged`, often used with filters like `?sort=name`.
 
@@ -148,7 +147,7 @@ page shared route =
         , subscriptions = subscriptions
         }
         |> Page.withOnQueryParameterChanged
-            { key = "sort" 
+            { key = "sort"
             , onChange = SortParameterChanged
             }
 
@@ -198,10 +197,9 @@ SortParameterChanged
     }
 ```
 
-
 ### `Page.withOnHashChanged`
 
-The `Page.withOnHashChanged` function allows your page to respond to changes in the hash or URL fragment. 
+The `Page.withOnHashChanged` function allows your page to respond to changes in the hash or URL fragment.
 
 This is a more specific version of `Page.onUrlChanged`, often used when jumping to certain sections on a page like `#about-us`.
 
@@ -269,3 +267,48 @@ UrlHashChanged
     , to = Just "our-mission"
     }
 ```
+
+### `Page.withOnSharedMsg`
+
+The `Page.withOnSharedMsg` function allows a page to respond to events in the shared state, rather than just reading the latest shared state.
+
+This is useful when you need to react to **a point in time** (like `Browser.Events.onResize`) rather than simply displaying the current shared state in your view.
+
+#### Type definition
+
+```elm
+Page.withOnSharedMsg :
+    (Shared.Msg -> msg)
+    -> Page model msg
+    -> Page model msg
+```
+
+#### Usage example
+
+```elm{15-20}
+module Pages.Dashboard exposing (Model, Msg, page)
+
+import Page exposing (Page)
+-- ...
+
+
+page : Shared.Model -> Route () -> Page Model Msg
+page shared route =
+    Page.new
+        { init = init
+        , update = update
+        , view = view
+        , subscriptions = subscriptions
+        }
+        |> Page.withOnSharedMsg
+            (\sharedMsg ->
+                case sharedMsg of
+                    Shared.Msg.ItemsSaved ->
+                        ShowSuccessToast
+
+                    _ ->
+                        NoOp
+            )
+```
+
+__Note:__ Use `Page.withOnSharedMsg` for event-based responses. For displaying the latest shared state, simply use the `shared` argument already provided to your `page` function.

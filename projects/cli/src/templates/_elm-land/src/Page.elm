@@ -3,7 +3,8 @@ module Page exposing
     , sandbox, element
     , withLayout
     , withOnUrlChanged, withOnQueryParameterChanged, withOnHashChanged
-    , init, update, view, subscriptions, layout, toUrlMessages
+    , withOnSharedMsg
+    , init, update, view, subscriptions, layout, toUrlMessages, toSharedMsg
     )
 
 {-|
@@ -12,8 +13,9 @@ module Page exposing
 @docs sandbox, element
 @docs withLayout
 @docs withOnUrlChanged, withOnQueryParameterChanged, withOnHashChanged
+@docs withOnSharedMsg
 
-@docs init, update, view, subscriptions, layout, toUrlMessages
+@docs init, update, view, subscriptions, layout, toUrlMessages, toSharedMsg
 
 -}
 
@@ -21,6 +23,7 @@ import Dict exposing (Dict)
 import Effect exposing (Effect)
 import Layouts exposing (Layout)
 import Route exposing (Route)
+import Shared
 import View exposing (View)
 
 
@@ -34,6 +37,7 @@ type Page model msg
         , onUrlChanged : Maybe ({ from : Route (), to : Route () } -> msg)
         , onHashChanged : Maybe ({ from : Maybe String, to : Maybe String } -> msg)
         , onQueryParameterChangedDict : Dict String ({ from : Maybe String, to : Maybe String } -> msg)
+        , onSharedMsg : Maybe (Shared.Msg -> msg)
         }
 
 
@@ -54,6 +58,7 @@ new options =
         , onUrlChanged = Nothing
         , onHashChanged = Nothing
         , onQueryParameterChangedDict = Dict.empty
+        , onSharedMsg = Nothing
         }
 
 
@@ -73,6 +78,7 @@ sandbox options =
         , onUrlChanged = Nothing
         , onHashChanged = Nothing
         , onQueryParameterChangedDict = Dict.empty
+        , onSharedMsg = Nothing
         }
 
 
@@ -99,6 +105,7 @@ element options =
         , onUrlChanged = Nothing
         , onHashChanged = Nothing
         , onQueryParameterChangedDict = Dict.empty
+        , onSharedMsg = Nothing
         }
 
 
@@ -151,6 +158,14 @@ withOnQueryParameterChanged :
     -> Page model msg
 withOnQueryParameterChanged { key, onChange } (Page page) =
     Page { page | onQueryParameterChangedDict = Dict.insert key onChange page.onQueryParameterChangedDict }
+
+
+withOnSharedMsg :
+    (Shared.Msg -> msg)
+    -> Page model msg
+    -> Page model msg
+withOnSharedMsg handler (Page page) =
+    Page { page | onSharedMsg = Just handler }
 
 
 
@@ -228,3 +243,8 @@ toUrlMessages routes (Page page) =
           Dict.toList page.onQueryParameterChangedDict
             |> List.filterMap toQueryParameterMessage
         ]
+
+
+toSharedMsg : Shared.Msg -> Page model msg -> Maybe msg
+toSharedMsg sharedMsg (Page page) =
+    Maybe.map (\handler -> handler sharedMsg) page.onSharedMsg

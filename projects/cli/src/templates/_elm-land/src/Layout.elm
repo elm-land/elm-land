@@ -2,8 +2,9 @@ module Layout exposing
     ( Layout, new
     , withParentProps
     , withOnUrlChanged, withOnQueryParameterChanged, withOnHashChanged
+    , withOnSharedMsg
     , init, update, view, subscriptions
-    , parentProps, toUrlMessages
+    , parentProps, toUrlMessages, toSharedMsg
     )
 
 {-|
@@ -11,15 +12,17 @@ module Layout exposing
 @docs Layout, new
 @docs withParentProps
 @docs withOnUrlChanged, withOnQueryParameterChanged, withOnHashChanged
+@docs withOnSharedMsg
 
 @docs init, update, view, subscriptions
-@docs parentProps, toUrlMessages
+@docs parentProps, toUrlMessages, toSharedMsg
 
 -}
 
 import Dict exposing (Dict)
 import Effect exposing (Effect)
 import Route exposing (Route)
+import Shared
 import View exposing (View)
 
 
@@ -33,6 +36,7 @@ type Layout parentProps model msg contentMsg
         , onUrlChanged : Maybe ({ from : Route (), to : Route () } -> msg)
         , onHashChanged : Maybe ({ from : Maybe String, to : Maybe String } -> msg)
         , onQueryParameterChangedDict : Dict String ({ from : Maybe String, to : Maybe String } -> msg)
+        , onSharedMsg : Maybe (Shared.Msg -> msg)
         }
 
 
@@ -53,6 +57,7 @@ new options =
         , onUrlChanged = Nothing
         , onHashChanged = Nothing
         , onQueryParameterChangedDict = Dict.empty
+        , onSharedMsg = Nothing
         }
 
 
@@ -70,6 +75,7 @@ withParentProps props (Layout layout) =
         , onUrlChanged = layout.onUrlChanged
         , onHashChanged = layout.onHashChanged
         , onQueryParameterChangedDict = layout.onQueryParameterChangedDict
+        , onSharedMsg = layout.onSharedMsg
         }
 
 
@@ -113,6 +119,14 @@ withOnQueryParameterChanged :
     -> Layout parentProps model msg contentMsg
 withOnQueryParameterChanged { key, onChange } (Layout layout) =
     Layout { layout | onQueryParameterChangedDict = Dict.insert key onChange layout.onQueryParameterChangedDict }
+
+
+withOnSharedMsg :
+    (Shared.Msg -> msg)
+    -> Layout parentProps model msg contentMsg
+    -> Layout parentProps model msg contentMsg
+withOnSharedMsg handler (Layout layout) =
+    Layout { layout | onSharedMsg = Just handler }
 
 
 init : Layout parentProps model msg contentMsg -> () -> ( model, Effect msg )
@@ -192,3 +206,8 @@ toUrlMessages routes (Layout layout) =
           Dict.toList layout.onQueryParameterChangedDict
             |> List.filterMap toQueryParameterMessage
         ]
+
+
+toSharedMsg : Shared.Msg -> Layout parentProps model msg contentMsg -> Maybe msg
+toSharedMsg sharedMsg (Layout layout) =
+    Maybe.map (\handler -> handler sharedMsg) layout.onSharedMsg
