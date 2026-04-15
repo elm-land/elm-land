@@ -30,7 +30,7 @@ onPageLoad shared route =
             Auth.Action.loadCustomPage
 
 
-{-| Renders whenever `Auth.Action.showCustomView` is returned from `onPageLoad`.
+{-| Renders whenever `Auth.Action.loadCustomPage` is returned from `onPageLoad`.
 -}
 viewCustomPage : Shared.Model -> Route () -> View Never
 viewCustomPage shared route =
