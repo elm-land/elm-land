@@ -79,6 +79,9 @@ load helpers
   cp -r ../../examples/01-hello-world ../../examples/01-local-hello
   cd ../../examples/01-local-hello
   echo '{ "dependencies": { "elm-land": "file:../../projects/cli/elm-land-0.20.1.tgz" } }' > package.json
+  echo "allowBuilds:" > pnpm-workspace.yaml
+  echo "  elm: false" >> pnpm-workspace.yaml
+  echo "  esbuild: false" >> pnpm-workspace.yaml
   npm install -g pnpm
   pnpm install
 
