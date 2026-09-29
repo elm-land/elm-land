@@ -96,7 +96,7 @@ const argsForTypeScript = () => {
   if (hasTsConfigFile) {
     return ['--project', pathToTsConfigFile]
   } else {
-    return ['src/interop.ts', '--noEmit', '--lib', 'es6,dom']
+    return ['src/interop.ts', '--noEmit', '--lib', 'es6,dom', '--noUncheckedSideEffectImports', 'false']
   }
 }
 

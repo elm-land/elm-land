@@ -52,7 +52,6 @@ For that reason, we are using [bats](https://github.com/bats-core/bats-core) to 
 ```bash
 # Make sure you are in the `./cli` folder!
 npm install
-npm link
 npm run setup
 npm run test
 ```

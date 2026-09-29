@@ -10,7 +10,7 @@
     "start": "npm install && elm-land server"
   },
   "dependencies": {
-    "@sentry/browser": "7.19.0",
-    "@sentry/tracing": "7.19.0"
+    "@sentry/browser": "11.1.0",
+    "@sentry/tracing": "7.120.4"
   }
 }

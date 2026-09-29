@@ -1,0 +1,4 @@
+@import "tailwindcss";
+
+@source './**/*.{js,elm,ts,css,html}';
+@source '../.elm-land/**/*.{js,elm,ts,css,html}';

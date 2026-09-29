@@ -1,0 +1,19 @@
+{
+  "name": "elm-land-tailwindcss-with-ambient-module-declarations",
+  "version": "1.0.0",
+  "description": "> Built with [Elm Land](https://elm.land) 🌈",
+  "main": "index.js",
+  "scripts": {
+    "start": "elm-land server",
+    "build": "elm-land build",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "BSD-3-Clause",
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "postcss": "^8.5.28",
+    "tailwindcss": "^4.3.3"
+  }
+}

@@ -8,7 +8,7 @@ let printHelpInfo = () => {
       '',
       Utils.intro.success(`detected the ${Terminal.green('help')} command`),
       `    Elm Land comes with a built-in development server powered`,
-      `    by ${Terminal.cyan('Vite 3.0')}. ⚡️`,
+      `    by ${Terminal.cyan('Vite 8.0')}. ⚡️`,
       '',
       `    By design, the dev server doesn't have many configuration `,
       `    options, but you can provide the ${Terminal.pink('HOST')} or ${Terminal.pink('PORT')} environment`,

@@ -1,5 +1,15 @@
 load helpers
 
+setup_file() {
+  npm install --global elm
+  npm link
+}
+
+teardown_file() {
+  npm uninstall --global elm-land
+  npm uninstall --global elm
+}
+
 @test "'01-hello-world' example builds successfully" {
   cd ../../examples/01-hello-world
   expectElmExampleBuilds
@@ -103,5 +113,11 @@ load helpers
 
 @test "'20-auth-error-page' example builds successfully" {
   cd ../../examples/20-auth-error-page
+  expectElmExampleBuilds
+}
+
+@test "'21-tailwindcss-with-ambient-module-declarations' example builds successfully" {
+  cd ../../examples/21-tailwindcss-with-ambient-module-declarations
+  run npm install
   expectElmExampleBuilds
 }

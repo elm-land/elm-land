@@ -7,6 +7,10 @@ let compile = async (path : string) : Promise<ElmError | undefined> => {
 let toRawJsonString = async (path : string) : Promise<string> => {
   return nodeElmCompiler
     .compileToString([path], { report: 'json' })
+    .then((value: string) => {
+      console.log("after compile")
+      return value;
+    })
     .catch((err : { message: string }) => err.message.slice('Compilation failed\n'.length))
 }
 

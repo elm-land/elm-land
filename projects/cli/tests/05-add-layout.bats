@@ -1,5 +1,14 @@
 load helpers
 
+setup_file() {
+  npm install --global elm
+  npm link
+}
+
+teardown_file() {
+  npm uninstall --global elm-land
+  npm uninstall --global elm
+}
 
 @test "'elm-land add layout' fails without a name" {
   run elm-land add layout

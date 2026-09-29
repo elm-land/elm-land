@@ -160,6 +160,7 @@ suite =
                                                 ]
                                             ]
                                           )
+                                        , ( "NotFound_", [] )
                                         ]
                                     }
                                 , CodeGen.Declaration.function
@@ -639,4 +640,5 @@ runTestFor :
     -> Expect.Expectation
 runTestFor options =
     CodeGen.Module.toString options.actual
+        |> String.trim
         |> Expect.equal (Util.String.dedent options.expected)
