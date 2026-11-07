@@ -2,8 +2,12 @@
 import { Cli } from './cli.js'
 import { Effects } from './effects.js'
 import { Files } from './files.js'
+import { useBundledElmCompiler } from './elm-binary.js'
 
 let main = async () => {
+  useBundledElmCompiler()
+
+
   try {
     let output = await Cli.run(process.argv)
 

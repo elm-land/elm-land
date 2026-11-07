@@ -24,7 +24,9 @@ load helpers
 
 @test "'elm-land build' should pass even if elm is globally installed with npm" {
   npm link
-  npm install -g elm --force
+  # An older global compiler must not shadow the one elm-land ships with:
+  # 0.19.1 refuses to build this "elm-version": "0.19.3" project
+  npm install -g elm@0.19.1-6 --force
 
   cd ../../examples/01-hello-world
   run elm-land build
@@ -79,7 +81,9 @@ load helpers
   cp -r ../../examples/01-hello-world ../../examples/01-local-hello
   cd ../../examples/01-local-hello
   echo '{ "dependencies": { "elm-land": "file:../../projects/cli/elm-land-0.20.1.tgz" } }' > package.json
-  npm install -g pnpm
+  # pnpm 10+ refuses to install until the Elm binary's build script is approved
+  printf 'allowBuilds:\n  elm: true\n' > pnpm-workspace.yaml
+  npm install -g pnpm@12.18.0
   pnpm install
 
   run npx elm-land build

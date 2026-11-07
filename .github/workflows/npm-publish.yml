@@ -12,31 +12,40 @@ jobs:
     defaults:
       run:
         working-directory: projects/cli
-    runs-on: macos-12
+    runs-on: macos-15
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
         with:
-          node-version: 18
-      - run: npm install
-      - run: npm run setup
+          package_json_file: projects/cli/package.json
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: projects/cli/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run setup
       - run: npm link
-      - run: npm test
+      - run: pnpm test
 
   publish-npm:
     defaults:
       run:
         working-directory: projects/cli
     needs: build
-    runs-on: macos-12
+    runs-on: macos-15
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
         with:
-          node-version: 18
+          package_json_file: projects/cli/package.json
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
           registry-url: https://registry.npmjs.org/
-      - run: npm install
-      - run: npm run setup
-      - run: npm publish
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run setup
+      # A release checks out a tag (detached HEAD), so skip pnpm's branch checks
+      - run: pnpm publish --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}

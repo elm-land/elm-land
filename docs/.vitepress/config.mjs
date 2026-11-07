@@ -116,7 +116,7 @@ export default defineConfig({
       pattern: 'https://github.com/elm-land/elm-land/edit/main/docs/:path',
       text: 'Found a typo? Let us know!'
     },
-    lastUpdatedText: 'Updated on'
+    lastUpdated: { text: 'Updated on' }
   }
 }
 )

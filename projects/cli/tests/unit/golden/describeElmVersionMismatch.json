@@ -1,0 +1,4 @@
+{
+  "upgrade-from-0.19.1": "    Your <cyan>elm.json</cyan> says this app needs Elm <pink>0.19.1</pink>, but this\n    version of Elm Land uses Elm <pink>0.19.3</pink>.\n\n    To fix this, change this line in <cyan>elm.json</cyan>:\n\n        \"elm-version\": \"0.19.1\"\n\n    to:\n\n        \"elm-version\": \"0.19.3\"",
+  "ahead-of-elm-land": "    Your <cyan>elm.json</cyan> says this app needs Elm <pink>0.19.4</pink>, but this\n    version of Elm Land uses Elm <pink>0.19.3</pink>.\n\n    To fix this, change this line in <cyan>elm.json</cyan>:\n\n        \"elm-version\": \"0.19.4\"\n\n    to:\n\n        \"elm-version\": \"0.19.3\""
+}

@@ -160,6 +160,7 @@ suite =
                                                 ]
                                             ]
                                           )
+                                        , ( "NotFound_", [] )
                                         ]
                                     }
                                 , CodeGen.Declaration.function
@@ -638,5 +639,7 @@ runTestFor :
     }
     -> Expect.Expectation
 runTestFor options =
+    -- CodeGen.Module.toString ends every file with a newline, like elm-format does.
+    -- dedent trims the expected text, so the newline is added back here.
     CodeGen.Module.toString options.actual
-        |> Expect.equal (Util.String.dedent options.expected)
+        |> Expect.equal (Util.String.dedent options.expected ++ "\n")

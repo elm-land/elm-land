@@ -1,0 +1,3 @@
+allowBuilds:
+  elm: true
+  elm-test: true

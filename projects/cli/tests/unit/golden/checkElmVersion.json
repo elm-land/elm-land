@@ -1,0 +1,30 @@
+{
+  "matching-app": {
+    "status": "ok"
+  },
+  "old-app": {
+    "status": "mismatch",
+    "projectVersion": "0.19.1",
+    "compilerVersion": "0.19.3"
+  },
+  "newer-app": {
+    "status": "mismatch",
+    "projectVersion": "0.19.4",
+    "compilerVersion": "0.19.3"
+  },
+  "package-range": {
+    "status": "ok"
+  },
+  "no-type": {
+    "status": "ok"
+  },
+  "no-elm-version": {
+    "status": "ok"
+  },
+  "invalid-json": {
+    "status": "ok"
+  },
+  "json-null": {
+    "status": "ok"
+  }
+}

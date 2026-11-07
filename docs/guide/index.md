@@ -13,7 +13,7 @@ outline: deep
 
 ## Installation
 
-__Prerequisite:__ [Node.js](https://nodejs.org) (v18.16.0 or higher)
+__Prerequisite:__ [Node.js](https://nodejs.org) (v20.19.0, or v22.12.0 or higher)
 
 Elm Land comes with a single [CLI tool](https://www.npmjs.com/package/elm-land) to help you create new projects, add features, run your dev server, and more. You can install it with the following command:
 
@@ -27,6 +27,17 @@ npm install -g elm-land@latest
 Sometimes, folks encounter issues with the `-g` flag. If you see an `EACCES` error, check out [this official NPM guide](https://docs.npmjs.com/resolving-eacces-permissions-errors-when-installing-packages-globally) on how to fix the problem. 
 
 If you are still stuck, stop by the [Elm Land Discord](https://join.elm.land). Let's figure it out together!
+
+:::
+
+::: details Using pnpm?
+
+pnpm 10 and later skip the install script that sets up the Elm compiler, and newer versions stop the install until you approve it. Allow it once with `pnpm approve-builds`, or add this to your `pnpm-workspace.yaml`:
+
+```yaml
+allowBuilds:
+  elm: true
+```
 
 :::
 

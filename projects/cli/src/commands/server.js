@@ -1,6 +1,7 @@
 
 import { Files } from "../files.js"
 import { Utils, Terminal } from "./_utils.js"
+import { projectElmVersionProblem } from "../elm-version.js"
 
 let printHelpInfo = () => {
   return {
@@ -34,6 +35,11 @@ let run = async () => {
     config = JSON.parse(rawTextConfig)
   } catch (err) {
     // TODO: Warn user about invalid config JSON
+  }
+
+  let elmVersionProblem = projectElmVersionProblem({ intro: Utils.intro, colors: Terminal })
+  if (elmVersionProblem) {
+    return Promise.reject(elmVersionProblem)
   }
 
   let port = process.env.PORT || 1234
