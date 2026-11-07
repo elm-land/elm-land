@@ -1,0 +1,11 @@
+{
+  "unset": "localhost",
+  "empty": "localhost",
+  "blank": "localhost",
+  "all-interfaces": "0.0.0.0",
+  "ipv6-all": "::",
+  "loopback": "127.0.0.1",
+  "named": "my-laptop.local",
+  "padded": "0.0.0.0",
+  "other-vars-only": "localhost"
+}

@@ -1,0 +1,8 @@
+{
+  "all-interfaces": "localhost",
+  "ipv6-all": "localhost",
+  "ipv6-all-bracketed": "localhost",
+  "localhost": "localhost",
+  "loopback": "127.0.0.1",
+  "named": "my-laptop.local"
+}

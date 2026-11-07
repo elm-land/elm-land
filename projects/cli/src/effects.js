@@ -1,10 +1,11 @@
 import { watch } from 'chokidar'
 import { join } from 'path'
-import { createServer, loadEnv, build as _build } from 'vite'
+import { createServer, loadEnv, build as _build, searchForWorkspaceRoot } from 'vite'
 import ElmVitePlugin from 'vite-plugin-elm-watch'
 import * as ElmErrorJson from 'vite-plugin-elm-watch/src/elm-error-json.js'
 import * as TypeScriptPlugin from './vite-plugins/typescript/index.js'
 import { parseViteBuildError, describeKnownBuildError } from './vite-build-errors.js'
+import { allowedFsRoots } from './dev-server-options.js'
 import { Codegen } from './codegen.js'
 import { Files } from './files.js'
 import { Utils, Terminal } from './commands/_utils.js'
@@ -234,7 +235,7 @@ let runServer = async (options) => {
       server: {
         host: options.host,
         port: options.port,
-        fs: { allow: ['../..'] },
+        fs: { allow: allowedFsRoots(process.cwd(), searchForWorkspaceRoot) },
         proxy
       },
       plugins: [
