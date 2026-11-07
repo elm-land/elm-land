@@ -4,7 +4,7 @@
   "description": "The website at https://elm.land",
   "main": "index.js",
   "scripts": {
-    "start": "npm i && npm run dev",
+    "start": "pnpm install && pnpm run dev",
     "dev": "vitepress dev",
     "build": "vitepress build",
     "preview": "vitepress preview"
@@ -22,6 +22,7 @@
   "license": "ISC",
   "homepage": "https://elm.land",
   "devDependencies": {
-    "vitepress": "1.0.0-rc.35"
-  }
+    "vitepress": "1.6.4"
+  },
+  "packageManager": "pnpm@12.18.0"
 }

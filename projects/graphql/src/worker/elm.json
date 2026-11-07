@@ -2,7 +2,7 @@
     "type": "application",
     "source-directories": [
         "src",
-        "../../../codegen/src"
+        "../../../tooling/codegen/src"
     ],
     "elm-version": "0.19.3",
     "dependencies": {

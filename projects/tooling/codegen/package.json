@@ -4,7 +4,7 @@
   "description": "Generate Elm code with Elm code",
   "main": "src/Codegen.elm",
   "scripts": {
-    "start": "npm install && npm run docs",
+    "start": "pnpm install && pnpm run docs",
     "docs": "elm-doc-preview",
     "test": "elm-test",
     "test:watch": "elm-test --watch"
@@ -24,8 +24,9 @@
   },
   "homepage": "https://github.com/elm-land/elm-land#readme",
   "devDependencies": {
-    "elm": "^0.19.1-5",
-    "elm-doc-preview": "5.0.5",
-    "elm-test": "^0.19.1-revision7"
-  }
+    "elm": "0.19.3-0",
+    "elm-doc-preview": "6.0.1",
+    "elm-test": "0.19.3-0"
+  },
+  "packageManager": "pnpm@12.18.0"
 }

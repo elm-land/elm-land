@@ -13,7 +13,7 @@ outline: deep
 
 ## Installation
 
-__Prerequisite:__ [Node.js](https://nodejs.org) (v18.16.0 or higher)
+__Prerequisite:__ [Node.js](https://nodejs.org) (v20.19.0, or v22.12.0 or higher)
 
 Elm Land comes with a single [CLI tool](https://www.npmjs.com/package/elm-land) to help you create new projects, add features, run your dev server, and more. You can install it with the following command:
 
