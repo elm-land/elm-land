@@ -45,6 +45,16 @@ elm-land server ................ run a local dev server
 This command starts a development server (powered by [Vite](https://vitejs.dev)) at `http://localhost:1234`. If 
 port `1234` is already taken, the server will automatically find the next available port.
 
+#### Network access
+
+By default, the dev server only accepts connections from your own machine. To open your app from another device, like a phone on the same Wi-Fi, or from outside a Docker container, set the `HOST` environment variable:
+
+```sh
+HOST=0.0.0.0 elm-land server
+```
+
+Only do this on networks you trust: anyone who can reach the dev server can read your project's files.
+
 
 #### Server configuration
 

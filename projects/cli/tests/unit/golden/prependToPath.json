@@ -1,0 +1,10 @@
+{
+  "absent": "/elm:/usr/bin:/bin",
+  "already-first": "/elm:/usr/bin",
+  "in-the-middle": "/elm:/usr/bin:/bin",
+  "listed-twice": "/elm:/usr/bin",
+  "empty-entries": "/elm:/usr/bin:/bin",
+  "empty-string": "/elm",
+  "undefined": "/elm",
+  "windows": "C:\\elm;C:\\Windows;C:\\Tools"
+}

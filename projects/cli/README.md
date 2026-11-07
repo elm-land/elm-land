@@ -51,8 +51,10 @@ For that reason, we are using [bats](https://github.com/bats-core/bats-core) to 
 
 ```bash
 # Make sure you are in the `./cli` folder!
-npm install
+pnpm install   # or `npm install` (the lockfile is pnpm-lock.yaml)
 npm link
 npm run setup
 npm run test
 ```
+
+The scripts work the same with `pnpm run` or `npm run`.

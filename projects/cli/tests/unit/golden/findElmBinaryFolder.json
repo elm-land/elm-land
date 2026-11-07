@@ -1,0 +1,6 @@
+{
+  "linux-x64": "/nm/@elm_binaries/linux_x64",
+  "darwin-arm64": "/nm/@elm_binaries/darwin_arm64",
+  "windows-asks-for-exe": "/nm/@elm_binaries/win32_x64",
+  "not-installed": null
+}

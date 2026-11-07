@@ -2,9 +2,9 @@
     "type": "application",
     "source-directories": [
         "src",
-        "../../../codegen/src"
+        "../../../tooling/codegen/src"
     ],
-    "elm-version": "0.19.1",
+    "elm-version": "0.19.3",
     "dependencies": {
         "direct": {
             "elm/browser": "1.0.2",
