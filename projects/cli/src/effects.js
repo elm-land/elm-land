@@ -4,7 +4,7 @@ import { createServer, loadEnv, build as _build } from 'vite'
 import ElmVitePlugin from 'vite-plugin-elm-watch'
 import * as ElmErrorJson from 'vite-plugin-elm-watch/src/elm-error-json.js'
 import * as TypeScriptPlugin from './vite-plugins/typescript/index.js'
-import { parseViteBuildError } from './vite-build-errors.js'
+import { parseViteBuildError, describeKnownBuildError } from './vite-build-errors.js'
 import { Codegen } from './codegen.js'
 import { Files } from './files.js'
 import { Utils, Terminal } from './commands/_utils.js'
@@ -522,36 +522,16 @@ const build = async (config) => {
 const handleViteBuildErrors = (err) => {
   let message = (err ? err.message : '') || ''
 
+  // Missing files and NPM packages get a friendlier explanation
   let known = parseViteBuildError(message)
-
-  try {
-    // Provide helpful error for missing local JS dependencies
-    if (known && known.kind === 'missing-file') {
-      message = [
-        `    The file ${Terminal.cyan(known.importer)} tried to import`,
-        `    another file at ${Terminal.pink(`"${known.dependencyName}"`)}, but it wasn't found.`,
-        '',
-        '    Maybe the file was deleted?'
-      ].join('\n')
-    }
-
-    // Provide helpful error for missing NPM dependencies
-    else if (known && known.kind === 'missing-package') {
-      message = [
-        `    The file ${Terminal.cyan(known.importer)} tried to import`,
-        `    an NPM package named ${Terminal.pink(known.dependencyName)}, but it wasn't found.`,
-        '',
-        `    Make sure to run ${Terminal.cyan('npm install')} before running this command.`
-      ].join('\n')
-    }
-
+  if (known) {
     return Promise.reject([
       '',
       Utils.intro.error('failed to build this project.'),
-      message,
+      describeKnownBuildError(known, Terminal),
       ''
     ].join('\n'))
-  } catch (_) { }
+  }
 
   return Promise.reject([
     '',

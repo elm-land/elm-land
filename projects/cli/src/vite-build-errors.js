@@ -1,7 +1,17 @@
-// Recognizes the Vite build errors that deserve a friendlier explanation.
+// Vite build errors that deserve a friendlier explanation.
 //
-// Pure: takes the error message text, returns plain data (or null when
-// the message is not one we know how to explain).
+// Strata:
+//   Value     KnownBuildError  { kind: 'missing-file' | 'missing-package',
+//                                dependencyName, importer }
+//   Port      Colors           { cyan, pink }: (text) => text
+//   Promote   parseViteBuildError, describeKnownBuildError   (pure)
+//
+// The Boundary (rejecting the build with this text) stays in effects.js.
+
+/**
+ * @typedef {{ kind: 'missing-file' | 'missing-package', dependencyName: string, importer: string }} KnownBuildError
+ * @typedef {{ cyan: (text: string) => string, pink: (text: string) => string }} Colors
+ */
 
 // Rollup (Vite <= 7):    Could not resolve './x.js' from src/interop.js
 // Rolldown (Vite >= 8):  [UNRESOLVED_IMPORT] Could not resolve './x.js' in src/interop.js
@@ -12,7 +22,7 @@ const missingPackagePattern = /failed to resolve import ("[^"]+") from "([^"]+)"
 
 /**
  * @param {string} message
- * @returns {{ kind: 'missing-file' | 'missing-package', dependencyName: string, importer: string } | null}
+ * @returns {KnownBuildError | null}
  */
 export const parseViteBuildError = (message) => {
   let missingFile = missingFilePattern.exec(message)
@@ -26,4 +36,29 @@ export const parseViteBuildError = (message) => {
   }
 
   return null
+}
+
+/**
+ * @param {KnownBuildError} known
+ * @param {Colors} colors
+ * @returns {string}
+ */
+export const describeKnownBuildError = (known, { cyan, pink }) => {
+  switch (known.kind) {
+    case 'missing-file':
+      return [
+        `    The file ${cyan(known.importer)} tried to import`,
+        `    another file at ${pink(`"${known.dependencyName}"`)}, but it wasn't found.`,
+        '',
+        '    Maybe the file was deleted?'
+      ].join('\n')
+
+    case 'missing-package':
+      return [
+        `    The file ${cyan(known.importer)} tried to import`,
+        `    an NPM package named ${pink(known.dependencyName)}, but it wasn't found.`,
+        '',
+        `    Make sure to run ${cyan('npm install')} before running this command.`
+      ].join('\n')
+  }
 }

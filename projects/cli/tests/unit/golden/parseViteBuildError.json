@@ -1,0 +1,34 @@
+{
+  "rolldown-missing-file": {
+    "kind": "missing-file",
+    "dependencyName": "./does-not-exist.js",
+    "importer": "src/interop.js"
+  },
+  "rollup-missing-file": {
+    "kind": "missing-file",
+    "dependencyName": "./x.js",
+    "importer": "src/interop.js"
+  },
+  "importer-with-trailing-space": {
+    "kind": "missing-file",
+    "dependencyName": "../lib/a.js",
+    "importer": "src/interop.ts"
+  },
+  "rolldown-missing-package": {
+    "kind": "missing-package",
+    "dependencyName": "\"left-pad\"",
+    "importer": "/app/src/interop.js"
+  },
+  "rollup-missing-package": {
+    "kind": "missing-package",
+    "dependencyName": "\"@scope/pkg\"",
+    "importer": "src/interop.ts"
+  },
+  "both-mentioned": {
+    "kind": "missing-file",
+    "dependencyName": "./c.js",
+    "importer": "d.js"
+  },
+  "unknown": null,
+  "empty": null
+}

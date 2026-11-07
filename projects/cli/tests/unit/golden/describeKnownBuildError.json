@@ -1,0 +1,4 @@
+{
+  "missing-file": "    The file <cyan>src/interop.js</cyan> tried to import\n    another file at <pink>\"./does-not-exist.js\"</pink>, but it wasn't found.\n\n    Maybe the file was deleted?",
+  "missing-package": "    The file <cyan>/app/src/interop.ts</cyan> tried to import\n    an NPM package named <pink>\"left-pad\"</pink>, but it wasn't found.\n\n    Make sure to run <cyan>npm install</cyan> before running this command."
+}
