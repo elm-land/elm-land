@@ -12,15 +12,15 @@
     "elm-land": "src/index.js"
   },
   "scripts": {
-    "start": "pnpm install && pnpm run setup && pnpm run dev",
-    "setup": "pnpm run build",
-    "build": "pnpm run build:codegen-worker && pnpm run build:validate-worker",
+    "start": "npx -y pnpm@12.18.0 install && npm run setup && npm run dev",
+    "setup": "npm run build",
+    "build": "npm run build:codegen-worker && npm run build:validate-worker",
     "build:codegen-worker": "(cd src/codegen && elm make src/Worker.elm --optimize --output=../../dist/codegen-worker.js && mv ../../dist/codegen-worker.js ../../dist/codegen-worker.cjs)",
     "build:validate-worker": "(cd src/validate && elm make src/Worker.elm --optimize --output=../../dist/validate-worker.js && mv ../../dist/validate-worker.js ../../dist/validate-worker.cjs)",
-    "dev": "pnpm run dev:codegen-worker & pnpm run dev:validate-worker",
-    "dev:codegen-worker": "chokidar src/codegen/src -c \"pnpm run build:codegen-worker\" --initial",
-    "dev:validate-worker": "chokidar src/validate/src -c \"pnpm run build:validate-worker\" --initial",
-    "test": "pnpm run test:unit && bats tests/*.bats",
+    "dev": "npm run dev:codegen-worker & npm run dev:validate-worker",
+    "dev:codegen-worker": "chokidar src/codegen/src -c \"npm run build:codegen-worker\" --initial",
+    "dev:validate-worker": "chokidar src/validate/src -c \"npm run build:validate-worker\" --initial",
+    "test": "npm run test:unit && bats tests/*.bats",
     "test:unit": "node --test \"tests/unit/*.test.js\""
   },
   "repository": {

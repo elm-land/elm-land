@@ -4,7 +4,7 @@
   "description": "Generate Elm code with Elm code",
   "main": "src/Codegen.elm",
   "scripts": {
-    "start": "pnpm install && pnpm run docs",
+    "start": "npx -y pnpm@12.18.0 install && npm run docs",
     "docs": "elm-doc-preview",
     "test": "elm-test",
     "test:watch": "elm-test --watch"
