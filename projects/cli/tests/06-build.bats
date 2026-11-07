@@ -54,6 +54,22 @@ load helpers
   cd ../../projects/cli
 }
 
+@test "'elm-land build' explains how to upgrade a project made for an older Elm" {
+  mkdir -p tests/tmp
+  cd tests/tmp
+  run elm-land init old-elm-version
+  cd old-elm-version
+  sed -i.bak 's/"elm-version": "0.19.3"/"elm-version": "0.19.1"/' elm.json
+
+  run elm-land build
+  expectToFail
+
+  expectOutputContains "Elm version"
+  expectOutputContains '"elm-version": "0.19.3"'
+
+  cd ../../..
+}
+
 @test "cleanup" {
   cleanupTmpFolder
 }
