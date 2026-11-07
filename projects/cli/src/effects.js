@@ -4,6 +4,7 @@ import { createServer, loadEnv, build as _build } from 'vite'
 import ElmVitePlugin from 'vite-plugin-elm-watch'
 import * as ElmErrorJson from 'vite-plugin-elm-watch/src/elm-error-json.js'
 import * as TypeScriptPlugin from './vite-plugins/typescript/index.js'
+import { parseViteBuildError } from './vite-build-errors.js'
 import { Codegen } from './codegen.js'
 import { Files } from './files.js'
 import { Utils, Terminal } from './commands/_utils.js'
@@ -57,10 +58,12 @@ let runServer = async (options) => {
     if (isWindows) {
       // Listen for changes to the "src" folder, so the browser
       // automatically refreshes when an Elm file is changed
-      let srcFolder = `${join(process.cwd(), 'src')}/**/*.elm`
+      // chokidar v4+ has no glob support: watch the folder, skip non-Elm files
+      let srcFolder = join(process.cwd(), 'src')
       let srcFolderWatcher = watch(srcFolder, {
         ignorePermissionErrors: true,
-        ignoreInitial: true
+        ignoreInitial: true,
+        ignored: (filepath, stats) => Boolean(stats && stats.isFile() && !filepath.endsWith('.elm'))
       })
       let mainElmPath = join(process.cwd(), '.elm-land', 'src', 'Main.elm')
 
@@ -71,7 +74,8 @@ let runServer = async (options) => {
 
     // Listen for changes to static assets, so the browser
     // automatically shows the latest asset changes
-    let staticFolder = `${join(process.cwd(), 'static')}/**`
+    // (chokidar watches folders recursively; it no longer accepts globs)
+    let staticFolder = join(process.cwd(), 'static')
     let staticFolderWatcher = watch(staticFolder, {
       ignorePermissionErrors: true,
       ignoreInitial: true
@@ -518,28 +522,24 @@ const build = async (config) => {
 const handleViteBuildErrors = (err) => {
   let message = (err ? err.message : '') || ''
 
+  let known = parseViteBuildError(message)
+
   try {
     // Provide helpful error for missing local JS dependencies
-    if (message.includes('Could not resolve')) {
-      let [dependencyName, fileImportingPackage] = message.split('Could not resolve \'')[1].split(`' from `)
-      fileImportingPackage = fileImportingPackage.split('\n')[0]
-
+    if (known && known.kind === 'missing-file') {
       message = [
-        `    The file ${Terminal.cyan(fileImportingPackage)} tried to import`,
-        `    another file at ${Terminal.pink(`"${dependencyName}"`)}, but it wasn't found.`,
+        `    The file ${Terminal.cyan(known.importer)} tried to import`,
+        `    another file at ${Terminal.pink(`"${known.dependencyName}"`)}, but it wasn't found.`,
         '',
         '    Maybe the file was deleted?'
       ].join('\n')
     }
 
     // Provide helpful error for missing NPM dependencies
-    else if (message.includes('failed to resolve import')) {
-      let [dependencyName, fileImportingPackage] = message.split('failed to resolve import ')[1].split(' from "')
-      fileImportingPackage = fileImportingPackage.split('".')[0]
-
+    else if (known && known.kind === 'missing-package') {
       message = [
-        `    The file ${Terminal.cyan(fileImportingPackage)} tried to import`,
-        `    an NPM package named ${Terminal.pink(dependencyName)}, but it wasn't found.`,
+        `    The file ${Terminal.cyan(known.importer)} tried to import`,
+        `    an NPM package named ${Terminal.pink(known.dependencyName)}, but it wasn't found.`,
         '',
         `    Make sure to run ${Terminal.cyan('npm install')} before running this command.`
       ].join('\n')
