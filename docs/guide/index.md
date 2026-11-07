@@ -30,6 +30,17 @@ If you are still stuck, stop by the [Elm Land Discord](https://join.elm.land). L
 
 :::
 
+::: details Using pnpm?
+
+pnpm 10 and later skip the install script that sets up the Elm compiler, and newer versions stop the install until you approve it. Allow it once with `pnpm approve-builds`, or add this to your `pnpm-workspace.yaml`:
+
+```yaml
+allowBuilds:
+  elm: true
+```
+
+:::
+
 ## Creating a new project
 
 You can use the `elm-land` CLI tool to create new projects. Here is how to use it to make new project in the "quickstart" folder:
