@@ -40,11 +40,12 @@
   "homepage": "https://elm.land",
   "devDependencies": {
     "bats": "1.13.0",
-    "chokidar-cli": "3.0.0"
+    "chokidar-cli": "3.0.0",
+    "fast-check": "4.10.2"
   },
   "dependencies": {
-    "@lydell/elm": "0.19.1-14",
     "chokidar": "5.0.0",
+    "elm": "0.19.3-0",
     "typescript": "5.9.3",
     "vite": "8.3.6",
     "vite-plugin-elm-watch": "2.0.0"

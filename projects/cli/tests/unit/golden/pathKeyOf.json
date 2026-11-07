@@ -1,0 +1,7 @@
+{
+  "posix": "PATH",
+  "windows": "Path",
+  "lowercase": "path",
+  "missing": "PATH",
+  "lookalike-only": "PATH"
+}

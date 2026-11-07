@@ -1,3 +1,2 @@
 allowBuilds:
-  "@lydell/elm": true
   elm: true
