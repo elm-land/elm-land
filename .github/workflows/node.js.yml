@@ -15,24 +15,31 @@ jobs:
         working-directory: projects/cli
 
     name: "Node.js"
-    runs-on: macos-14
+    runs-on: macos-15
 
     strategy:
       matrix:
-        node-version: [18,20]
+        # Vite 8 and chokidar 5 need Node ^20.19.0 || >=22.12.0
+        node-version: [20, 22, 24]
 
     steps:
       - name: "Checkout latest code"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v7
+      - name: "Install pnpm"
+        uses: pnpm/action-setup@v6
+        with:
+          package_json_file: projects/cli/package.json
       - name: Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node-version }}
-      - name: "Install NPM dependencies"
-        run: npm ci
+          cache: pnpm
+          cache-dependency-path: projects/cli/pnpm-lock.yaml
+      - name: "Install dependencies"
+        run: pnpm install --frozen-lockfile
       - name: "Build Elm code generator"
-        run: npm run setup
+        run: pnpm run setup
       - name: "Make elm-land available in terminal"
         run: npm link
       - name: "Run test suite"
-        run: npm test
+        run: pnpm test
